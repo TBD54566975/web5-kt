@@ -7,10 +7,15 @@ This repo contains 4 jvm packages:
 * [dids](./dids) - did generation and resolution
 * [credentials](./credentials) - creation and verification of verifiable claims
 
-# Buidling
+# Building
 
 To build and run test just run:
 
 ```bash
 ./gradlew build check cleanTest test --console=rich
 ```
+
+# Other Docs
+* [Guidelines](./CONVENTIONS.md)
+* [Code of Conduct](./CODE_OF_CONDUCT.md)
+* [Governance](./GOVERNANCE.md)
