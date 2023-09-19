@@ -1,10 +1,6 @@
-import com.vanniktech.maven.publish.JavadocJar
-import com.vanniktech.maven.publish.KotlinJvm
-
 plugins {
   id("org.jetbrains.kotlin.jvm")
   id("java-library")
-  id("com.vanniktech.maven.publish.base")
 }
 
 version = "0.1.0"
@@ -27,10 +23,9 @@ java {
   withSourcesJar()
 }
 
-
-mavenPublishing {
-  configure(KotlinJvm(
-    sourcesJar = true,
-    javadocJar = JavadocJar.Javadoc()
-  ))
-}
+//mavenPublishing {
+//  configure(KotlinJvm(
+//    sourcesJar = true,
+//    javadocJar = JavadocJar.Javadoc()
+//  ))
+//}
