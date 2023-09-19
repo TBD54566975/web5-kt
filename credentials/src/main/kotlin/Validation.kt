@@ -1,18 +1,14 @@
 package web5.credentials
 
-import java.util.Date
+import java.util.*
 
-public class Validation {
+public class Validation private constructor() {
 
   public companion object {
     public class ValidationError(message: String) : Exception(message)
 
     private fun validateDate(date: Date): Boolean {
-      if (date.time > 0) {
-        return true
-      } else {
-        return false
-      }
+      return date.time > 0
     }
 
     public fun validate(verifiableCredential: VerifiableCredentialType) {
@@ -26,9 +22,8 @@ public class Validation {
 
       if (!VerifiableCredentialType.DEFAULT_JSONLD_CONTEXTS[0].equals(verifiableCredential.getContexts().get(0))) {
         throw ValidationError(
-          "First value of @context must be " + VerifiableCredentialType.DEFAULT_JSONLD_CONTEXTS[0] + ": " + verifiableCredential.getContexts().get(
-            0
-          )
+          "First value of @context must be ${VerifiableCredentialType.DEFAULT_JSONLD_CONTEXTS[0]}: " +
+            "${verifiableCredential.getContexts().get(0)}"
         )
       }
 

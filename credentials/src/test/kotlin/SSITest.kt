@@ -1,19 +1,17 @@
 package web5.credentials
 
 import com.nimbusds.jose.jwk.JWK
-import java.net.URI
-import java.util.Base64
-import kotlin.test.Test
-import kotlin.test.assertTrue
-import kotlin.test.assertContains
-import kotlin.test.assertNotNull
 import foundation.identity.did.DIDDocument
 import org.junit.jupiter.api.BeforeEach
 import uniresolver.result.ResolveDataModelResult
 import uniresolver.result.ResolveRepresentationResult
 import uniresolver.w3c.DIDResolver
-import java.util.Date
-import java.util.UUID
+import java.net.URI
+import java.util.*
+import kotlin.test.Test
+import kotlin.test.assertContains
+import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 class SSITest {
   lateinit var signOptions: SignOptions
@@ -127,6 +125,6 @@ class SimpleResolver(var didDocument: DIDDocument) : DIDResolver {
   }
 
   override fun resolveRepresentation(p0: String?, p1: MutableMap<String, Any>?): ResolveRepresentationResult {
-    throw NotImplementedError()
+    return ResolveRepresentationResult.build()
   }
 }
