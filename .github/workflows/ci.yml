@@ -27,4 +27,4 @@ jobs:
 
 
       - name: Run Gradle Tasks
-        run: ./gradlew build check publishToMavenLocal --continue
+        run: ./gradlew build check cleanTest test --continue

@@ -12,5 +12,5 @@ This repo contains 4 jvm packages:
 To build and run test just run:
 
 ```bash
-./gradlew build && ./gradlew cleanTest test --console=rich
+./gradlew build check cleanTest test --console=rich
 ```
