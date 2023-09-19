@@ -1,6 +1,6 @@
 package web5.credentials
 
-fun main(args: Array<String>) {
+public fun main(args: Array<String>) {
   println("Hello World!")
 
   // Try adding program arguments via Run/Debug configuration.
