@@ -7,7 +7,9 @@ import uniresolver.result.ResolveDataModelResult
 import uniresolver.result.ResolveRepresentationResult
 import uniresolver.w3c.DIDResolver
 import java.net.URI
-import java.util.*
+import java.util.Base64
+import java.util.Date
+import java.util.UUID
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertNotNull

@@ -9,7 +9,7 @@ import com.nimbusds.jose.jwk.gen.OctetKeyPairGenerator
 import foundation.identity.did.DIDDocument
 import foundation.identity.did.VerificationMethod
 import java.net.URI
-import java.util.*
+import java.util.UUID
 
 public object DidKey {
   // multicodec code for Ed25519 keys

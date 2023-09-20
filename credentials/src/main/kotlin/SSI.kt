@@ -18,7 +18,9 @@ import io.ipfs.multibase.Multibase
 import uniresolver.result.ResolveDataModelResult
 import uniresolver.w3c.DIDResolver
 import java.net.URI
-import java.util.*
+import java.util.Base64
+import java.util.Date
+import java.util.UUID
 
 public class DIDKey private constructor() {
   public companion object {

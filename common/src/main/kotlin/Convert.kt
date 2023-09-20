@@ -1,4 +1,4 @@
-import java.util.*
+import java.util.Base64
 
 public val B64URL_ENCODER: Base64.Encoder = Base64.getUrlEncoder()
 public val B64URL_DECODER: Base64.Decoder = Base64.getUrlDecoder()

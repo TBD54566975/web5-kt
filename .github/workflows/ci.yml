@@ -1,6 +1,7 @@
 name: SDK Kotlin CI
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main

@@ -2,7 +2,8 @@ package web5.credentials
 
 import java.text.ParseException
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Date
+import java.util.TimeZone
 
 public object Util {
   /**
