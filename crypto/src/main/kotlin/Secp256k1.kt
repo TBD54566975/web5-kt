@@ -4,37 +4,41 @@ import com.nimbusds.jose.Algorithm
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.crypto.bc.BouncyCastleProviderSingleton
 import com.nimbusds.jose.jwk.Curve
+import com.nimbusds.jose.jwk.ECKey
 import com.nimbusds.jose.jwk.KeyType
 import com.nimbusds.jose.jwk.KeyUse
+import com.nimbusds.jose.jwk.gen.ECKeyGenerator
 import com.nimbusds.jose.jwk.gen.OctetKeyPairGenerator
 
-object Secp256k1 {
-  fun algorithm(): Algorithm {
-    return JWSAlgorithm.ES256K
+object Secp256k1 : CryptoPrimitive<ECKey> {
+
+  override val algorithm: Algorithm = JWSAlgorithm.ES256K
+  override val curve: Curve = Curve.SECP256K1
+  override val keyType: KeyType = KeyType.EC
+  override val keyUse: KeyUse = KeyUse.SIGNATURE
+
+  override fun generatePrivateKey(): ByteArray {
+    val privateKeyJwk = generatePrivateKeyJwk()
+    return privateKeyJwk.d.decode()
   }
 
-  fun curve(): Curve {
-    return Curve.SECP256K1
+  override fun getPublicKey(privateKeyBytes: ByteArray): ByteArray {
+    TODO("Not yet implemented")
   }
 
-  fun keyType(): KeyType {
-    return KeyType.EC
-  }
-
-  fun generatePrivateKey(): ByteArray {
-    val privateKeyJwk = Secp256k1.generatePrivateKeyJwk()
-    return privateKeyJwk.decodedD
-  }
-
-  fun generatePrivateKeyJwk(): PrivateKeyJwk {
-    return OctetKeyPairGenerator(curve())
+  override fun generatePrivateKeyJwk(): ECKey {
+    return ECKeyGenerator(curve)
       .provider(BouncyCastleProviderSingleton.getInstance())
       .keyIDFromThumbprint(true)
       .keyUse(KeyUse.SIGNATURE)
       .generate()
   }
 
-  fun getPublicKeyJwk(privateKeyJwk: PrivateKeyJwk): PublicKeyJwk {
+  override fun getPublicKeyJwk(privateKeyJwk: PrivateKeyJwk): PublicKeyJwk {
     return privateKeyJwk.toPublicJWK()
+  }
+
+  override fun privateKeyToJwk(privateKeyBytes: ByteArray): ECKey {
+    TODO("Not yet implemented")
   }
 }

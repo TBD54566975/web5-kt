@@ -12,10 +12,4 @@ import com.nimbusds.jose.jwk.gen.OctetKeyPairGenerator
 import org.bouncycastle.crypto.signers.Ed25519Signer
 import java.security.KeyPairGenerator
 
-fun main(args: Array<String>) {
-  val kp = Ed25519.generatePrivateKeyJwk()
-  println(kp)
-
-  val kp2 = Ed25519.privateKeyToJwk(kp.decodedD)
-  println(kp2)
-}
+fun main(args: Array<String>) {}
