@@ -1,8 +1,8 @@
 package web5.credentials.model
 
-public data class FieldV2(
-  val id: String?,
-  val path: List<String>?,
-  val purpose: String?,
-  val name: String?
+public class FieldV2(
+  public val id: String?,
+  public val path: List<String>?,
+  public val purpose: String?,
+  public val name: String?
 )

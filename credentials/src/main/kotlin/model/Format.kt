@@ -1,7 +1,7 @@
 package web5.credentials.model
 
-public data class Format(
-  val jwt: JwtObject?,
-  val jwtVc: JwtObject?,
-  val jwtVp: JwtObject?
+public class Format(
+  public val jwt: JwtObject?,
+  public val jwtVc: JwtObject?,
+  public val jwtVp: JwtObject?
 )

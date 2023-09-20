@@ -5,7 +5,7 @@ public enum class ConformantConsumerDisclosure(public val str: String) {
   PREFERRED("preferred")
 }
 
-public data class ConstraintsV2(
-  val fields: List<FieldV2>?,
-  val limitDisclosure: ConformantConsumerDisclosure?,
+public class ConstraintsV2(
+  public val fields: List<FieldV2>?,
+  public val limitDisclosure: ConformantConsumerDisclosure?,
 )

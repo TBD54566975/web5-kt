@@ -1,9 +1,9 @@
 package web5.credentials.model
 
-public data class InputDescriptorV2(
-  val id: String,
-  val name: String?,
-  val purpose: String?,
-  val format: Format?,
-  val constraints: ConstraintsV2?
+public class InputDescriptorV2(
+  public val id: String,
+  public val name: String?,
+  public val purpose: String?,
+  public val format: Format?,
+  public val constraints: ConstraintsV2?
 )
