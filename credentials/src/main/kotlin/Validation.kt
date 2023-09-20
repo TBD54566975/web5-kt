@@ -2,7 +2,6 @@ package web5.credentials
 
 import java.util.Date
 
-
 public class Validation private constructor() {
 
   public companion object {
