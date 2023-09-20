@@ -3,7 +3,7 @@ package web5.crypto
 import Convert
 import asBase64Url
 
-fun main(args: Array<String>) {
+public fun main() {
   val base64urlEncodedStr = Convert("hi").toBase64Url()
   println(base64urlEncodedStr)
 

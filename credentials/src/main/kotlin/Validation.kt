@@ -2,61 +2,56 @@ package web5.credentials
 
 import java.util.Date
 
-public class Validation {
+public class Validation private constructor() {
 
   public companion object {
     public class ValidationError(message: String) : Exception(message)
 
     private fun validateDate(date: Date): Boolean {
-      if (date.time > 0) {
-        return true
-      } else {
-        return false
-      }
+      return date.time > 0
     }
 
     public fun validate(verifiableCredential: VerifiableCredentialType) {
-      if (verifiableCredential.getJsonObject() == null) {
+      if (verifiableCredential.jsonObject.isNullOrEmpty()) {
         throw ValidationError("Bad or missing JSON object.")
       }
 
-      if (verifiableCredential.getContexts().isEmpty()) {
+      if (verifiableCredential.contexts.isEmpty()) {
         throw ValidationError("Bad or missing '@context'.")
       }
 
-      if (!VerifiableCredentialType.DEFAULT_JSONLD_CONTEXTS[0].equals(verifiableCredential.getContexts().get(0))) {
+      if (!VerifiableCredentialType.DEFAULT_JSONLD_CONTEXTS[0].equals(verifiableCredential.contexts[0])) {
         throw ValidationError(
-          "First value of @context must be " + VerifiableCredentialType.DEFAULT_JSONLD_CONTEXTS[0] + ": " + verifiableCredential.getContexts().get(
-            0
-          )
+          "First value of @context must be ${VerifiableCredentialType.DEFAULT_JSONLD_CONTEXTS[0]}: " +
+            "${verifiableCredential.contexts[0]}"
         )
       }
 
-      if (verifiableCredential.getTypes().isEmpty()) {
+      if (verifiableCredential.types.isEmpty()) {
         throw ValidationError("Bad or missing 'type'.")
       }
 
-      if (!verifiableCredential.getTypes().contains(VerifiableCredentialType.DEFAULT_JSONLD_TYPES[0])) {
-        throw ValidationError("'type' must contain 'VerifiableCredential': " + verifiableCredential.getTypes())
+      if (!verifiableCredential.types.contains(VerifiableCredentialType.DEFAULT_JSONLD_TYPES[0])) {
+        throw ValidationError("'type' must contain 'VerifiableCredential': " + verifiableCredential.types)
       }
 
-      if (verifiableCredential.getIssuer() == null) {
+      if (verifiableCredential.issuer == null) {
         throw ValidationError("Bad or missing 'issuer'.")
       }
 
-      if (verifiableCredential.getIssuanceDate() == null) {
+      if (verifiableCredential.issuanceDate == null) {
         throw ValidationError("Missing 'issuanceDate'.")
       }
 
-      if (!validateDate(verifiableCredential.getIssuanceDate())) {
+      if (!validateDate(verifiableCredential.issuanceDate)) {
         throw ValidationError("Bad 'issuanceDate'.")
       }
 
-      if (verifiableCredential.getExpirationDate() != null && !validateDate(verifiableCredential.getExpirationDate())) {
+      if (verifiableCredential.expirationDate != null && !validateDate(verifiableCredential.expirationDate)) {
         throw ValidationError("Bad 'expirationDate'.")
       }
 
-      if (verifiableCredential.getCredentialSubject() == null) {
+      if (verifiableCredential.credentialSubject == null) {
         throw ValidationError("Bad or missing 'credentialSubject'.")
       }
     }

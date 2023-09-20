@@ -11,11 +11,11 @@ import foundation.identity.did.VerificationMethod
 import java.net.URI
 import java.util.UUID
 
-object DidKey {
+public object DidKey {
   // multicodec code for Ed25519 keys
   private val ED25519_CODEC_ID = Varint.encode(0xed)
 
-  fun create(): Pair<String, OctetKeyPair> {
+  public fun create(): Pair<String, OctetKeyPair> {
     val jwk = OctetKeyPairGenerator(Curve.Ed25519)
       .keyUse(KeyUse.SIGNATURE) // indicate the intended use of the key
       .keyID(UUID.randomUUID().toString()) // give the key a unique ID
@@ -30,7 +30,7 @@ object DidKey {
     return Pair("did:key:$encodedId", jwk)
   }
 
-  fun resolve(did: String): DIDDocument {
+  public fun resolve(did: String): DIDDocument {
     val (scheme, method, id) = did.split(':')
 
     if (scheme != "did") {

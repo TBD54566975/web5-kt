@@ -18,20 +18,9 @@ dependencies {
   testImplementation(kotlin("test"))
 
   implementation("com.github.richardbergquist:java-multicodec:main-SNAPSHOT")
-  implementation("com.google.crypto.tink:tink:1.7.0")
+  implementation("com.google.crypto.tink:tink:1.10.0")
   implementation("decentralized-identity:uni-resolver-core:0.13.0")
-  implementation("com.danubetech:verifiable-credentials-java:1.4.0")
-}
-
-kotlin {
-  explicitApi()
-}
-
-// This is needed so test can run in the IDE
-java {
-  toolchain {
-    languageVersion.set(JavaLanguageVersion.of(20))
-  }
+  implementation("com.danubetech:verifiable-credentials-java:1.5.0")
 }
 
 tasks.test {

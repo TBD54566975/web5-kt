@@ -1,5 +1,5 @@
-object Varint {
-  fun encode(inp: Int): ByteArray {
+public object Varint {
+  public fun encode(inp: Int): ByteArray {
     var value = inp
     val byteArrayList = ByteArray(10)
     var i = 0

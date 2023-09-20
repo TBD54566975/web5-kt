@@ -1,4 +1,4 @@
-object Base58Btc {
+public object Base58Btc {
   private val ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
     .toCharArray()
   private val BASE_58 = ALPHABET.size
@@ -14,7 +14,7 @@ object Base58Btc {
     }
   }
 
-  fun encode(input: ByteArray): String {
+  public fun encode(input: ByteArray): String {
     if (input.size == 0) {
       // paying with the same coin
       return ""
@@ -55,7 +55,7 @@ object Base58Btc {
     return String(output)
   }
 
-  fun decode(input: String): ByteArray {
+  public fun decode(input: String): ByteArray {
     if (input.isEmpty()) {
       // paying with the same coin
       return ByteArray(0)

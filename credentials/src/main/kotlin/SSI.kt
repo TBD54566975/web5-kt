@@ -18,9 +18,11 @@ import io.ipfs.multibase.Multibase
 import uniresolver.result.ResolveDataModelResult
 import uniresolver.w3c.DIDResolver
 import java.net.URI
-import java.util.*
+import java.util.Base64
+import java.util.Date
+import java.util.UUID
 
-public class DIDKey {
+public class DIDKey private constructor() {
   public companion object {
     public fun generateEd25519(): Triple<JWK, String, DIDDocument> {
       val jwk = OctetKeyPairGenerator(Curve.Ed25519)
@@ -116,7 +118,7 @@ public data class DecodedVcJwt(
 public typealias VcJwt = String
 public typealias VpJwt = String
 
-public class VerifiableCredential {
+public class VerifiableCredential private constructor() {
   public companion object {
     @Throws(Exception::class)
     public fun create(
@@ -125,7 +127,10 @@ public class VerifiableCredential {
       verifiableCredential: VerifiableCredentialType?,
     ): VcJwt {
       if (createVcOptions != null && verifiableCredential != null) {
-        throw Exception("createVcOptions and verifiableCredential are mutually exclusive, either include the full verifiableCredential or the options to create one")
+        throw Exception(
+          "createVcOptions and verifiableCredential are mutually exclusive, either include the full " +
+            "verifiableCredential or the options to create one"
+        )
       }
 
       if (createVcOptions == null && verifiableCredential == null) {
@@ -177,7 +182,7 @@ public class VerifiableCredential {
   }
 }
 
-public class VerifiablePresentation {
+public class VerifiablePresentation private constructor() {
   public companion object {
     public fun create(signOptions: SignOptions, createVpOptions: CreateVpOptions): VpJwt {
 
