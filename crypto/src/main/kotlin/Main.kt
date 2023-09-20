@@ -1,15 +1,21 @@
 package web5.crypto
 
+
 import Convert
-import asBase64Url
+import com.nimbusds.jose.crypto.bc.BouncyCastleProviderSingleton
+import com.nimbusds.jose.jwk.Curve
+import com.nimbusds.jose.jwk.JWK
+import com.nimbusds.jose.jwk.KeyUse
+import com.nimbusds.jose.jwk.OctetKeyPair
+import com.nimbusds.jose.jwk.gen.ECKeyGenerator
+import com.nimbusds.jose.jwk.gen.OctetKeyPairGenerator
+import org.bouncycastle.crypto.signers.Ed25519Signer
+import java.security.KeyPairGenerator
 
 fun main(args: Array<String>) {
-  val base64urlEncodedStr = Convert("hi").toBase64Url()
-  println(base64urlEncodedStr)
+  val kp = Ed25519.generatePrivateKeyJwk()
+  println(kp)
 
-  val str = Convert(base64urlEncodedStr).asBase64Url().toStr()
-  println(str)
-
-  val encodedAgane = Convert(str).toBase64Url()
-  println(encodedAgane)
+  val kp2 = Ed25519.privateKeyToJwk(kp.decodedD)
+  println(kp2)
 }
