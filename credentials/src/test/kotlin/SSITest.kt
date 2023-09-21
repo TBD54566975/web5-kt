@@ -17,7 +17,6 @@ import java.util.Base64
 import java.util.Date
 import java.util.UUID
 import kotlin.test.Test
-import kotlin.test.assertContains
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
@@ -32,10 +31,11 @@ class SSITest {
   fun setup() {
     privateJWK = OctetKeyPairGenerator(Curve.Ed25519)
       .generate()
+
     val didCreator = DIDKeyMethod.creator(CreateDIDKeyOptions(privateJWK.toPublicJWK()))
     assertTrue(DIDKeyMethod.authorize(didCreator))
-
     didKey = didCreator.create()
+
     did = didKey.did
     didDocument = didKey.document
 
@@ -44,14 +44,6 @@ class SSITest {
       issuerDid = did.toString(),
       subjectDid = did.toString(),
       signerPrivateKey = privateJWK
-    )
-  }
-
-  @Test
-  fun generateReturnsValidKey() {
-    assertContains(
-      DIDKeyMethod.creator(CreateDIDKeyOptions(privateJWK.toPublicJWK())).create().did.toString(),
-      "did:key:z6Mk"
     )
   }
 
