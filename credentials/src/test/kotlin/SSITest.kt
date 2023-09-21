@@ -1,11 +1,17 @@
 package web5.credentials
 
+import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.JWK
+import com.nimbusds.jose.jwk.gen.OctetKeyPairGenerator
+import foundation.identity.did.DID
 import foundation.identity.did.DIDDocument
 import org.junit.jupiter.api.BeforeEach
 import uniresolver.result.ResolveDataModelResult
 import uniresolver.result.ResolveRepresentationResult
 import uniresolver.w3c.DIDResolver
+import web5.dids.CreateDIDKeyOptions
+import web5.dids.DIDCreationResult
+import web5.dids.DIDKeyMethod
 import java.net.URI
 import java.util.Base64
 import java.util.Date
@@ -17,27 +23,36 @@ import kotlin.test.assertTrue
 
 class SSITest {
   lateinit var signOptions: SignOptions
-  lateinit var didKey: Triple<JWK, String, DIDDocument>
-  lateinit var did: String
+  lateinit var didKey: DIDCreationResult
+  lateinit var privateJWK: JWK
+  lateinit var did: DID
   lateinit var didDocument: DIDDocument
 
   @BeforeEach
   fun setup() {
-    didKey = DIDKey.generateEd25519()
-    did = didKey.second
-    didDocument = didKey.third
+    privateJWK = OctetKeyPairGenerator(Curve.Ed25519)
+      .generate()
+    val didCreator = DIDKeyMethod.creator(CreateDIDKeyOptions(privateJWK.toPublicJWK()))
+    assertTrue(DIDKeyMethod.authorize(didCreator))
+
+    didKey = didCreator.create()
+    did = didKey.did
+    didDocument = didKey.document
 
     signOptions = SignOptions(
-      kid = "#" + did.split(":")[2],
-      issuerDid = did,
-      subjectDid = did,
-      signerPrivateKey = didKey.first
+      kid = "#" + did.methodSpecificId,
+      issuerDid = did.toString(),
+      subjectDid = did.toString(),
+      signerPrivateKey = privateJWK
     )
   }
 
   @Test
   fun generateReturnsValidKey() {
-    assertContains(DIDKey.generateEd25519().second, "did:key:z6Mk")
+    assertContains(
+      DIDKeyMethod.creator(CreateDIDKeyOptions(privateJWK.toPublicJWK())).create().did.toString(),
+      "did:key:z6Mk"
+    )
   }
 
   @Test
@@ -50,13 +65,13 @@ class SSITest {
     claims["degree"] = degree
 
     val credentialSubject = CredentialSubject.builder()
-      .id(URI.create(didKey.second))
+      .id(didKey.did.toUri())
       .claims(claims)
       .build()
 
     val vcCreateOptions = CreateVcOptions(
       credentialSubject = credentialSubject,
-      issuer = did,
+      issuer = did.toString(),
       expirationDate = null,
       credentialStatus = null
     )
@@ -86,14 +101,14 @@ class SSITest {
   @Test
   fun `creates a valid VC JWT with valid VC builder`() {
     val credentialSubject = CredentialSubject.builder()
-      .id(URI.create(did))
+      .id(did.toUri())
       .claims(mutableMapOf<String, Any>().apply { this["firstName"] = "Bobby" })
       .build()
 
     val vc: VerifiableCredentialType = VerifiableCredentialType.builder()
       .id(URI.create(UUID.randomUUID().toString()))
       .credentialSubject(credentialSubject)
-      .issuer(URI.create(did))
+      .issuer(did.toUri())
       .issuanceDate(Date())
       .build()
 
@@ -104,18 +119,18 @@ class SSITest {
   @Test
   fun `creates a valid VP JWT with valid VC`() {
     val credentialSubject = CredentialSubject.builder()
-      .id(URI.create(did))
+      .id(did.toUri())
       .claims(mutableMapOf<String, Any>().apply { this["firstName"] = "Bobby" })
       .build()
 
     val vc: VerifiableCredentialType = VerifiableCredentialType.builder()
       .id(URI.create(UUID.randomUUID().toString()))
       .credentialSubject(credentialSubject)
-      .issuer(URI.create(did))
+      .issuer(did.toUri())
       .issuanceDate(Date())
       .build()
 
-    val createVpOptions = CreateVpOptions(arrayListOf(vc), did)
+    val createVpOptions = CreateVpOptions(arrayListOf(vc), did.toString())
     val vpJwt: VpJwt = VerifiablePresentation.create(signOptions, createVpOptions)
     assertTrue(VerifiablePresentation.verify(vpJwt, SimpleResolver(didDocument)))
   }

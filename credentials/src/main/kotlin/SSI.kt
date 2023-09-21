@@ -3,18 +3,13 @@ package web5.credentials
 import com.danubetech.verifiablecredentials.jwt.JwtVerifiableCredential
 import com.danubetech.verifiablecredentials.jwt.JwtVerifiablePresentation
 import com.danubetech.verifiablecredentials.jwt.ToJwtConverter
-import com.identityfoundry.ddi.protocol.multicodec.Multicodec
-import com.identityfoundry.ddi.protocol.multicodec.MulticodecEncoder
-import com.nimbusds.jose.jwk.Curve
+import com.nimbusds.jose.JWSAlgorithm
+import com.nimbusds.jose.JWSObject
+import com.nimbusds.jose.JWSVerifier
+import com.nimbusds.jose.crypto.ECDSAVerifier
+import com.nimbusds.jose.crypto.Ed25519Verifier
 import com.nimbusds.jose.jwk.JWK
-import com.nimbusds.jose.jwk.OctetKeyPair
-import com.nimbusds.jose.jwk.gen.OctetKeyPairGenerator
-import com.nimbusds.jose.util.Base64URL
 import com.nimbusds.jwt.SignedJWT
-import foundation.identity.did.DID
-import foundation.identity.did.DIDDocument
-import foundation.identity.did.VerificationMethod
-import io.ipfs.multibase.Multibase
 import uniresolver.result.ResolveDataModelResult
 import uniresolver.w3c.DIDResolver
 import java.net.URI
@@ -22,74 +17,11 @@ import java.util.Base64
 import java.util.Date
 import java.util.UUID
 
-public class DIDKey private constructor() {
-  public companion object {
-    public fun generateEd25519(): Triple<JWK, String, DIDDocument> {
-      val jwk = OctetKeyPairGenerator(Curve.Ed25519)
-        .generate()
-      val publicJWK = jwk.toPublicJWK()
-
-      val methodSpecId: String = Multibase.encode(
-        Multibase.Base.Base58BTC,
-        MulticodecEncoder.encode(Multicodec.ED25519_PUB, publicJWK.decodedX)
-      )
-
-      val identifier = "did:key:$methodSpecId"
-      val didDocument = createDocument(identifier)
-
-      return Triple(
-        jwk,
-        identifier,
-        didDocument,
-      )
-    }
-
-    private fun createSignatureMethod(did: DID): VerificationMethod {
-      val multibaseValue = did.methodSpecificId
-      val decodedMultibase = Multibase.decode(multibaseValue)
-      val decodedData = MulticodecEncoder.decode(decodedMultibase)
-      val multicodecValue = decodedData.codec
-      val rawPublicKeyBytes = decodedData.dataAsBytes
-
-      // The byte len for ed25519-pub
-      require(rawPublicKeyBytes.size == 32)
-
-      return VerificationMethod.builder()
-        .id(URI.create(did.toUri().toString() + "#$multibaseValue"))
-        .type("JsonWebKey2020")
-        .controller(did.toUri())
-        .publicKeyJwk(encodeJWK(multicodecValue, rawPublicKeyBytes)!!.toJSONObject())
-        .build()
-    }
-
-    private fun encodeJWK(multicodecValue: Multicodec?, rawPublicKeyBytes: ByteArray?): OctetKeyPair? {
-      require(multicodecValue == Multicodec.ED25519_PUB)
-      return OctetKeyPair.Builder(Curve.Ed25519, Base64URL.encode(rawPublicKeyBytes)).build()
-    }
-
-    private fun createDocument(identifier: String): DIDDocument {
-      val did = DID.fromString(identifier)
-      require(did.methodName == "key")
-      require(did.methodSpecificId.startsWith('z'))
-      val signatureVerificationMethod: VerificationMethod = createSignatureMethod(did)
-      val idOnly = VerificationMethod.builder().id(signatureVerificationMethod.id).build()
-      return DIDDocument.builder().id(URI.create(identifier))
-        .verificationMethod(signatureVerificationMethod)
-        .authenticationVerificationMethod(idOnly)
-        .assertionMethodVerificationMethod(idOnly)
-        .capabilityInvocationVerificationMethod(idOnly)
-        .capabilityDelegationVerificationMethod(idOnly)
-        .build()
-    }
-
-  }
-}
-
 public data class SignOptions(
   var kid: String,
   var issuerDid: String,
   var subjectDid: String,
-  var signerPrivateKey: JWK,
+  var signerPrivateKey: JWK
 )
 
 // TODO: Implement CredentialSchema,
@@ -166,8 +98,9 @@ public class VerifiableCredential private constructor() {
 
       val publicKeyJWK = issuerPublicJWK(vcJWT, resolver)
 
-      return JwtVerifiableCredential.fromCompactSerialization(vcJWT)
-        .verify_Ed25519_EdDSA(publicKeyJWK.toOctetKeyPair())
+      val verifier = JWSObject.parse(vcJWT).header.algorithm.toVerifier(publicKeyJWK)
+
+      return JwtVerifiableCredential.fromCompactSerialization(vcJWT).jwsObject.verify(verifier)
     }
 
     public fun decode(vcJWT: VcJwt): DecodedVcJwt {
@@ -179,6 +112,17 @@ public class VerifiableCredential private constructor() {
         signature = encodedSignature
       )
     }
+  }
+}
+
+private fun JWSAlgorithm.toVerifier(publicKeyJWK: JWK): JWSVerifier? {
+  return when (this) {
+    JWSAlgorithm.EdDSA -> Ed25519Verifier(publicKeyJWK.toOctetKeyPair())
+    JWSAlgorithm.ES256K -> ECDSAVerifier(publicKeyJWK.toECKey())
+    JWSAlgorithm.ES256 -> ECDSAVerifier(publicKeyJWK.toECKey())
+    JWSAlgorithm.ES384 -> ECDSAVerifier(publicKeyJWK.toECKey())
+    JWSAlgorithm.ES512 -> ECDSAVerifier(publicKeyJWK.toECKey())
+    else -> null
   }
 }
 

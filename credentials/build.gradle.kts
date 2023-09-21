@@ -15,6 +15,8 @@ repositories {
 }
 
 dependencies {
+  implementation(project(mapOf("path" to ":dids")))
+  implementation(project(mapOf("path" to ":dids")))
   testImplementation(kotlin("test"))
 
   implementation("com.github.richardbergquist:java-multicodec:main-SNAPSHOT")
