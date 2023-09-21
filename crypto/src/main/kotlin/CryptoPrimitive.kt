@@ -9,6 +9,12 @@ import com.nimbusds.jose.jwk.KeyUse
 typealias PrivateKeyJwk = JWK
 typealias PublicKeyJwk = JWK
 
+interface GenerateOptions
+
+// TODO: add `sign` function signature. add SignOptions interface
+// TODO: add `verify` function signature. add VerifyOptions interface
+// TODO: add getPublicKey(options)
+// TODO: add getPublicKeyJwk(options)
 interface CryptoPrimitive<out T : JWK> {
   /**
    * the algorithm this crypto primitive falls under
@@ -32,12 +38,17 @@ interface CryptoPrimitive<out T : JWK> {
 
   fun generatePrivateKey(): ByteArray
 
+  fun generatePrivateKey(options: GenerateOptions): ByteArray
+
   fun getPublicKey(privateKeyBytes: ByteArray): ByteArray
 
   fun generatePrivateKeyJwk(): T
+
+  fun generatePrivateKeyJwk(options: GenerateOptions): T
 
   fun getPublicKeyJwk(privateKeyJwk: PrivateKeyJwk): JWK
 
   fun privateKeyToJwk(privateKeyBytes: ByteArray): T
 
+  fun publicKeyToJwk(publicKeyBytes: ByteArray): JWK
 }

@@ -1,3 +1,5 @@
+package web5.common
+
 import java.util.Base64
 
 val B64URL_ENCODER: Base64.Encoder = Base64.getUrlEncoder()
@@ -10,7 +12,7 @@ class Convert<T>(val value: T, val kind: String? = null) {
   fun toBase64Url(padding: Boolean = true): String {
     val encoder = if (padding) B64URL_ENCODER else B64URL_ENCODER.withoutPadding()
 
-    return when(this.value) {
+    return when (this.value) {
       is ByteArray -> encoder.encodeToString(this.value)
       is String -> {
         return when (this.kind) {
@@ -19,6 +21,7 @@ class Convert<T>(val value: T, val kind: String? = null) {
           else -> handleNotSupported()
         }
       }
+
       else -> handleNotSupported()
     }
   }
@@ -34,28 +37,38 @@ class Convert<T>(val value: T, val kind: String? = null) {
           else -> handleNotSupported()
         }
       }
+
       else -> handleNotSupported()
     }
   }
 
   fun toStr(): String {
-    return when(this.value) {
+    return when (this.value) {
       is ByteArray -> String(this.value)
       is String -> {
-        return when(this.kind) {
+        return when (this.kind) {
           "base64url" -> String(B64URL_DECODER.decode(this.value))
           null -> this.value
           else -> handleNotSupported()
         }
       }
+
       else -> handleNotSupported()
     }
   }
 
   fun toByteArray(): ByteArray {
-    return when(this.value) {
+    return when (this.value) {
       is ByteArray -> this.value
-      is String -> this.value.toByteArray()
+      is String -> {
+        return when (this.kind) {
+          "base58btc" -> Base58Btc.decode(this.value)
+          "base64url" -> B64URL_DECODER.decode(this.value)
+          null -> this.value.toByteArray()
+          else -> handleNotSupported()
+        }
+      }
+
       else -> handleNotSupported()
     }
   }

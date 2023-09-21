@@ -1,6 +1,6 @@
 package web5.crypto
 
-import Convert
+import web5.common.Convert
 import com.nimbusds.jose.Algorithm
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.jwk.Curve
@@ -18,6 +18,7 @@ import org.bouncycastle.crypto.params.Ed25519PrivateKeyParameters
  *
  * **TODO**: include example usage
  */
+
 object Ed25519 : CryptoPrimitive<OctetKeyPair> {
   override val algorithm: Algorithm = JWSAlgorithm.EdDSA
   override val curve: Curve = Curve.Ed25519
@@ -27,6 +28,10 @@ object Ed25519 : CryptoPrimitive<OctetKeyPair> {
   override fun generatePrivateKey(): ByteArray {
     val privateKeyJwk = generatePrivateKeyJwk()
     return privateKeyJwk.decodedD
+  }
+
+  override fun generatePrivateKey(options: GenerateOptions): ByteArray {
+    throw Exception("Ed25519 has no options when generating a private key")
   }
 
   override fun getPublicKey(privateKeyBytes: ByteArray): ByteArray {
@@ -39,6 +44,10 @@ object Ed25519 : CryptoPrimitive<OctetKeyPair> {
       .keyIDFromThumbprint(true)
       .keyUse(keyUse)
       .generate()
+  }
+
+  override fun generatePrivateKeyJwk(options: GenerateOptions): OctetKeyPair {
+    throw Exception("Ed25519 has no options when generating a private key")
   }
 
   override fun getPublicKeyJwk(privateKeyJwk: PrivateKeyJwk): JWK {
@@ -57,5 +66,16 @@ object Ed25519 : CryptoPrimitive<OctetKeyPair> {
       .keyUse(KeyUse.SIGNATURE)
       .algorithm(algorithm)
       .build()
+  }
+
+  override fun publicKeyToJwk(publicKeyBytes: ByteArray): JWK {
+    val base64UrlEncodedPublicKey = Convert(publicKeyBytes).toBase64Url(padding = false)
+
+    return OctetKeyPair.Builder(curve, Base64URL(base64UrlEncodedPublicKey))
+      .keyIDFromThumbprint()
+      .keyUse(KeyUse.SIGNATURE)
+      .algorithm(algorithm)
+      .build()
+
   }
 }

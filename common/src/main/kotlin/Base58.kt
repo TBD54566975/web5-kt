@@ -1,3 +1,5 @@
+package web5.common
+
 object Base58Btc {
   private val ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
     .toCharArray()

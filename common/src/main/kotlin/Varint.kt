@@ -1,3 +1,9 @@
+package web5.common
+
+import java.io.DataInput
+import java.io.IOException
+
+
 object Varint {
   fun encode(inp: Int): ByteArray {
     var value = inp
@@ -15,5 +21,27 @@ object Varint {
     }
 
     return out
+  }
+
+  fun decode(input: ByteArray): Pair<Int, Int> {
+    var value = 0
+    var i = 0
+    var bytesRead = 0
+    var b: Int
+
+    while (true) {
+      b = input[bytesRead].toInt()
+      bytesRead++
+
+      if (b and 0x80 == 0) break
+
+      value = value or (b and 0x7F shl i)
+      i += 7
+      require(i <= 35) { "Variable length quantity is too long" }
+    }
+
+    value = value or (b shl i)
+
+    return Pair(value, bytesRead)
   }
 }

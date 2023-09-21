@@ -1,35 +1,63 @@
 package web5.dids
 
-import Convert
-import Varint
+import web5.common.Convert
+import web5.common.Varint
 import com.nimbusds.jose.jwk.Curve
-import com.nimbusds.jose.jwk.KeyUse
-import com.nimbusds.jose.jwk.OctetKeyPair
-import com.nimbusds.jose.jwk.gen.OctetKeyPairGenerator
+import com.nimbusds.jose.jwk.JWK
 import foundation.identity.did.DIDDocument
 import foundation.identity.did.VerificationMethod
+import io.ipfs.multibase.Multibase
+import web5.crypto.Ed25519
+import web5.crypto.InMemoryKeyManager
+import web5.crypto.KeyManager
+import web5.crypto.Secp256k1
 import java.net.URI
-import java.util.UUID
+
+val CURVE_CODEC_IDS = mapOf(
+  Curve.Ed25519 to Varint.encode(0xed),
+  Curve.SECP256K1 to Varint.encode(0xe7)
+)
+
+val CODEC_CURVE_IDS = mapOf(
+  0xed to Curve.Ed25519,
+  0xe7 to Curve.SECP256K1
+)
+
+class CreateDidKeyOptions(val curve: Curve = Curve.Ed25519, val keyManager: KeyManager)
+class DidState(val did: String, val didDocument: DIDDocument, val keyManager: KeyManager)
 
 object DidKey {
-  // multicodec code for Ed25519 keys
-  private val ED25519_CODEC_ID = Varint.encode(0xed)
+  const val METHOD = "key"
 
-  fun create(): Pair<String, OctetKeyPair> {
-    val jwk = OctetKeyPairGenerator(Curve.Ed25519)
-      .keyUse(KeyUse.SIGNATURE) // indicate the intended use of the key
-      .keyID(UUID.randomUUID().toString()) // give the key a unique ID
-      .generate()
-
-    val pubJwk = jwk.toPublicJWK()
-    val pubKeyBytes = pubJwk.x.decode()
-
-    val idBytes = ED25519_CODEC_ID + pubKeyBytes
-    val encodedId = "z${Convert(idBytes).toBase58Btc()}"
-
-    return Pair("did:key:$encodedId", jwk)
+  /**
+   * creates a did:key. stores key in an InMemoryKeyManager that's returned from this method
+   */
+  fun create(): DidState {
+    val keyManager = InMemoryKeyManager()
+    val defaultOptions = CreateDidKeyOptions(keyManager = keyManager)
+    return create(defaultOptions)
   }
 
+  fun create(options: CreateDidKeyOptions): DidState {
+    val keyAlias = options.keyManager.generatePrivateKey(options.curve)
+    val publicKeyBytes = options.keyManager.getPublicKey(keyAlias)
+
+    val codecId = CURVE_CODEC_IDS.getOrElse(options.curve) {
+      throw Exception("${options.curve} curve not supported")
+    }
+
+    val idBytes = codecId + publicKeyBytes
+    val multibaseEncodedId = Multibase.encode(Multibase.Base.Base58BTC, idBytes)
+
+    val did = "did:key:$multibaseEncodedId"
+    val didDocument = resolve(did)
+
+    return DidState(did, didDocument, keyManager = options.keyManager)
+  }
+
+  // TODO: return DidResolutionResult instead of DidDocument. hopefully danubetech lib has a type for this
+  // TODO: return appropriate DidResolutionResult with error property set instead of throwing exceptions
+  // TODO: add support for X25519 derived key
   fun resolve(did: String): DIDDocument {
     val (scheme, method, id) = did.split(':')
 
@@ -41,23 +69,22 @@ object DidKey {
       throw IllegalArgumentException("invalid did method. Method must be 'key'")
     }
 
-    val idBytes = Convert(id.substring(1)).toByteArray()
-    val publicKeyBytes = idBytes.drop(ED25519_CODEC_ID.size).toByteArray()
+    val idBytes = Multibase.decode(id)
+    val (codecId, numBytes) = Varint.decode(idBytes)
 
-    val publicKeyBase64Url = Convert(publicKeyBytes).toStr()
+    val curve = CODEC_CURVE_IDS[codecId]
+    val publicKeyBytes = idBytes.drop(numBytes).toByteArray()
 
-    val jwk = hashMapOf<String, Any>(
-      "alg" to "EdDSA",
-      "crv" to "Ed25519",
-      "kty" to "OKP",
-      "use" to "sig",
-      "x" to publicKeyBase64Url
-    )
+    val publicKeyJwk: JWK = when (curve) {
+      Curve.Ed25519 -> Ed25519.publicKeyToJwk(publicKeyBytes)
+      Curve.SECP256K1 -> Secp256k1.publicKeyToJwk(publicKeyBytes)
+      else -> throw IllegalArgumentException("Unsupported curve: $curve")
+    }
 
-    val keyId = URI.create("$did#$id")
+    val verificationMethodId = URI.create("$did#$id")
     val verificationMethod = VerificationMethod.builder()
-      .id(keyId)
-      .publicKeyJwk(jwk)
+      .id(verificationMethodId)
+      .publicKeyJwk(publicKeyJwk.toJSONObject())
       .controller(URI(did))
       .type("JsonWebKey2020")
       .build()
