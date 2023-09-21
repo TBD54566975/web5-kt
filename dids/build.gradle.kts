@@ -19,6 +19,7 @@ dependencies {
   testImplementation(kotlin("test"))
   implementation("com.github.richardbergquist:java-multicodec:main-SNAPSHOT")
   implementation("com.github.multiformats:java-multibase:1.1.1")
+  implementation("decentralized-identity:uni-resolver-core:0.13.0")
 }
 
 tasks.test {

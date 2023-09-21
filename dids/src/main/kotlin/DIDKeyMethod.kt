@@ -12,6 +12,9 @@ import foundation.identity.did.DID
 import foundation.identity.did.DIDDocument
 import foundation.identity.did.VerificationMethod
 import io.ipfs.multibase.Multibase
+import uniresolver.result.ResolveDataModelResult
+import uniresolver.result.ResolveRepresentationResult
+import uniresolver.w3c.DIDResolver
 import java.net.URI
 
 private val JWK.decodedX: ByteArray?
@@ -74,6 +77,7 @@ public object DIDKeyMethod : DIDMethod {
 }
 
 public class DIDKeyCreationMetadata(public val jwk: JWK) : DIDCreationMetadata
+
 private class DIDKeyCreator(
   private val jwk: JWK,
 ) : DIDCreator {
@@ -92,61 +96,63 @@ private class DIDKeyCreator(
     )
   }
 
-  private fun createSignatureMethod(did: DID): VerificationMethod {
-    val multibaseValue = did.methodSpecificId
-    val decodedMultibase = Multibase.decode(multibaseValue)
+  companion object {
+    private fun createSignatureMethod(did: DID): VerificationMethod {
+      val multibaseValue = did.methodSpecificId
+      val decodedMultibase = Multibase.decode(multibaseValue)
 
-    // TODO: The decode function is not unambiguous. See https://github.com/richardbergquist/java-multicodec#current-workarounds
-    val decodedData = MulticodecEncoder.decode(decodedMultibase)
-    val multicodecValue = decodedData.codec
-    val rawPublicKeyBytes = decodedData.dataAsBytes
+      // TODO: The decode function is not unambiguous. See https://github.com/richardbergquist/java-multicodec#current-workarounds
+      val decodedData = MulticodecEncoder.decode(decodedMultibase)
+      val multicodecValue = decodedData.codec
+      val rawPublicKeyBytes = decodedData.dataAsBytes
 
-    require(rawPublicKeyBytes.size == expectedPublicKeySize(multicodecValue))
+      require(rawPublicKeyBytes.size == expectedPublicKeySize(multicodecValue))
 
-    return VerificationMethod.builder()
-      .id(URI.create(did.toUri().toString() + "#$multibaseValue"))
-      .type("JsonWebKey2020")
-      .controller(did.toUri())
-      .publicKeyJwk(encodeJWK(multicodecValue, rawPublicKeyBytes)!!.toJSONObject())
-      .build()
-  }
-
-  private fun expectedPublicKeySize(multicodecValue: Multicodec): Int {
-    // from https://w3c-ccg.github.io/did-method-key/#signature-method-creation-algorithm
-    //    0xe7	33 bytes	secp256k1-pub - Secp256k1 public key (compressed)
-    //    0xec	32 bytes	x25519-pub - Curve25519 public key
-    //    0xed	32 bytes	ed25519-pub - Ed25519 public key
-    //    0x1200	33 bytes	p256-pub - P-256 public key (compressed)
-    //    0x1201	49 bytes	p384-pub - P-384 public key (compressed)
-    return when (multicodecValue) {
-      Multicodec.SECP256K1_PUB -> 33
-      Multicodec.X25519_PUB -> 32
-      Multicodec.ED25519_PUB -> 32
-      Multicodec.P256_PUB -> 33
-      Multicodec.P384_PUB -> 49
-      else -> -1
+      return VerificationMethod.builder()
+        .id(URI.create(did.toUri().toString() + "#$multibaseValue"))
+        .type("JsonWebKey2020")
+        .controller(did.toUri())
+        .publicKeyJwk(encodeJWK(multicodecValue, rawPublicKeyBytes).toJSONObject())
+        .build()
     }
-  }
 
-  private fun encodeJWK(multicodecValue: Multicodec, rawPublicKeyBytes: ByteArray): OctetKeyPair? {
-    val curve = multicodecValue.toCurve()
-    require(curve != null)
-    return OctetKeyPair.Builder(curve, Base64URL.encode(rawPublicKeyBytes)).build()
-  }
+    private fun expectedPublicKeySize(multicodecValue: Multicodec): Int {
+      // from https://w3c-ccg.github.io/did-method-key/#signature-method-creation-algorithm
+      //    0xe7	33 bytes	secp256k1-pub - Secp256k1 public key (compressed)
+      //    0xec	32 bytes	x25519-pub - Curve25519 public key
+      //    0xed	32 bytes	ed25519-pub - Ed25519 public key
+      //    0x1200	33 bytes	p256-pub - P-256 public key (compressed)
+      //    0x1201	49 bytes	p384-pub - P-384 public key (compressed)
+      return when (multicodecValue) {
+        Multicodec.SECP256K1_PUB -> 33
+        Multicodec.X25519_PUB -> 32
+        Multicodec.ED25519_PUB -> 32
+        Multicodec.P256_PUB -> 33
+        Multicodec.P384_PUB -> 49
+        else -> -1
+      }
+    }
 
-  private fun createDocument(identifier: String): DIDDocument {
-    val did = DID.fromString(identifier)
-    require(did.methodName == "key")
-    require(did.methodSpecificId.startsWith('z'))
-    val signatureVerificationMethod: VerificationMethod = createSignatureMethod(did)
-    val idOnly = VerificationMethod.builder().id(signatureVerificationMethod.id).build()
-    return DIDDocument.builder().id(URI.create(identifier))
-      .verificationMethod(signatureVerificationMethod)
-      .authenticationVerificationMethod(idOnly)
-      .assertionMethodVerificationMethod(idOnly)
-      .capabilityInvocationVerificationMethod(idOnly)
-      .capabilityDelegationVerificationMethod(idOnly)
-      .build()
+    private fun encodeJWK(multicodecValue: Multicodec, rawPublicKeyBytes: ByteArray): OctetKeyPair {
+      val curve = multicodecValue.toCurve()
+      require(curve != null)
+      return OctetKeyPair.Builder(curve, Base64URL.encode(rawPublicKeyBytes)).build()
+    }
+
+    fun createDocument(identifier: String): DIDDocument {
+      val did = DID.fromString(identifier)
+      require(did.methodName == "key")
+      require(did.methodSpecificId.startsWith('z'))
+      val signatureVerificationMethod: VerificationMethod = createSignatureMethod(did)
+      val idOnly = VerificationMethod.builder().id(signatureVerificationMethod.id).build()
+      return DIDDocument.builder().id(URI.create(identifier))
+        .verificationMethod(signatureVerificationMethod)
+        .authenticationVerificationMethod(idOnly)
+        .assertionMethodVerificationMethod(idOnly)
+        .capabilityInvocationVerificationMethod(idOnly)
+        .capabilityDelegationVerificationMethod(idOnly)
+        .build()
+    }
   }
 }
 
@@ -163,4 +169,23 @@ private fun Multicodec.toCurve(): Curve? {
     Multicodec.P384_PUB -> Curve.P_384
     else -> null
   }
+}
+
+public typealias DIDResolver = DIDResolver
+
+public object DIDKeyResolver : DIDResolver {
+  override fun resolve(identifier: String?, resolutionOptions: MutableMap<String, Any>?): ResolveDataModelResult {
+    require(identifier != null)
+    return ResolveDataModelResult.build(
+      null,
+      DIDKeyCreator.createDocument(identifier),
+      null,
+    )
+  }
+
+  override fun resolveRepresentation(identifier: String?, resolutionOptions: MutableMap<String, Any>?):
+    ResolveRepresentationResult {
+    return ResolveRepresentationResult.build()
+  }
+
 }

@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import web5.dids.CreateDIDKeyOptions
 import web5.dids.DIDKeyMethod
+import web5.dids.DIDKeyResolver
 import kotlin.test.assertContains
 
 class DIDKeyMethodTest {
@@ -24,5 +25,14 @@ class DIDKeyMethodTest {
       DIDKeyMethod.creator(CreateDIDKeyOptions(privateJWK.toPublicJWK())).create().did.toString(),
       "did:key:z6Mk"
     )
+  }
+
+  @Test
+  fun resolveReturnsTheSameCreatedDocument() {
+    val privateJWK = OctetKeyPairGenerator(Curve.Ed25519).generate()
+    val created = DIDKeyMethod.creator(CreateDIDKeyOptions(privateJWK.toPublicJWK())).create()
+
+    val resolutionResult = DIDKeyResolver.resolve(created.did.toString(), null)
+    assertEquals(created.document, resolutionResult.didDocument)
   }
 }
