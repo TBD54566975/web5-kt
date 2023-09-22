@@ -4,8 +4,8 @@ import java.io.DataInput
 import java.io.IOException
 
 
-object Varint {
-  fun encode(inp: Int): ByteArray {
+public object Varint {
+  public fun encode(inp: Int): ByteArray {
     var value = inp
     val byteArrayList = ByteArray(10)
     var i = 0
@@ -23,7 +23,7 @@ object Varint {
     return out
   }
 
-  fun decode(input: ByteArray): Pair<Int, Int> {
+  public fun decode(input: ByteArray): Pair<Int, Int> {
     var value = 0
     var i = 0
     var bytesRead = 0

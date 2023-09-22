@@ -25,19 +25,19 @@ val CODEC_CURVE_IDS = mapOf(
 class CreateDidKeyOptions(val curve: Curve = Curve.Ed25519, val keyManager: KeyManager)
 class DidState(val did: String, val didDocument: DIDDocument, val keyManager: KeyManager)
 
-object DidKey {
+public object DidKey {
   const val METHOD = "key"
 
   /**
    * creates a did:key. stores key in an InMemoryKeyManager that's returned from this method
    */
-  fun create(): DidState {
+  public fun create(): DidState {
     val keyManager = InMemoryKeyManager()
     val defaultOptions = CreateDidKeyOptions(keyManager = keyManager)
     return create(defaultOptions)
   }
 
-  fun create(options: CreateDidKeyOptions): DidState {
+  public fun create(options: CreateDidKeyOptions): DidState {
     val keyAlias = options.keyManager.generatePrivateKey(options.curve)
     val publicKeyBytes = options.keyManager.getPublicKey(keyAlias)
 
@@ -57,7 +57,7 @@ object DidKey {
   // TODO: return DidResolutionResult instead of DidDocument. hopefully danubetech lib has a type for this
   // TODO: return appropriate DidResolutionResult with error property set instead of throwing exceptions
   // TODO: add support for X25519 derived key
-  fun resolve(did: String): DIDDocument {
+  public fun resolve(did: String): DIDDocument {
     val (scheme, method, id) = did.split(':')
 
     if (scheme != "did") {
