@@ -15,6 +15,22 @@ public interface GenerateOptions
 // TODO: add `verify` function signature. add VerifyOptions interface
 // TODO: add getPublicKey(options)
 // TODO: add getPublicKeyJwk(options)
+
+/**
+ * interface that is concretely implemented for each cryptographic primitive we intend to support
+ * (e.g. [Ed25519] and [Secp256k1]). Includes functions for:
+ * * key generation (public & private) as [ByteArray]s and [JWK]s ([ByteArray] often needed for DID creation)
+ * * signing
+ * * verifying
+ * * conversion between [ByteArray] keys <-> [JWK] representation and vice versa
+ *
+ * This interface includes [generatePrivateKey] and [generatePrivateKeyJwk] functions that take no args.
+ * the purpose of the no argument functions are to encourage each concrete implementation to provide
+ * a way to generate keys without having to think or know about what options might exist.
+ *
+ * concrete implementations of these functions can use sensible defaults to call [generatePrivateKey] or
+ * [generatePrivateKeyJwk] respectively
+ */
 public interface CryptoPrimitive<out T : JWK> {
   /**
    * the algorithm this crypto primitive falls under
