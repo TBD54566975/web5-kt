@@ -282,7 +282,6 @@ private fun selectFrom(presentationDefinition: PresentationDefinitionV2, vcJwts:
   return selectableCredentials
 }
 
-// TODO: Implement evaluateJsonPath function
 private fun evaluateJsonPath(vcJwt: VcJwt, path: String): String? {
   val vc: VerifiableCredentialType =
     FromJwtConverter.fromJwtVerifiableCredential(JwtVerifiableCredential.fromCompactSerialization(vcJwt))
