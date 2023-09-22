@@ -1,11 +1,12 @@
 package web5.sdk.dids
 
-import web5.sdk.common.Varint
 import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.JWK
+import foundation.identity.did.DID
 import foundation.identity.did.DIDDocument
 import foundation.identity.did.VerificationMethod
 import io.ipfs.multibase.Multibase
+import web5.sdk.common.Varint
 import web5.sdk.crypto.Ed25519
 import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.crypto.KeyManager
@@ -50,7 +51,7 @@ public object DidKey {
     val publicKeyBytes = options.keyManager.getPublicKey(keyAlias)
 
     val codecId = CURVE_CODEC_IDS.getOrElse(options.curve) {
-      throw Exception("${options.curve} curve not supported")
+      throw UnsupportedOperationException("${options.curve} curve not supported")
     }
 
     val idBytes = codecId + publicKeyBytes
@@ -66,16 +67,11 @@ public object DidKey {
   // TODO: return appropriate DidResolutionResult with error property set instead of throwing exceptions
   // TODO: add support for X25519 derived key
   public fun resolve(did: String): DIDDocument {
-    val (scheme, method, id) = did.split(':')
+    val parsedDid = DID.fromString(did)
 
-    if (scheme != "did") {
-      throw IllegalArgumentException("invalid scheme")
-    }
+    require(parsedDid.methodName == "key") { throw IllegalArgumentException("expected did:key") }
 
-    if (method != "key") {
-      throw IllegalArgumentException("invalid did method. Method must be 'key'")
-    }
-
+    val id = parsedDid.methodSpecificId
     val idBytes = Multibase.decode(id)
     val (codecId, numBytes) = Varint.decode(idBytes)
 
