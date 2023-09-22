@@ -3,10 +3,15 @@ package web5.credentials
 import com.nimbusds.jose.jwk.JWK
 import foundation.identity.did.DIDDocument
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.assertThrows
 import uniresolver.result.ResolveDataModelResult
 import uniresolver.result.ResolveRepresentationResult
 import uniresolver.w3c.DIDResolver
+import web5.credentials.model.ConstraintsV2
 import web5.credentials.model.CredentialSubject
+import web5.credentials.model.FieldV2
+import web5.credentials.model.InputDescriptorV2
+import web5.credentials.model.PresentationDefinitionV2
 import web5.credentials.model.VerifiableCredentialType
 import java.net.URI
 import java.util.Base64
@@ -38,12 +43,12 @@ class SSITest {
   }
 
   @Test
-  fun generateReturnsValidKey() {
+  fun `generate did key returns valid key`() {
     assertContains(DIDKey.generateEd25519().second, "did:key:z6Mk")
   }
 
   @Test
-  fun `creates a VC JWT with CreateVCOptions`() {
+  fun `creates vc with createVCOptions returns valid vc jwt`() {
     val claims: MutableMap<String, Any> = LinkedHashMap()
     val degree: MutableMap<String, Any> = LinkedHashMap()
     degree["name"] = "Bachelor of Science and Arts"
@@ -86,7 +91,7 @@ class SSITest {
   }
 
   @Test
-  fun `creates a valid VC JWT with valid VC builder`() {
+  fun `creates vc with valid vc builder returns vc jwt`() {
     val credentialSubject = CredentialSubject.builder()
       .id(URI.create(did))
       .claims(mutableMapOf<String, Any>().apply { this["firstName"] = "Bobby" })
@@ -104,10 +109,10 @@ class SSITest {
   }
 
   @Test
-  fun `creates a valid VP JWT with valid VC`() {
+  fun `fulfills presentation definition with valid vcjwt`() {
     val credentialSubject = CredentialSubject.builder()
       .id(URI.create(did))
-      .claims(mutableMapOf<String, Any>().apply { this["firstName"] = "Bobby" })
+      .claims(mutableMapOf<String, Any>().apply { this["btcAddress"] = "btcAddress123" })
       .build()
 
     val vc: VerifiableCredentialType = VerifiableCredentialType.builder()
@@ -117,9 +122,40 @@ class SSITest {
       .issuanceDate(Date())
       .build()
 
-    val createVpOptions = CreateVpOptions(arrayListOf(vc), did)
+    val vcJwt: VcJwt = VerifiableCredential.create(signOptions, null, vc)
+
+    val createVpOptions = CreateVpOptions(getPresentationDefinition(), arrayListOf(vcJwt), did)
     val vpJwt: VpJwt = VerifiablePresentation.create(signOptions, createVpOptions)
+
     assertTrue(VerifiablePresentation.verify(vpJwt, SimpleResolver(didDocument)))
+  }
+
+  @Test
+  fun `presentation definition is not fulfilled`() {
+    val credentialSubject = CredentialSubject.builder()
+      .id(URI.create(did))
+      .claims(mutableMapOf<String, Any>().apply { this["something"] = "notgood" })
+      .build()
+
+    val vc: VerifiableCredentialType = VerifiableCredentialType.builder()
+      .id(URI.create(UUID.randomUUID().toString()))
+      .credentialSubject(credentialSubject)
+      .issuer(URI.create(did))
+      .issuanceDate(Date())
+      .build()
+
+    val vcJwt: VcJwt = VerifiableCredential.create(signOptions, null, vc)
+
+    val createVpOptions = CreateVpOptions(getPresentationDefinition(), arrayListOf(vcJwt), did)
+
+    val exception = assertThrows<Exception> {
+      VerifiablePresentation.create(signOptions, createVpOptions)
+    }
+
+    assertTrue(
+      exception
+        .message?.contains("There are no useable Vcs that correspond to the presentation definition") == true
+    )
   }
 }
 
@@ -131,4 +167,25 @@ class SimpleResolver(var didDocument: DIDDocument) : DIDResolver {
   override fun resolveRepresentation(p0: String?, p1: MutableMap<String, Any>?): ResolveRepresentationResult {
     return ResolveRepresentationResult.build()
   }
+}
+
+fun getPresentationDefinition(): PresentationDefinitionV2 {
+  return PresentationDefinitionV2(
+    id = "test-pd-id",
+    name = "simple PD",
+    purpose = "pd for testing",
+    inputDescriptors = listOf(
+      InputDescriptorV2(
+        id = "whatever",
+        purpose = "id for testing",
+        constraints = ConstraintsV2(
+          fields = listOf(
+            FieldV2(
+              path = listOf("$.credentialSubject.btcAddress")
+            )
+          )
+        )
+      )
+    )
+  )
 }
