@@ -1,6 +1,5 @@
 package web5.dids
 
-import web5.common.Convert
 import web5.common.Varint
 import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.JWK
@@ -92,10 +91,6 @@ object DidKey {
     return DIDDocument.builder()
       .id(URI(did))
       .verificationMethod(verificationMethod)
-      .authenticationVerificationMethod(verificationMethod)
-      .assertionMethodVerificationMethod(verificationMethod)
-      .capabilityDelegationVerificationMethod(verificationMethod)
-      .capabilityInvocationVerificationMethod(verificationMethod)
       .build()
   }
 }

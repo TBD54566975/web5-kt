@@ -76,6 +76,9 @@ object Ed25519 : CryptoPrimitive<OctetKeyPair> {
       .keyUse(KeyUse.SIGNATURE)
       .algorithm(algorithm)
       .build()
+  }
 
+  override fun publicKeyJwkToBytes(jwk: JWK): ByteArray {
+    return jwk.toOctetKeyPair().decodedX
   }
 }

@@ -71,4 +71,8 @@ object Secp256k1 : CryptoPrimitive<ECKey> {
   override fun publicKeyToJwk(publicKeyBytes: ByteArray): JWK {
     TODO("Not yet implemented")
   }
+
+  override fun publicKeyJwkToBytes(jwk: JWK): ByteArray {
+    TODO("Not yet implemented")
+  }
 }

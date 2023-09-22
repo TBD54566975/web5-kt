@@ -51,4 +51,6 @@ interface CryptoPrimitive<out T : JWK> {
   fun privateKeyToJwk(privateKeyBytes: ByteArray): T
 
   fun publicKeyToJwk(publicKeyBytes: ByteArray): JWK
+
+  fun publicKeyJwkToBytes(jwk: JWK): ByteArray
 }
