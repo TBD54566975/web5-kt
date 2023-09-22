@@ -17,6 +17,10 @@ import foundation.identity.did.VerificationMethod
 import io.ipfs.multibase.Multibase
 import uniresolver.result.ResolveDataModelResult
 import uniresolver.w3c.DIDResolver
+import web5.credentials.model.CredentialStatus
+import web5.credentials.model.CredentialSubject
+import web5.credentials.model.VerifiableCredentialType
+import web5.credentials.model.VerifiablePresentationType
 import java.net.URI
 import java.util.Base64
 import java.util.Date
