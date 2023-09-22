@@ -1,4 +1,4 @@
-package web5.crypto.web5.sdk.crypto
+package web5.sdk.crypto
 
 
 public fun main(args: Array<String>) {

@@ -38,6 +38,8 @@ complexity:
   ComplexMethod:
     active: true
     ignoreSingleWhenExpression: true
+  LongParameterList:
+    constructorThreshold: 10
   MethodOverloading:
     active: true
 
@@ -65,7 +67,6 @@ formatting:
   autoCorrect: true
   Indentation:
     indentSize: 2
-    continuationIndentSize: 2
   ParameterListWrapping:
     indentSize: 2
   MaximumLineLength:
@@ -97,10 +98,6 @@ potential-bugs:
     active: true
   IteratorNotThrowingNoSuchElementException:
     active: true
-  MissingWhenCase:
-    active: true
-  RedundantElseInWhen:
-    active: true
   UnsafeCallOnNullableType:
     active: true
   UnsafeCast:
@@ -120,15 +117,10 @@ style:
     active: true
   ForbiddenComment:
     active: false
-    values: [ 'TODO:', 'FIXME:', 'STOPSHIP:', '@author' ]
   FunctionOnlyReturningConstant:
     active: true
   LoopWithTooManyJumpStatements:
     active: true
-  LibraryCodeMustSpecifyReturnType:
-    active: true
-    excludes: [ '**/*.kt' ]
-    includes: [ '**/detekt-api/src/main/**/api/*.kt' ]
   MaxLineLength:
     excludes: [ '**/test/**', '**/*.Test.kt', '**/*.Spec.kt' ]
     excludeCommentStatements: true

@@ -1,6 +1,5 @@
 package web5.sdk.crypto
 
-import web5.sdk.common.Convert
 import com.nimbusds.jose.Algorithm
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.jwk.Curve
@@ -11,6 +10,7 @@ import com.nimbusds.jose.jwk.OctetKeyPair
 import com.nimbusds.jose.jwk.gen.OctetKeyPairGenerator
 import com.nimbusds.jose.util.Base64URL
 import org.bouncycastle.crypto.params.Ed25519PrivateKeyParameters
+import web5.sdk.common.Convert
 
 /**
  * API for generating Ed25519 key pairs, computing public keys from private keys,

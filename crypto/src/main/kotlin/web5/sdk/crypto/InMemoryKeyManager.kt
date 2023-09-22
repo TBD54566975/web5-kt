@@ -14,7 +14,7 @@ public class InMemoryKeyManager : KeyManager {
   // in-memory keystore. flat k/v map where the key is a keyId.
   private val keyStore: MutableMap<String, JWK> = HashMap()
   override fun generatePrivateKey(curve: Curve): String {
-    val primitive = cryptoPrimitives[curve] ?: throw Exception("${curve.name} not supported")
+    val primitive = cryptoPrimitives[curve] ?: throw UnsupportedOperationException("${curve.name} not supported")
     val privateKeyJwk = primitive.generatePrivateKeyJwk()
 
     keyStore[privateKeyJwk.keyID] = privateKeyJwk
