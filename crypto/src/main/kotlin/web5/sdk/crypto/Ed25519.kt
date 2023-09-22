@@ -1,6 +1,6 @@
-package web5.crypto
+package web5.sdk.crypto
 
-import web5.common.Convert
+import web5.sdk.common.Convert
 import com.nimbusds.jose.Algorithm
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.jwk.Curve
@@ -19,7 +19,7 @@ import org.bouncycastle.crypto.params.Ed25519PrivateKeyParameters
  * **TODO**: include example usage
  */
 
-object Ed25519 : CryptoPrimitive<OctetKeyPair> {
+public object Ed25519 : CryptoPrimitive<OctetKeyPair> {
   override val algorithm: Algorithm = JWSAlgorithm.EdDSA
   override val curve: Curve = Curve.Ed25519
   override val keyType: KeyType = KeyType.OKP
@@ -31,7 +31,7 @@ object Ed25519 : CryptoPrimitive<OctetKeyPair> {
   }
 
   override fun generatePrivateKey(options: GenerateOptions): ByteArray {
-    throw Exception("Ed25519 has no options when generating a private key")
+    throw IllegalArgumentException("Ed25519 has no options when generating a private key")
   }
 
   override fun getPublicKey(privateKeyBytes: ByteArray): ByteArray {

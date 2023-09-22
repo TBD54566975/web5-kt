@@ -1,4 +1,4 @@
-package web5.crypto
+package web5.sdk.crypto
 
 import com.nimbusds.jose.Algorithm
 import com.nimbusds.jose.JWSAlgorithm
@@ -9,10 +9,9 @@ import com.nimbusds.jose.jwk.JWK
 import com.nimbusds.jose.jwk.KeyType
 import com.nimbusds.jose.jwk.KeyUse
 import com.nimbusds.jose.jwk.gen.ECKeyGenerator
-import com.nimbusds.jose.jwk.gen.OctetKeyPairGenerator
 
-class GenerateSecp256k1Options(val hash: String? = "sha256") : GenerateOptions
-object Secp256k1 : CryptoPrimitive<ECKey> {
+public class GenerateSecp256k1Options(public val hash: String? = "sha256") : GenerateOptions
+public object Secp256k1 : CryptoPrimitive<ECKey> {
 
   override val algorithm: Algorithm = JWSAlgorithm.ES256K
   override val curve: Curve = Curve.SECP256K1
@@ -24,14 +23,12 @@ object Secp256k1 : CryptoPrimitive<ECKey> {
   }
 
   override fun generatePrivateKey(options: GenerateOptions): ByteArray {
-    if (options !is GenerateSecp256k1Options) {
-      throw Exception("Invalid Options")
-    }
+    require(options is GenerateSecp256k1Options) { "Invalid Options" }
 
     return generatePrivateKey(options)
   }
 
-  fun generatePrivateKey(options: GenerateSecp256k1Options): ByteArray {
+  public fun generatePrivateKey(options: GenerateSecp256k1Options): ByteArray {
     val privateKeyJwk = generatePrivateKeyJwk()
     return privateKeyJwk.d.decode()
   }
@@ -45,14 +42,12 @@ object Secp256k1 : CryptoPrimitive<ECKey> {
   }
 
   override fun generatePrivateKeyJwk(options: GenerateOptions): ECKey {
-    if (options !is GenerateSecp256k1Options) {
-      throw Exception("Invalid Options")
-    }
+    require(options is GenerateSecp256k1Options) { "Invalid Options" }
 
     return generatePrivateKeyJwk(options)
   }
 
-  fun generatePrivateKeyJwk(options: GenerateSecp256k1Options): ECKey {
+  public fun generatePrivateKeyJwk(options: GenerateSecp256k1Options): ECKey {
     return ECKeyGenerator(curve)
       .provider(BouncyCastleProviderSingleton.getInstance())
       .keyIDFromThumbprint(true)

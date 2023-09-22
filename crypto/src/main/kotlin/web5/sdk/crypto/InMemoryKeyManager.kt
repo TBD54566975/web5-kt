@@ -1,18 +1,18 @@
-package web5.crypto
+package web5.sdk.crypto
 
 import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.JWK
 import com.nimbusds.jose.jwk.KeyType
 
 // TODO: add hashmap of kid -> JWK that will act as "in-memory keystore"
-class InMemoryKeyManager : KeyManager {
-  val cryptoPrimitives = hashMapOf<Curve, CryptoPrimitive<JWK>>(
+public class InMemoryKeyManager : KeyManager {
+  private val cryptoPrimitives = hashMapOf<Curve, CryptoPrimitive<JWK>>(
     Ed25519.curve to Ed25519,
     Secp256k1.curve to Secp256k1
   )
 
   // in-memory keystore. flat k/v map where the key is a keyId.
-  val keyStore: MutableMap<String, JWK> = HashMap()
+  private val keyStore: MutableMap<String, JWK> = HashMap()
   override fun generatePrivateKey(curve: Curve): String {
     val primitive = cryptoPrimitives[curve] ?: throw Exception("${curve.name} not supported")
     val privateKeyJwk = primitive.generatePrivateKeyJwk()

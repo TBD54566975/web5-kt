@@ -1,4 +1,4 @@
-package web5.common
+package web5.sdk.common
 
 import java.util.Arrays
 
@@ -30,7 +30,7 @@ import java.util.Arrays
  * could be used to create visually identical looking account numbers.
  *  * A string with non-alphanumeric characters is not as easily accepted as an account number.
  *  * E-mail usually won't line-break if there's no punctuation to break at.
- *  * Doubleclicking selects the whole number as one word if it's all alphanumeric.
+ *  * Double-clicking selects the whole number as one word if it's all alphanumeric.
  *
  * However, note that the encoding/decoding runs in O(n) time, so it is not useful for large data.
  *
@@ -100,7 +100,7 @@ public object Base58Btc {
     }
     // Convert the base58-encoded ASCII chars to a base58 byte sequence (base58 digits).
     val input58 = ByteArray(input.length)
-    for (i in 0 until input.length) {
+    for (i in input.indices) {
       val c = input[i]
       val digit = if (c.code < 128) INDEXES[c.code] else -1
       require(digit >= 0) { String.format("Invalid character in Base58: 0x%04x", c.code) }
