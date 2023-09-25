@@ -154,7 +154,7 @@ class SSITest {
 
     assertTrue(
       exception
-        .message?.contains("There are no useable Vcs that correspond to the presentation definition") == true
+        .message?.contains("There are no useable Vcs that correspond to the presentation definition")!!
     )
   }
 }

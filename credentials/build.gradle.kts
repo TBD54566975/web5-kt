@@ -37,8 +37,8 @@ tasks.test {
 }
 
 // This is needed for IntelliJ unit tests to work in the IDE
-//java {
-//  toolchain {
-//    languageVersion = JavaLanguageVersion.of(20)
-//  }
-//}
+java {
+  toolchain {
+    languageVersion = JavaLanguageVersion.of(20)
+  }
+}
