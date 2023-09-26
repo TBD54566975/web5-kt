@@ -18,7 +18,6 @@ import foundation.identity.did.DID
 import foundation.identity.did.DIDDocument
 import foundation.identity.did.VerificationMethod
 import io.ipfs.multibase.Multibase
-import org.json.simple.JSONValue
 import uniresolver.result.ResolveDataModelResult
 import uniresolver.w3c.DIDResolver
 import web5.credentials.model.CredentialStatus
@@ -299,7 +298,7 @@ private fun selectFrom(presentationDefinition: PresentationDefinitionV2, vcJwts:
 
             // Optional fields are not needed to complete the required fields in the presentation definition
             if (field.optional != null && field.optional) {
-              continue;
+              continue
             }
 
             for (path: String in field.path) {
@@ -331,7 +330,7 @@ private fun evaluateJsonPath(vcJwt: VcJwt, path: String): String? {
   val vc: VerifiableCredentialType =
     FromJwtConverter.fromJwtVerifiableCredential(JwtVerifiableCredential.fromCompactSerialization(vcJwt))
 
-  val vcJsonString: String = JSONValue.toJSONString(vc.jsonObject)
+  val vcJsonString: String = vc.toJson()
   val result: String? = JsonPath.parse(vcJsonString)?.read<String>(path)
 
   return result
