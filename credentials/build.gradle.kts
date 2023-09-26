@@ -5,8 +5,6 @@ plugins {
   id("java-library")
 }
 
-version = "1.0"
-
 repositories {
   mavenCentral()
 
@@ -35,10 +33,3 @@ tasks.test {
     showStackTraces = true
   }
 }
-
-// This is needed for IntelliJ unit tests to work in the IDE
-//java {
-//  toolchain {
-//    languageVersion = JavaLanguageVersion.of(20)
-//  }
-//}
