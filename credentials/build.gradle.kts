@@ -3,9 +3,24 @@ import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 plugins {
   id("org.jetbrains.kotlin.jvm")
   id("java-library")
+  `maven-publish`
 }
 
-version = "1.0"
+group = "web5"
+version = "0.0.0"
+
+java {
+  withJavadocJar()
+  withSourcesJar()
+}
+
+publishing {
+  publications {
+    create<MavenPublication>("web5Credentials") {
+      from(components["java"])
+    }
+  }
+}
 
 repositories {
   mavenCentral()
@@ -35,10 +50,3 @@ tasks.test {
     showStackTraces = true
   }
 }
-
-// This is needed for IntelliJ unit tests to work in the IDE
-//java {
-//  toolchain {
-//    languageVersion = JavaLanguageVersion.of(20)
-//  }
-//}
