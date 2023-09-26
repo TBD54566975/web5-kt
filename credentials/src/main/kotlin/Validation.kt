@@ -1,5 +1,6 @@
 package web5.credentials
 
+import web5.credentials.model.VerifiableCredentialType
 import java.util.Date
 
 public class Validation private constructor() {
