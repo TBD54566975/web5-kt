@@ -3,23 +3,6 @@ import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 plugins {
   id("org.jetbrains.kotlin.jvm")
   id("java-library")
-  `maven-publish`
-}
-
-group = "web5"
-version = "0.0.0"
-
-java {
-  withJavadocJar()
-  withSourcesJar()
-}
-
-publishing {
-  publications {
-    create<MavenPublication>("web5Credentials") {
-      from(components["java"])
-    }
-  }
 }
 
 repositories {
