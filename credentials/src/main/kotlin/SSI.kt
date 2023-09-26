@@ -243,7 +243,7 @@ private fun selectFrom(presentationDefinition: PresentationDefinitionV2, vcJwts:
 
             // Optional fields are not needed to complete the required fields in the presentation definition
             if (field.optional != null && field.optional) {
-              continue;
+              continue
             }
 
             for (path: String in field.path) {
