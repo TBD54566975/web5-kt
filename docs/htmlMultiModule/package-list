@@ -1,0 +1,27 @@
+$dokka.format:html-v1
+$dokka.linkExtension:html
+$dokka.location:////PointingToDeclaration/common/[root]/index.html
+$dokka.location://B64URL_DECODER/#/PointingToDeclaration/common/[root]/-b64-u-r-l_-d-e-c-o-d-e-r.html
+$dokka.location://B64URL_ENCODER/#/PointingToDeclaration/common/[root]/-b64-u-r-l_-e-n-c-o-d-e-r.html
+$dokka.location://asBase64Url/Convert[kotlin.String]#/PointingToDeclaration/common/[root]/as-base64-url.html
+$dokka.location:/Base58Btc///PointingToDeclaration/common/[root]/-base58-btc/index.html
+$dokka.location:/Base58Btc/decode/#kotlin.String/PointingToDeclaration/common/[root]/-base58-btc/decode.html
+$dokka.location:/Base58Btc/encode/#kotlin.ByteArray/PointingToDeclaration/common/[root]/-base58-btc/encode.html
+$dokka.location:/Convert///PointingToDeclaration/common/[root]/-convert/index.html
+$dokka.location:/Convert/Convert/#TypeParam(bounds=[kotlin.Any?])#kotlin.String?/PointingToDeclaration/common/[root]/-convert/-convert.html
+$dokka.location:/Convert/kind/#/PointingToDeclaration/common/[root]/-convert/kind.html
+$dokka.location:/Convert/toBase58Btc/#/PointingToDeclaration/common/[root]/-convert/to-base58-btc.html
+$dokka.location:/Convert/toBase64Url/#kotlin.Boolean/PointingToDeclaration/common/[root]/-convert/to-base64-url.html
+$dokka.location:/Convert/toByteArray/#/PointingToDeclaration/common/[root]/-convert/to-byte-array.html
+$dokka.location:/Convert/toStr/#/PointingToDeclaration/common/[root]/-convert/to-str.html
+$dokka.location:/Convert/value/#/PointingToDeclaration/common/[root]/-convert/value.html
+$dokka.location:/Varint///PointingToDeclaration/common/[root]/-varint/index.html
+$dokka.location:/Varint/encode/#kotlin.Int/PointingToDeclaration/common/[root]/-varint/encode.html
+module:credentials
+web5.credentials
+web5.credentials.model
+web5.credentials.utils
+module:crypto
+web5.crypto
+module:dids
+web5.dids
