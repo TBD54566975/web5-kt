@@ -225,7 +225,7 @@ public object VerifiableCredential {
    * Verifies the authenticity of a verifiable credential using its JWT representation and a DID resolver.
    *
    * @param vcJWT The JWT representation of the verifiable credential to be verified.
-   * @param resolver The DID resolver used for resolving issuer DID information.
+   * @param resolver The DID resolver used for resolving DID information.
    * @return `true` if the verification succeeds; otherwise, `false`.
    * @throws Exception Throws an exception if the verifications fails.
    */
