@@ -6,7 +6,7 @@ on:
       - main
   pull_request:
     branches:
-      - dokka
+      - main
 
 jobs:
   build-web5-sdk-kotlin:
