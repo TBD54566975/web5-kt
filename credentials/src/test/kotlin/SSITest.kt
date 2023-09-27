@@ -236,7 +236,7 @@ class SSITest {
     }
 
     assertTrue(
-      exception.message!!.contains("Required field firstNameId is not satisfied in InputDescriptor")!!
+      exception.message!!.contains("Required field firstNameId is not satisfied in InputDescriptor")
     )
   }
 
