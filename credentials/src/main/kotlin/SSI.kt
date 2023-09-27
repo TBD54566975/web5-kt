@@ -132,6 +132,7 @@ public data class CreateVcOptions(
  *
  * @property presentationDefinition The definition describing the requirements of what vcs are needed for the verifiable presentation.
  * @property verifiableCredentialJwts The list of verifiable credentials in JWT format to be included in the presentation.
+ * @property resolver Used to verify the validity of the VcJwts that are passed in to be included in the presentation.
  * @property holder The decentralized identifier for the holder of the presentation.
  */
 public data class CreateVpOptions(
@@ -241,10 +242,11 @@ public class VerifiablePresentation private constructor() {
      */
     @Throws(Exception::class)
     public fun create(signOptions: SignOptions, createVpOptions: CreateVpOptions): VpJwt {
-
       // Verify VC Validity
-      createVpOptions.verifiableCredentialJwts.forEach { vcJwt ->
-        VerifiableCredential.verify(vcJwt, createVpOptions.resolver)
+      for (vcJwt: VcJwt in createVpOptions.verifiableCredentialJwts) {
+        if (!VerifiableCredential.verify(vcJwt, createVpOptions.resolver)) {
+          throw Exception("One or more VcJwts are invalid.")
+        }
       }
 
       validatePresentationFrom(createVpOptions.presentationDefinition, createVpOptions.verifiableCredentialJwts)
@@ -271,7 +273,8 @@ public class VerifiablePresentation private constructor() {
 
     /**
      * The selectFrom method is a helper function that helps filter out the verifiable credentials which can not be selected and returns
-     * the selectable credentials.
+     * the selectable credentials. It should be used to show what credentials are needed for a given presentation definition.
+     * A decision can then be made on which VCs to use and use VerifiablePresentation.create() to create a conforming VP
      *
      * @param presentationDefinition definition of what is expected in the presentation.
      * @param vcJwts verifiable credentials are the credentials from wallet provided to the library to find selectable credentials.
@@ -284,37 +287,37 @@ public class VerifiablePresentation private constructor() {
 
       if (!presentationDefinition.submissionRequirements.isNullOrEmpty()) {
         throw NotImplementedError("Presentation Definition's Submission Requirements feature is not implemented")
-      } else {
-        for (inputDescriptor: InputDescriptorV2 in presentationDefinition.inputDescriptors) {
-          // Fields Processing
-          if (inputDescriptor.constraints.fields!!.isNotEmpty()) {
-            for (vcJwt: VcJwt in vcJwts) {
-              var fieldMatch = false
+      }
 
-              for (field: FieldV2 in inputDescriptor.constraints.fields) {
+      for (inputDescriptor: InputDescriptorV2 in presentationDefinition.inputDescriptors) {
+        // Fields Processing
+        if (inputDescriptor.constraints.fields!!.isNotEmpty()) {
+          for (vcJwt: VcJwt in vcJwts) {
+            var fieldMatch = false
 
-                // Optional fields are not needed to complete the required fields in the presentation definition
-                if (field.optional != null && field.optional) {
-                  continue;
-                }
+            for (field: FieldV2 in inputDescriptor.constraints.fields) {
 
-                for (path: String in field.path) {
-                  val jsonPathResult = evaluateJsonPath(vcJwt, path)
+              // Optional fields are not needed to complete the required fields in the presentation definition
+              if (field.optional != null && field.optional) {
+                continue;
+              }
 
-                  if (jsonPathResult != null) {
-                    if (field.filter != null) {
-                      throw NotImplementedError("Field Filter is not implemented")
-                    } else {
-                      fieldMatch = true
-                      break
-                    }
+              for (path: String in field.path) {
+                val jsonPathResult = evaluateJsonPath(vcJwt, path)
+
+                if (jsonPathResult != null) {
+                  if (field.filter != null) {
+                    throw NotImplementedError("Field Filter is not implemented")
+                  } else {
+                    fieldMatch = true
+                    break
                   }
                 }
               }
+            }
 
-              if (fieldMatch) {
-                selectableCredentials.add(vcJwt)
-              }
+            if (fieldMatch) {
+              selectableCredentials.add(vcJwt)
             }
           }
         }
@@ -336,7 +339,7 @@ public class VerifiablePresentation private constructor() {
  * descriptor is not satisfied by the provided credentials, an exception is thrown.
  *
  * ### Throws
- * - [NotImplementedError] if the Presentation Definition contains Submission Requirements or if a Field Filter is implemented.
+ * - [NotImplementedError] if the Presentation Definition contains Submission Requirements or if a Field Filter is included.
  * - [Exception] if any required field is not satisfied in the given InputDescriptor.
  *
  * @param presentationDefinition The [PresentationDefinitionV2] object representing the presentation's definition.
@@ -347,31 +350,31 @@ public class VerifiablePresentation private constructor() {
 private fun validatePresentationFrom(presentationDefinition: PresentationDefinitionV2, vcJwts: List<VcJwt>) {
   if (!presentationDefinition.submissionRequirements.isNullOrEmpty()) {
     throw NotImplementedError("Presentation Definition's Submission Requirements feature is not implemented")
-  } else {
-    for (inputDescriptor: InputDescriptorV2 in presentationDefinition.inputDescriptors) {
-      if (inputDescriptor.constraints.fields!!.isNotEmpty()) {
-        for (field: FieldV2 in inputDescriptor.constraints.fields) {
-          if (field.optional == true) continue // Skip optional fields
+  }
 
-          var fieldMatch = false
-          for (vcJwt: VcJwt in vcJwts) {
-            for (path: String in field.path) {
-              val jsonPathResult = evaluateJsonPath(vcJwt, path)
-              if (jsonPathResult != null) {
-                if (field.filter != null) {
-                  throw NotImplementedError("Field Filter is not implemented")
-                } else {
-                  fieldMatch = true
-                  break
-                }
+  for (inputDescriptor: InputDescriptorV2 in presentationDefinition.inputDescriptors) {
+    if (inputDescriptor.constraints.fields!!.isNotEmpty()) {
+      for (field: FieldV2 in inputDescriptor.constraints.fields) {
+        if (field.optional == true) continue // Skip optional fields
+
+        var fieldMatch = false
+        for (vcJwt: VcJwt in vcJwts) {
+          for (path: String in field.path) {
+            val jsonPathResult = evaluateJsonPath(vcJwt, path)
+            if (jsonPathResult != null) {
+              if (field.filter != null) {
+                throw NotImplementedError("Field Filter is not implemented")
+              } else {
+                fieldMatch = true
+                break
               }
             }
-            if (fieldMatch) break // Exit the loop once a match is found for the field
           }
+          if (fieldMatch) break // Exit the loop once a match is found for the field
+        }
 
-          if (!fieldMatch) {
-            throw Exception("Required field ${field.id} is not satisfied in InputDescriptor ${inputDescriptor.id}")
-          }
+        if (!fieldMatch) {
+          throw Exception("Required field ${field.id} is not satisfied in InputDescriptor ${inputDescriptor.id}")
         }
       }
     }

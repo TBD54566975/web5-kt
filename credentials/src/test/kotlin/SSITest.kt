@@ -205,7 +205,7 @@ class SSITest {
 
     assertTrue(
       exception
-        .message?.contains("is not satisfied in InputDescriptor")!!
+        .message!!.contains("is not satisfied in InputDescriptor")
     )
   }
 
@@ -237,7 +237,7 @@ class SSITest {
     }
 
     assertTrue(
-      exception.message?.contains("Required field firstNameId is not satisfied in InputDescriptor")!!
+      exception.message!!.contains("Required field firstNameId is not satisfied in InputDescriptor")!!
     )
   }
 
@@ -268,7 +268,7 @@ class SSITest {
     }
 
     assertTrue(
-      exception.message?.contains("Required field firstNameId is not satisfied in InputDescriptor")!!
+      exception.message!!.contains("Required field firstNameId is not satisfied in InputDescriptor")!!
     )
   }
 
@@ -321,7 +321,7 @@ class SSITest {
     }
 
     assertTrue(
-      exception.message?.contains("Required field btcAddressId is not satisfied in InputDescriptor")!!
+      exception.message!!.contains("Required field btcAddressId is not satisfied in InputDescriptor")!!
     )
   }
 
@@ -346,7 +346,7 @@ class SSITest {
     }
 
     assertTrue(
-      exception.message?.contains("Invalid serialized unsecured/JWS/JWE")!!
+      exception.message!!.contains("Invalid serialized unsecured/JWS/JWE")!!
     )
   }
 
