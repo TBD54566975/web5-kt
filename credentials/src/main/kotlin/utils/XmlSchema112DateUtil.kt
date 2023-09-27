@@ -5,6 +5,9 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.TimeZone
 
+/**
+ * Utility object for common XML Schema 112 date functions.
+ */
 public object Util {
   /**
    * Retrieves the current timestamp in XML Schema 1.1.2 date-time format.

@@ -163,95 +163,96 @@ public data class DecodedVcJwt(
 public typealias VcJwt = String
 public typealias VpJwt = String
 
-public class VerifiableCredential private constructor() {
-  public companion object {
+/**
+ * Utility class for creating, validating, verifying, and decoding verifiable credentials.
+ */
+public object VerifiableCredential {
 
-    /**
-     * Creates a verifiable credential JWT based on the given signing options, credential creation options, and verifiable credential type.
-     *
-     * @param signOptions The options required for signing the credential, including the key identifier, issuer DID, subject DID, and signer private key.
-     * @param createVcOptions The options required to create a verifiable credential. Either this or [verifiableCredential] must be provided.
-     * @param verifiableCredential The verifiable credential to be created. Either this or [createVcOptions] must be provided.
-     * @return A [VcJwt] representing the verifiable credential in JWT format.
-     * @throws Exception Throws an exception if any validation fails during the creation of the verifiable credential or any other exception occurring during the creation of the credential.
-     */
-    @Throws(Exception::class)
-    public fun create(
-      signOptions: SignOptions, createVcOptions: CreateVcOptions?, verifiableCredential: VerifiableCredentialType?,
-    ): VcJwt {
-      if (createVcOptions != null && verifiableCredential != null) {
-        throw Exception(
-          "createVcOptions and verifiableCredential are mutually exclusive, either include the full " +
-            "verifiableCredential or the options to create one"
-        )
-      }
-
-      if (createVcOptions == null && verifiableCredential == null) {
-        throw Exception("createVcOptions or verifiableCredential must be provided")
-      }
-
-      val vc: VerifiableCredentialType = verifiableCredential ?: VerifiableCredentialType.builder()
-        .id(URI.create(UUID.randomUUID().toString()))
-        .credentialSubject(createVcOptions!!.credentialSubject)
-        .issuer(URI.create(createVcOptions.issuer))
-        .issuanceDate(Date())
-        .apply {
-          createVcOptions.expirationDate?.let { expirationDate(it) }
-          createVcOptions.credentialStatus?.let { credentialStatus(it) }
-        }
-        .build()
-
-      this.validatePayload(vc)
-
-      // TODO: This removes issuanceDate which is required https://www.w3.org/TR/vc-data-model/#issuance-date
-      return ToJwtConverter.toJwtVerifiableCredential(vc)
-        .sign_Ed25519_EdDSA(signOptions.signerPrivateKey.toOctetKeyPair(), signOptions.kid, false)
-    }
-
-    /**
-     * Validates the payload of a verifiable credential.
-     *
-     * @param vc The verifiable credential to be validated.
-     * @throws Exception Throws an exception if the validation fails, indicating issues with the payload.
-     */
-    @Throws(Exception::class)
-    public fun validatePayload(vc: VerifiableCredentialType) {
-      Validation.validate(vc)
-    }
-
-    /**
-     * Verifies the authenticity of a verifiable credential using its JWT representation and a DID resolver.
-     *
-     * @param vcJWT The JWT representation of the verifiable credential to be verified.
-     * @param resolver The DID resolver used for resolving issuer DID information.
-     * @return `true` if the verification succeeds; otherwise, `false`.
-     * @throws Exception Throws an exception if the verifications fails.
-     */
-    @Throws(Exception::class)
-    public fun verify(vcJWT: String, resolver: DIDResolver): Boolean {
-      require(vcJWT.isNotEmpty())
-
-      val publicKeyJWK = issuerPublicJWK(vcJWT, resolver)
-
-      return JwtVerifiableCredential.fromCompactSerialization(vcJWT)
-        .verify_Ed25519_EdDSA(publicKeyJWK.toOctetKeyPair())
-    }
-
-    /**
-     * Decodes a verifiable credential JWT into its header, payload, and signature components.
-     *
-     * @param vcJWT The JWT representation of the verifiable credential to be decoded.
-     * @return A [DecodedVcJwt] object containing the decoded components.
-     */
-    public fun decode(vcJWT: VcJwt): DecodedVcJwt {
-      val (encodedHeader, encodedPayload, encodedSignature) = vcJWT.split('.')
-
-      return DecodedVcJwt(
-        header = String(Base64.getDecoder().decode(encodedHeader)),
-        payload = String(Base64.getDecoder().decode(encodedPayload)),
-        signature = encodedSignature
+  /**
+   * Creates a verifiable credential JWT based on the given signing options, credential creation options, and verifiable credential type.
+   *
+   * @param signOptions The options required for signing the credential, including the key identifier, issuer DID, subject DID, and signer private key.
+   * @param createVcOptions The options required to create a verifiable credential. Either this or [verifiableCredential] must be provided.
+   * @param verifiableCredential The verifiable credential to be created. Either this or [createVcOptions] must be provided.
+   * @return A [VcJwt] representing the verifiable credential in JWT format.
+   * @throws Exception Throws an exception if any validation fails during the creation of the verifiable credential or any other exception occurring during the creation of the credential.
+   */
+  @Throws(Exception::class)
+  public fun create(
+    signOptions: SignOptions, createVcOptions: CreateVcOptions?, verifiableCredential: VerifiableCredentialType?,
+  ): VcJwt {
+    if (createVcOptions != null && verifiableCredential != null) {
+      throw Exception(
+        "createVcOptions and verifiableCredential are mutually exclusive, either include the full " +
+          "verifiableCredential or the options to create one"
       )
     }
+
+    if (createVcOptions == null && verifiableCredential == null) {
+      throw Exception("createVcOptions or verifiableCredential must be provided")
+    }
+
+    val vc: VerifiableCredentialType = verifiableCredential ?: VerifiableCredentialType.builder()
+      .id(URI.create(UUID.randomUUID().toString()))
+      .credentialSubject(createVcOptions!!.credentialSubject)
+      .issuer(URI.create(createVcOptions.issuer))
+      .issuanceDate(Date())
+      .apply {
+        createVcOptions.expirationDate?.let { expirationDate(it) }
+        createVcOptions.credentialStatus?.let { credentialStatus(it) }
+      }
+      .build()
+
+    this.validatePayload(vc)
+
+    // TODO: This removes issuanceDate which is required https://www.w3.org/TR/vc-data-model/#issuance-date
+    return ToJwtConverter.toJwtVerifiableCredential(vc)
+      .sign_Ed25519_EdDSA(signOptions.signerPrivateKey.toOctetKeyPair(), signOptions.kid, false)
+  }
+
+  /**
+   * Validates the payload of a verifiable credential.
+   *
+   * @param vc The verifiable credential to be validated.
+   * @throws Exception Throws an exception if the validation fails, indicating issues with the payload.
+   */
+  @Throws(Exception::class)
+  public fun validatePayload(vc: VerifiableCredentialType) {
+    Validation.validate(vc)
+  }
+
+  /**
+   * Verifies the authenticity of a verifiable credential using its JWT representation and a DID resolver.
+   *
+   * @param vcJWT The JWT representation of the verifiable credential to be verified.
+   * @param resolver The DID resolver used for resolving issuer DID information.
+   * @return `true` if the verification succeeds; otherwise, `false`.
+   * @throws Exception Throws an exception if the verifications fails.
+   */
+  @Throws(Exception::class)
+  public fun verify(vcJWT: String, resolver: DIDResolver): Boolean {
+    require(vcJWT.isNotEmpty())
+
+    val publicKeyJWK = issuerPublicJWK(vcJWT, resolver)
+
+    return JwtVerifiableCredential.fromCompactSerialization(vcJWT)
+      .verify_Ed25519_EdDSA(publicKeyJWK.toOctetKeyPair())
+  }
+
+  /**
+   * Decodes a verifiable credential JWT into its header, payload, and signature components.
+   *
+   * @param vcJWT The JWT representation of the verifiable credential to be decoded.
+   * @return A [DecodedVcJwt] object containing the decoded components.
+   */
+  public fun decode(vcJWT: VcJwt): DecodedVcJwt {
+    val (encodedHeader, encodedPayload, encodedSignature) = vcJWT.split('.')
+
+    return DecodedVcJwt(
+      header = String(Base64.getDecoder().decode(encodedHeader)),
+      payload = String(Base64.getDecoder().decode(encodedPayload)),
+      signature = encodedSignature
+    )
   }
 }
 

@@ -1,6 +1,21 @@
 import java.util.Base64
 
+/**
+ * A Base64 URL encoder for encoding data into Base64 URL-safe format.
+ *
+ * This encoder is used to encode binary data into a URL-safe Base64 representation.
+ * Base64 URL encoding replaces characters like '+' and '/' with '-' and '_', respectively,
+ * making the resulting string safe for use in URLs.
+ */
 public val B64URL_ENCODER: Base64.Encoder = Base64.getUrlEncoder()
+
+/**
+ * A Base64 URL decoder for decoding data from Base64 URL-safe format.
+ *
+ * This decoder is used to decode Base64 URL-safe encoded strings back into their original binary data.
+ * It can handle strings that were encoded using the Base64 URL-safe encoding scheme, which is designed
+ * for safe inclusion in URLs without requiring additional URL encoding.
+ */
 public val B64URL_DECODER: Base64.Decoder = Base64.getUrlDecoder()
 
 // TODO: implement https://github.com/TBD54566975/web5-js/blob/main/packages/common/src/convert.ts

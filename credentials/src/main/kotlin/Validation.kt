@@ -1,11 +1,11 @@
-/**
- * Utility class for validating verifiable credentials (VCs).
- */
 package web5.credentials
 
 import web5.credentials.model.VerifiableCredentialType
 import java.util.Date
 
+/**
+ * Utility class for validating verifiable credentials (VCs).
+ */
 public object Validation {
 
   /**
