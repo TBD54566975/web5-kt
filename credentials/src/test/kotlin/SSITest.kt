@@ -343,7 +343,7 @@ class SSITest {
     }
 
     assertTrue(
-      exception.message!!.contains("Invalid serialized unsecured/JWS/JWE")!!
+      exception.message!!.contains("Invalid serialized unsecured/JWS/JWE")
     )
   }
 
