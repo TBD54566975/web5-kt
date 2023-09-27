@@ -21,7 +21,5 @@ module:credentials
 web5.credentials
 web5.credentials.model
 web5.credentials.utils
-module:crypto
-web5.crypto
 module:dids
 web5.dids
