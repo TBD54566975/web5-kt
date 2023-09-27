@@ -1,10 +1,14 @@
 import io.gitlab.arturbosch.detekt.Detekt
+import org.jetbrains.dokka.DokkaConfiguration
+import org.jetbrains.dokka.gradle.DokkaTaskPartial
+import java.net.URL
 
 plugins {
   id("org.jetbrains.kotlin.jvm") version "1.9.0"
   id("java-library")
   id("io.gitlab.arturbosch.detekt") version "1.23.1"
   `maven-publish`
+  id("org.jetbrains.dokka") version "1.9.0"
 }
 
 repositories {
@@ -26,6 +30,7 @@ subprojects {
     plugin("org.jetbrains.kotlin.jvm")
     plugin("java-library")
     plugin("maven-publish")
+    plugin("org.jetbrains.dokka")
   }
 
   tasks.withType<Detekt>().configureEach {
@@ -58,4 +63,29 @@ subprojects {
       }
     }
   }
+
+  tasks.withType<DokkaTaskPartial>().configureEach {
+    dokkaSourceSets.configureEach {
+      documentedVisibilities.set(
+        setOf(
+          DokkaConfiguration.Visibility.PUBLIC,
+          DokkaConfiguration.Visibility.PROTECTED
+        )
+      )
+
+      sourceLink {
+        val exampleDir = "https://github.com/TBD54566975/web5-sdk-kotlin/tree/main"
+
+        localDirectory.set(rootProject.projectDir)
+        remoteUrl.set(URL(exampleDir))
+        remoteLineSuffix.set("#L")
+      }
+    }
+  }
+}
+
+// Configures only the parent MultiModule task,
+// this will not affect subprojects
+tasks.dokkaHtmlMultiModule {
+  moduleName.set("Web5 SDK Documentation")
 }
