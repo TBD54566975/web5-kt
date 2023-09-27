@@ -1,4 +1,13 @@
+/**
+ * A utility object for encoding integers in a variable-length format.
+ */
 public object Varint {
+  /**
+   * Encodes an integer into a variable-length byte array.
+   *
+   * @param inp The integer value to be encoded.
+   * @return The variable-length byte array representing the encoded integer.
+   */
   public fun encode(inp: Int): ByteArray {
     var value = inp
     val byteArrayList = ByteArray(10)
