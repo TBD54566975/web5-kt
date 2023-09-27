@@ -30,8 +30,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v2
         with:
-          name: ${{ matrix.projects }}
-          path: ${{ matrix.projects }}/build/dokka
+          path: build/dokka
 
   deploy-examples:
     runs-on: ubuntu-latest
