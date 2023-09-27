@@ -19,8 +19,10 @@ comments:
     includes: [ '**/detekt-api/src/main/**/api/*.kt' ]
   UndocumentedPublicFunction:
     active: true
-    excludes: [ '**/*.kt' ]
-    includes: [ '**/detekt-api/src/main/**/api/*.kt' ]
+    excludes:
+      [
+        "**/test/**",
+      ]
 
 complexity:
   StringLiteralDuplication:

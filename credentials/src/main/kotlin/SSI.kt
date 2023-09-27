@@ -32,8 +32,16 @@ import java.util.Base64
 import java.util.Date
 import java.util.UUID
 
+/**
+ * Represents a utility class for DIDKey operations.
+ */
 public class DIDKey private constructor() {
   public companion object {
+    /**
+     * Generates an Ed25519 DIDKey along with its associated JWK, identifier, and DID document.
+     *
+     * @return A [Triple] containing the JWK, identifier, and DID document.
+     */
     public fun generateEd25519(): Triple<JWK, String, DIDDocument> {
       val jwk = OctetKeyPairGenerator(Curve.Ed25519)
         .generate()
@@ -200,11 +208,25 @@ public class VerifiableCredential private constructor() {
         .sign_Ed25519_EdDSA(signOptions.signerPrivateKey.toOctetKeyPair(), signOptions.kid, false)
     }
 
+    /**
+     * Validates the payload of a verifiable credential.
+     *
+     * @param vc The verifiable credential to be validated.
+     * @throws Exception Throws an exception if the validation fails, indicating issues with the payload.
+     */
     @Throws(Exception::class)
     public fun validatePayload(vc: VerifiableCredentialType) {
       Validation.validate(vc)
     }
 
+    /**
+     * Verifies the authenticity of a verifiable credential using its JWT representation and a DID resolver.
+     *
+     * @param vcJWT The JWT representation of the verifiable credential to be verified.
+     * @param resolver The DID resolver used for resolving issuer DID information.
+     * @return `true` if the verification succeeds; otherwise, `false`.
+     * @throws Exception Throws an exception if the verifications fails.
+     */
     @Throws(Exception::class)
     public fun verify(vcJWT: String, resolver: DIDResolver): Boolean {
       require(vcJWT.isNotEmpty())
@@ -215,6 +237,12 @@ public class VerifiableCredential private constructor() {
         .verify_Ed25519_EdDSA(publicKeyJWK.toOctetKeyPair())
     }
 
+    /**
+     * Decodes a verifiable credential JWT into its header, payload, and signature components.
+     *
+     * @param vcJWT The JWT representation of the verifiable credential to be decoded.
+     * @return A [DecodedVcJwt] object containing the decoded components.
+     */
     public fun decode(vcJWT: VcJwt): DecodedVcJwt {
       val (encodedHeader, encodedPayload, encodedSignature) = vcJWT.split('.')
 
@@ -227,48 +255,57 @@ public class VerifiableCredential private constructor() {
   }
 }
 
-public class VerifiablePresentation private constructor() {
-  public companion object {
-    /**
-     * Creates a verifiable presentation JWT based on the given signing options and presentation creation options.
-     *
-     * @param signOptions The options required for signing the presentation, including the key identifier, issuer DID, subject DID, and signer private key.
-     * @param createVpOptions The options required to create a verifiable presentation, including the presentation definition, list of verifiable credentials in JWT format, and the holder of the presentation.
-     * @return A [VpJwt] representing the verifiable presentation in JWT format.
-     * @throws Exception if there are no usable verifiable credentials that correspond to the presentation definition or any other exception occurring during the creation of the presentation.
-     */
-    @Throws(Exception::class)
-    public fun create(signOptions: SignOptions, createVpOptions: CreateVpOptions): VpJwt {
+/**
+ * Utility class for creating and verifying verifiable presentations (VPs) in JWT format.
+ */
+public object VerifiablePresentation {
+  /**
+   * Creates a verifiable presentation JWT based on the given signing options and presentation creation options.
+   *
+   * @param signOptions The options required for signing the presentation, including the key identifier, issuer DID, subject DID, and signer private key.
+   * @param createVpOptions The options required to create a verifiable presentation, including the presentation definition, list of verifiable credentials in JWT format, and the holder of the presentation.
+   * @return A [VpJwt] representing the verifiable presentation in JWT format.
+   * @throws Exception if there are no usable verifiable credentials that correspond to the presentation definition or any other exception occurring during the creation of the presentation.
+   */
+  @Throws(Exception::class)
+  public fun create(signOptions: SignOptions, createVpOptions: CreateVpOptions): VpJwt {
 
-      val usableVcJwts: List<VcJwt> =
-        selectFrom(createVpOptions.presentationDefinition, createVpOptions.verifiableCredentialJwts)
+    val usableVcJwts: List<VcJwt> =
+      selectFrom(createVpOptions.presentationDefinition, createVpOptions.verifiableCredentialJwts)
 
-      if (usableVcJwts.size == 0) {
-        throw Exception("There are no useable Vcs that correspond to the presentation definition")
-      }
-
-      // TODO change to be more than one VC
-      val vcToUse: VerifiableCredentialType =
-        FromJwtConverter
-          .fromJwtVerifiableCredential(JwtVerifiableCredential.fromCompactSerialization(usableVcJwts.get(0)))
-
-      // TODO change to be more than one VC
-      val vp: VerifiablePresentationType = VerifiablePresentationType.builder()
-        .verifiableCredential(vcToUse)
-        .holder(URI.create(createVpOptions.holder))
-        .build()
-
-      return ToJwtConverter.toJwtVerifiablePresentation(vp)
-        .sign_Ed25519_EdDSA(signOptions.signerPrivateKey.toOctetKeyPair(), signOptions.kid, true)
+    if (usableVcJwts.size == 0) {
+      throw Exception("There are no useable Vcs that correspond to the presentation definition")
     }
 
-    public fun verify(vpJWT: String, resolver: DIDResolver): Boolean {
-      val publicKeyJWK = issuerPublicJWK(vpJWT, resolver)
-      require(!publicKeyJWK.isPrivate)
-      require(vpJWT.isNotEmpty())
-      return JwtVerifiablePresentation.fromCompactSerialization(vpJWT)
-        .verify_Ed25519_EdDSA(publicKeyJWK.toOctetKeyPair())
-    }
+    // TODO change to be more than one VC
+    val vcToUse: VerifiableCredentialType =
+      FromJwtConverter
+        .fromJwtVerifiableCredential(JwtVerifiableCredential.fromCompactSerialization(usableVcJwts.get(0)))
+
+    // TODO change to be more than one VC
+    val vp: VerifiablePresentationType = VerifiablePresentationType.builder()
+      .verifiableCredential(vcToUse)
+      .holder(URI.create(createVpOptions.holder))
+      .build()
+
+    return ToJwtConverter.toJwtVerifiablePresentation(vp)
+      .sign_Ed25519_EdDSA(signOptions.signerPrivateKey.toOctetKeyPair(), signOptions.kid, true)
+  }
+
+  // TODO: Maybe throw an exception
+  /**
+   * Verifies the authenticity of a verifiable presentation using its JWT representation and a DID resolver.
+   *
+   * @param vpJWT The JWT representation of the verifiable presentation to be verified.
+   * @param resolver The DID resolver used for resolving issuer DID information.
+   * @return `true` if the verification succeeds; otherwise, `false`.
+   */
+  public fun verify(vpJWT: String, resolver: DIDResolver): Boolean {
+    val publicKeyJWK = issuerPublicJWK(vpJWT, resolver)
+    require(!publicKeyJWK.isPrivate)
+    require(vpJWT.isNotEmpty())
+    return JwtVerifiablePresentation.fromCompactSerialization(vpJWT)
+      .verify_Ed25519_EdDSA(publicKeyJWK.toOctetKeyPair())
   }
 }
 
