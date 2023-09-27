@@ -15,12 +15,14 @@ repositories {
 dependencies {
   testImplementation(kotlin("test"))
 
+  api("com.danubetech:verifiable-credentials-java:1.5.0")
+  api("com.nimbusds:nimbus-jose-jwt:9.34")
+  api("decentralized-identity:did-common-java:1.9.0")
+  api("decentralized-identity:uni-resolver-core:0.13.0")
+
   implementation("com.github.richardbergquist:java-multicodec:main-SNAPSHOT")
   implementation("com.google.crypto.tink:tink:1.10.0")
-  implementation("decentralized-identity:uni-resolver-core:0.13.0")
-  implementation("com.danubetech:verifiable-credentials-java:1.5.0")
   implementation("com.nfeld.jsonpathkt:jsonpathkt:2.0.1")
-  implementation("com.googlecode.json-simple:json-simple:1.1.1")
 }
 
 tasks.test {
