@@ -168,7 +168,7 @@ class SSITest {
     )
 
     val createVpOptions =
-      CreateVpOptions(btcAddressPd, arrayListOf(vcJwt), SimpleResolver(didDocument), did)
+      CreateVpOptions(btcAddressPd, arrayListOf(vcJwt), did)
     val vpJwt: VpJwt = VerifiablePresentation.create(signOptions, createVpOptions)
 
     assertTrue(VerifiablePresentation.verify(vpJwt, SimpleResolver(didDocument)))
@@ -197,7 +197,7 @@ class SSITest {
     )
 
     val createVpOptions =
-      CreateVpOptions(btcAddressPd, arrayListOf(vcJwt), SimpleResolver(didDocument), did)
+      CreateVpOptions(btcAddressPd, arrayListOf(vcJwt), did)
 
     val exception = assertThrows<Exception> {
       VerifiablePresentation.create(signOptions, createVpOptions)
@@ -228,7 +228,6 @@ class SSITest {
       CreateVpOptions(
         btcAddressFirstNamePd,
         arrayListOf(btcAddressVcJwt),
-        SimpleResolver(didDocument),
         did
       )
 
@@ -259,7 +258,6 @@ class SSITest {
     val createVpOptions = CreateVpOptions(
       btcAddressFirstNamePd,
       arrayListOf(btcAddressVcJwt, btcAddressVcJwt),
-      SimpleResolver(didDocument),
       did
     )
 
@@ -292,7 +290,6 @@ class SSITest {
     val createVpOptions = CreateVpOptions(
       btcAddressFirstNamePd,
       arrayListOf(btcAddressVcJwt, firstNameVcJwt),
-      SimpleResolver(didDocument),
       did
     )
 
@@ -314,7 +311,7 @@ class SSITest {
       )
     )
 
-    val createVpOptions = CreateVpOptions(btcAddressFirstNamePd, arrayListOf(), SimpleResolver(didDocument), did)
+    val createVpOptions = CreateVpOptions(btcAddressFirstNamePd, arrayListOf(), did)
 
     val exception = assertThrows<Exception> {
       VerifiablePresentation.create(signOptions, createVpOptions)
@@ -339,7 +336,7 @@ class SSITest {
     )
 
     val createVpOptions =
-      CreateVpOptions(btcAddressFirstNamePd, arrayListOf("invalidjwt"), SimpleResolver(didDocument), did)
+      CreateVpOptions(btcAddressFirstNamePd, arrayListOf("invalidjwt"), did)
 
     val exception = assertThrows<Exception> {
       VerifiablePresentation.create(signOptions, createVpOptions)

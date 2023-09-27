@@ -132,13 +132,11 @@ public data class CreateVcOptions(
  *
  * @property presentationDefinition The definition describing the requirements of what vcs are needed for the verifiable presentation.
  * @property verifiableCredentialJwts The list of verifiable credentials in JWT format to be included in the presentation.
- * @property resolver Used to verify the validity of the VcJwts that are passed in to be included in the presentation.
  * @property holder The decentralized identifier for the holder of the presentation.
  */
 public data class CreateVpOptions(
   val presentationDefinition: PresentationDefinitionV2,
   val verifiableCredentialJwts: List<VcJwt>,
-  val resolver: DIDResolver,
   val holder: String, // TODO: Remove this
 )
 
@@ -242,13 +240,6 @@ public class VerifiablePresentation private constructor() {
      */
     @Throws(Exception::class)
     public fun create(signOptions: SignOptions, createVpOptions: CreateVpOptions): VpJwt {
-      // Verify VC Validity
-      for (vcJwt: VcJwt in createVpOptions.verifiableCredentialJwts) {
-        if (!VerifiableCredential.verify(vcJwt, createVpOptions.resolver)) {
-          throw Exception("One or more VcJwts are invalid.")
-        }
-      }
-
       validatePresentationFrom(createVpOptions.presentationDefinition, createVpOptions.verifiableCredentialJwts)
 
       val vcMap: MutableMap<String, Any> = HashMap()
