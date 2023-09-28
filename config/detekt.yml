@@ -11,16 +11,28 @@ custom-checks:
     includes: [ '**/test/**/*Spec.kt' ]
 
 comments:
+  active: true
+  DeprecatedBlockTag:
+    active: true
+  EndOfSentenceFormat:
+    active: true
+    endOfSentenceFormat: '([.?!][ \t\n\r\f<])|([.?!:]$)'
   CommentOverPrivateProperty:
     active: true
   UndocumentedPublicClass:
     active: true
-    excludes: [ '**/*.kt' ]
-    includes: [ '**/detekt-api/src/main/**/api/*.kt' ]
+    excludes: [ '**/test/**' ]
+    searchInNestedClass: true
+    searchInInnerClass: true
+    searchInInnerObject: true
+    searchInInnerInterface: true
+    searchInProtectedClass: false
   UndocumentedPublicFunction:
     active: true
-    excludes: [ '**/*.kt' ]
-    includes: [ '**/detekt-api/src/main/**/api/*.kt' ]
+    excludes: [ '**/test/**' ]
+  UndocumentedPublicProperty:
+    active: false
+    excludes: [ '**/test/**' ]
 
 complexity:
   StringLiteralDuplication:
@@ -51,7 +63,7 @@ exceptions:
   ReturnFromFinally:
     active: true
   SwallowedException:
-    active: false
+    active: true
   ThrowingExceptionFromFinally:
     active: true
   ThrowingExceptionsWithoutMessageOrCause:

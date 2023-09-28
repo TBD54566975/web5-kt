@@ -1,3 +1,6 @@
+/**
+ * A utility object for Base58 encoding and decoding.
+ */
 public object Base58Btc {
   private val ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
     .toCharArray()
@@ -14,6 +17,12 @@ public object Base58Btc {
     }
   }
 
+  /**
+   * Encodes a byte array into a Base58 string.
+   *
+   * @param input The input byte array to be encoded.
+   * @return The Base58 encoded string.
+   */
   public fun encode(input: ByteArray): String {
     if (input.size == 0) {
       // paying with the same coin
@@ -55,6 +64,12 @@ public object Base58Btc {
     return String(output)
   }
 
+  /**
+   * Decodes a Base58 encoded string into a byte array.
+   *
+   * @param input The Base58 encoded string to be decoded.
+   * @return The decoded byte array.
+   */
   public fun decode(input: String): ByteArray {
     if (input.isEmpty()) {
       // paying with the same coin

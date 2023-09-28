@@ -11,10 +11,18 @@ import foundation.identity.did.VerificationMethod
 import java.net.URI
 import java.util.UUID
 
+/**
+ * Utility object for working with DID (Decentralized Identifier) keys.
+ */
 public object DidKey {
   // multicodec code for Ed25519 keys
   private val ED25519_CODEC_ID = Varint.encode(0xed)
 
+  /**
+   * Creates a new DID key pair.
+   *
+   * @return A pair containing the DID and the associated OctetKeyPair.
+   */
   public fun create(): Pair<String, OctetKeyPair> {
     val jwk = OctetKeyPairGenerator(Curve.Ed25519)
       .keyUse(KeyUse.SIGNATURE) // indicate the intended use of the key
@@ -30,6 +38,13 @@ public object DidKey {
     return Pair("did:key:$encodedId", jwk)
   }
 
+  /**
+   * Resolves a DID and returns the associated DID Document.
+   *
+   * @param did The DID to resolve.
+   * @return The resolved DID Document.
+   * @throws IllegalArgumentException if the provided DID is invalid.
+   */
   public fun resolve(did: String): DIDDocument {
     val (scheme, method, id) = did.split(':')
 
