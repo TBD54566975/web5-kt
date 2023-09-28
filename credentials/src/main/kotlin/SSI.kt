@@ -157,7 +157,7 @@ public data class CreateVpOptions(
  * @property payload The payload of the JWT, containing the claims and the issuer of the token.
  * @property signature The signature of the JWT, used for verifying the integrity of the token.
  */
-public data class DecodedVcJwt(
+public data class DecodedJwt(
   val header: Any,
   val payload: Any,
   val signature: String,
@@ -241,6 +241,22 @@ public object VerifiableCredential {
     return JwtVerifiableCredential.fromCompactSerialization(vcJWT)
       .verify_Ed25519_EdDSA(publicKeyJWK.toOctetKeyPair())
   }
+
+  /**
+   * Decodes a verifiable credential JWT into its header, payload, and signature components.
+   *
+   * @param vcJWT The JWT representation of the verifiable credential to be decoded.
+   * @return A [DecodedJwt] object containing the decoded components.
+   */
+  public fun decode(vcJWT: VcJwt): DecodedJwt {
+    val (encodedHeader, encodedPayload, encodedSignature) = vcJWT.split('.')
+
+    return DecodedJwt(
+      header = String(Base64.getDecoder().decode(encodedHeader)),
+      payload = String(Base64.getDecoder().decode(encodedPayload)),
+      signature = encodedSignature
+    )
+  }
 }
 
 /**
@@ -296,12 +312,12 @@ public object VerifiablePresentation {
    * Decodes a verifiable presentation JWT into its header, payload, and signature components.
    *
    * @param vpJWT The JWT representation of the verifiable presentation to be decoded.
-   * @return A [DecodedVcJwt] object containing the decoded components.
+   * @return A [DecodedJwt] object containing the decoded components.
    */
-  public fun decode(vpJWT: VpJwt): DecodedVcJwt {
+  public fun decode(vpJWT: VpJwt): DecodedJwt {
     val (encodedHeader, encodedPayload, encodedSignature) = vpJWT.split('.')
 
-    return DecodedVcJwt(
+    return DecodedJwt(
       header = String(Base64.getDecoder().decode(encodedHeader)),
       payload = String(Base64.getDecoder().decode(encodedPayload)),
       signature = encodedSignature
