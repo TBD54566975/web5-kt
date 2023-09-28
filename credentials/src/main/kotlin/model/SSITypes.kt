@@ -1,7 +1,8 @@
 package web5.credentials.model
 
-/**
- * Verifiable Credentials
+import com.fasterxml.jackson.annotation.JsonInclude
+
+/** Verifiable Credentials
  *
  * A verifiable credential is a tamper-evident credential that has authorship that can be cryptographically verified.
  *
@@ -33,6 +34,7 @@ public typealias VerifiablePresentationType = com.danubetech.verifiablecredentia
  *
  * @see [Presentation Definition](https://identity.foundation/presentation-exchange/#presentation-definition)
  */
+
 public class PresentationDefinitionV2(
   public val id: String,
   public val name: String? = null,
@@ -172,4 +174,26 @@ public class FilterV2(
   public val not: Any? = null,
   public val pattern: String? = null,
   public val type: String
+)
+
+/**
+ * Represents a presentation submission object.
+ *
+ * @see [Presentation Submission](https://identity.foundation/presentation-exchange/spec/v2.0.0/#presentation-submission)
+ */
+public data class PresentationSubmission(
+  val id: String,
+  val definitionId: String,
+  val descriptorMap: List<DescriptorMap>
+)
+
+/**
+ * Represents descriptor map for a presentation submission.
+ */
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public data class DescriptorMap(
+  val id: String,
+  val path: String,
+  val pathNested: DescriptorMap? = null,
+  val format: String
 )
