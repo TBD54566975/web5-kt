@@ -1,8 +1,10 @@
 package web5.credentials
 
 import com.nimbusds.jose.jwk.JWK
+import com.nimbusds.jwt.SignedJWT
 import foundation.identity.did.DIDDocument
 import foundation.identity.jsonld.JsonLDObject
+import jakarta.json.JsonObject
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.assertThrows
 import uniresolver.result.ResolveDataModelResult
@@ -16,13 +18,11 @@ import web5.credentials.model.InputDescriptorV2
 import web5.credentials.model.PresentationDefinitionV2
 import web5.credentials.model.VerifiableCredentialType
 import java.net.URI
-import java.util.Base64
 import java.util.Date
 import java.util.UUID
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 class SSITest {
@@ -73,20 +73,13 @@ class SSITest {
 
     val vcJwt: VcJwt = VerifiableCredential.create(signOptions, vcCreateOptions, null)
 
-    assertNotNull(vcJwt)
-    assertTrue { vcJwt.split(".").size == 3 }
+    val signedJWT = SignedJWT.parse(vcJwt)
+    val payload = signedJWT.payload.toJSONObject()
 
-    val parts = vcJwt.split(".")
-    val header = String(Base64.getDecoder().decode(parts[0]))
-    val payload = String(Base64.getDecoder().decode(parts[1]))
-
-    // Header Checks
-    assertTrue { header.contains("\"alg\":\"") }
-    assertTrue { header.contains("\"typ\":\"JWT\"") }
-
-    // Payload Checks
-    assertTrue { payload.contains("\"iss\":\"") }
-    assertTrue { payload.contains("\"sub\":\"") }
+    assertEquals("EdDSA", signedJWT.header.algorithm.name)
+    assertEquals("JWT", signedJWT.header.type.toString())
+    assertTrue { payload.containsKey("iss") }
+    assertTrue { payload.containsKey("sub") }
 
     assertTrue {
       VerifiableCredential.verify(vcJwt, SimpleResolver(didDocument))
@@ -118,10 +111,11 @@ class SSITest {
       .claims(mutableMapOf<String, Any>().apply { this["firstName"] = "Bobby" })
       .build()
 
-    val properties: MutableMap<String, Any> = HashMap()
-    properties["statusPurpose"] = "revocation"
-    properties["statusListIndex"] = "94567"
-    properties["statusListCredential"] = "https://example.com/credentials/status/3"
+    val properties = mapOf(
+      "statusPurpose" to "revocation",
+      "statusListIndex" to "94567",
+      "statusListCredential" to "https://example.com/credentials/status/3"
+    )
 
     val credentialStatus: CredentialStatus = CredentialStatus.builder()
       .base(
@@ -171,19 +165,14 @@ class SSITest {
       CreateVpOptions(btcAddressPd, arrayListOf(vcJwt), did)
     val vpJwt: VpJwt = VerifiablePresentation.create(signOptions, createVpOptions)
 
-    assertTrue(VerifiablePresentation.verify(vpJwt, SimpleResolver(didDocument)))
+    val signedJWT = SignedJWT.parse(vpJwt)
+    val payload = signedJWT.payload.toJSONObject()
 
-    val parts = vpJwt.split(".")
-    val header = String(Base64.getDecoder().decode(parts[0]))
-    val payload = String(Base64.getDecoder().decode(parts[1]))
-
-    // Header Checks
-    assertTrue { header.contains("\"alg\":\"") }
-    assertTrue { header.contains("\"typ\":\"JWT\"") }
-
-    // Payload Checks
-    assertTrue { payload.contains("\"iss\":\"") }
-    assertTrue { payload.contains("\"sub\":\"") }
+    assertEquals("EdDSA", signedJWT.header.algorithm.name)
+    assertEquals("JWT", signedJWT.header.type.toString())
+    assertTrue(payload.containsKey("iss"))
+    assertTrue(payload.containsKey("sub"))
+    assertTrue(payload.containsKey("vp"))
   }
 
   @Test

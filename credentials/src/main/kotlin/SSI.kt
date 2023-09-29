@@ -150,19 +150,6 @@ public data class CreateVpOptions(
   val holder: String, // TODO: Remove this
 )
 
-/**
- * Represents the decoded parts of a Verifiable Credential JWT.
- *
- * @property header The header of the JWT, containing metadata about the token.
- * @property payload The payload of the JWT, containing the claims and the issuer of the token.
- * @property signature The signature of the JWT, used for verifying the integrity of the token.
- */
-public data class DecodedJwt(
-  val header: Any,
-  val payload: Any,
-  val signature: String,
-)
-
 public typealias VcJwt = String
 public typealias VpJwt = String
 
@@ -241,22 +228,6 @@ public object VerifiableCredential {
     return JwtVerifiableCredential.fromCompactSerialization(vcJWT)
       .verify_Ed25519_EdDSA(publicKeyJWK.toOctetKeyPair())
   }
-
-  /**
-   * Decodes a verifiable credential JWT into its header, payload, and signature components.
-   *
-   * @param vcJWT The JWT representation of the verifiable credential to be decoded.
-   * @return A [DecodedJwt] object containing the decoded components.
-   */
-  public fun decode(vcJWT: VcJwt): DecodedJwt {
-    val (encodedHeader, encodedPayload, encodedSignature) = vcJWT.split('.')
-
-    return DecodedJwt(
-      header = String(Base64.getDecoder().decode(encodedHeader)),
-      payload = String(Base64.getDecoder().decode(encodedPayload)),
-      signature = encodedSignature
-    )
-  }
 }
 
 /**
@@ -278,9 +249,10 @@ public object VerifiablePresentation {
       createVpOptions.verifiableCredentialJwts
     )
 
-    val properties: MutableMap<String, Any> = HashMap()
-    properties["verifiableCredential"] = createVpOptions.verifiableCredentialJwts
-    properties["presentation_submission"] = presentationSubmission
+    val properties: Map<String, Any> = mapOf(
+      "verifiableCredential" to createVpOptions.verifiableCredentialJwts,
+      "presentation_submission" to presentationSubmission
+    )
 
     val vp: VerifiablePresentation? = VerifiablePresentationType.builder()
       .properties(properties)
@@ -309,22 +281,6 @@ public object VerifiablePresentation {
   }
 
   /**
-   * Decodes a verifiable presentation JWT into its header, payload, and signature components.
-   *
-   * @param vpJWT The JWT representation of the verifiable presentation to be decoded.
-   * @return A [DecodedJwt] object containing the decoded components.
-   */
-  public fun decode(vpJWT: VpJwt): DecodedJwt {
-    val (encodedHeader, encodedPayload, encodedSignature) = vpJWT.split('.')
-
-    return DecodedJwt(
-      header = String(Base64.getDecoder().decode(encodedHeader)),
-      payload = String(Base64.getDecoder().decode(encodedPayload)),
-      signature = encodedSignature
-    )
-  }
-
-  /**
    * The selectFrom method is a helper function that helps filter out the verifiable credentials which can not be selected and returns
    * the selectable credentials.
    *
@@ -345,6 +301,10 @@ public object VerifiablePresentation {
       // Fields Processing
       if (inputDescriptor.constraints.fields!!.isNotEmpty()) {
         for (vcJwt: VcJwt in vcJwts) {
+
+          val vc: VerifiableCredentialType =
+            FromJwtConverter.fromJwtVerifiableCredential(JwtVerifiableCredential.fromCompactSerialization(vcJwt))
+
           var fieldMatch = false
 
           for (field: FieldV2 in inputDescriptor.constraints.fields) {
@@ -354,16 +314,12 @@ public object VerifiablePresentation {
               continue
             }
 
-            for (path: String in field.path) {
-              val jsonPathResult = evaluateJsonPath(vcJwt, path)
-
-              if (jsonPathResult != null) {
-                if (field.filter != null) {
-                  throw NotImplementedError("Field Filter is not implemented")
-                } else {
-                  fieldMatch = true
-                  break
-                }
+            for (jsonPathResult: String in field.path.mapNotNull { evaluateJsonPath(vc, it) }) {
+              if (field.filter != null) {
+                throw NotImplementedError("Field Filter is not implemented")
+              } else {
+                fieldMatch = true
+                break
               }
             }
           }
@@ -416,8 +372,11 @@ public object VerifiablePresentation {
 
           var fieldMatch = false
           for ((vcIndex, vcJwt) in vcJwts.withIndex()) {
+            val vc: VerifiableCredentialType =
+              FromJwtConverter.fromJwtVerifiableCredential(JwtVerifiableCredential.fromCompactSerialization(vcJwt))
+
             for (path: String in field.path) {
-              val jsonPathResult = evaluateJsonPath(vcJwt, path)
+              val jsonPathResult = evaluateJsonPath(vc, path)
               if (jsonPathResult != null) {
                 if (field.filter != null) {
                   throw NotImplementedError("Field Filter is not implemented")
@@ -470,12 +429,7 @@ private fun issuerPublicJWK(vcJWT: String, resolver: DIDResolver): JWK {
   return publicKeyJWK
 }
 
-private fun evaluateJsonPath(vcJwt: VcJwt, path: String): String? {
-  val vc: VerifiableCredentialType =
-    FromJwtConverter.fromJwtVerifiableCredential(JwtVerifiableCredential.fromCompactSerialization(vcJwt))
-
+private fun evaluateJsonPath(vc: VerifiableCredentialType, path: String): String? {
   val vcJsonString: String = vc.toJson()
-  val result: String? = JsonPath.parse(vcJsonString)?.read<String>(path)
-
-  return result
+  return JsonPath.parse(vcJsonString)?.read<String>(path)
 }
