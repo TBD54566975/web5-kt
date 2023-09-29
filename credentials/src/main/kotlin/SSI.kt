@@ -335,7 +335,7 @@ public object VerifiablePresentation {
   }
 
   /**
-   * Validates a list of Verifiable Credentials (VcJwts) against a presentation definition and generates a presentation submission
+   * Validates a list of Verifiable Credentials (VcJwts) against a presentation definition and generates a presentation submission.
    *
    * This method checks the presentation definition and the list of Verifiable Credentials to ensure
    * that the required fields in the definition are satisfied by the provided credentials.
@@ -343,16 +343,10 @@ public object VerifiablePresentation {
    * Currently, if the presentation definition contains submission requirements, or if any required field in an input
    * descriptor is not satisfied by the provided credentials, an exception is thrown.
    *
-   * A compliant presentation submission is returned
-   *
-   * ### Throws
-   * - [NotImplementedError] if the Presentation Definition contains Submission Requirements or if a Field Filter is implemented.
-   * - [Exception] if any required field is not satisfied in the given InputDescriptor.
-   *
    * @param presentationDefinition The [PresentationDefinitionV2] object representing the presentation's definition.
    * @param vcJwts The list of [VcJwt] representing the Verifiable Credentials to be validated against the presentation definition.
    * @throws Exception If a required field is not satisfied in a given InputDescriptor.
-   * @return the generated presentation submission.
+   * @return the generated compliant presentation submission.
    */
   @Throws(Exception::class)
   private fun generatePresentationSubmissionFrom(

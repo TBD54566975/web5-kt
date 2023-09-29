@@ -4,7 +4,6 @@ import com.nimbusds.jose.jwk.JWK
 import com.nimbusds.jwt.SignedJWT
 import foundation.identity.did.DIDDocument
 import foundation.identity.jsonld.JsonLDObject
-import jakarta.json.JsonObject
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.assertThrows
 import uniresolver.result.ResolveDataModelResult
