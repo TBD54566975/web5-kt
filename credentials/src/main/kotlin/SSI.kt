@@ -1,5 +1,6 @@
 package web5.credentials
 
+import com.danubetech.verifiablecredentials.VerifiablePresentation
 import com.danubetech.verifiablecredentials.jwt.FromJwtConverter
 import com.danubetech.verifiablecredentials.jwt.JwtVerifiableCredential
 import com.danubetech.verifiablecredentials.jwt.JwtVerifiablePresentation
@@ -22,9 +23,11 @@ import uniresolver.result.ResolveDataModelResult
 import uniresolver.w3c.DIDResolver
 import web5.credentials.model.CredentialStatus
 import web5.credentials.model.CredentialSubject
+import web5.credentials.model.DescriptorMap
 import web5.credentials.model.FieldV2
 import web5.credentials.model.InputDescriptorV2
 import web5.credentials.model.PresentationDefinitionV2
+import web5.credentials.model.PresentationSubmission
 import web5.credentials.model.VerifiableCredentialType
 import web5.credentials.model.VerifiablePresentationType
 import java.net.URI
@@ -147,19 +150,6 @@ public data class CreateVpOptions(
   val holder: String, // TODO: Remove this
 )
 
-/**
- * Represents the decoded parts of a Verifiable Credential JWT.
- *
- * @property header The header of the JWT, containing metadata about the token.
- * @property payload The payload of the JWT, containing the claims and the issuer of the token.
- * @property signature The signature of the JWT, used for verifying the integrity of the token.
- */
-public data class DecodedVcJwt(
-  val header: Any,
-  val payload: Any,
-  val signature: String,
-)
-
 public typealias VcJwt = String
 public typealias VpJwt = String
 
@@ -238,22 +228,6 @@ public object VerifiableCredential {
     return JwtVerifiableCredential.fromCompactSerialization(vcJWT)
       .verify_Ed25519_EdDSA(publicKeyJWK.toOctetKeyPair())
   }
-
-  /**
-   * Decodes a verifiable credential JWT into its header, payload, and signature components.
-   *
-   * @param vcJWT The JWT representation of the verifiable credential to be decoded.
-   * @return A [DecodedVcJwt] object containing the decoded components.
-   */
-  public fun decode(vcJWT: VcJwt): DecodedVcJwt {
-    val (encodedHeader, encodedPayload, encodedSignature) = vcJWT.split('.')
-
-    return DecodedVcJwt(
-      header = String(Base64.getDecoder().decode(encodedHeader)),
-      payload = String(Base64.getDecoder().decode(encodedPayload)),
-      signature = encodedSignature
-    )
-  }
 }
 
 /**
@@ -270,30 +244,27 @@ public object VerifiablePresentation {
    */
   @Throws(Exception::class)
   public fun create(signOptions: SignOptions, createVpOptions: CreateVpOptions): VpJwt {
+    val presentationSubmission = generatePresentationSubmissionFrom(
+      createVpOptions.presentationDefinition,
+      createVpOptions.verifiableCredentialJwts
+    )
 
-    val usableVcJwts: List<VcJwt> =
-      selectFrom(createVpOptions.presentationDefinition, createVpOptions.verifiableCredentialJwts)
+    val properties: Map<String, Any> = mapOf(
+      "verifiableCredential" to createVpOptions.verifiableCredentialJwts,
+      "presentation_submission" to presentationSubmission
+    )
 
-    if (usableVcJwts.size == 0) {
-      throw Exception("There are no useable Vcs that correspond to the presentation definition")
-    }
-
-    // TODO change to be more than one VC
-    val vcToUse: VerifiableCredentialType =
-      FromJwtConverter
-        .fromJwtVerifiableCredential(JwtVerifiableCredential.fromCompactSerialization(usableVcJwts.get(0)))
-
-    // TODO change to be more than one VC
-    val vp: VerifiablePresentationType = VerifiablePresentationType.builder()
-      .verifiableCredential(vcToUse)
+    val vp: VerifiablePresentation? = VerifiablePresentationType.builder()
+      .properties(properties)
       .holder(URI.create(createVpOptions.holder))
+      .context(URI.create("https://identity.foundation/presentation-exchange/submission/v1"))
+      .type("PresentationSubmission")
       .build()
 
     return ToJwtConverter.toJwtVerifiablePresentation(vp)
       .sign_Ed25519_EdDSA(signOptions.signerPrivateKey.toOctetKeyPair(), signOptions.kid, true)
   }
 
-  // TODO: Maybe throw an exception
   /**
    * Verifies the authenticity of a verifiable presentation using its JWT representation and a DID resolver.
    *
@@ -308,28 +279,32 @@ public object VerifiablePresentation {
     return JwtVerifiablePresentation.fromCompactSerialization(vpJWT)
       .verify_Ed25519_EdDSA(publicKeyJWK.toOctetKeyPair())
   }
-}
 
-/**
- * The selectFrom method is a helper function that helps filter out the verifiable credentials which can not be selected and returns
- * the selectable credentials.
- *
- * @param presentationDefinition definition of what is expected in the presentation.
- * @param vcJwts verifiable credentials are the credentials from wallet provided to the library to find selectable credentials.
- *
- * @return the selectable credentials.
- */
-@Throws(Exception::class)
-private fun selectFrom(presentationDefinition: PresentationDefinitionV2, vcJwts: List<VcJwt>): List<VcJwt> {
-  val selectableCredentials = mutableListOf<VcJwt>()
+  /**
+   * The selectFrom method is a helper function that helps filter out the verifiable credentials which can not be selected and returns
+   * the selectable credentials.
+   *
+   * @param presentationDefinition definition of what is expected in the presentation.
+   * @param vcJwts verifiable credentials are the credentials from wallet provided to the library to find selectable credentials.
+   *
+   * @return the selectable credentials.
+   */
+  @Throws(Exception::class)
+  public fun selectFrom(presentationDefinition: PresentationDefinitionV2, vcJwts: List<VcJwt>): List<VcJwt> {
+    val selectableCredentials = mutableListOf<VcJwt>()
 
-  if (!presentationDefinition.submissionRequirements.isNullOrEmpty()) {
-    throw NotImplementedError("Presentation Definition's Submission Requirements feature is not implemented")
-  } else {
+    if (!presentationDefinition.submissionRequirements.isNullOrEmpty()) {
+      throw NotImplementedError("Presentation Definition's Submission Requirements feature is not implemented")
+    }
+
     for (inputDescriptor: InputDescriptorV2 in presentationDefinition.inputDescriptors) {
       // Fields Processing
       if (inputDescriptor.constraints.fields!!.isNotEmpty()) {
         for (vcJwt: VcJwt in vcJwts) {
+
+          val vc: VerifiableCredentialType =
+            FromJwtConverter.fromJwtVerifiableCredential(JwtVerifiableCredential.fromCompactSerialization(vcJwt))
+
           var fieldMatch = false
 
           for (field: FieldV2 in inputDescriptor.constraints.fields) {
@@ -339,16 +314,12 @@ private fun selectFrom(presentationDefinition: PresentationDefinitionV2, vcJwts:
               continue
             }
 
-            for (path: String in field.path) {
-              val jsonPathResult = evaluateJsonPath(vcJwt, path)
-
-              if (jsonPathResult != null) {
-                if (field.filter != null) {
-                  throw NotImplementedError("Field Filter is not implemented")
-                } else {
-                  fieldMatch = true
-                  break
-                }
+            for (jsonPathResult: String in field.path.mapNotNull { evaluateJsonPath(vc, it) }) {
+              if (field.filter != null) {
+                throw NotImplementedError("Field Filter is not implemented")
+              } else {
+                fieldMatch = true
+                break
               }
             }
           }
@@ -359,20 +330,82 @@ private fun selectFrom(presentationDefinition: PresentationDefinitionV2, vcJwts:
         }
       }
     }
+
+    return selectableCredentials
   }
 
-  return selectableCredentials
+  /**
+   * Validates a list of Verifiable Credentials (VcJwts) against a presentation definition and generates a presentation submission.
+   *
+   * This method checks the presentation definition and the list of Verifiable Credentials to ensure
+   * that the required fields in the definition are satisfied by the provided credentials.
+   *
+   * Currently, if the presentation definition contains submission requirements, or if any required field in an input
+   * descriptor is not satisfied by the provided credentials, an exception is thrown.
+   *
+   * @param presentationDefinition The [PresentationDefinitionV2] object representing the presentation's definition.
+   * @param vcJwts The list of [VcJwt] representing the Verifiable Credentials to be validated against the presentation definition.
+   * @throws Exception If a required field is not satisfied in a given InputDescriptor.
+   * @return the generated compliant presentation submission.
+   */
+  @Throws(Exception::class)
+  private fun generatePresentationSubmissionFrom(
+    presentationDefinition: PresentationDefinitionV2,
+    vcJwts: List<VcJwt>
+  ): PresentationSubmission {
+    if (!presentationDefinition.submissionRequirements.isNullOrEmpty()) {
+      throw NotImplementedError("Presentation Definition's Submission Requirements feature is not implemented")
+    }
+
+    val descriptorMapList = mutableListOf<DescriptorMap>()
+
+    for (inputDescriptor: InputDescriptorV2 in presentationDefinition.inputDescriptors) {
+      if (inputDescriptor.constraints.fields!!.isNotEmpty()) {
+        for (field: FieldV2 in inputDescriptor.constraints.fields) {
+          if (field.optional == true) continue // Skip optional fields
+
+          var fieldMatch = false
+          for ((vcIndex, vcJwt) in vcJwts.withIndex()) {
+            val vc: VerifiableCredentialType =
+              FromJwtConverter.fromJwtVerifiableCredential(JwtVerifiableCredential.fromCompactSerialization(vcJwt))
+
+            for (path: String in field.path) {
+              val jsonPathResult = evaluateJsonPath(vc, path)
+              if (jsonPathResult != null) {
+                if (field.filter != null) {
+                  throw NotImplementedError("Field Filter is not implemented")
+                } else {
+                  fieldMatch = true
+                  descriptorMapList.add(
+                    DescriptorMap(
+                      id = inputDescriptor.id,
+                      path = "$.verifiableCredential[$vcIndex]",
+                      format = "jwt_vc",
+                      // TODO: Support pathNested
+                    )
+                  )
+                  break
+                }
+              }
+            }
+            if (fieldMatch) break // Exit the loop once a match is found for the field
+          }
+
+          if (!fieldMatch) {
+            throw Exception("Required field ${field.id} is not satisfied in InputDescriptor ${inputDescriptor.id}")
+          }
+        }
+      }
+    }
+
+    return PresentationSubmission(
+      id = UUID.randomUUID().toString(),
+      definitionId = presentationDefinition.id,
+      descriptorMap = descriptorMapList
+    )
+  }
 }
 
-private fun evaluateJsonPath(vcJwt: VcJwt, path: String): String? {
-  val vc: VerifiableCredentialType =
-    FromJwtConverter.fromJwtVerifiableCredential(JwtVerifiableCredential.fromCompactSerialization(vcJwt))
-
-  val vcJsonString: String = vc.toJson()
-  val result: String? = JsonPath.parse(vcJsonString)?.read<String>(path)
-
-  return result
-}
 
 private fun issuerPublicJWK(vcJWT: String, resolver: DIDResolver): JWK {
   val signedJWT = SignedJWT.parse(vcJWT)
@@ -388,4 +421,9 @@ private fun issuerPublicJWK(vcJWT: String, resolver: DIDResolver): JWK {
 
   val publicKeyJWK = JWK.parse(publicKeyJwkMap)
   return publicKeyJWK
+}
+
+private fun evaluateJsonPath(vc: VerifiableCredentialType, path: String): String? {
+  val vcJsonString: String = vc.toJson()
+  return JsonPath.parse(vcJsonString)?.read<String>(path)
 }
