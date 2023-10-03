@@ -5,8 +5,8 @@ import foundation.identity.did.DIDDocument
 public class DidResolutionResult(
   public var context: String? = null,
   public var didDocument: DIDDocument,
-  public var didResolutionMetadata: DidResolutionMetadata,
-  public var didDocumentMetadata: DidDocumentMetadata
+  public var didResolutionMetadata: DidResolutionMetadata = DidResolutionMetadata(),
+  public var didDocumentMetadata: DidDocumentMetadata = DidDocumentMetadata()
 )
 
 public class DidResolutionMetadata(

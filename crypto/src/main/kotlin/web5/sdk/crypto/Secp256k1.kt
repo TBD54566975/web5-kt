@@ -2,6 +2,7 @@ package web5.sdk.crypto
 
 import com.nimbusds.jose.Algorithm
 import com.nimbusds.jose.JWSAlgorithm
+import com.nimbusds.jose.Payload
 import com.nimbusds.jose.crypto.bc.BouncyCastleProviderSingleton
 import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.ECKey
@@ -9,65 +10,53 @@ import com.nimbusds.jose.jwk.JWK
 import com.nimbusds.jose.jwk.KeyType
 import com.nimbusds.jose.jwk.KeyUse
 import com.nimbusds.jose.jwk.gen.ECKeyGenerator
+import web5.sdk.common.Varint
 
-public class GenerateSecp256k1Options(public val hash: String? = "sha256") : GenerateOptions
-public object Secp256k1 : CryptoPrimitive<ECKey> {
-
+public object Secp256k1 : KeyGenerator, Signer {
   override val algorithm: Algorithm = JWSAlgorithm.ES256K
-  override val curve: Curve = Curve.SECP256K1
   override val keyType: KeyType = KeyType.EC
-  override val keyUse: KeyUse = KeyUse.SIGNATURE
 
-  override fun generatePrivateKey(): ByteArray {
-    return generatePrivateKey(GenerateSecp256k1Options())
-  }
+  /** [reference](https://github.com/multiformats/multicodec/blob/master/table.csv#L92) */
+  public val pubMulticodec: ByteArray = Varint.encode(0xe7)
 
-  override fun generatePrivateKey(options: GenerateOptions): ByteArray {
-    require(options is GenerateSecp256k1Options) { "Invalid Options" }
+  /** [reference](https://github.com/multiformats/multicodec/blob/master/table.csv#L169) */
+  public val privMultiCodec: ByteArray = Varint.encode(0x1301)
 
-    return generatePrivateKey(options)
-  }
-
-  public fun generatePrivateKey(options: GenerateSecp256k1Options): ByteArray {
-    val privateKeyJwk = generatePrivateKeyJwk()
-    return privateKeyJwk.d.decode()
-  }
-
-  override fun getPublicKey(privateKeyBytes: ByteArray): ByteArray {
-    TODO("Not yet implemented")
-  }
-
-  override fun generatePrivateKeyJwk(): ECKey {
-    return generatePrivateKeyJwk(GenerateSecp256k1Options())
-  }
-
-  override fun generatePrivateKeyJwk(options: GenerateOptions): ECKey {
-    require(options is GenerateSecp256k1Options) { "Invalid Options" }
-
-    return generatePrivateKeyJwk(options)
-  }
-
-  public fun generatePrivateKeyJwk(options: GenerateSecp256k1Options): ECKey {
-    return ECKeyGenerator(curve)
+  override fun generatePrivateKey(options: KeyGenOptions?): JWK {
+    return ECKeyGenerator(Curve.SECP256K1)
       .provider(BouncyCastleProviderSingleton.getInstance())
       .keyIDFromThumbprint(true)
       .keyUse(KeyUse.SIGNATURE)
       .generate()
   }
 
-  override fun getPublicKeyJwk(privateKeyJwk: PrivateKeyJwk): PublicKeyJwk {
-    return privateKeyJwk.toPublicJWK()
+  override fun getPublicKey(privateKey: JWK): JWK {
+    require(privateKey is ECKey) { "private key must be an EC Key (kty: EC)" }
+
+    return privateKey.toECKey().toPublicJWK()
   }
 
-  override fun privateKeyToJwk(privateKeyBytes: ByteArray): ECKey {
+  override fun privateKeyToBytes(privateKey: JWK): ByteArray {
     TODO("Not yet implemented")
   }
 
-  override fun publicKeyToJwk(publicKeyBytes: ByteArray): JWK {
+  override fun publicKeyToBytes(publicKey: JWK): ByteArray {
     TODO("Not yet implemented")
   }
 
-  override fun publicKeyJwkToBytes(jwk: JWK): ByteArray {
+  override fun bytesToPrivateKey(privateKeyBytes: ByteArray): JWK {
+    TODO("Not yet implemented")
+  }
+
+  override fun bytesToPublicKey(publicKeyBytes: ByteArray): JWK {
+    TODO("Not yet implemented")
+  }
+
+  override fun sign(privateKey: JWK, payload: Payload, options: SignOptions?): String {
+    TODO("Not yet implemented")
+  }
+
+  override fun verify(options: VerifyOptions?) {
     TODO("Not yet implemented")
   }
 }
