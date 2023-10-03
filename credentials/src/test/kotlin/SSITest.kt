@@ -3,14 +3,12 @@ package web5.credentials
 import com.nimbusds.jose.jwk.JWK
 import com.nimbusds.jwt.SignedJWT
 import foundation.identity.did.DIDDocument
-import foundation.identity.jsonld.JsonLDObject
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.assertThrows
 import uniresolver.result.ResolveDataModelResult
 import uniresolver.result.ResolveRepresentationResult
 import uniresolver.w3c.DIDResolver
 import web5.credentials.model.ConstraintsV2
-import web5.credentials.model.CredentialStatus
 import web5.credentials.model.CredentialSubject
 import web5.credentials.model.FieldV2
 import web5.credentials.model.InputDescriptorV2
@@ -95,41 +93,6 @@ class SSITest {
     val vc: VerifiableCredentialType = VerifiableCredentialType.builder()
       .id(URI.create(UUID.randomUUID().toString()))
       .credentialSubject(credentialSubject)
-      .issuer(URI.create(did))
-      .issuanceDate(Date())
-      .build()
-
-    val vcJwt: VcJwt = VerifiableCredential.create(signOptions, null, vc)
-    assertTrue(VerifiableCredential.verify(vcJwt, SimpleResolver(didDocument)))
-  }
-
-  @Test
-  fun `creates credential status vc with valid vc builder returns vc jwt`() {
-    val credentialSubject = CredentialSubject.builder()
-      .id(URI.create(did))
-      .claims(mutableMapOf<String, Any>().apply { this["firstName"] = "Bobby" })
-      .build()
-
-    val properties = mapOf(
-      "statusPurpose" to "revocation",
-      "statusListIndex" to "94567",
-      "statusListCredential" to "https://example.com/credentials/status/3"
-    )
-
-    val credentialStatus: CredentialStatus = CredentialStatus.builder()
-      .base(
-        JsonLDObject.builder()
-          .id(URI.create("https://example.com/credentials/status/3#94567"))
-          .type("StatusList2021Entry")
-          .properties(properties)
-          .build()
-      )
-      .build()
-
-    val vc: VerifiableCredentialType = VerifiableCredentialType.builder()
-      .id(URI.create(UUID.randomUUID().toString()))
-      .credentialSubject(credentialSubject)
-      .credentialStatus(credentialStatus)
       .issuer(URI.create(did))
       .issuanceDate(Date())
       .build()

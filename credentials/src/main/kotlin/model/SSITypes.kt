@@ -16,6 +16,11 @@ public typealias VerifiableCredentialType = com.danubetech.verifiablecredentials
 public typealias CredentialStatus = com.danubetech.verifiablecredentials.credentialstatus.CredentialStatus
 
 /**
+ * Represents a type of credential status a StatusList2021Entry
+ */
+public typealias StatusList2021Entry = com.danubetech.verifiablecredentials.credentialstatus.StatusList2021Entry
+
+/**
  * Represents the subject of a verifiable credential.
  */
 public typealias CredentialSubject = com.danubetech.verifiablecredentials.CredentialSubject
@@ -24,6 +29,7 @@ public typealias CredentialSubject = com.danubetech.verifiablecredentials.Creden
  * Represents a verifiable presentation.
  */
 public typealias VerifiablePresentationType = com.danubetech.verifiablecredentials.VerifiablePresentation
+
 
 /**
  * Presentation Exchange
@@ -197,3 +203,4 @@ public data class DescriptorMap(
   val pathNested: DescriptorMap? = null,
   val format: String
 )
+
