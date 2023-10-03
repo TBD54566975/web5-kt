@@ -16,7 +16,7 @@ public typealias VerifiableCredentialType = com.danubetech.verifiablecredentials
 public typealias CredentialStatus = com.danubetech.verifiablecredentials.credentialstatus.CredentialStatus
 
 /**
- * Represents a type of credential status a StatusList2021Entry
+ * Represents a type of credential status a StatusList2021Entry.
  */
 public typealias StatusList2021Entry = com.danubetech.verifiablecredentials.credentialstatus.StatusList2021Entry
 
