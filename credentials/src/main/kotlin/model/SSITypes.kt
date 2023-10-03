@@ -30,7 +30,6 @@ public typealias CredentialSubject = com.danubetech.verifiablecredentials.Creden
  */
 public typealias VerifiablePresentationType = com.danubetech.verifiablecredentials.VerifiablePresentation
 
-
 /**
  * Presentation Exchange
  *
@@ -203,4 +202,3 @@ public data class DescriptorMap(
   val pathNested: DescriptorMap? = null,
   val format: String
 )
-
