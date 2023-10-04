@@ -1,8 +1,5 @@
 
-import com.nimbusds.jose.crypto.bc.BouncyCastleProviderSingleton
 import com.nimbusds.jose.jwk.Curve
-import com.nimbusds.jose.jwk.KeyUse
-import com.nimbusds.jose.jwk.gen.ECKeyGenerator
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
 import io.ktor.http.HttpHeaders
@@ -14,13 +11,11 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.erdtman.jcs.JsonCanonicalizer
 import web5.dids.DIDIonManager
+import web5.dids.ion.model.JsonWebKey
 import web5.dids.ion.model.PublicKey
 import web5.dids.ion.model.PublicKeyPurpose
 import web5.dids.ion.model.SidetreeCreateOperation
-import web5.dids.ion.model.toJsonWebKey
 import java.io.File
-import java.security.Provider
-import java.util.UUID
 import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertContains
@@ -38,43 +33,31 @@ class DIDIonTest {
     assertEquals(did.didString, metadata.longFormDID)
     assertContains(metadata.longFormDID, metadata.shortFormDID)
   }
-
   @Test
   fun createWithCustom() = runTest {
-    val verificationKey = ECKeyGenerator(Curve.SECP256K1)
-      .keyUse(KeyUse.SIGNATURE)
-      .keyID(UUID.randomUUID().toString())
-      .provider(BouncyCastleProviderSingleton.getInstance() as Provider)
-      .generate()
-      .toPublicJWK()
-      .toJsonWebKey()
+    val verificationKey = readKey("src/test/resources/verification_jwk.json")
+    val updateKey = readKey("src/test/resources/update_jwk.json")
+    val recoveryKey = readKey("src/test/resources/recovery_jwk.json")
     val c = DIDIonManager {
-      ionHost = "https://ion.tbddev.org"
+      ionHost = "madeuphost"
       engine = mockEngine()
-      updatePublicJsonWebKey = ECKeyGenerator(Curve.SECP256K1)
-        .keyUse(KeyUse.SIGNATURE)
-        .keyID(UUID.randomUUID().toString())
-        .provider(BouncyCastleProviderSingleton.getInstance() as Provider)
-        .generate()
-        .toPublicJWK()
-        .toJsonWebKey()
+      updatePublicJsonWebKey = updateKey
       verificationPublicKey = PublicKey(
         id = verificationKey.kid!!,
         type = Curve.SECP256K1.name,
         publicKeyJWK = verificationKey,
         purposes = listOf(PublicKeyPurpose.AUTHENTICATION),
       )
-      recoveryJsonWebKey = ECKeyGenerator(Curve.SECP256K1)
-        .keyUse(KeyUse.SIGNATURE)
-        .keyID(UUID.randomUUID().toString())
-        .provider(BouncyCastleProviderSingleton.getInstance() as Provider)
-        .generate()
-        .toPublicJWK()
-        .toJsonWebKey()
+      recoveryJsonWebKey = recoveryKey
     }
     val (did, _, metadata) = c.create()
     assertContains(did.toString(), "did:ion:")
     assertContains(metadata.longFormDID, metadata.shortFormDID)
+  }
+
+  private fun readKey(pathname: String): JsonWebKey {
+    return Json.decodeFromString<JsonWebKey>(
+      File(pathname).readText())
   }
 
   @Test

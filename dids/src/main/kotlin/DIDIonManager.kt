@@ -21,6 +21,7 @@ import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
+import io.ktor.http.isSuccess
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.encodeToString
@@ -68,10 +69,10 @@ public class DIDIonConfiguration internal constructor(
 
 
 /**
- * Returns a DIDIonManager with the provided configuration [block].
+ * Returns a DIDIonManager after applying the provided configuration [builderAction].
  */
-public fun DIDIonManager(block: DIDIonConfiguration.() -> Unit): DIDIonManager {
-  val conf = DIDIonConfiguration().apply(block)
+public fun DIDIonManager(builderAction: DIDIonConfiguration.() -> Unit): DIDIonManager {
+  val conf = DIDIonConfiguration().apply(builderAction)
   return DIDIonManagerImpl(conf)
 }
 
@@ -133,22 +134,22 @@ public sealed class DIDIonManager(
     if (response.status.value in 200..299) {
       val shortFormDID = "did:ion:$shortFormDIDSegment"
       val longFormDID = "$shortFormDID:$longFormDIDSegment"
-      val resolutionResponse = client.get("$identifiersEndpoint/$longFormDID")
-      val body = resolutionResponse.bodyAsText()
+      val resolutionResult = resolve(DID.fromString(longFormDID))
 
-      if (resolutionResponse.status.value in 200..299) {
-        val (did, didDocument) = parseResult(body)
-        return Triple(
-          did, didDocument,
-          CreationMetadata(
-            createOp,
-            shortFormDID,
-            longFormDID,
-            opBody
-          )
-        )
+      if (resolutionResult.isErrorResult) {
+        throw Exception("error when resolving after creation: ${resolutionResult.errorMessage}")
       }
-      throw Exception("received error response '$body'")
+
+      return Triple(
+        DID.fromUri(resolutionResult.didDocument.id),
+        resolutionResult.didDocument,
+        CreationMetadata(
+          createOp,
+          shortFormDID,
+          longFormDID,
+          opBody
+        )
+      )
     }
     throw Exception("received error response '$opBody'")
   }
@@ -170,18 +171,13 @@ public sealed class DIDIonManager(
   public suspend fun resolve(did: DID): ResolveDataModelResult {
     require(did.methodName == "ion")
 
-    val resp = client.get(
-      "https://ion.tbddev.org/identifiers/$did"
-    )
+    val resp = client.get("$identifiersEndpoint/$did")
     val body = resp.bodyAsText()
+    if (!resp.status.isSuccess()) {
+      throw Exception("resolution error response '$body'")
+    }
     val mapper = jacksonObjectMapper()
     return mapper.readValue(body, ResolveDataModelResult::class.java)
-  }
-
-  private fun parseResult(resolutionResult: String): Pair<DID, DIDDocument> {
-    val mapper = jacksonObjectMapper()
-    val resolution = mapper.readValue(resolutionResult, ResolveDataModelResult::class.java)
-    return Pair(DID.fromUri(resolution!!.didDocument.id), resolution.didDocument)
   }
 
   private fun createOperation(): SidetreeCreateOperation {
