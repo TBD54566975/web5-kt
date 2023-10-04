@@ -9,6 +9,7 @@ plugins {
   id("io.gitlab.arturbosch.detekt") version "1.23.1"
   `maven-publish`
   id("org.jetbrains.dokka") version "1.9.0"
+  id("org.jetbrains.kotlinx.kover") version "0.7.3"
 }
 
 repositories {
@@ -31,6 +32,7 @@ subprojects {
     plugin("java-library")
     plugin("maven-publish")
     plugin("org.jetbrains.dokka")
+    plugin("org.jetbrains.kotlinx.kover")
   }
 
   tasks.withType<Detekt>().configureEach {
