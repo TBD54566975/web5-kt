@@ -3,9 +3,11 @@ package web5.credentials
 import com.nimbusds.jose.jwk.JWK
 import foundation.identity.did.DIDDocument
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
 import web5.credentials.model.CredentialSubject
 import web5.credentials.model.StatusList2021Entry
+import web5.credentials.model.StatusPurpose
 import web5.credentials.model.VerifiableCredentialType
 import java.net.URI
 import java.util.Date
@@ -37,15 +39,65 @@ class SSICredStatusListTest {
   }
 
   @Test
+  fun `valid credential with credentialStatus spec example`() {
+
+    val specExampleRevocableVc = VerifiableCredentialType.fromJson(
+      """{
+              "@context": [
+                "https://www.w3.org/ns/credentials/v2",
+                "https://www.w3.org/ns/credentials/examples/v2"
+              ],
+              "id": "https://example.com/credentials/23894672394",
+              "type": ["VerifiableCredential"],
+              "issuer": "did:example:12345",
+              "validFrom": "2021-04-05T14:27:42Z",
+              "credentialStatus": {
+                "id": "https://example.com/credentials/status/3#94567",
+                "type": "BitStringStatusListEntry",
+                "statusPurpose": "revocation",
+                "statusListIndex": "94567",
+                "statusListCredential": "https://example.com/credentials/status/3"
+              },
+              "credentialSubject": {
+                "id": "did:example:6789",
+                "type": "Person"
+              }
+            }"""
+    )
+
+    assertTrue(
+      specExampleRevocableVc.contexts.containsAll(
+        listOf(
+          URI.create("https://www.w3.org/ns/credentials/v2"),
+          URI.create("https://www.w3.org/ns/credentials/examples/v2")
+        )
+      )
+    )
+
+    assertEquals(specExampleRevocableVc.type, "VerifiableCredential")
+    assertEquals(specExampleRevocableVc.issuer.toString(), "did:example:12345")
+    assertNotNull(specExampleRevocableVc.credentialStatus)
+    assertEquals(specExampleRevocableVc.credentialSubject.id.toString(), "did:example:6789")
+    assertEquals(specExampleRevocableVc.credentialSubject.type.toString(), "Person")
+
+    val credentialStatus: StatusList2021Entry =
+      StatusList2021Entry.fromJsonObject(specExampleRevocableVc.credentialStatus.jsonObject)
+
+    assertEquals(credentialStatus.id.toString(), "https://example.com/credentials/status/3#94567")
+    assertEquals(credentialStatus.type.toString(), "BitStringStatusListEntry")
+    assertEquals(credentialStatus.statusPurpose.toString(), StatusPurpose.REVOCATION.toString().lowercase())
+    assertEquals(credentialStatus.statusListIndex, "94567")
+    assertEquals(credentialStatus.statusListCredential.toString(), "https://example.com/credentials/status/3")
+  }
+
+  @Test
   fun `valid credential with credentialStatus`() {
-    val testCredJwt1 = createTestCredWithStatus(
+    val credWithCredStatus = createTestCredWithStatus(
       did,
       "test-subject-id-1",
       mapOf("firstName" to "Bobby"),
       "123"
     )
-
-    val credWithCredStatus = VerifiableCredential.fromJwt(testCredJwt1)
 
     assertTrue(
       credWithCredStatus.contexts.containsAll(
@@ -67,9 +119,41 @@ class SSICredStatusListTest {
 
     assertEquals(credentialStatus.id.toString(), "cred-with-status-id")
     assertEquals(credentialStatus.type.toString(), "StatusList2021Entry")
-    assertEquals(credentialStatus.statusPurpose.toString(), "revocation")
+    assertEquals(credentialStatus.statusPurpose.toString(), StatusPurpose.REVOCATION.toString().lowercase())
     assertEquals(credentialStatus.statusListIndex, "123")
     assertEquals(credentialStatus.statusListCredential.toString(), "status-list-cred-id")
+
+
+    val vcJwt = VerifiableCredential.create(signOptions, null, credWithCredStatus)
+
+    assertNotNull(vcJwt)
+    assertDoesNotThrow { VerifiableCredential.verify(vcJwt, SimpleResolver(didDocument)) }
+
+    val decodedVc = vcJwt.toVerifiableCredentialType()
+
+    assertTrue(
+      decodedVc.contexts.containsAll(
+        listOf(
+          URI.create("https://www.w3.org/2018/credentials/v1"),
+          URI.create("https://w3id.org/vc/status-list/2021/v1")
+        )
+      )
+    )
+
+    assertEquals(decodedVc.type, "VerifiableCredential")
+    assertEquals(decodedVc.issuer.toString(), did)
+    assertNotNull(decodedVc.issuanceDate)
+    assertNotNull(decodedVc.credentialStatus)
+    assertEquals(decodedVc.credentialSubject.claims.get("firstName"), "Bobby")
+
+    val decodedCredentialStatus: StatusList2021Entry =
+      StatusList2021Entry.fromJsonObject(decodedVc.credentialStatus.jsonObject)
+
+    assertEquals(decodedCredentialStatus.id.toString(), "cred-with-status-id")
+    assertEquals(decodedCredentialStatus.type.toString(), "StatusList2021Entry")
+    assertEquals(decodedCredentialStatus.statusPurpose.toString(), StatusPurpose.REVOCATION.toString().lowercase())
+    assertEquals(decodedCredentialStatus.statusListIndex, "123")
+    assertEquals(decodedCredentialStatus.statusListCredential.toString(), "status-list-cred-id")
   }
 
   @Test
@@ -91,16 +175,13 @@ class SSICredStatusListTest {
       "124"
     )
 
-    val statusListCredentialJwt =
+    val statusListCredential =
       VerifiableCredential.generateStatusList2021Credential(
-        signOptions,
         revocationID,
         testIssuer,
-        "revocation",
+        StatusPurpose.REVOCATION,
         listOf(testCred1, testCred2)
       )
-
-    val statusListCredential = VerifiableCredential.fromJwt(statusListCredentialJwt)
 
     assertNotNull(statusListCredential)
     assertTrue(
@@ -125,6 +206,7 @@ class SSICredStatusListTest {
       "revocation",
       statusListCredential.credentialSubject.jsonObject["statusPurpose"] as? String?
     )
+    
     assertEquals(
       "H4sIAAAAAAAA/2NgQAESAAPT1/8QAAAA",
       statusListCredential.credentialSubject.jsonObject["encodedList"] as? String?
@@ -152,17 +234,16 @@ class SSICredStatusListTest {
 
     val exception = assertThrows<Exception> {
       VerifiableCredential.generateStatusList2021Credential(
-        signOptions,
         revocationID,
         testIssuer,
-        "revocation",
+        StatusPurpose.REVOCATION,
         listOf(testCred1, testCred2)
       )
     }
 
     assertTrue(
       exception
-        .message!!.contains("duplicate entry found")
+        .message!!.contains("duplicate entry found with index: 123")
     )
   }
 
@@ -180,17 +261,43 @@ class SSICredStatusListTest {
 
     val exception = assertThrows<Exception> {
       VerifiableCredential.generateStatusList2021Credential(
-        signOptions,
         revocationID,
         testIssuer,
-        "revocation",
+        StatusPurpose.REVOCATION,
         listOf(testCred1)
       )
     }
 
     assertTrue(
       exception
-        .message!!.contains("invalid status list index")
+        .message!!.contains("invalid status list index: -1")
+    )
+  }
+
+  @Test
+  fun `invalid value too large for bitset`() {
+    val revocationID = "revocation-id"
+    val testIssuer = did
+
+    val testCred1 = createTestCredWithStatus(
+      did,
+      "test-subject-id-1",
+      mapOf("company" to "Block", "website" to "https://block.xyz"),
+      Int.MAX_VALUE.toString()
+    )
+
+    val exception = assertThrows<Exception> {
+      VerifiableCredential.generateStatusList2021Credential(
+        revocationID,
+        testIssuer,
+        StatusPurpose.REVOCATION,
+        listOf(testCred1)
+      )
+    }
+
+    assertTrue(
+      exception
+        .message!!.contains("invalid status list index: ${Int.MAX_VALUE}, index is larger than the bitset size")
     )
   }
 
@@ -198,7 +305,7 @@ class SSICredStatusListTest {
   fun `validate credential exists in status cred list`() {
     val revocationID = "revocation-id"
     val testIssuer = did
-    
+
     val testCred1 = createTestCredWithStatus(
       did,
       "test-subject-id-1",
@@ -222,13 +329,11 @@ class SSICredStatusListTest {
 
     val statusListCredential =
       VerifiableCredential.generateStatusList2021Credential(
-        signOptions,
         revocationID,
         testIssuer,
-        "revocation",
+        StatusPurpose.REVOCATION,
         listOf(testCred1, testCred2)
       )
-
 
     val revoked = VerifiableCredential.validateCredentialInStatusList(testCred1, statusListCredential)
     assertTrue(revoked)
@@ -245,7 +350,7 @@ class SSICredStatusListTest {
     subjectId: String,
     claims: Map<String, String>,
     statusListIndex: String
-  ): VcJwt {
+  ): VerifiableCredentialType {
 
     val credentialSubject = CredentialSubject.builder()
       .id(URI.create(subjectId))
@@ -259,7 +364,7 @@ class SSICredStatusListTest {
       .statusListCredential(URI.create("status-list-cred-id"))
       .build()
 
-    val vc = VerifiableCredentialType.builder()
+    return VerifiableCredentialType.builder()
       .contexts(
         listOf(
           URI.create("https://w3id.org/vc/status-list/2021/v1")
@@ -271,7 +376,5 @@ class SSICredStatusListTest {
       .credentialSubject(credentialSubject)
       .credentialStatus(credentialStatus)
       .build()
-
-    return VerifiableCredential.create(signOptions, null, vc)
   }
 }

@@ -11,6 +11,14 @@ import com.fasterxml.jackson.annotation.JsonInclude
 public typealias VerifiableCredentialType = com.danubetech.verifiablecredentials.VerifiableCredential
 
 /**
+ * Status purpose of a status list credential or a credential with a credential status.
+ */
+public enum class StatusPurpose {
+  REVOCATION,
+  SUSPENSION
+}
+
+/**
  * Represents the status of a credential.
  */
 public typealias CredentialStatus = com.danubetech.verifiablecredentials.credentialstatus.CredentialStatus

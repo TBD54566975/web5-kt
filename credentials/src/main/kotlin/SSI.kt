@@ -28,6 +28,7 @@ import web5.credentials.model.InputDescriptorV2
 import web5.credentials.model.PresentationDefinitionV2
 import web5.credentials.model.PresentationSubmission
 import web5.credentials.model.StatusList2021Entry
+import web5.credentials.model.StatusPurpose
 import web5.credentials.model.VerifiableCredentialType
 import web5.credentials.model.VerifiablePresentationType
 import java.io.ByteArrayInputStream
@@ -158,6 +159,30 @@ public data class CreateVpOptions(
 public typealias VcJwt = String
 public typealias VpJwt = String
 
+
+/**
+ * Converts the [VcJwt] object into a [VerifiableCredentialType].
+ *
+ * This function leverages the [FromJwtConverter.fromJwtVerifiableCredential]
+ * and [JwtVerifiableCredential.fromCompactSerialization] methods to convert the JWT
+ * representation of a verifiable credential into its object form.
+ */
+public fun VcJwt.toVerifiableCredentialType(): VerifiableCredentialType {
+  return FromJwtConverter.fromJwtVerifiableCredential(JwtVerifiableCredential.fromCompactSerialization(this))
+}
+
+/**
+ * Converts the [VpJwt] object into a [VerifiablePresentationType].
+ *
+ * This function leverages the [FromJwtConverter.fromJwtVerifiablePresentation]
+ * and [JwtVerifiablePresentation.fromCompactSerialization] methods to convert the JWT
+ * representation of a verifiable presentation into its object form.
+ */
+@Throws(Exception::class)
+public fun VpJwt.toVerifiablePresentationType(): VerifiablePresentationType {
+  return FromJwtConverter.fromJwtVerifiablePresentation(JwtVerifiablePresentation.fromCompactSerialization(this))
+}
+
 /**
  * Utility class for creating, validating, verifying, and decoding verifiable credentials.
  */
@@ -235,50 +260,29 @@ public object VerifiableCredential {
   }
 
   /**
-   * Converts a verifiable credential JWT into a [VerifiableCredentialType] object.
-   *
-   * @param vcJwt The verifiable credential in JWT format to be converted.
-   * @return A [VerifiableCredentialType] object representing the provided verifiable credential JWT.
-   * @throws Exception Throws an exception if the conversion from JWT to [VerifiableCredentialType] fails or any other unexpected error occurs during the conversion process.
-   */
-  @Throws(Exception::class)
-  public fun fromJwt(vcJwt: VcJwt): VerifiableCredentialType {
-    return FromJwtConverter.fromJwtVerifiableCredential(JwtVerifiableCredential.fromCompactSerialization(vcJwt))
-  }
-
-  /**
-   * Generates a `StatusList2021Credential` in JWT format for a list of issued credentials.
+   * Generates a `StatusList2021Credential` for a list of issued credentials.
    *
    * The function creates a status list credential with a specific purpose, e.g., for revocation.
    * The credential indicates the status (like revocation status) of other credentials.
-   *
-   * @param signOptions The options required for signing the generated status list credential.
-   * @param statusListCredentialId The identifier for the status list credential.
-   * @param issuer The DID or URI of the entity issuing the status list credential.
-   * @param purpose The purpose of the status list (e.g., "revocation").
-   * @param issuedCredentialJwts A list of JWTs representing the credentials whose status needs to be represented in the status list.
-   * @return A [VcJwt] representing the `StatusList2021Credential` in JWT format.
-   * @throws Exception Throws an exception if the generation of the `StatusList2021Credential` fails or any other unexpected error occurs during the generation process.
    */
   @Throws(Exception::class)
   public fun generateStatusList2021Credential(
-    signOptions: SignOptions,
     statusListCredentialId: String,
     issuer: String,
-    purpose: String,
-    issuedCredentialJwts: List<VcJwt>
-  ): VcJwt {
-    val statusListIndexes = prepareCredentialsForStatusList(purpose, issuedCredentialJwts)
+    statusPurpose: StatusPurpose,
+    issuedCredentials: List<VerifiableCredentialType>
+  ): VerifiableCredentialType {
+    val statusListIndexes = prepareCredentialsForStatusList(statusPurpose, issuedCredentials)
     val bitString = bitstringGeneration(statusListIndexes)
 
-    val claims = mapOf("statusPurpose" to purpose, "encodedList" to bitString)
+    val claims = mapOf("statusPurpose" to statusPurpose.toString().lowercase(), "encodedList" to bitString)
     val credSubject = CredentialSubject.builder()
       .id(URI.create(statusListCredentialId))
       .type("StatusList2021")
       .claims(claims)
       .build()
 
-    val statusListCred = VerifiableCredentialType.builder()
+    return VerifiableCredentialType.builder()
       .id(URI.create(statusListCredentialId))
       .issuer(URI.create(issuer))
       .issuanceDate(Date())
@@ -286,29 +290,19 @@ public object VerifiableCredential {
       .type("StatusList2021Credential")
       .credentialSubject(credSubject)
       .build()
-
-    return create(signOptions, null, statusListCred)
   }
 
   /**
    * Validates if a given credential is part of the status list represented by a `StatusList2021Credential`.
    *
-   * The function takes in two credential JWTs: one representing the credential to be validated and the other representing the status list credential.
+   * The function takes in two credentials: one representing the credential to be validated and the other representing the status list credential.
    * It checks if the given credential's status list index is present in the expanded status list derived from the status list credential.
-   *
-   * @param credentialToValidateJwt The JWT representing the credential to be validated.
-   * @param statusListCredentialJwt The JWT representing the `StatusList2021Credential`.
-   * @return `true` if the credential's status list index is present in the status list (revoked), `false` otherwise.
-   * @throws Exception Throws an exception if there is a mismatch in status purposes between the two credentials, if required fields are missing, or if any other unexpected error occurs during validation.
    */
   @Throws(Exception::class)
   public fun validateCredentialInStatusList(
-    credentialToValidateJwt: VcJwt,
-    statusListCredentialJwt: VcJwt
+    credentialToValidate: VerifiableCredentialType,
+    statusListCredential: VerifiableCredentialType
   ): Boolean {
-    val credentialToValidate = fromJwt(credentialToValidateJwt)
-    val statusListCredential = fromJwt(statusListCredentialJwt)
-
     val statusListEntryValue: StatusList2021Entry =
       StatusList2021Entry.fromJsonObject(credentialToValidate.credentialStatus.jsonObject)
 
@@ -338,29 +332,23 @@ public object VerifiableCredential {
    *
    * - It validates that all credentials use the `StatusList2021` in the `credentialStatus` property.
    * - Assembles a list of `statusListIndex` values for the bitstring generation algorithm.
-   *
-   * @param purpose The intended purpose of the credentials, used to ensure consistency across credentials.
-   * @param credentialJwts A list of JWTs representing the credentials to be processed.
-   * @return A list of `statusListIndex` values extracted from the provided credentials.
-   * @throws Exception Throws an exception if a credential does not have a status, if there's a mismatch in the status purpose, or if duplicate entries are found.
    */
   @Throws(Exception::class)
   private fun prepareCredentialsForStatusList(
-    purpose: String,
-    credentialJwts: List<VcJwt>
+    statusPurpose: StatusPurpose,
+    credentials: List<VerifiableCredentialType>
   ): List<String> {
     val duplicateSet = mutableSetOf<String>()
-    for (vcJwt in credentialJwts) {
-      val vc = fromJwt(vcJwt)
+    for (vc in credentials) {
       requireNotNull(vc.credentialStatus) { "no credential status found in credential" }
 
       val statusListEntry: StatusList2021Entry =
         StatusList2021Entry.fromJsonObject(vc.credentialStatus.jsonObject)
 
-      require(statusListEntry.statusPurpose == purpose) { "status purpose mismatch" }
+      require(statusListEntry.statusPurpose == statusPurpose.toString().lowercase()) { "status purpose mismatch" }
 
       if (!duplicateSet.add(statusListEntry.statusListIndex)) {
-        throw Exception("duplicate entry found")
+        throw Exception("duplicate entry found with index: ${statusListEntry.statusListIndex}")
       }
     }
 
@@ -378,20 +366,23 @@ public object VerifiableCredential {
    *    - Sets the corresponding bit in the bitstring to 1.
    * 3. Compresses the generated bitstring using the GZIP compression algorithm.
    * 4. Returns the base64-encoded representation of the compressed bitstring.
-   *
-   * @param statusListIndexes A list of status list index values, represented as strings.
-   * @return A base64-encoded, GZIP-compressed bitstring representation of the provided status list indexes.
-   * @throws Exception Throws an exception if an invalid or duplicate status list index value is found.
    */
   private fun bitstringGeneration(statusListIndexes: List<String>): String {
     val duplicateCheck = mutableSetOf<Int>()
-    val bitSet = BitSet(16 * 1024 * 8) // 1KB = 1024 bytes, 1 byte = 8 bits
+
+    // 1. Let bitstring be a list of bits with a minimum size of 16KB, where each bit is initialized to 0 (zero).
+    val bitSetSize = 16 * 1024 * 8
+    val bitSet = BitSet(bitSetSize)
 
     for (index in statusListIndexes) {
       val indexInt = index.toIntOrNull()
 
       if (indexInt == null || indexInt < 0) {
-        throw Exception("invalid status list index")
+        throw Exception("invalid status list index: $index")
+      }
+
+      if (indexInt >= bitSetSize) {
+        throw Exception("invalid status list index: $index, index is larger than the bitset size")
       }
 
       if (!duplicateCheck.add(indexInt)) {
@@ -414,10 +405,6 @@ public object VerifiableCredential {
    * 1. Decodes the provided compressed bitstring from its base64 representation.
    * 2. Decompresses the decoded bitstring using the GZIP compression algorithm.
    * 3. Iterates through the decompressed bitstring and collects the indices of bits set to 1.
-   *
-   * @param compressedBitstring The base64-encoded, GZIP-compressed bitstring to be expanded.
-   * @return A list of string representations of indices where the bit in the decompressed bitstring is set to 1.
-   * @throws Exception Throws an exception if there's an error in decoding or decompressing the bitstring.
    */
   @Throws(Exception::class)
   private fun bitstringExpansion(compressedBitstring: String): List<String> {
@@ -497,18 +484,6 @@ public object VerifiablePresentation {
     require(vpJWT.isNotEmpty())
     return JwtVerifiablePresentation.fromCompactSerialization(vpJWT)
       .verify_Ed25519_EdDSA(publicKeyJWK.toOctetKeyPair())
-  }
-
-  /**
-   * Converts a verifiable presentation JWT into a [VerifiablePresentationType] object.
-   *
-   * @param vpJwt The verifiable presentation in JWT format to be converted.
-   * @return A [VerifiablePresentationType] object representing the provided verifiable presentation JWT.
-   * @throws Exception Throws an exception if the conversion from JWT to [VerifiablePresentationType] fails or any other unexpected error occurs during the conversion process.
-   */
-  @Throws(Exception::class)
-  public fun fromJwt(vpJwt: VpJwt): VerifiablePresentationType {
-    return FromJwtConverter.fromJwtVerifiablePresentation(JwtVerifiablePresentation.fromCompactSerialization(vpJwt))
   }
 
   /**
