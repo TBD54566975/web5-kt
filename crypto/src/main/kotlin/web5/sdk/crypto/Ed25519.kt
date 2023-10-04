@@ -6,6 +6,7 @@ import com.nimbusds.jose.JWSHeader
 import com.nimbusds.jose.JWSObject
 import com.nimbusds.jose.Payload
 import com.nimbusds.jose.crypto.Ed25519Signer
+import com.nimbusds.jose.crypto.Ed25519Verifier
 import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.JWK
 import com.nimbusds.jose.jwk.KeyType
@@ -16,12 +17,24 @@ import com.nimbusds.jose.util.Base64URL
 import org.bouncycastle.crypto.params.Ed25519PrivateKeyParameters
 import web5.sdk.common.Convert
 import web5.sdk.common.Varint
+import web5.sdk.crypto.Ed25519.algorithm
+import web5.sdk.crypto.Ed25519.keyType
+import web5.sdk.crypto.Ed25519.privMultiCodec
+import web5.sdk.crypto.Ed25519.pubMulticodec
 
 /**
- * API for generating Ed25519 key pairs, computing public keys from private keys,
- * and signing and verifying messages.
+ * Implementation of the [KeyGenerator] and [Signer] interfaces, specifically utilizing
+ * the Ed25519 elliptic curve digital signature algorithm. This implementation provides
+ * functionality to generate key pairs, compute public keys from private keys, and
+ * sign/verify messages utilizing Ed25519.
  *
- * **TODO**: include example usage
+ * ### Example Usage:
+ * TODO: Insert example usage here.
+ *
+ * @property algorithm Specifies the JWS algorithm type. For Ed25519, this is `EdDSA`.
+ * @property keyType Specifies the key type. For Ed25519, this is `OKP`.
+ * @property pubMulticodec A byte array representing the multicodec prefix for an Ed25519 public key.
+ * @property privMultiCodec A byte array representing the multicodec prefix for an Ed25519 private key.
  */
 
 public object Ed25519 : KeyGenerator, Signer {
@@ -31,6 +44,12 @@ public object Ed25519 : KeyGenerator, Signer {
   public val pubMulticodec: ByteArray = Varint.encode(0xed)
   public val privMultiCodec: ByteArray = Varint.encode(0x1300)
 
+  /**
+   * Generates a private key utilizing the Ed25519 algorithm.
+   *
+   * @param options (Optional) Additional options to control the key generation process.
+   * @return The generated private key in JWK format.
+   */
   override fun generatePrivateKey(options: KeyGenOptions?): JWK {
     return OctetKeyPairGenerator(Curve.Ed25519)
       .keyIDFromThumbprint(true)
@@ -39,6 +58,12 @@ public object Ed25519 : KeyGenerator, Signer {
       .toOctetKeyPair()
   }
 
+  /**
+   * Derives the public key corresponding to a given private key.
+   *
+   * @param privateKey The private key in JWK format.
+   * @return The corresponding public key in JWK format.
+   */
   override fun getPublicKey(privateKey: JWK): JWK {
     require(privateKey is OctetKeyPair) { "private key must be an Octet Key Pair (kty: OKP)" }
 
@@ -94,8 +119,13 @@ public object Ed25519 : KeyGenerator, Signer {
     return jws.serialize()
   }
 
-  override fun verify(options: VerifyOptions?) {
-    TODO("Not yet implemented")
+  override fun verify(publicKey: JWK, jws: String, options: VerifyOptions?) {
+    validateKey(publicKey)
+
+    val parsedJws = JWSObject.parse(jws)
+    val verifier = Ed25519Verifier(publicKey.toOctetKeyPair())
+
+    parsedJws.verify(verifier)
   }
 
   public fun validateKey(key: JWK) {
