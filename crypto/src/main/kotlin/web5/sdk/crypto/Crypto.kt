@@ -115,7 +115,6 @@ public object Crypto {
     val rawCurve = publicKey.toJSONObject()["crv"]
     val curve = rawCurve?.let { Curve.parse(it.toString()) }
 
-
     val verifier = getSigner(publicKey.algorithm, curve)
     verifier.verify(publicKey, jws)
   }
