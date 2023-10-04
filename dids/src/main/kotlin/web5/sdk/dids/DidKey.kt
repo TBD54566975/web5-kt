@@ -51,7 +51,6 @@ public object DidKeyMethod : DidMethod<CreateDidKeyOptions> {
   }
 
 
-  // TODO: return DidResolutionResult instead of DidDocument. hopefully danubetech lib has a type for this
   // TODO: return appropriate DidResolutionResult with error property set instead of throwing exceptions
   // TODO: add support for X25519 derived key
   override fun resolve(did: String): DidResolutionResult {
