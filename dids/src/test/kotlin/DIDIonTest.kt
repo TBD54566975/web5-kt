@@ -5,7 +5,6 @@ import com.nimbusds.jose.jwk.KeyUse
 import com.nimbusds.jose.jwk.gen.ECKeyGenerator
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
-import io.ktor.client.engine.mock.toByteArray
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
@@ -100,8 +99,6 @@ class DIDIonTest {
   }
 
   private fun mockEngine() = MockEngine { request ->
-    val body = String(request.body.toByteArray())
-    println(body)
     when (request.url.encodedPath) {
       "/operations" -> {
         respond(
