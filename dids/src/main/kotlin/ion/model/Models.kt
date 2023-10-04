@@ -90,17 +90,15 @@ public data class JsonWebKey(
 )
 
 /**
- * Converts a JWK (JSON Web Key) to a JSON Web Key (JsonWebKey) object.
- *
- * @param JWK The input JWK.
- * @return JsonWebKey representation.
+ * Converts a [JWK] (from the nimbus library) to a JSON Web Key ([JsonWebKey]) object, which can be serialized in
+ * kotlin.
  */
 public fun JWK.toJsonWebKey(): JsonWebKey {
   return Json.decodeFromString<JsonWebKey>(toJSONString())
 }
 
 /**
- * Converts a JsonWebKey object to a JWK (JSON Web Key).
+ * Converts a [JsonWebKey] object to a [JWK] (from the nimbus library).
  *
  * @return JWK representation.
  */
@@ -202,6 +200,6 @@ public data class SidetreeCreateOperation(
  */
 @Serializable
 internal data class InitialState(
-  public val suffixData: OperationSuffixDataObject,
-  public val delta: Delta,
+  val suffixData: OperationSuffixDataObject,
+  val delta: Delta,
 )
