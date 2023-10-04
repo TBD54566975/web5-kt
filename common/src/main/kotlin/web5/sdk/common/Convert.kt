@@ -1,6 +1,5 @@
 package web5.sdk.common
 
-import java.lang.UnsupportedOperationException
 import java.util.Base64
 
 /**
@@ -12,6 +11,9 @@ import java.util.Base64
  */
 public val B64URL_ENCODER: Base64.Encoder = Base64.getUrlEncoder()
 
+/**
+ * Enumeration to define the supported string kinds for encoding and decoding operations.
+ */
 public enum class StringKind {
   Base64Url,
   Base58Btc
@@ -27,14 +29,48 @@ public enum class StringKind {
 public val B64URL_DECODER: Base64.Decoder = Base64.getUrlDecoder()
 
 // TODO: implement https://github.com/TBD54566975/web5-js/blob/main/packages/common/src/convert.ts
+
 /**
- * A utility class for converting values to various formats, including Base64 and Base58BTC.
+ * A utility class [Convert] to facilitate various conversions including Base64 and Base58BTC.
  *
  * @param T The type of the value to be converted.
- * @param value The value to be converted.
- * @param kind An optional string representing the kind of conversion.
+ * @param value The actual value to be converted.
+ * @param kind Specifies the kind of conversion (optional parameter).
+ *
+ * Note: Usage of this class should ensure that the type [T] and [kind] are compatible with
+ * the conversion methods, as certain methods may not support all data types or kinds
+ *
+ * Example Usage:
+ * ```
+ * // Example 1: Convert a ByteArray to a Base64Url encoded string without padding
+ * val byteArray = byteArrayOf(1, 2, 3)
+ * val base64Url = Convert(byteArray).toBase64Url(padding = false)
+ * println(base64Url)  // Output should be a Base64Url encoded string without padding
+ *
+ * // Example 2: Convert a Base64Url encoded string to a ByteArray
+ * val base64Str = "AQID"
+ * val originalByteArray = Convert(base64Str, StringKind.Base64Url).toByteArray()
+ *
+ * // Example 3: Convert a ByteArray to a Base58Btc encoded string
+ * val byteArray = byteArrayOf(1, 2, 3)
+ * val base58BtcStr = Convert(byteArray).toBase58Btc()
+ * println(base58BtcStr)  // Output should be a Base58Btc encoded string
+ *
+ * // Example 4: Convert a Base64Url encoded string to a regular string
+ * val base64UrlStr = "SGVsbG8gd29ybGQ="
+ * val decodedStr = Convert(base64UrlStr, StringKind.Base64Url).toStr()
+ * println(decodedStr)  // Output should be: "Hello world"
+ * ```
  */
 public class Convert<T>(private val value: T, private val kind: StringKind? = null) {
+  /**
+   * Converts the [value] to a Base64Url-encoded string.
+   *
+   * @param padding Determines whether the resulting Base64 string should be padded or not. Default is true.
+   * @return The Base64Url-encoded string.
+   *
+   * Note: If the value type is unsupported for this conversion, the method will throw an exception.
+   */
   public fun toBase64Url(padding: Boolean = true): String {
     val encoder = if (padding) B64URL_ENCODER else B64URL_ENCODER.withoutPadding()
 
@@ -53,9 +89,11 @@ public class Convert<T>(private val value: T, private val kind: StringKind? = nu
   }
 
   /**
-   * Converts the value to a Base58BTC-encoded string.
+   * Converts the [value] to a Base58BTC-encoded string.
    *
    * @return The Base58BTC-encoded string.
+   *
+   * Note: If the value type or kind is unsupported for this conversion, the method will throw an exception.
    */
   public fun toBase58Btc(): String {
     return when (this.value) {
@@ -73,9 +111,11 @@ public class Convert<T>(private val value: T, private val kind: StringKind? = nu
   }
 
   /**
-   * Converts the value to a string.
+   * Converts the [value] to a string representation.
    *
-   * @return The string representation of the value.
+   * @return The string representation of the [value].
+   *
+   * Note: If the value type or kind is unsupported for this conversion, the method will throw an exception.
    */
   public fun toStr(): String {
     return when (this.value) {
@@ -93,9 +133,11 @@ public class Convert<T>(private val value: T, private val kind: StringKind? = nu
   }
 
   /**
-   * Converts the value to a byte array.
+   * Converts the [value] to a byte array representation.
    *
-   * @return The byte array representation of the value.
+   * @return The byte array representation of the [value].
+   *
+   * Note: If the value type or kind is unsupported for this conversion, the method will throw an exception.
    */
   public fun toByteArray(): ByteArray {
     return when (this.value) {
@@ -112,6 +154,13 @@ public class Convert<T>(private val value: T, private val kind: StringKind? = nu
     }
   }
 
+  /**
+   * A private utility function to handle unsupported conversion scenarios.
+   *
+   * This function throws:
+   * - [UnsupportedOperationException] when the [value]'s type is not supported for the conversion,
+   * - [NullPointerException] when the [value] is null.
+   */
   private fun handleNotSupported(): Nothing {
     value?.let {
       throw UnsupportedOperationException("converting from ${it::class} not supported")
