@@ -29,7 +29,7 @@ public object DidKeyMethod : DidMethod<CreateDidKeyOptions> {
   override val method: String = "key"
 
   /**
-   * creates a did:key. stores key in an InMemoryKeyManager that's returned from this method
+   * creates a did:key. stores key in a keymanager that's returned from this method
    */
   override fun create(keyManager: KeyManager, options: CreateDidKeyOptions?): DidKey {
     val opts = options ?: CreateDidKeyOptions()
