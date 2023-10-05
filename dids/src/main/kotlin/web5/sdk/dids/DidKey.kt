@@ -37,7 +37,6 @@ public class CreateDidKeyOptions(
   public val curve: Curve = Curve.Ed25519,
 ) : CreateDidOptions
 
-
 public typealias DidKey = Did
 
 /**
@@ -87,7 +86,6 @@ public object DidKeyMethod : DidMethod<CreateDidKeyOptions> {
 
     return DidKey(keyManager, did)
   }
-
 
   /**
    * Resolves a "did:key" DID into a [DidResolutionResult], which contains the DID Document and possible related metadata.
