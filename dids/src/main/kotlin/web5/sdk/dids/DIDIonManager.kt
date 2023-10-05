@@ -1,15 +1,11 @@
-package web5.dids
+package web5.dids.web5.sdk.dids
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.nimbusds.jose.crypto.bc.BouncyCastleProviderSingleton
+import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.jwk.Curve
-import com.nimbusds.jose.jwk.ECKey
 import com.nimbusds.jose.jwk.JWK
-import com.nimbusds.jose.jwk.KeyUse
-import com.nimbusds.jose.jwk.gen.ECKeyGenerator
 import com.nimbusds.jose.util.Base64URL
 import foundation.identity.did.DID
-import foundation.identity.did.DIDDocument
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.cio.CIO
@@ -30,8 +26,6 @@ import org.erdtman.jcs.JsonCanonicalizer
 import org.erwinkok.multiformat.multicodec.Multicodec
 import org.erwinkok.multiformat.multihash.Multihash
 import org.erwinkok.result.get
-import uniresolver.result.ResolveDataModelResult
-import uniresolver.result.ResolveRepresentationResult
 import web5.dids.ion.model.Commitment
 import web5.dids.ion.model.Delta
 import web5.dids.ion.model.Document
@@ -44,8 +38,12 @@ import web5.dids.ion.model.ReplaceAction
 import web5.dids.ion.model.SidetreeCreateOperation
 import web5.dids.ion.model.toJWK
 import web5.dids.ion.model.toJsonWebKey
-import java.security.Provider
-import java.util.UUID
+import web5.sdk.crypto.KeyManager
+import web5.sdk.dids.CreateDidOptions
+import web5.sdk.dids.CreationMetadata
+import web5.sdk.dids.Did
+import web5.sdk.dids.DidMethod
+import web5.sdk.dids.DidResolutionResult
 
 private const val operationsPath = "/operations"
 private const val identifiersPath = "/identifiers"
@@ -55,14 +53,12 @@ private const val identifiersPath = "/identifiers"
  *
  * @property ionHost The ION host URL.
  * @property updatePublicJsonWebKey The update public JSON Web Key. When absent, a new one will be generated.
- * @property verificationPublicKey The verification public key. When absent, a new one will be generated.
  * @property recoveryJsonWebKey The recovery JSON Web Key. When absent, a new one will be generated.
  * @property engine The engine to use. When absent, a new one will be created from the [CIO] factory.
  */
 public class DIDIonConfiguration internal constructor(
   public var ionHost: String = "https://ion.tbddev.org",
   public var updatePublicJsonWebKey: JsonWebKey? = null,
-  public var verificationPublicKey: PublicKey? = null,
   public var recoveryJsonWebKey: JsonWebKey? = null,
   public var engine: HttpClientEngine? = null,
 )
@@ -84,7 +80,7 @@ private class DIDIonManagerImpl(configuration: DIDIonConfiguration) : DIDIonMana
  */
 public sealed class DIDIonManager(
   public val configuration: DIDIonConfiguration
-) {
+) : DidMethod<CreateDidIonOptions> {
 
   @OptIn(ExperimentalSerializationApi::class)
   private val json = Json {
@@ -107,13 +103,16 @@ public sealed class DIDIonManager(
     }
   }
 
+  override val method: String
+    get() = "ion"
+
   /**
    * Creates a DID and DID Document.
    *
    * @return Pair of DID and DIDDocument.
    */
-  public suspend fun create(): Triple<DID, DIDDocument, CreationMetadata> {
-    val createOp = createOperation()
+  override suspend fun create(keyManager: KeyManager, options: CreateDidIonOptions?): Pair<Did, IonCreationMetadata> {
+    val (createOp, keys) = createOperation(keyManager, options)
 
     val shortFormDIDSegment =
       Base64URL.encode(
@@ -134,20 +133,23 @@ public sealed class DIDIonManager(
     if (response.status.value in 200..299) {
       val shortFormDID = "did:ion:$shortFormDIDSegment"
       val longFormDID = "$shortFormDID:$longFormDIDSegment"
-      val resolutionResult = resolve(DID.fromString(longFormDID))
+      val resolutionResult = resolve(longFormDID)
 
-      if (resolutionResult.isErrorResult) {
-        throw Exception("error when resolving after creation: ${resolutionResult.errorMessage}")
+      if (!resolutionResult.didResolutionMetadata.error.isNullOrEmpty()) {
+        throw Exception("error when resolving after creation: ${resolutionResult.didResolutionMetadata.error}")
       }
 
-      return Triple(
-        DID.fromUri(resolutionResult.didDocument.id),
-        resolutionResult.didDocument,
-        CreationMetadata(
+      return Pair(
+        Did(
+          keyManager,
+          resolutionResult.didDocument.id.toString()
+        ),
+        IonCreationMetadata(
           createOp,
           shortFormDID,
           longFormDID,
-          opBody
+          opBody,
+          keys
         )
       )
     }
@@ -166,9 +168,10 @@ public sealed class DIDIonManager(
   }
 
   /**
-   * Given a [did], returns the [ResolveRepresentationResult], which is specified in https://w3c-ccg.github.io/did-resolution/#did-resolution-result
+   * Given a [didUrl], returns the [DidResolutionResult], which is specified in https://w3c-ccg.github.io/did-resolution/#did-resolution-result
    */
-  public suspend fun resolve(did: DID): ResolveDataModelResult {
+  override suspend fun resolve(didUrl: String): DidResolutionResult {
+    val did = DID.fromString(didUrl)
     require(did.methodName == "ion")
 
     val resp = client.get("$identifiersEndpoint/$did")
@@ -177,30 +180,30 @@ public sealed class DIDIonManager(
       throw Exception("resolution error response '$body'")
     }
     val mapper = jacksonObjectMapper()
-    return mapper.readValue(body, ResolveDataModelResult::class.java)
+    return mapper.readValue(body, DidResolutionResult::class.java)
   }
 
-  private fun createOperation(): SidetreeCreateOperation {
+  private fun createOperation(keyManager: KeyManager, options: CreateDidIonOptions?)
+    : Pair<SidetreeCreateOperation, KeyAliases> {
     val updatePublicJWK: JWK = if (configuration.updatePublicJsonWebKey == null) {
-      val updateKeyID = UUID.randomUUID().toString()
-      val updateJWK: ECKey = secp256KeyWithID(updateKeyID)
-      updateJWK.toPublicJWK()
+      val alias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K, Curve.SECP256K1)
+      keyManager.getPublicKey(alias)
     } else {
       configuration.updatePublicJsonWebKey!!.toJWK()
     }
     val publicKeyCommitment: String = publicKeyCommitment(updatePublicJWK)
 
-    val verificationPublicKey = if (configuration.verificationPublicKey == null) {
-      val verificationKeyID = UUID.randomUUID().toString()
-      val verificationJWK = secp256KeyWithID(verificationKeyID)
+    val verificationPublicKey = if (options?.verificationPublicKey == null) {
+      val alias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K, Curve.SECP256K1)
+      val verificationJWK = keyManager.getPublicKey(alias)
       PublicKey(
-        id = verificationKeyID,
+        id = "#${verificationJWK.keyID}}",
         type = "JsonWebKey2020",
         publicKeyJWK = verificationJWK.toJsonWebKey(),
         purposes = listOf(PublicKeyPurpose.AUTHENTICATION),
       )
     } else {
-      configuration.verificationPublicKey!!
+      options.verificationPublicKey
     }
     val patches = listOf(ReplaceAction(Document(listOf(verificationPublicKey))))
     val createOperationDelta = Delta(
@@ -208,25 +211,30 @@ public sealed class DIDIonManager(
       updateCommitment = publicKeyCommitment
     )
 
-    val recoveryKeyID = UUID.randomUUID().toString()
-    val recoveryJWK: ECKey = secp256KeyWithID(recoveryKeyID)
-    val recoveryCommitment = publicKeyCommitment(recoveryJWK.toPublicJWK())
+    val recoveryPublicJWK = if (configuration.recoveryJsonWebKey == null) {
+      val alias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K, Curve.SECP256K1)
+      keyManager.getPublicKey(alias)
+    } else {
+      configuration.recoveryJsonWebKey!!.toJWK()
+    }
+    val recoveryCommitment = publicKeyCommitment(recoveryPublicJWK)
 
     val operation: OperationSuffixDataObject =
       createOperationSuffixDataObject(createOperationDelta, recoveryCommitment)
 
-    return SidetreeCreateOperation(
-      type = "create",
-      suffixData = operation,
-      delta = createOperationDelta,
+    return Pair(
+      SidetreeCreateOperation(
+        type = "create",
+        suffixData = operation,
+        delta = createOperationDelta,
+      ),
+      KeyAliases(
+        updateKeyAlias = updatePublicJWK.keyID,
+        verificationKeyAlias = verificationPublicKey.publicKeyJWK!!.kid!!,
+        recoveryKeyAlias = recoveryPublicJWK.keyID
+      )
     )
   }
-
-  private fun secp256KeyWithID(recoveryKeyID: String): ECKey = ECKeyGenerator(Curve.SECP256K1)
-    .keyUse(KeyUse.SIGNATURE)
-    .keyID(recoveryKeyID)
-    .provider(BouncyCastleProviderSingleton.getInstance() as Provider)
-    .generate()
 
   private fun createOperationSuffixDataObject(
     createOperationDeltaObject: Delta,
@@ -264,6 +272,22 @@ public sealed class DIDIonManager(
 }
 
 /**
+ * Container for the key aliases for an ION did.
+ */
+public data class KeyAliases(
+  public val updateKeyAlias: String,
+  public val verificationKeyAlias: String,
+  public val recoveryKeyAlias: String)
+
+/**
+ * Options available when creating an ion did.
+ *
+ * @param verificationPublicKey When provided, will be used as the verification key in the DID document.
+ */
+public class CreateDidIonOptions(
+  public val verificationPublicKey: PublicKey? = null) : CreateDidOptions
+
+/**
  * Metadata related to the creation of a DID (Decentralized Identifier) on the Sidetree protocol.
  *
  * @property createOperation The Sidetree create operation used to create the DID.
@@ -271,9 +295,10 @@ public sealed class DIDIonManager(
  * @property longFormDID The long-form DID representing the DID created.
  * @property operationsResponseBody The response body received after submitting the create operation.
  */
-public data class CreationMetadata(
+public data class IonCreationMetadata(
   public val createOperation: SidetreeCreateOperation,
   public val shortFormDID: String,
   public val longFormDID: String,
-  public val operationsResponseBody: String
-)
+  public val operationsResponseBody: String,
+  public val keyAliases: KeyAliases,
+) : CreationMetadata

@@ -68,7 +68,8 @@ public object DidKeyMethod : DidMethod<CreateDidKeyOptions> {
    *
    * @throws UnsupportedOperationException if the specified curve is not supported.
    */
-  override fun create(keyManager: KeyManager, options: CreateDidKeyOptions?): DidKey {
+  public override suspend fun create(keyManager: KeyManager, options: CreateDidKeyOptions?)
+    : Pair<DidKey, CreatedDidKeyMetadata> {
     val opts = options ?: CreateDidKeyOptions()
 
     val keyAlias = keyManager.generatePrivateKey(opts.algorithm, opts.curve)
@@ -84,7 +85,10 @@ public object DidKeyMethod : DidMethod<CreateDidKeyOptions> {
 
     val did = "did:key:$multibaseEncodedId"
 
-    return DidKey(keyManager, did)
+    return Pair(
+      DidKey(keyManager, did),
+      CreatedDidKeyMetadata(keyAlias)
+    )
   }
 
   /**
@@ -93,13 +97,13 @@ public object DidKeyMethod : DidMethod<CreateDidKeyOptions> {
    * This implementation primarily constructs a DID Document with a single verification method derived
    * from the DID's method-specific identifier (the public key).
    *
-   * @param did The "did:key" DID that needs to be resolved.
+   * @param didUrl The "did:key" DID that needs to be resolved.
    * @return A [DidResolutionResult] instance containing the DID Document and related context.
    *
    * @throws IllegalArgumentException if the provided DID does not conform to the "did:key" method.
    */
-  override fun resolve(did: String): DidResolutionResult {
-    val parsedDid = DID.fromString(did)
+  public override suspend fun resolve(didUrl: String): DidResolutionResult {
+    val parsedDid = DID.fromString(didUrl)
 
     require(parsedDid.methodName == method) { throw IllegalArgumentException("expected did:key") }
 
@@ -112,19 +116,28 @@ public object DidKeyMethod : DidMethod<CreateDidKeyOptions> {
     val keyGenerator = Crypto.getKeyGenerator(multiCodec)
     val publicKeyJwk = keyGenerator.bytesToPublicKey(publicKeyBytes)
 
-    val verificationMethodId = URI.create("$did#$id")
+    val verificationMethodId = URI.create("$didUrl#$id")
     val verificationMethod = VerificationMethod.builder()
       .id(verificationMethodId)
       .publicKeyJwk(publicKeyJwk.toJSONObject())
-      .controller(URI(did))
+      .controller(URI(didUrl))
       .type("JsonWebKey2020")
       .build()
 
     val didDocument = DIDDocument.builder()
-      .id(URI(did))
+      .id(URI(didUrl))
       .verificationMethod(verificationMethod)
       .build()
 
     return DidResolutionResult(didDocument = didDocument, context = "https://w3id.org/did-resolution/v1")
   }
 }
+
+/**
+ * Contains metadata related to the creation of a did key.
+ *
+ * @param keyAlias The key alias that was created in the [KeyManager].
+ */
+public class CreatedDidKeyMetadata(
+  public val keyAlias: String
+) : CreationMetadata

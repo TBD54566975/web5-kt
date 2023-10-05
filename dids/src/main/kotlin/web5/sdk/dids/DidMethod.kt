@@ -22,6 +22,20 @@ import web5.sdk.crypto.KeyManager
 public interface CreateDidOptions
 
 /**
+ * Represents metadata that results from the creation of a Decentralized Identifier (DID).
+ *
+ * Implementers can include information that would be considered useful for callers.
+ *
+ * ### Usage Example
+ * ```
+ * class MyDidMethodCreatedMetadata : CreationMetadata {
+ *     // implementation-specific metadata about the created did
+ * }
+ * ```
+ */
+public interface CreationMetadata
+
+/**
  * Represents a Decentralized Identifier (DID) as per the W3C DID specification.
  *
  * A DID is a new type of identifier that is created, resolved, and cryptographically
@@ -80,7 +94,7 @@ public interface DidMethod<T : CreateDidOptions> {
    * @param options Optional instance of [T], representing method-specific options during the DID creation.
    * @return An instance of [Did] representing the created DID.
    */
-  public fun create(keyManager: KeyManager, options: T? = null): Did
+  public suspend fun create(keyManager: KeyManager, options: T? = null): Pair<Did, CreationMetadata>
 
   /**
    * Resolves a DID URL into a set of concrete data and metadata, wrapped in a [DidResolutionResult].
@@ -88,5 +102,5 @@ public interface DidMethod<T : CreateDidOptions> {
    * @param didUrl A string representing the DID URL that needs to be resolved.
    * @return An instance of [DidResolutionResult] containing resolved data and possibly related metadata.
    */
-  public fun resolve(didUrl: String): DidResolutionResult
+  public suspend fun resolve(didUrl: String): DidResolutionResult
 }

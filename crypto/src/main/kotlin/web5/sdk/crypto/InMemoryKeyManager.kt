@@ -4,6 +4,7 @@ import com.nimbusds.jose.Algorithm
 import com.nimbusds.jose.Payload
 import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.JWK
+import java.util.UUID
 
 /**
  * A class for managing cryptographic keys in-memory.
@@ -69,5 +70,14 @@ public class InMemoryKeyManager : KeyManager {
    */
   override fun sign(keyAlias: String, payload: Payload) {
     TODO("Not yet implemented")
+  }
+
+  override fun import(jwk: JWK): String {
+    var kid = jwk.keyID
+    if (kid.isNullOrEmpty()) {
+      kid = UUID.randomUUID().toString()
+    }
+    keyStore.putIfAbsent(kid, jwk)
+    return kid
   }
 }

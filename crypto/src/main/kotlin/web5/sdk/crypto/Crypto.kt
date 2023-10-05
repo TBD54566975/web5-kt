@@ -93,11 +93,7 @@ public object Crypto {
    * @return The computed public key as a JWK object.
    */
   public fun computePublicKey(privateKey: JWK): JWK {
-    val rawCurve = privateKey.toJSONObject()["crv"]
-    val curve = rawCurve?.let { Curve.parse(it.toString()) }
-    val generator = getKeyGenerator(privateKey.algorithm, curve)
-
-    return generator.getPublicKey(privateKey)
+    return privateKey.toPublicJWK()
   }
 
   /**

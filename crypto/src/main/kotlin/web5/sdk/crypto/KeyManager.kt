@@ -53,4 +53,11 @@ public interface KeyManager {
    * used may depend on the type and parameters of the stored key.
    */
   public fun sign(keyAlias: String, payload: Payload)
+
+  /**
+   * Imports a private [jwk] into this keyManager. Any error should throw an exception.
+   *
+   * @return A unique alias (String) that can be used to reference the imported key.
+   */
+  public fun import(jwk: JWK): String
 }
