@@ -16,7 +16,6 @@ import com.nimbusds.jose.jwk.gen.OctetKeyPairGenerator
 import com.nimbusds.jose.util.Base64URL
 import org.bouncycastle.crypto.params.Ed25519PrivateKeyParameters
 import web5.sdk.common.Convert
-import web5.sdk.common.Varint
 import web5.sdk.crypto.Ed25519.algorithm
 import web5.sdk.crypto.Ed25519.keyType
 import web5.sdk.crypto.Ed25519.privMultiCodec
@@ -41,8 +40,8 @@ public object Ed25519 : KeyGenerator, Signer {
   override val algorithm: Algorithm = JWSAlgorithm.EdDSA
   override val keyType: KeyType = KeyType.OKP
 
-  public val pubMulticodec: ByteArray = Varint.encode(0xed)
-  public val privMultiCodec: ByteArray = Varint.encode(0x1300)
+  public val pubMulticodec: Int = 0xed
+  public val privMultiCodec: Int = 0x1300
 
   /**
    * Generates a private key utilizing the Ed25519 algorithm.
@@ -52,6 +51,7 @@ public object Ed25519 : KeyGenerator, Signer {
    */
   override fun generatePrivateKey(options: KeyGenOptions?): JWK {
     return OctetKeyPairGenerator(Curve.Ed25519)
+      .algorithm(JWSAlgorithm.EdDSA)
       .keyIDFromThumbprint(true)
       .keyUse(KeyUse.SIGNATURE)
       .generate()

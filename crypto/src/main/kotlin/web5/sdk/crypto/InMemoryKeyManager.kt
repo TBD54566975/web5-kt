@@ -16,7 +16,8 @@ public class InMemoryKeyManager : KeyManager {
   }
 
   override fun getPublicKey(keyAlias: String): JWK {
-    TODO("Not yet implemented")
+    val privateKey = keyStore[keyAlias] ?: throw Exception("key with alias $keyAlias not found")
+    return Crypto.computePublicKey(privateKey)
   }
 
   override fun sign(keyAlias: String, payload: Payload) {

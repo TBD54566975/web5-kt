@@ -14,7 +14,6 @@ import com.nimbusds.jose.jwk.gen.ECKeyGenerator
 import com.nimbusds.jose.util.Base64URL
 import org.bouncycastle.jce.ECNamedCurveTable
 import org.bouncycastle.math.ec.ECPoint
-import web5.sdk.common.Varint
 import web5.sdk.crypto.Secp256k1.privMultiCodec
 import web5.sdk.crypto.Secp256k1.pubMulticodec
 import java.math.BigInteger
@@ -56,11 +55,11 @@ public object Secp256k1 : KeyGenerator, Signer {
   override val algorithm: Algorithm = JWSAlgorithm.ES256K
   override val keyType: KeyType = KeyType.EC
 
-  /** [reference](https://github.com/multiformats/multicodec/blob/master/table.csv#L92) */
-  public val pubMulticodec: ByteArray = Varint.encode(0xe7)
+  /** [reference](https://github.com/multiformats/multicodec/blob/master/table.csv#L92). */
+  public val pubMulticodec: Int = 0xe7
 
-  /** [reference](https://github.com/multiformats/multicodec/blob/master/table.csv#L169) */
-  public val privMultiCodec: ByteArray = Varint.encode(0x1301)
+  /** [reference](https://github.com/multiformats/multicodec/blob/master/table.csv#L169). */
+  public val privMultiCodec: Int = 0x1301
 
   /**
    * Generates a private key using the SECP256K1 curve and ES256K algorithm.

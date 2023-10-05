@@ -60,11 +60,11 @@ public object DidKeyMethod : DidMethod<CreateDidKeyOptions> {
 
     val id = parsedDid.methodSpecificId
     val idBytes = Multibase.decode(id)
-    val (codecId, numBytes) = Varint.decode(idBytes)
+    val (multiCodec, numBytes) = Varint.decode(idBytes)
 
     val publicKeyBytes = idBytes.drop(numBytes).toByteArray()
 
-    val keyGenerator = Crypto.getKeyGenerator(Varint.encode(codecId))
+    val keyGenerator = Crypto.getKeyGenerator(multiCodec)
     val publicKeyJwk = keyGenerator.bytesToPublicKey(publicKeyBytes)
 
     val verificationMethodId = URI.create("$did#$id")

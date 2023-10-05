@@ -47,7 +47,7 @@ public object Crypto {
     )
   )
 
-  private val keyGeneratorsByMultiCodec = mapOf<ByteArray, KeyGenerator>(
+  private val keyGeneratorsByMultiCodec = mapOf<Int, KeyGenerator>(
     Ed25519.privMultiCodec to Ed25519,
     Ed25519.pubMulticodec to Ed25519,
     Secp256k1.privMultiCodec to Secp256k1,
@@ -86,6 +86,14 @@ public object Crypto {
     return keyGenerator.generatePrivateKey(options)
   }
 
+  public fun computePublicKey(privateKey: JWK): JWK {
+    val rawCurve = privateKey.toJSONObject()["crv"]
+    val curve = rawCurve?.let { Curve.parse(it.toString()) }
+    val generator = getKeyGenerator(privateKey.algorithm, curve)
+
+    return generator.getPublicKey(privateKey)
+  }
+
   /**
    * Signs a payload using the specified private key and options.
    *
@@ -97,7 +105,6 @@ public object Crypto {
   public fun sign(privateKey: JWK, payload: Payload, options: SignOptions) {
     val rawCurve = privateKey.toJSONObject()["crv"]
     val curve = rawCurve?.let { Curve.parse(it.toString()) }
-
 
     val signer = getSigner(privateKey.algorithm, curve)
 
@@ -139,7 +146,7 @@ public object Crypto {
     return keyGenerator
   }
 
-  public fun getKeyGenerator(multiCodec: ByteArray): KeyGenerator {
+  public fun getKeyGenerator(multiCodec: Int): KeyGenerator {
     return keyGeneratorsByMultiCodec.getOrElse(multiCodec) {
       throw IllegalArgumentException("multicodec not supported")
     }

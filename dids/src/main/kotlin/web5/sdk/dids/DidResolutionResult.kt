@@ -1,5 +1,8 @@
 package web5.sdk.dids
 
+import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.KotlinModule
 import foundation.identity.did.DIDDocument
 
 public class DidResolutionResult(
@@ -7,7 +10,20 @@ public class DidResolutionResult(
   public var didDocument: DIDDocument,
   public var didResolutionMetadata: DidResolutionMetadata = DidResolutionMetadata(),
   public var didDocumentMetadata: DidDocumentMetadata = DidDocumentMetadata()
-)
+) {
+  override fun toString(): String {
+    return objectMapper.writeValueAsString(this)
+  }
+
+  private companion object {
+    // Initializing ObjectMapper as a static member
+    private val objectMapper: ObjectMapper = ObjectMapper().apply {
+      registerModule(KotlinModule.Builder().build())
+
+      setSerializationInclusion(JsonInclude.Include.NON_NULL)
+    }
+  }
+}
 
 public class DidResolutionMetadata(
   public var contentType: String? = null,
