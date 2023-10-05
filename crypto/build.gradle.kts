@@ -10,7 +10,7 @@ repositories {
 }
 
 dependencies {
-  implementation("com.nimbusds:nimbus-jose-jwt:9.34")
+  api("com.nimbusds:nimbus-jose-jwt:9.34")
   implementation("com.google.crypto.tink:tink:1.10.0")
   implementation("org.bouncycastle:bcprov-jdk15on:1.70")
   implementation("org.bouncycastle:bcpkix-jdk15on:1.70")
