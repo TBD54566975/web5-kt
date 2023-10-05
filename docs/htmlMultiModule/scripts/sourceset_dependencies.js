@@ -1,1 +1,1 @@
-sourceset_dependencies = '{":common:dokkaHtmlPartial/main":[],":credentials:dokkaHtmlPartial/main":[],":dids:dokkaHtmlPartial/main":[]}'
+sourceset_dependencies = '{":common:dokkaHtmlPartial/main":[],":credentials:dokkaHtmlPartial/main":[],":dids:dokkaHtmlPartial/main":[],":crypto:dokkaHtmlPartial/main":[]}'

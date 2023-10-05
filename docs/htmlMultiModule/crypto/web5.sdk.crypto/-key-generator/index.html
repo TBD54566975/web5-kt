@@ -1,0 +1,209 @@
+<!doctype html>
+<html class="no-js">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>KeyGenerator</title>
+<link href="../../../images/logo-icon.svg" rel="icon" type="image/svg">    <script>var pathToRoot = "../../../";</script>
+    <script>document.documentElement.classList.replace("no-js","js");</script>
+    <script>const storage = localStorage.getItem("dokka-dark-mode")
+    if (storage == null) {
+        const osDarkSchemePreferred = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        if (osDarkSchemePreferred === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    } else {
+        const savedDarkMode = JSON.parse(storage)
+        if(savedDarkMode === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    }
+    </script>
+<script type="text/javascript" src="https://unpkg.com/kotlin-playground@1/dist/playground.min.js" async></script>
+<script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async></script>
+<link href="../../../styles/style.css" rel="Stylesheet">
+<link href="../../../styles/main.css" rel="Stylesheet">
+<link href="../../../styles/prism.css" rel="Stylesheet">
+<link href="../../../styles/logo-styles.css" rel="Stylesheet">
+<link href="../../../styles/font-jb-sans-auto.css" rel="Stylesheet">
+<script type="text/javascript" src="../../../scripts/clipboard.js" async></script>
+<script type="text/javascript" src="../../../scripts/navigation-loader.js" async></script>
+<script type="text/javascript" src="../../../scripts/platform-content-handler.js" async></script>
+<script type="text/javascript" src="../../../scripts/main.js" defer></script>
+<script type="text/javascript" src="../../../scripts/prism.js" async></script>
+<script type="text/javascript" src="../../../scripts/symbol-parameters-wrapper_deferred.js" defer></script></head>
+<body>
+    <div class="root">
+<nav class="navigation" id="navigation-wrapper">
+    <div class="navigation--inner">
+        <div class="navigation-title">
+            <button class="menu-toggle" id="menu-toggle" type="button">toggle menu</button>
+            <div class="library-name">
+<a class="library-name--link" href="../../../index.html">
+                            Web5 SDK Documentation
+                    </a>            </div>
+            <div class="library-version">0.0.0
+            </div>
+        </div>
+        <div class="filter-section" id="filter-section">
+                <button class="platform-tag platform-selector jvm-like" data-active="" data-filter=":crypto:dokkaHtmlPartial/main">jvm</button>
+        </div>
+    </div>
+    <div class="navigation-controls">
+        <button class="navigation-controls--btn navigation-controls--theme" id="theme-toggle-button" type="button">switch theme</button>
+        <div class="navigation-controls--btn navigation-controls--search" id="searchBar" role="button">search in API</div>
+    </div>
+</nav>
+        <div id="container">
+            <div class="sidebar" id="leftColumn">
+                <div class="sidebar--inner" id="sideMenu"></div>
+            </div>
+            <div id="main">
+<div class="main-content" data-page-type="classlike" id="content" pageids="crypto::web5.sdk.crypto/KeyGenerator///PointingToDeclaration//-688304473">
+  <div class="breadcrumbs"><a href="../../index.html">crypto</a><span class="delimiter">/</span><a href="../index.html">web5.sdk.crypto</a><span class="delimiter">/</span><span class="current">KeyGenerator</span></div>
+  <div class="cover ">
+    <h1 class="cover"><span>Key</span><wbr><span><span>Generator</span></span></h1>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":crypto:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">interface </span><a href="index.html">KeyGenerator</a><span class="clearfix"><span class="floating-right">(<a href="https://github.com/TBD54566975/web5-sdk-kotlin/tree/main/crypto/src/main/kotlin/web5/sdk/crypto/KeyGenerator.kt#L65">source</a>)</span></span></div><p class="paragraph">The <code class="lang-kotlin">KeyGenerator</code> interface provides a blueprint for implementing cryptographic key generation and conversion functionalities for various cryptographic algorithms and key types.</p><p class="paragraph">Cryptographic keys play a pivotal role in securing communication and data. This interface standardizes the key management operations including key generation, format conversion, and key derivation, ensuring that implementers adhere to a consistent API. In the realm of cryptographic applications, <code class="lang-kotlin">KeyGenerator</code> enables developers to instantiate key pairs, convert keys between various formats, and derive public keys from private ones, while abstracting the specifics of the cryptographic algorithm and key type in use.</p><p class="paragraph">Implementers are expected to provide concrete implementations for various key management activities for specified algorithms (e.g., RSA, EC) and key types (symmetric/asymmetric), and to handle potential exceptions, especially in scenarios such as deriving public keys in symmetric key contexts.</p><h3 class=""> Example Usage:</h3><div class="sample-container"><pre><code class="block lang-kotlin" theme="idea">val keyGenerator: KeyGenerator = ...<br>val privateKey: JWK = keyGenerator.generatePrivateKey()<br>val publicKey: JWK = keyGenerator.getPublicKey(privateKey)<br>val privateKeyBytes: ByteArray = keyGenerator.privateKeyToBytes(privateKey)<br>val restoredPrivateKey: JWK = keyGenerator.bytesToPrivateKey(privateKeyBytes)</code></pre><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><h3 class=""> Note:</h3><p class="paragraph">For symmetric key generators, certain methods like <code class="lang-kotlin">getPublicKey</code> or <code class="lang-kotlin">publicKeyToBytes</code> may not be applicable and should throw an <code class="lang-kotlin">UnsupportedOperationException</code>.</p><h4 class="">Inheritors</h4><div class="table"><div class="table-row" data-filterable-current=":crypto:dokkaHtmlPartial/main" data-filterable-set=":crypto:dokkaHtmlPartial/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="../-ed25519/index.html">Ed25519</a></div></span></div><div></div></div></div><div class="table-row" data-filterable-current=":crypto:dokkaHtmlPartial/main" data-filterable-set=":crypto:dokkaHtmlPartial/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="../-secp256k1/index.html">Secp256k1</a></div></span></div><div></div></div></div></div></div></div>
+  </div>
+  <div class="tabbedcontent">
+    <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="CONSTRUCTOR,TYPE,PROPERTY,FUNCTION">Members</button></div>
+    <div class="tabs-section-body">
+      <div data-togglable="PROPERTY">
+        <h2 class="">Properties</h2>
+        <div class="table"><a data-name="1588698204%2FProperties%2F-688304473" anchor-label="algorithm" id="1588698204%2FProperties%2F-688304473" data-filterable-set=":crypto:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":crypto:dokkaHtmlPartial/main" data-filterable-set=":crypto:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="algorithm.html"><span><span>algorithm</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1588698204%2FProperties%2F-688304473"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":crypto:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword"></span><span class="token keyword">val </span><a href="algorithm.html">algorithm</a><span class="token operator">: </span><span data-unresolved-link="com.nimbusds.jose/Algorithm///PointingToDeclaration/">Algorithm</span></div><div class="brief "><p class="paragraph">Indicates the algorithm intended to be used with the key.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1628774062%2FProperties%2F-688304473" anchor-label="keyType" id="-1628774062%2FProperties%2F-688304473" data-filterable-set=":crypto:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":crypto:dokkaHtmlPartial/main" data-filterable-set=":crypto:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="key-type.html"><span>key</span><wbr><span><span>Type</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1628774062%2FProperties%2F-688304473"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":crypto:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword"></span><span class="token keyword">val </span><a href="key-type.html">keyType</a><span class="token operator">: </span><span data-unresolved-link="com.nimbusds.jose.jwk/KeyType///PointingToDeclaration/">KeyType</span></div><div class="brief "><p class="paragraph">Indicates the cryptographic algorithm family used with the key.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div data-togglable="FUNCTION">
+        <h2 class="">Functions</h2>
+        <div class="table"><a data-name="84732293%2FFunctions%2F-688304473" anchor-label="bytesToPrivateKey" id="84732293%2FFunctions%2F-688304473" data-filterable-set=":crypto:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":crypto:dokkaHtmlPartial/main" data-filterable-set=":crypto:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="bytes-to-private-key.html"><span>bytes</span><wbr><span>To</span><wbr><span>Private</span><wbr><span><span>Key</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="84732293%2FFunctions%2F-688304473"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":crypto:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="bytes-to-private-key.html"><span class="token function">bytesToPrivateKey</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">privateKeyBytes<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-byte-array/index.html">ByteArray</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="com.nimbusds.jose.jwk/JWK///PointingToDeclaration/">JWK</span></div><div class="brief "><p class="paragraph">Converts a private key as bytes into a JWK.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1024041051%2FFunctions%2F-688304473" anchor-label="bytesToPublicKey" id="1024041051%2FFunctions%2F-688304473" data-filterable-set=":crypto:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":crypto:dokkaHtmlPartial/main" data-filterable-set=":crypto:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="bytes-to-public-key.html"><span>bytes</span><wbr><span>To</span><wbr><span>Public</span><wbr><span><span>Key</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1024041051%2FFunctions%2F-688304473"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":crypto:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="bytes-to-public-key.html"><span class="token function">bytesToPublicKey</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">publicKeyBytes<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-byte-array/index.html">ByteArray</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="com.nimbusds.jose.jwk/JWK///PointingToDeclaration/">JWK</span></div><div class="brief "><p class="paragraph">Converts a public key as bytes into a JWK. Applicable for asymmetric Key Generators only. Implementers of symmetric key generators should throw an UnsupportedOperation Exception</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-532877344%2FFunctions%2F-688304473" anchor-label="generatePrivateKey" id="-532877344%2FFunctions%2F-688304473" data-filterable-set=":crypto:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":crypto:dokkaHtmlPartial/main" data-filterable-set=":crypto:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="generate-private-key.html"><span>generate</span><wbr><span>Private</span><wbr><span><span>Key</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-532877344%2FFunctions%2F-688304473"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":crypto:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="generate-private-key.html"><span class="token function">generatePrivateKey</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">options<span class="token operator">: </span><a href="../-key-gen-options/index.html">KeyGenOptions</a><span class="token operator">?</span><span class="token operator"> = </span>null</span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="com.nimbusds.jose.jwk/JWK///PointingToDeclaration/">JWK</span></div><div class="brief "><p class="paragraph">Generates a private key.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-204527368%2FFunctions%2F-688304473" anchor-label="getPublicKey" id="-204527368%2FFunctions%2F-688304473" data-filterable-set=":crypto:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":crypto:dokkaHtmlPartial/main" data-filterable-set=":crypto:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-public-key.html"><span>get</span><wbr><span>Public</span><wbr><span><span>Key</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-204527368%2FFunctions%2F-688304473"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":crypto:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="get-public-key.html"><span class="token function">getPublicKey</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">privateKey<span class="token operator">: </span><span data-unresolved-link="com.nimbusds.jose.jwk/JWK///PointingToDeclaration/">JWK</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="com.nimbusds.jose.jwk/JWK///PointingToDeclaration/">JWK</span></div><div class="brief "><p class="paragraph">Derives a public key from the private key provided. Applicable for asymmetric Key Generators only. Implementers of symmetric key generators should throw an UnsupportedOperation Exception</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1385467664%2FFunctions%2F-688304473" anchor-label="privateKeyToBytes" id="1385467664%2FFunctions%2F-688304473" data-filterable-set=":crypto:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":crypto:dokkaHtmlPartial/main" data-filterable-set=":crypto:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="private-key-to-bytes.html"><span>private</span><wbr><span>Key</span><wbr><span>To</span><wbr><span><span>Bytes</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1385467664%2FFunctions%2F-688304473"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":crypto:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="private-key-to-bytes.html"><span class="token function">privateKeyToBytes</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">privateKey<span class="token operator">: </span><span data-unresolved-link="com.nimbusds.jose.jwk/JWK///PointingToDeclaration/">JWK</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-byte-array/index.html">ByteArray</a></div><div class="brief "><p class="paragraph">Converts a private key to bytes.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1206264430%2FFunctions%2F-688304473" anchor-label="publicKeyToBytes" id="-1206264430%2FFunctions%2F-688304473" data-filterable-set=":crypto:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":crypto:dokkaHtmlPartial/main" data-filterable-set=":crypto:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="public-key-to-bytes.html"><span>public</span><wbr><span>Key</span><wbr><span>To</span><wbr><span><span>Bytes</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1206264430%2FFunctions%2F-688304473"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":crypto:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="public-key-to-bytes.html"><span class="token function">publicKeyToBytes</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">publicKey<span class="token operator">: </span><span data-unresolved-link="com.nimbusds.jose.jwk/JWK///PointingToDeclaration/">JWK</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-byte-array/index.html">ByteArray</a></div><div class="brief "><p class="paragraph">Converts a public key to bytes. Applicable for asymmetric Key Generators only. Implementers of symmetric key generators should throw an UnsupportedOperation Exception</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      <div class="footer">
+        <span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2023 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span>
+      </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+
