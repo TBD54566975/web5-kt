@@ -18,7 +18,6 @@ import web5.sdk.crypto.Secp256k1.privMultiCodec
 import web5.sdk.crypto.Secp256k1.pubMulticodec
 import java.math.BigInteger
 
-
 /**
  * A cryptographic object responsible for key generation, signature creation, and signature verification
  * utilizing the SECP256K1 elliptic curve, widely used for Bitcoin and Ethereum transactions.
@@ -56,10 +55,10 @@ public object Secp256k1 : KeyGenerator, Signer {
   override val keyType: KeyType = KeyType.EC
 
   /** [reference](https://github.com/multiformats/multicodec/blob/master/table.csv#L92). */
-  public val pubMulticodec: Int = 0xe7
+  public const val pubMulticodec: Int = 0xe7
 
   /** [reference](https://github.com/multiformats/multicodec/blob/master/table.csv#L169). */
-  public val privMultiCodec: Int = 0x1301
+  public const val privMultiCodec: Int = 0x1301
 
   /**
    * Generates a private key using the SECP256K1 curve and ES256K algorithm.
@@ -122,6 +121,34 @@ public object Secp256k1 : KeyGenerator, Signer {
     TODO("Not yet implemented")
   }
 
+  /**
+   * Validates the provided [JWK] (JSON Web Key) to ensure it conforms to the expected key type and format.
+   *
+   * This function checks the following:
+   * - The key must be an instance of [OctetKeyPair].
+   * - The key type (`kty`) must be [KeyType.EC] (Elliptic Curve).
+   *
+   * If any of these checks fail, this function throws an [IllegalArgumentException] with
+   * a descriptive error message.
+   *
+   * ### Usage Example:
+   * ```
+   * val jwk: JWK = //...obtain or generate a JWK
+   * try {
+   *     Secp256k1.validateKey(jwk)
+   *     // Key is valid, proceed with further operations...
+   * } catch (e: IllegalArgumentException) {
+   *     // Handle invalid key...
+   * }
+   * ```
+   *
+   * ### Important:
+   * Ensure to call this function before using a [JWK] in cryptographic operations
+   * to safeguard against invalid key usage and potential vulnerabilities.
+   *
+   * @param key The [JWK] to validate.
+   * @throws IllegalArgumentException if the key is not of type [OctetKeyPair] or if the key type is not [KeyType.EC].
+   */
   public fun validateKey(key: JWK) {
     require(key is OctetKeyPair) { "private key must be an Octet Key Pair (kty: OKP)" }
     require(key.keyType == keyType) { "private key key type must be OKP" }

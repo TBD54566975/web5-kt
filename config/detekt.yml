@@ -17,8 +17,6 @@ comments:
   EndOfSentenceFormat:
     active: true
     endOfSentenceFormat: '([.?!][ \t\n\r\f<])|([.?!:]$)'
-  CommentOverPrivateProperty:
-    active: true
   UndocumentedPublicClass:
     active: true
     excludes: [ '**/test/**' ]

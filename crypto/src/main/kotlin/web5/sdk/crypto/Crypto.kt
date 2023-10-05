@@ -86,6 +86,12 @@ public object Crypto {
     return keyGenerator.generatePrivateKey(options)
   }
 
+  /**
+   * Computes a public key from the given private key, utilizing relevant [KeyGenerator].
+   *
+   * @param privateKey The JWK private key used to compute the public key.
+   * @return The computed public key as a JWK object.
+   */
   public fun computePublicKey(privateKey: JWK): JWK {
     val rawCurve = privateKey.toJSONObject()["crv"]
     val curve = rawCurve?.let { Curve.parse(it.toString()) }
@@ -126,6 +132,15 @@ public object Crypto {
     verifier.verify(publicKey, jws)
   }
 
+  /**
+   * Extracts the public key's bytes.
+   *
+   * This function retrieves the public key's byte representation using relevant key generators.
+   *
+   * @param publicKey The JWK public key to extract bytes from.
+   * @return The byte array representation of the public key.
+   * @throws IllegalArgumentException if the algorithm or curve is not supported.
+   */
   public fun getPublicKeyBytes(publicKey: JWK): ByteArray {
     val rawCurve = publicKey.toJSONObject()["crv"]
     val curve = rawCurve?.let { Curve.parse(it.toString()) }
@@ -134,6 +149,17 @@ public object Crypto {
     return generator.publicKeyToBytes(publicKey)
   }
 
+  /**
+   * Retrieves a [KeyGenerator] based on the provided algorithm and curve.
+   *
+   * This function looks up and retrieves the relevant [KeyGenerator] based on the provided
+   * algorithm and curve parameters.
+   *
+   * @param algorithm The cryptographic algorithm to find a key generator for.
+   * @param curve The cryptographic curve to find a key generator for.
+   * @return The corresponding [KeyGenerator].
+   * @throws IllegalArgumentException if the algorithm or curve is not supported.
+   */
   public fun getKeyGenerator(algorithm: Algorithm, curve: Curve? = null): KeyGenerator {
     val keyGenAlgorithm = keyGenerators.getOrElse(algorithm) {
       throw IllegalArgumentException("Algorithm $algorithm not supported")
@@ -146,12 +172,33 @@ public object Crypto {
     return keyGenerator
   }
 
+  /**
+   * Retrieves a [KeyGenerator] based on the provided multicodec identifier.
+   *
+   * This function looks up and retrieves the relevant [KeyGenerator] based on the provided
+   * multicodec identifier.
+   *
+   * @param multiCodec The multicodec identifier to find a key generator for.
+   * @return The corresponding [KeyGenerator].
+   * @throws IllegalArgumentException if the multicodec is not supported.
+   */
   public fun getKeyGenerator(multiCodec: Int): KeyGenerator {
     return keyGeneratorsByMultiCodec.getOrElse(multiCodec) {
       throw IllegalArgumentException("multicodec not supported")
     }
   }
 
+  /**
+   * Retrieves a [Signer] based on the provided algorithm and curve.
+   *
+   * This function looks up and retrieves the relevant [Signer] based on the provided
+   * algorithm and curve parameters.
+   *
+   * @param algorithm The cryptographic algorithm to find a signer for.
+   * @param curve The cryptographic curve to find a signer for.
+   * @return The corresponding [Signer].
+   * @throws IllegalArgumentException if the algorithm or curve is not supported.
+   */
   public fun getSigner(algorithm: Algorithm, curve: Curve? = null): Signer {
     val signerAlgorithm = signers.getOrElse(algorithm) {
       throw IllegalArgumentException("Algorithm $algorithm not supported")

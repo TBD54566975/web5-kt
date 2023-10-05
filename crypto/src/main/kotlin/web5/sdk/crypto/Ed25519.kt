@@ -40,8 +40,8 @@ public object Ed25519 : KeyGenerator, Signer {
   override val algorithm: Algorithm = JWSAlgorithm.EdDSA
   override val keyType: KeyType = KeyType.OKP
 
-  public val pubMulticodec: Int = 0xed
-  public val privMultiCodec: Int = 0x1300
+  public const val pubMulticodec: Int = 0xed
+  public const val privMultiCodec: Int = 0x1300
 
   /**
    * Generates a private key utilizing the Ed25519 algorithm.
@@ -128,6 +128,34 @@ public object Ed25519 : KeyGenerator, Signer {
     parsedJws.verify(verifier)
   }
 
+  /**
+   * Validates the provided [JWK] (JSON Web Key) to ensure it conforms to the expected key type and format.
+   *
+   * This function checks the following:
+   * - The key must be an instance of [OctetKeyPair].
+   * - The key type (`kty`) must be [KeyType.OKP] (Octet Key Pair).
+   *
+   * If any of these checks fail, this function throws an [IllegalArgumentException] with
+   * a descriptive error message.
+   *
+   * ### Usage Example:
+   * ```
+   * val jwk: JWK = //...obtain or generate a JWK
+   * try {
+   *     Secp256k1.validateKey(jwk)
+   *     // Key is valid, proceed with further operations...
+   * } catch (e: IllegalArgumentException) {
+   *     // Handle invalid key...
+   * }
+   * ```
+   *
+   * ### Important:
+   * Ensure to call this function before using a [JWK] in cryptographic operations
+   * to safeguard against invalid key usage and potential vulnerabilities.
+   *
+   * @param key The [JWK] to validate.
+   * @throws IllegalArgumentException if the key is not of type [OctetKeyPair] or if the key type is not [KeyType.EC].
+   */
   public fun validateKey(key: JWK) {
     require(key is OctetKeyPair) { "private key must be an Octet Key Pair (kty: OKP)" }
     require(key.keyType == keyType) { "private key key type must be OKP" }
