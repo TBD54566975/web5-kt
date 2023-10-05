@@ -15,6 +15,8 @@ dependencies {
   implementation("org.bouncycastle:bcprov-jdk15on:1.70")
   implementation("org.bouncycastle:bcpkix-jdk15on:1.70")
   implementation(project(":common"))
+
+  implementation("com.amazonaws:aws-java-sdk-kms:1.12.538")
 }
 
 tasks.test {

@@ -1,7 +1,7 @@
 package web5.sdk.crypto
 
 import com.nimbusds.jose.Algorithm
-import com.nimbusds.jose.Payload
+import com.nimbusds.jose.JWSObject
 import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.JWK
 
@@ -20,7 +20,7 @@ public class InMemoryKeyManager : KeyManager {
     return Crypto.computePublicKey(privateKey)
   }
 
-  override fun sign(keyAlias: String, payload: Payload) {
+  override fun sign(keyAlias: String, unsignedJWS: JWSObject): String {
     TODO("Not yet implemented")
   }
 }
