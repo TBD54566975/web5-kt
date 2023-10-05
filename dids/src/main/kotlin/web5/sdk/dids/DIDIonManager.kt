@@ -1,4 +1,4 @@
-package web5.dids.web5.sdk.dids
+package web5.sdk.dids
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.nimbusds.jose.JWSAlgorithm
@@ -39,11 +39,6 @@ import web5.dids.ion.model.SidetreeCreateOperation
 import web5.dids.ion.model.toJWK
 import web5.dids.ion.model.toJsonWebKey
 import web5.sdk.crypto.KeyManager
-import web5.sdk.dids.CreateDidOptions
-import web5.sdk.dids.CreationMetadata
-import web5.sdk.dids.Did
-import web5.sdk.dids.DidMethod
-import web5.sdk.dids.DidResolutionResult
 
 private const val operationsPath = "/operations"
 private const val identifiersPath = "/identifiers"
@@ -52,14 +47,10 @@ private const val identifiersPath = "/identifiers"
  * Configuration for the DIDIonManager.
  *
  * @property ionHost The ION host URL.
- * @property updatePublicJsonWebKey The update public JSON Web Key. When absent, a new one will be generated.
- * @property recoveryJsonWebKey The recovery JSON Web Key. When absent, a new one will be generated.
  * @property engine The engine to use. When absent, a new one will be created from the [CIO] factory.
  */
 public class DIDIonConfiguration internal constructor(
   public var ionHost: String = "https://ion.tbddev.org",
-  public var updatePublicJsonWebKey: JsonWebKey? = null,
-  public var recoveryJsonWebKey: JsonWebKey? = null,
   public var engine: HttpClientEngine? = null,
 )
 
@@ -79,7 +70,7 @@ private class DIDIonManagerImpl(configuration: DIDIonConfiguration) : DIDIonMana
  * Base class for managing DIDIon operations. Uses the given [configuration].
  */
 public sealed class DIDIonManager(
-  public val configuration: DIDIonConfiguration
+  private val configuration: DIDIonConfiguration
 ) : DidMethod<CreateDidIonOptions> {
 
   @OptIn(ExperimentalSerializationApi::class)
@@ -185,11 +176,11 @@ public sealed class DIDIonManager(
 
   private fun createOperation(keyManager: KeyManager, options: CreateDidIonOptions?)
     : Pair<SidetreeCreateOperation, KeyAliases> {
-    val updatePublicJWK: JWK = if (configuration.updatePublicJsonWebKey == null) {
+    val updatePublicJWK: JWK = if (options?.updatePublicJsonWebKey == null) {
       val alias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K, Curve.SECP256K1)
       keyManager.getPublicKey(alias)
     } else {
-      configuration.updatePublicJsonWebKey!!.toJWK()
+      options.updatePublicJsonWebKey!!.toJWK()
     }
     val publicKeyCommitment: String = publicKeyCommitment(updatePublicJWK)
 
@@ -211,11 +202,11 @@ public sealed class DIDIonManager(
       updateCommitment = publicKeyCommitment
     )
 
-    val recoveryPublicJWK = if (configuration.recoveryJsonWebKey == null) {
+    val recoveryPublicJWK = if (options?.recoveryJsonWebKey == null) {
       val alias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K, Curve.SECP256K1)
       keyManager.getPublicKey(alias)
     } else {
-      configuration.recoveryJsonWebKey!!.toJWK()
+      options.recoveryJsonWebKey!!.toJWK()
     }
     val recoveryCommitment = publicKeyCommitment(recoveryPublicJWK)
 
@@ -283,9 +274,13 @@ public data class KeyAliases(
  * Options available when creating an ion did.
  *
  * @param verificationPublicKey When provided, will be used as the verification key in the DID document.
+ * @param updatePublicJsonWebKey When provided, will be used to create the update key commitment.
+ * @param recoveryJsonWebKey When provided, will be used to create the recovery key commitment.
  */
 public class CreateDidIonOptions(
-  public val verificationPublicKey: PublicKey? = null) : CreateDidOptions
+  public val verificationPublicKey: PublicKey? = null,
+  public var updatePublicJsonWebKey: JsonWebKey? = null,
+  public var recoveryJsonWebKey: JsonWebKey? = null) : CreateDidOptions
 
 /**
  * Metadata related to the creation of a DID (Decentralized Identifier) on the Sidetree protocol.

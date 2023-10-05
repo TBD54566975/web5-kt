@@ -1,6 +1,5 @@
 package web5.sdk.dids
 
-import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.JWK
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
@@ -17,8 +16,6 @@ import web5.dids.ion.model.PublicKey
 import web5.dids.ion.model.PublicKeyPurpose
 import web5.dids.ion.model.SidetreeCreateOperation
 import web5.dids.ion.model.toJsonWebKey
-import web5.dids.web5.sdk.dids.CreateDidIonOptions
-import web5.dids.web5.sdk.dids.DIDIonManager
 import web5.sdk.crypto.InMemoryKeyManager
 import java.io.File
 import kotlin.test.Ignore
@@ -41,21 +38,21 @@ class DIDIonTest {
     val verificationKey = readKey("src/test/resources/verification_jwk.json")
     val updateKey = readKey("src/test/resources/update_jwk.json")
     val recoveryKey = readKey("src/test/resources/recovery_jwk.json")
-    val c = DIDIonManager {
+    val manager = DIDIonManager {
       ionHost = "madeuphost"
       engine = mockEngine()
-      updatePublicJsonWebKey = updateKey.toJsonWebKey()
-      recoveryJsonWebKey = recoveryKey.toJsonWebKey()
     }
     val opts = CreateDidIonOptions(
       verificationPublicKey = PublicKey(
         id = verificationKey.keyID,
-        type = Curve.SECP256K1.name,
+        type = "JsonWebKey2020",
         publicKeyJWK = verificationKey.toJsonWebKey(),
         purposes = listOf(PublicKeyPurpose.AUTHENTICATION),
-      )
+      ),
+      updatePublicJsonWebKey = updateKey.toJsonWebKey(),
+      recoveryJsonWebKey = recoveryKey.toJsonWebKey()
     )
-    val (did, metadata) = c.create(keyManager, opts)
+    val (did, metadata) = manager.create(keyManager, opts)
     assertContains(did.uri, "did:ion:")
     assertContains(metadata.longFormDID, metadata.shortFormDID)
   }
