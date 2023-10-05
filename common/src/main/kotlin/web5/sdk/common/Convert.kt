@@ -12,9 +12,9 @@ import java.util.Base64
 public val B64URL_ENCODER: Base64.Encoder = Base64.getUrlEncoder()
 
 /**
- * Enumeration to define the supported string kinds for encoding and decoding operations.
+ * Enumeration of supported encoding formats.
  */
-public enum class StringKind {
+public enum class EncodingFormat {
   Base64Url,
   Base58Btc
 }
@@ -49,7 +49,7 @@ public val B64URL_DECODER: Base64.Decoder = Base64.getUrlDecoder()
  *
  * // Example 2: Convert a Base64Url encoded string to a ByteArray
  * val base64Str = "AQID"
- * val originalByteArray = Convert(base64Str, StringKind.Base64Url).toByteArray()
+ * val originalByteArray = Convert(base64Str, EncodingFormat.Base64Url).toByteArray()
  *
  * // Example 3: Convert a ByteArray to a Base58Btc encoded string
  * val byteArray = byteArrayOf(1, 2, 3)
@@ -58,11 +58,11 @@ public val B64URL_DECODER: Base64.Decoder = Base64.getUrlDecoder()
  *
  * // Example 4: Convert a Base64Url encoded string to a regular string
  * val base64UrlStr = "SGVsbG8gd29ybGQ="
- * val decodedStr = Convert(base64UrlStr, StringKind.Base64Url).toStr()
+ * val decodedStr = Convert(base64UrlStr, EncodingFormat.Base64Url).toStr()
  * println(decodedStr)  // Output should be: "Hello world"
  * ```
  */
-public class Convert<T>(private val value: T, private val kind: StringKind? = null) {
+public class Convert<T>(private val value: T, private val kind: EncodingFormat? = null) {
   /**
    * Converts the [value] to a Base64Url-encoded string.
    *
@@ -78,7 +78,7 @@ public class Convert<T>(private val value: T, private val kind: StringKind? = nu
       is ByteArray -> encoder.encodeToString(this.value)
       is String -> {
         return when (this.kind) {
-          StringKind.Base64Url -> this.value
+          EncodingFormat.Base64Url -> this.value
           null -> encoder.encodeToString(this.toByteArray())
           else -> handleNotSupported()
         }
@@ -100,8 +100,8 @@ public class Convert<T>(private val value: T, private val kind: StringKind? = nu
       is ByteArray -> Base58Btc.encode(this.value)
       is String -> {
         return when (this.kind) {
-          StringKind.Base58Btc -> this.value
-          StringKind.Base64Url -> Base58Btc.encode(B64URL_DECODER.decode(this.value))
+          EncodingFormat.Base58Btc -> this.value
+          EncodingFormat.Base64Url -> Base58Btc.encode(B64URL_DECODER.decode(this.value))
           null -> Base58Btc.encode(this.toByteArray())
         }
       }
@@ -122,7 +122,7 @@ public class Convert<T>(private val value: T, private val kind: StringKind? = nu
       is ByteArray -> String(this.value)
       is String -> {
         return when (this.kind) {
-          StringKind.Base64Url -> String(B64URL_DECODER.decode(this.value))
+          EncodingFormat.Base64Url -> String(B64URL_DECODER.decode(this.value))
           null -> this.value
           else -> handleNotSupported()
         }
@@ -144,8 +144,8 @@ public class Convert<T>(private val value: T, private val kind: StringKind? = nu
       is ByteArray -> this.value
       is String -> {
         return when (this.kind) {
-          StringKind.Base58Btc -> Base58Btc.decode(this.value)
-          StringKind.Base64Url -> B64URL_DECODER.decode(this.value)
+          EncodingFormat.Base58Btc -> Base58Btc.decode(this.value)
+          EncodingFormat.Base64Url -> B64URL_DECODER.decode(this.value)
           null -> this.value.toByteArray()
         }
       }
