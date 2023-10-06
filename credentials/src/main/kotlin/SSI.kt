@@ -566,48 +566,71 @@ public object VerifiablePresentation {
     val descriptorMapList = mutableListOf<DescriptorMap>()
 
     for (inputDescriptor: InputDescriptorV2 in presentationDefinition.inputDescriptors) {
-      if (inputDescriptor.constraints.fields!!.isNotEmpty()) {
-        for (field: FieldV2 in inputDescriptor.constraints.fields) {
-          if (field.optional == true) continue // Skip optional fields
-
-          var fieldMatch = false
-          for ((vcIndex, vcJwt) in vcJwts.withIndex()) {
-            val vc: VerifiableCredentialType =
-              FromJwtConverter.fromJwtVerifiableCredential(JwtVerifiableCredential.fromCompactSerialization(vcJwt))
-
-            for (path: String in field.path) {
-              val jsonPathResult = evaluateJsonPath(vc, path)
-              if (jsonPathResult != null) {
-                if (field.filter != null) {
-                  throw NotImplementedError("Field Filter is not implemented")
-                } else {
-                  fieldMatch = true
-                  descriptorMapList.add(
-                    DescriptorMap(
-                      id = inputDescriptor.id,
-                      path = "$.verifiableCredential[$vcIndex]",
-                      format = "jwt_vc",
-                      // TODO: Support pathNested
-                    )
-                  )
-                  break
-                }
-              }
-            }
-            if (fieldMatch) break // Exit the loop once a match is found for the field
-          }
-
-          if (!fieldMatch) {
-            throw Exception("Required field ${field.id} is not satisfied in InputDescriptor ${inputDescriptor.id}")
-          }
-        }
-      }
+      processInputDescriptor(inputDescriptor, vcJwts, descriptorMapList)
     }
 
     return PresentationSubmission(
       id = UUID.randomUUID().toString(),
       definitionId = presentationDefinition.id,
       descriptorMap = descriptorMapList
+    )
+  }
+
+  private fun processInputDescriptor(
+    inputDescriptor: InputDescriptorV2,
+    vcJwts: List<VcJwt>,
+    descriptorMapList: MutableList<DescriptorMap>
+  ) {
+    if (inputDescriptor.constraints.fields!!.isNotEmpty()) {
+      for (field: FieldV2 in inputDescriptor.constraints.fields) {
+        if (field.optional == true) continue // Skip optional fields
+
+        val fieldMatch = findFieldMatch(field, vcJwts, inputDescriptor, descriptorMapList)
+
+        if (!fieldMatch) {
+          throw Exception("Required field ${field.id} is not satisfied in InputDescriptor ${inputDescriptor.id}")
+        }
+      }
+    }
+  }
+
+  private fun findFieldMatch(
+    field: FieldV2,
+    vcJwts: List<VcJwt>,
+    inputDescriptor: InputDescriptorV2,
+    descriptorMapList: MutableList<DescriptorMap>
+  ): Boolean {
+    for ((vcIndex, vcJwt) in vcJwts.withIndex()) {
+      val vc: VerifiableCredentialType =
+        FromJwtConverter.fromJwtVerifiableCredential(JwtVerifiableCredential.fromCompactSerialization(vcJwt))
+
+      for (path: String in field.path) {
+        val jsonPathResult = evaluateJsonPath(vc, path)
+        if (jsonPathResult != null) {
+          if (field.filter != null) {
+            throw NotImplementedError("Field Filter is not implemented")
+          } else {
+            addToDescriptorMapList(vcIndex, inputDescriptor, descriptorMapList)
+            return true
+          }
+        }
+      }
+    }
+    return false
+  }
+
+  private fun addToDescriptorMapList(
+    vcIndex: Int,
+    inputDescriptor: InputDescriptorV2,
+    descriptorMapList: MutableList<DescriptorMap>
+  ) {
+    descriptorMapList.add(
+      DescriptorMap(
+        id = inputDescriptor.id,
+        path = "$.verifiableCredential[$vcIndex]",
+        format = "jwt_vc"
+        // TODO: Support pathNested
+      )
     )
   }
 }

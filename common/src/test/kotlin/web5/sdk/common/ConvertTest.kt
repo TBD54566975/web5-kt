@@ -1,3 +1,5 @@
+package web5.sdk.common
+
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals

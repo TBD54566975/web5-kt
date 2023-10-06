@@ -17,8 +17,6 @@ comments:
   EndOfSentenceFormat:
     active: true
     endOfSentenceFormat: '([.?!][ \t\n\r\f<])|([.?!:]$)'
-  CommentOverPrivateProperty:
-    active: true
   UndocumentedPublicClass:
     active: true
     excludes: [ '**/test/**' ]
@@ -47,9 +45,11 @@ complexity:
     threshold: 10
     includeStaticDeclarations: false
     includePrivateDeclarations: false
-  ComplexMethod:
+  CyclomaticComplexMethod:
     active: true
     ignoreSingleWhenExpression: true
+  LongParameterList:
+    constructorThreshold: 10
   MethodOverloading:
     active: true
 
@@ -77,7 +77,6 @@ formatting:
   autoCorrect: true
   Indentation:
     indentSize: 2
-    continuationIndentSize: 2
   ParameterListWrapping:
     indentSize: 2
   MaximumLineLength:
@@ -93,6 +92,8 @@ naming:
     variablePattern: '[a-z][A-Za-z0-9]*'
     privateVariablePattern: '(_)?[a-z][A-Za-z0-9]*'
     excludeClassPattern: '$^'
+  PackageNaming:
+    active: false
 
 performance:
   ArrayPrimitive:
@@ -106,10 +107,6 @@ potential-bugs:
   IteratorHasNextCallsNextMethod:
     active: true
   IteratorNotThrowingNoSuchElementException:
-    active: true
-  MissingWhenCase:
-    active: true
-  RedundantElseInWhen:
     active: true
   UnsafeCallOnNullableType:
     active: true
@@ -130,15 +127,10 @@ style:
     active: true
   ForbiddenComment:
     active: false
-    values: [ 'TODO:', 'FIXME:', 'STOPSHIP:', '@author' ]
   FunctionOnlyReturningConstant:
     active: true
   LoopWithTooManyJumpStatements:
     active: true
-  LibraryCodeMustSpecifyReturnType:
-    active: true
-    excludes: [ '**/*.kt' ]
-    includes: [ '**/detekt-api/src/main/**/api/*.kt' ]
   MaxLineLength:
     excludes: [ '**/test/**', '**/*.Test.kt', '**/*.Spec.kt' ]
     excludeCommentStatements: true
