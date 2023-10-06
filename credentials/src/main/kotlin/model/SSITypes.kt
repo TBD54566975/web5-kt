@@ -19,6 +19,17 @@ public enum class StatusPurpose {
 }
 
 /**
+ * The JSON property key for an encoded list.
+ */
+public const val ENCODED_LIST: String = "encodedList"
+
+/**
+ * The JSON property key for a status purpose.
+ */
+public const val STATUS_PURPOSE: String = "statusPurpose"
+
+
+/**
  * Represents the status of a credential.
  */
 public typealias CredentialStatus = com.danubetech.verifiablecredentials.credentialstatus.CredentialStatus

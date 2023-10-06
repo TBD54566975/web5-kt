@@ -23,10 +23,12 @@ import uniresolver.w3c.DIDResolver
 import web5.credentials.model.CredentialStatus
 import web5.credentials.model.CredentialSubject
 import web5.credentials.model.DescriptorMap
+import web5.credentials.model.ENCODED_LIST
 import web5.credentials.model.FieldV2
 import web5.credentials.model.InputDescriptorV2
 import web5.credentials.model.PresentationDefinitionV2
 import web5.credentials.model.PresentationSubmission
+import web5.credentials.model.STATUS_PURPOSE
 import web5.credentials.model.StatusList2021Entry
 import web5.credentials.model.StatusPurpose
 import web5.credentials.model.VerifiableCredentialType
@@ -275,7 +277,7 @@ public object VerifiableCredential {
     val statusListIndexes = prepareCredentialsForStatusList(statusPurpose, issuedCredentials)
     val bitString = bitstringGeneration(statusListIndexes)
 
-    val claims = mapOf("statusPurpose" to statusPurpose.toString().lowercase(), "encodedList" to bitString)
+    val claims = mapOf(STATUS_PURPOSE to statusPurpose.toString().lowercase(), ENCODED_LIST to bitString)
     val credSubject = CredentialSubject.builder()
       .id(URI.create(statusListCredentialId))
       .type("StatusList2021")
@@ -307,13 +309,13 @@ public object VerifiableCredential {
       StatusList2021Entry.fromJsonObject(credentialToValidate.credentialStatus.jsonObject)
 
     val statusLisCredStatusPurpose: String? =
-      statusListCredential.credentialSubject.jsonObject["statusPurpose"] as? String?
+      statusListCredential.credentialSubject.jsonObject[STATUS_PURPOSE] as? String?
 
     requireNotNull(statusListEntryValue.statusPurpose)
     requireNotNull(statusLisCredStatusPurpose)
     require(statusListEntryValue.statusPurpose == statusLisCredStatusPurpose)
 
-    val compressedBitstring: String? = statusListCredential.credentialSubject.jsonObject["encodedList"] as? String?
+    val compressedBitstring: String? = statusListCredential.credentialSubject.jsonObject[ENCODED_LIST] as? String?
 
     requireNotNull(compressedBitstring)
     require(compressedBitstring.isNotEmpty())
