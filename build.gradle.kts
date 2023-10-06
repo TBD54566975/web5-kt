@@ -2,6 +2,11 @@ import io.gitlab.arturbosch.detekt.Detekt
 import org.jetbrains.dokka.DokkaConfiguration
 import org.jetbrains.dokka.gradle.DokkaTaskPartial
 import java.net.URL
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
+tasks.withType<KotlinCompile>().forEach {
+  it.kotlinOptions.jvmTarget = "11"
+}
 
 plugins {
   id("org.jetbrains.kotlin.jvm") version "1.9.0"
@@ -36,7 +41,7 @@ subprojects {
   }
 
   tasks.withType<Detekt>().configureEach {
-    jvmTarget = "1.8"
+    jvmTarget = "11"
   }
   dependencies {
     detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.23.1")
