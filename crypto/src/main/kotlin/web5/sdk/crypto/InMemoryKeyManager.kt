@@ -20,7 +20,7 @@ public class InMemoryKeyManager : KeyManager {
     return Crypto.computePublicKey(privateKey)
   }
 
-  override fun sign(keyAlias: String, unsignedJWS: JWSObject): String {
+  override fun sign(keyAlias: String, signingInput: ByteArray): ByteArray {
     TODO("Not yet implemented")
   }
 }
