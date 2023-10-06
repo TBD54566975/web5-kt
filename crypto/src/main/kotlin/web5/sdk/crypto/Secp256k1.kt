@@ -2,7 +2,6 @@ package web5.sdk.crypto
 
 import com.nimbusds.jose.Algorithm
 import com.nimbusds.jose.JWSAlgorithm
-import com.nimbusds.jose.Payload
 import com.nimbusds.jose.crypto.bc.BouncyCastleProviderSingleton
 import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.ECKey
@@ -17,6 +16,8 @@ import org.bouncycastle.math.ec.ECPoint
 import web5.sdk.crypto.Secp256k1.privMultiCodec
 import web5.sdk.crypto.Secp256k1.pubMulticodec
 import java.math.BigInteger
+import java.security.Security
+import java.security.Signature
 
 /**
  * A cryptographic object responsible for key generation, signature creation, and signature verification
@@ -44,13 +45,15 @@ import java.math.BigInteger
  * - `sign`: Generates a digital signature.
  * - `verify`: Verifies a digital signature.
  *
- * **Note:** The actual byte conversion and cryptographic functions are marked as `TODO`
- * and need to be implemented as per your requirements.
  *
  * @see KeyGenerator for generating key details.
  * @see Signer for handling signing operations.
  */
 public object Secp256k1 : KeyGenerator, Signer {
+  init {
+    Security.addProvider(BouncyCastleProviderSingleton.getInstance())
+  }
+
   override val algorithm: Algorithm = JWSAlgorithm.ES256K
   override val keyType: KeyType = KeyType.EC
 
@@ -59,6 +62,40 @@ public object Secp256k1 : KeyGenerator, Signer {
 
   /** [reference](https://github.com/multiformats/multicodec/blob/master/table.csv#L169). */
   public const val privMultiCodec: Int = 0x1301
+
+  /**  uncompressed key leading byte. */
+  public const val uncompressedKeyIdentifier: Byte = 0x04
+
+  /** Compressed key leading byte that indicates whether the Y coordinate is even. */
+  public const val compressedKeyEvenYIdentifier: Byte = 0x02
+
+  /** Compressed key leading byte that indicates whether the Y coordinate is odd. */
+  public const val compressedKeyOddYIdentifier: Byte = 0x03
+
+  /**
+   * Size of an uncompressed public key in bytes.
+   *
+   * The uncompressed key is represented with a leading 0x04 byte,
+   * followed by 32 bytes for the X coordinate and 32 bytes for the Y coordinate.
+   * Thus, an uncompressed key is 65 bytes in size.
+   */
+  public const val uncompressedKeySize: Int = 65
+
+  /**
+   * Range that defines the position of the X coordinate in an uncompressed public key byte array.
+   *
+   * The X coordinate is typically found in bytes 1 through 32 (inclusive) in the byte array representation
+   * of an uncompressed public key, assuming the first byte is reserved for the prefix (0x04).
+   */
+  public val publicKeyXRange: IntRange = 1..32
+
+  /**
+   * Range that defines the position of the Y coordinate in an uncompressed public key byte array.
+   *
+   * The Y coordinate is typically found in bytes 33 through 64 (inclusive) in the byte array representation
+   * of an uncompressed public key, following the X coordinate.
+   */
+  public val publicKeyYRange: IntRange = 33..64
 
   /**
    * Generates a private key using the SECP256K1 curve and ES256K algorithm.
@@ -78,7 +115,7 @@ public object Secp256k1 : KeyGenerator, Signer {
       .generate()
   }
 
-  override fun getPublicKey(privateKey: JWK): JWK {
+  override fun computePublicKey(privateKey: JWK): JWK {
     validateKey(privateKey)
 
     return privateKey.toECKey().toPublicJWK()
@@ -91,7 +128,13 @@ public object Secp256k1 : KeyGenerator, Signer {
   }
 
   override fun publicKeyToBytes(publicKey: JWK): ByteArray {
-    TODO("Not yet implemented")
+    validateKey(publicKey)
+
+    val ecKey = publicKey.toECKey()
+    val xBytes = ecKey.x.decode()
+    val yBytes = ecKey.y.decode()
+
+    return byteArrayOf(uncompressedKeyIdentifier) + xBytes + yBytes
   }
 
   override fun bytesToPrivateKey(privateKeyBytes: ByteArray): JWK {
@@ -110,15 +153,34 @@ public object Secp256k1 : KeyGenerator, Signer {
   }
 
   override fun bytesToPublicKey(publicKeyBytes: ByteArray): JWK {
-    TODO("Not yet implemented")
+    require(publicKeyBytes[0] == 0x04.toByte()) { "compressed public keys not supported yet" }
+
+    val xBytes = publicKeyBytes.sliceArray(1..32)
+    val yBytes = publicKeyBytes.sliceArray(33..64)
+
+    return ECKey.Builder(Curve.SECP256K1, Base64URL.encode(xBytes), Base64URL.encode(yBytes))
+      .algorithm(JWSAlgorithm.ES256K)
+      .keyIDFromThumbprint()
+      .keyUse(KeyUse.SIGNATURE)
+      .build()
   }
 
-  override fun sign(privateKey: JWK, payload: Payload, options: SignOptions?): String {
-    TODO("Not yet implemented")
+  override fun sign(privateKey: JWK, payload: ByteArray, options: SignOptions?): ByteArray {
+    val signature = Signature.getInstance("SHA256withECDSA", "BC")
+
+    signature.initSign(privateKey.toECKey().toPrivateKey())
+    signature.update(payload)
+
+    return signature.sign()
   }
 
-  override fun verify(publicKey: JWK, jws: String, options: VerifyOptions?) {
-    TODO("Not yet implemented")
+  override fun verify(publicKey: JWK, signedPayload: ByteArray, signature: ByteArray, options: VerifyOptions?) {
+    val verifier = Signature.getInstance("SHA256withECDSA", "BC")
+
+    verifier.initVerify(publicKey.toECKey().toPublicKey())
+    verifier.update(signedPayload)
+
+    verifier.verify(signature)
   }
 
   /**
@@ -152,6 +214,36 @@ public object Secp256k1 : KeyGenerator, Signer {
   public fun validateKey(key: JWK) {
     require(key is OctetKeyPair) { "private key must be an Octet Key Pair (kty: OKP)" }
     require(key.keyType == keyType) { "private key key type must be OKP" }
+  }
+
+  /**
+   * Compresses a public key represented by its X and Y coordinates concatenated in a single byte array.
+   *
+   * Assumes the input starts with a leading 0x04 byte, which is commonly used to denote an uncompressed public key
+   * in some elliptic curve representations.
+   *
+   * @param publicKeyBytes A byte array representing the public key, expected to be 65 bytes with the first byte being 0x04.
+   *                       The following 32 bytes are for the X coordinate, and the last 32 for the Y coordinate.
+   * @return The compressed public key as a byte array.
+   * @throws IllegalArgumentException if the input byte array is not of expected length or doesn't start with 0x04.
+   */
+  public fun compressPublicKey(publicKeyBytes: ByteArray): ByteArray {
+    require(publicKeyBytes.size == uncompressedKeySize && publicKeyBytes[0] == uncompressedKeyIdentifier) {
+      "Public key must be 65 bytes long and start with 0x04"
+    }
+
+    val xBytes = publicKeyBytes.sliceArray(publicKeyXRange)
+    val yBytes = publicKeyBytes.sliceArray(publicKeyYRange)
+
+    val prefix = if (yBytes.last() % 2 == 0) compressedKeyEvenYIdentifier else compressedKeyOddYIdentifier
+    return byteArrayOf(prefix) + xBytes
+  }
+
+  /**
+   * Inflates a compressed public key.
+   */
+  public fun inflatePublicKey(publicKeyBytes: ByteArray): ByteArray {
+    TODO("implement. needed for did:key")
   }
 
 }

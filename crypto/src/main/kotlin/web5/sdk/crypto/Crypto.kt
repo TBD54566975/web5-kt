@@ -1,13 +1,13 @@
 package web5.sdk.crypto
 
 import com.nimbusds.jose.Algorithm
-import com.nimbusds.jose.JWSAlgorithm
-import com.nimbusds.jose.Payload
 import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.JWK
 import web5.sdk.crypto.Crypto.generatePrivateKey
-import web5.sdk.crypto.Crypto.getPublicKeyBytes
+import web5.sdk.crypto.Crypto.publicKeyToBytes
 import web5.sdk.crypto.Crypto.sign
+
+public typealias CryptoAlgorithm = Pair<Algorithm, Curve?>
 
 /**
  * Cryptography utility object providing key generation, signature creation, and other crypto-related functionalities.
@@ -17,7 +17,7 @@ import web5.sdk.crypto.Crypto.sign
  * It offers convenience methods to:
  * - Generate private keys ([generatePrivateKey])
  * - Create digital signatures ([sign])
- * - Retrieve public key bytes ([getPublicKeyBytes])
+ * - conversion from JWK <-> bytes ([publicKeyToBytes])
  * - Get relevant key generators and signers based on algorithm and curve type.
  *
  * Internally, it utilizes predefined mappings to pair algorithms and curve types with their respective [KeyGenerator]
@@ -38,13 +38,10 @@ import web5.sdk.crypto.Crypto.sign
  * @see Signer for signing functionalities.
  */
 public object Crypto {
-  private val keyGenerators = mapOf<Algorithm, Map<Curve?, KeyGenerator>>(
-    JWSAlgorithm.EdDSA to mapOf(
-      Curve.Ed25519 to Ed25519
-    ),
-    JWSAlgorithm.ES256K to mapOf<Curve?, KeyGenerator>(
-      Curve.SECP256K1 to Secp256k1
-    )
+  private val keyGenerators = mapOf<CryptoAlgorithm, KeyGenerator>(
+    Pair(Secp256k1.algorithm, null) to Secp256k1,
+    Pair(Secp256k1.algorithm, Curve.SECP256K1) to Secp256k1,
+    Pair(Ed25519.algorithm, Curve.Ed25519) to Ed25519
   )
 
   private val keyGeneratorsByMultiCodec = mapOf<Int, KeyGenerator>(
@@ -55,21 +52,15 @@ public object Crypto {
   )
 
   private val multiCodecsByAlgorithm = mapOf(
-    JWSAlgorithm.EdDSA to mapOf(
-      Curve.Ed25519 to Ed25519.pubMulticodec
-    ),
-    JWSAlgorithm.ES256K to mapOf(
-      Curve.SECP256K1 to Secp256k1.pubMulticodec
-    )
+    Pair(Secp256k1.algorithm, null) to Secp256k1.pubMulticodec,
+    Pair(Secp256k1.algorithm, Curve.SECP256K1) to Secp256k1.pubMulticodec,
+    Pair(Ed25519.algorithm, Curve.Ed25519) to Ed25519.pubMulticodec
   )
 
-  private val signers = mapOf<Algorithm, Map<Curve?, Signer>>(
-    JWSAlgorithm.EdDSA to mapOf(
-      Curve.Ed25519 to Ed25519
-    ),
-    JWSAlgorithm.ES256K to mapOf(
-      Curve.SECP256K1 to Secp256k1
-    )
+  private val signers = mapOf<CryptoAlgorithm, Signer>(
+    Pair(Secp256k1.algorithm, null) to Secp256k1,
+    Pair(Secp256k1.algorithm, Curve.SECP256K1) to Secp256k1,
+    Pair(Ed25519.algorithm, Curve.Ed25519) to Ed25519
   )
 
   /**
@@ -89,7 +80,7 @@ public object Crypto {
   /**
    * Computes a public key from the given private key, utilizing relevant [KeyGenerator].
    *
-   * @param privateKey The JWK private key used to compute the public key.
+   * @param privateKey The private key used to compute the public key.
    * @return The computed public key as a JWK object.
    */
   public fun computePublicKey(privateKey: JWK): JWK {
@@ -97,18 +88,21 @@ public object Crypto {
     val curve = rawCurve?.let { Curve.parse(it.toString()) }
     val generator = getKeyGenerator(privateKey.algorithm, curve)
 
-    return generator.getPublicKey(privateKey)
+    return generator.computePublicKey(privateKey)
   }
 
   /**
-   * Signs a payload using the specified private key and options.
+   * Signs a payload using a private key.
    *
-   * @param privateKey The JWK private key used for signing.
-   * @param payload The payload to be signed.
-   * @param options Options for the signing process, possibly including additional metadata or specifications.
-   * @throws IllegalArgumentException if the curve or algorithm of the private key is not supported.
+   * This function utilizes the appropriate [Signer] to generate a digital signature
+   * of the provided payload using the provided private key.
+   *
+   * @param privateKey The JWK private key to be used for generating the signature.
+   * @param payload The byte array data to be signed.
+   * @param options Options for the signing operation, may include specific parameters relevant to the algorithm.
+   * @return The digital signature as a byte array.
    */
-  public fun sign(privateKey: JWK, payload: Payload, options: SignOptions) {
+  public fun sign(privateKey: JWK, payload: ByteArray, options: SignOptions) {
     val rawCurve = privateKey.toJSONObject()["crv"]
     val curve = rawCurve?.let { Curve.parse(it.toString()) }
 
@@ -118,32 +112,45 @@ public object Crypto {
   }
 
   /**
-   * Verifies the JSON Web Signature (JWS) using the provided public key.
+   * Verifies a signature against a signed payload using a public key.
    *
-   * @param publicKey The JSON Web Key (JWK) containing the public key used for verification.
-   * @param jws The JSON Web Signature string to verify.
+   * This function utilizes the relevant verifier to ensure the provided signature is
+   * valid for the signed payload using the provided public key.
    *
+   * @param publicKey The JWK public key to be used for verifying the signature.
+   * @param signedPayload The byte array data that was signed.
+   * @param signature The signature that will be verified.
+   * @return A boolean indicating whether the signature is valid (true) or not (false).
    */
-  public fun verify(publicKey: JWK, jws: String) {
-    val rawCurve = publicKey.toJSONObject()["crv"]
-    val curve = rawCurve?.let { Curve.parse(it.toString()) }
+  public fun verify(publicKey: JWK, signedPayload: ByteArray, signature: ByteArray) {
+    val curve = getJwkCurve(publicKey)
+    val verifier = getVerifier(publicKey.algorithm, curve)
 
-    val verifier = getSigner(publicKey.algorithm, curve)
-    verifier.verify(publicKey, jws)
+    verifier.verify(publicKey, signedPayload, signature)
   }
 
+
   /**
-   * Extracts the public key's bytes.
+   * Converts a [JWK] public key into its byte array representation.
    *
-   * This function retrieves the public key's byte representation using relevant key generators.
+   * @param publicKey A [JWK] object representing the public key to be converted.
+   * @return A [ByteArray] representing the byte-level information of the provided public key.
    *
-   * @param publicKey The JWK public key to extract bytes from.
-   * @return The byte array representation of the public key.
-   * @throws IllegalArgumentException if the algorithm or curve is not supported.
+   * ### Example
+   * ```kotlin
+   * val publicKeyBytes = publicKeyToBytes(myJwkPublicKey)
+   * ```
+   *
+   * ### Note
+   * This function assumes that the provided [JWK] contains valid curve and algorithm
+   * information. Malformed or invalid [JWK] objects may result in exceptions or
+   * unexpected behavior.
+   *
+   * ### Throws
+   * - [IllegalArgumentException] If the algorithm or curve in [JWK] is not supported or invalid.
    */
-  public fun getPublicKeyBytes(publicKey: JWK): ByteArray {
-    val rawCurve = publicKey.toJSONObject()["crv"]
-    val curve = rawCurve?.let { Curve.parse(it.toString()) }
+  public fun publicKeyToBytes(publicKey: JWK): ByteArray {
+    val curve = getJwkCurve(publicKey)
     val generator = getKeyGenerator(publicKey.algorithm, curve)
 
     return generator.publicKeyToBytes(publicKey)
@@ -161,15 +168,9 @@ public object Crypto {
    * @throws IllegalArgumentException if the algorithm or curve is not supported.
    */
   public fun getKeyGenerator(algorithm: Algorithm, curve: Curve? = null): KeyGenerator {
-    val keyGenAlgorithm = keyGenerators.getOrElse(algorithm) {
+    return keyGenerators.getOrElse(Pair(algorithm, curve)) {
       throw IllegalArgumentException("Algorithm $algorithm not supported")
     }
-
-    val keyGenerator = keyGenAlgorithm.getOrElse(curve) {
-      throw IllegalArgumentException("Curve $curve not supported")
-    }
-
-    return keyGenerator
   }
 
   /**
@@ -200,14 +201,60 @@ public object Crypto {
    * @throws IllegalArgumentException if the algorithm or curve is not supported.
    */
   public fun getSigner(algorithm: Algorithm, curve: Curve? = null): Signer {
-    val signerAlgorithm = signers.getOrElse(algorithm) {
+    return signers.getOrElse(Pair(algorithm, curve)) {
       throw IllegalArgumentException("Algorithm $algorithm not supported")
     }
+  }
 
-    val signer = signerAlgorithm.getOrElse(curve) {
-      throw IllegalArgumentException("Curve $curve not supported")
-    }
+  /**
+   * Retrieves a [Signer] to be used for verification based on the provided algorithm and curve.
+   *
+   * This function fetches the appropriate [Signer], which contains the verification
+   * logic for the cryptographic approach determined by the specified algorithm and curve.
+   *
+   * @param algorithm The cryptographic algorithm to find a verifier for.
+   * @param curve The cryptographic curve to find a verifier for.
+   * @return The corresponding [Signer] capable of verification.
+   * @throws IllegalArgumentException if the algorithm or curve is not supported.
+   */
+  public fun getVerifier(algorithm: Algorithm, curve: Curve? = null): Signer {
+    return getVerifier(algorithm, curve)
+  }
 
-    return signer
+  /**
+   * Extracts the cryptographic curve information from a [JWK] object.
+   *
+   * This function parses and returns the curve type used in a JWK.
+   * May return `null` if the curve information is not present or unsupported.
+   *
+   * @param jwk The JWK object from which to extract curve information.
+   * @return The [Curve] used in the JWK, or `null` if the curve is not defined or recognized.
+   */
+  public fun getJwkCurve(jwk: JWK): Curve? {
+    val rawCurve = jwk.toJSONObject()["crv"]
+
+    return rawCurve?.let { Curve.parse(it.toString()) }
+  }
+
+  /**
+   * Retrieves the multicodec identifier associated with a given cryptographic algorithm and curve.
+   *
+   * This function consults a predefined mapping of cryptographic algorithm and curve pairs to their
+   * respective multicodec identifiers, returning the matched identifier.
+   * Multicodec identifiers are useful for encoding the format or type of the key in systems that
+   * leverage multiple cryptographic standards.
+   *
+   * @param algorithm The cryptographic [Algorithm] for which the multicodec is requested.
+   * @param curve The cryptographic [Curve] associated with the algorithm, or null if not applicable.
+   * @return The multicodec identifier as an [Int] if a mapping exists, or null if the algorithm and curve
+   *         combination is not supported or mapped.
+   *
+   * ### Example
+   * ```kotlin
+   * val multicodec = getAlgorithmMultiCodec(JWSAlgorithm.EdDSA, Curve.Ed25519)
+   * ```
+   */
+  public fun getAlgorithmMultiCodec(algorithm: Algorithm, curve: Curve?): Int? {
+    return multiCodecsByAlgorithm[Pair(algorithm, curve)]
   }
 }

@@ -1,6 +1,5 @@
 package web5.sdk.crypto
 
-import com.nimbusds.jose.Payload
 import com.nimbusds.jose.jwk.JWK
 
 /**
@@ -78,14 +77,14 @@ public interface VerifyOptions
  */
 public interface Signer {
   /**
-   * Sign a given payload using a private key and optionally some additional options.
+   * Sign a given payload using a private key.
    *
    * @param privateKey The private key in JWK format to be used for signing.
    * @param payload The payload/data to be signed.
    * @param options Additional options to control the signing process.
    * @return A [String] representing the signature.
    */
-  public fun sign(privateKey: JWK, payload: Payload, options: SignOptions? = null): String
+  public fun sign(privateKey: JWK, payload: ByteArray, options: SignOptions? = null): ByteArray
 
   /**
    * Verify a signature given a public key, a JSON Web Signature (JWS), and optionally some additional verification options.
@@ -99,5 +98,5 @@ public interface Signer {
    * @param options Additional options to control the verification process.
    * @throws SomeExceptionType If verification fails, implementers should throw a specific exception type.
    */
-  public fun verify(publicKey: JWK, jws: String, options: VerifyOptions? = null)
+  public fun verify(publicKey: JWK, signedPayload: ByteArray, signature: ByteArray, options: VerifyOptions? = null)
 }
