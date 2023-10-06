@@ -35,19 +35,14 @@ public data class Service(
 )
 
 /**
- * Represents a public key in the ION document.
- *
- * @property id The public key ID.
- * @property type The public key type.
- * @property publicKeyJWK The public key JWK (JSON Web Key).
- * @property purposes List of public key purposes.
+ * Represents a public key in the ION document as defined in item 3 of https://identity.foundation/sidetree/spec/#add-public-keys
  */
 @Serializable
 public data class PublicKey(
   public val id: String,
   public val type: String,
   public val controller: String? = null,
-  @SerialName("publicKeyJwk") public val publicKeyJWK: JsonWebKey? = null,
+  public val publicKeyJwk: JsonWebKey? = null,
   public val purposes: List<PublicKeyPurpose> = emptyList()
 )
 

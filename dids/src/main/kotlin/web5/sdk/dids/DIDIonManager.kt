@@ -190,7 +190,7 @@ public sealed class DIDIonManager(
       PublicKey(
         id = "#${verificationJWK.keyID}}",
         type = "JsonWebKey2020",
-        publicKeyJWK = verificationJWK.toJsonWebKey(),
+        publicKeyJwk = verificationJWK.toJsonWebKey(),
         purposes = listOf(PublicKeyPurpose.AUTHENTICATION),
       )
     } else {
@@ -221,7 +221,7 @@ public sealed class DIDIonManager(
       ),
       KeyAliases(
         updateKeyAlias = updatePublicJWK.keyID,
-        verificationKeyAlias = verificationPublicKey.publicKeyJWK!!.kid!!,
+        verificationKeyAlias = verificationPublicKey.publicKeyJwk!!.kid!!,
         recoveryKeyAlias = recoveryPublicJWK.keyID
       )
     )

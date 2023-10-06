@@ -46,7 +46,7 @@ class DIDIonTest {
       verificationPublicKey = PublicKey(
         id = verificationKey.keyID,
         type = "JsonWebKey2020",
-        publicKeyJWK = verificationKey.toJsonWebKey(),
+        publicKeyJwk = verificationKey.toJsonWebKey(),
         purposes = listOf(PublicKeyPurpose.AUTHENTICATION),
       ),
       updatePublicJsonWebKey = updateKey.toJsonWebKey(),
