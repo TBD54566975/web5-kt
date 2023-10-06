@@ -18,6 +18,17 @@ import foundation.identity.did.DID
 import foundation.identity.did.DIDDocument
 import foundation.identity.did.VerificationMethod
 import io.ipfs.multibase.Multibase
+import io.ktor.client.HttpClient
+import io.ktor.client.plugins.ClientRequestException
+import io.ktor.client.plugins.ResponseException
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.request.*
+import io.ktor.client.statement.HttpResponse
+import io.ktor.client.statement.bodyAsText
+import io.ktor.http.isSuccess
+import io.ktor.serialization.kotlinx.json.json
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.json.Json
 import uniresolver.result.ResolveDataModelResult
 import uniresolver.w3c.DIDResolver
 import web5.credentials.model.CredentialStatus
@@ -161,6 +172,11 @@ public data class CreateVpOptions(
 public typealias VcJwt = String
 public typealias VpJwt = String
 
+@OptIn(ExperimentalSerializationApi::class)
+private val json = Json {
+  prettyPrint = true
+  explicitNulls = false
+}
 
 /**
  * Converts the [VcJwt] object into a [VerifiableCredentialType].
@@ -324,6 +340,51 @@ public object VerifiableCredential {
     val expandedValues: List<String> = bitstringExpansion(compressedBitstring)
 
     return expandedValues.any { it == credentialIndex }
+  }
+
+  /**
+   * Validates if a given credential is part of the status list represented by a `StatusList2021Credential`.
+   *
+   * The function takes in a credential representing the one to be validated.
+   * It fetches the status list credential from a URL present in the provided credential.
+   * It then checks if the given credential's status list index is present in the expanded status list derived from the status list credential.
+   */
+  @Throws(Exception::class)
+  public suspend fun validateCredentialInStatusList(
+    credentialToValidate: VerifiableCredentialType,
+    httpClient: HttpClient = defaultHttpClient() // default HTTP client but can be overridden
+  ): Boolean {
+
+    val statusListEntryValue: StatusList2021Entry =
+      StatusList2021Entry.fromJsonObject(credentialToValidate.credentialStatus.jsonObject)
+    val statusListCredential =
+      httpClient.fetchStatusListCredential(statusListEntryValue.statusListCredential.toString())
+
+    return validateCredentialInStatusList(credentialToValidate, statusListCredential)
+  }
+
+  private fun defaultHttpClient(): HttpClient {
+    return HttpClient {
+      install(ContentNegotiation) {
+        json(json)
+      }
+    }
+  }
+
+  private suspend fun HttpClient.fetchStatusListCredential(url: String): VerifiableCredentialType {
+    try {
+      val response: HttpResponse = this.get(url)
+      if (response.status.isSuccess()) {
+        val body = response.bodyAsText()
+        return VerifiableCredentialType.fromJson(body)
+      } else {
+        throw ClientRequestException(response, "Failed to retrieve VerifiableCredentialType from $url")
+      }
+    } catch (e: ClientRequestException) {
+      throw Exception("Failed to fetch the status list credential due to a request error: ${e.message}", e)
+    } catch (e: ResponseException) {
+      throw Exception("Failed to fetch the status list credential due to a response error: ${e.message}", e)
+    }
   }
 
   /**

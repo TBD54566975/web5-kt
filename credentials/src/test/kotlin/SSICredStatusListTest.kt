@@ -2,6 +2,12 @@ package web5.credentials
 
 import com.nimbusds.jose.jwk.JWK
 import foundation.identity.did.DIDDocument
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.mock.MockEngine
+import io.ktor.client.engine.mock.respond
+import io.ktor.http.fullPath
+import io.ktor.http.headersOf
+import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
@@ -121,7 +127,7 @@ class SSICredStatusListTest {
     assertEquals(credentialStatus.type.toString(), "StatusList2021Entry")
     assertEquals(credentialStatus.statusPurpose.toString(), StatusPurpose.REVOCATION.toString().lowercase())
     assertEquals(credentialStatus.statusListIndex, "123")
-    assertEquals(credentialStatus.statusListCredential.toString(), "status-list-cred-id")
+    assertEquals(credentialStatus.statusListCredential.toString(), "https://example.com/credentials/status/3")
 
 
     val vcJwt = VerifiableCredential.create(signOptions, null, credWithCredStatus)
@@ -153,7 +159,7 @@ class SSICredStatusListTest {
     assertEquals(decodedCredentialStatus.type.toString(), "StatusList2021Entry")
     assertEquals(decodedCredentialStatus.statusPurpose.toString(), StatusPurpose.REVOCATION.toString().lowercase())
     assertEquals(decodedCredentialStatus.statusListIndex, "123")
-    assertEquals(decodedCredentialStatus.statusListCredential.toString(), "status-list-cred-id")
+    assertEquals(decodedCredentialStatus.statusListCredential.toString(), "https://example.com/credentials/status/3")
   }
 
   @Test
@@ -206,7 +212,7 @@ class SSICredStatusListTest {
       "revocation",
       statusListCredential.credentialSubject.jsonObject["statusPurpose"] as? String?
     )
-    
+
     assertEquals(
       "H4sIAAAAAAAA/2NgQAESAAPT1/8QAAAA",
       statusListCredential.credentialSubject.jsonObject["encodedList"] as? String?
@@ -345,6 +351,53 @@ class SSICredStatusListTest {
     assertFalse(revoked3)
   }
 
+  @Test
+  fun `validate credential in status list using async method`() = runBlocking {
+    val testCred1 = createTestCredWithStatus(
+      did,
+      "test-subject-id-1",
+      mapOf("company" to "Block", "website" to "https://block.xyz"),
+      "123"
+    )
+
+    val testCred2 = createTestCredWithStatus(
+      did,
+      "test-subject-id-1",
+      mapOf("company" to "Block", "website" to "https://block.xyz"),
+      "124"
+    )
+
+    val statusListCredential =
+      VerifiableCredential.generateStatusList2021Credential(
+        "revocation-id",
+        did,
+        StatusPurpose.REVOCATION,
+        listOf(testCred1)
+      )
+
+    val mockedHttpClient = HttpClient(MockEngine) {
+      engine {
+        addHandler { request ->
+          when (request.url.fullPath) {
+            "/credentials/status/3" -> {
+              val responseBody = statusListCredential.toString()
+              respond(responseBody, headers = headersOf("Content-Type", "application/json"))
+            }
+
+            else -> error("Unhandled ${request.url.fullPath}")
+          }
+        }
+      }
+    }
+
+
+    val revoked = VerifiableCredential.validateCredentialInStatusList(testCred1, mockedHttpClient)
+    assertTrue(revoked)
+
+    val revoked2 = VerifiableCredential.validateCredentialInStatusList(testCred2, mockedHttpClient)
+    assertFalse(revoked2)
+  }
+
   private fun createTestCredWithStatus(
     issuer: String,
     subjectId: String,
@@ -361,7 +414,7 @@ class SSICredStatusListTest {
       .id(URI.create("cred-with-status-id"))
       .statusPurpose("revocation")
       .statusListIndex(statusListIndex)
-      .statusListCredential(URI.create("status-list-cred-id"))
+      .statusListCredential(URI.create("https://example.com/credentials/status/3"))
       .build()
 
     return VerifiableCredentialType.builder()
