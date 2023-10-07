@@ -82,6 +82,20 @@ public object Secp256k1 : KeyGenerator, Signer {
   public const val uncompressedKeySize: Int = 65
 
   /**
+   * The byte size of a compressed public key.
+   *
+   * A compressed public key in elliptic curve cryptography typically consists of:
+   * - A single byte prefix: 0x02 or 0x03, indicating whether the Y coordinate is even or odd, respectively
+   * - 32 bytes representing the X coordinate
+   * Thus, a compressed public key is 33 bytes in size.
+   *
+   * Example of use:
+   * This constant can be utilized for validating the length of a byte array supposed to
+   * represent a compressed public key, ensuring it conforms to the expected format.
+   */
+  public const val compressedKeySize: Int = 33
+
+  /**
    * Range that defines the position of the X coordinate in an uncompressed public key byte array.
    *
    * The X coordinate is typically found in bytes 1 through 32 (inclusive) in the byte array representation
@@ -153,7 +167,7 @@ public object Secp256k1 : KeyGenerator, Signer {
   }
 
   override fun bytesToPublicKey(publicKeyBytes: ByteArray): JWK {
-    require(publicKeyBytes[0] == 0x04.toByte()) { "compressed public keys not supported yet" }
+    // require(publicKeyBytes[0] == 0x04.toByte()) { "compressed public keys not supported yet" }
 
     val xBytes = publicKeyBytes.sliceArray(1..32)
     val yBytes = publicKeyBytes.sliceArray(33..64)
@@ -243,7 +257,16 @@ public object Secp256k1 : KeyGenerator, Signer {
    * Inflates a compressed public key.
    */
   public fun inflatePublicKey(publicKeyBytes: ByteArray): ByteArray {
-    TODO("implement. needed for did:key")
+    require(publicKeyBytes.size == compressedKeySize) { "Invalid key size" }
+
+    val spec = ECNamedCurveTable.getParameterSpec("secp256k1")
+    val curve = spec.curve
+
+    val ecPoint = curve.decodePoint(publicKeyBytes)
+    val xBytes = ecPoint.rawXCoord.encoded
+    val yBytes = ecPoint.rawYCoord.encoded
+
+    return byteArrayOf(uncompressedKeyIdentifier) + xBytes + yBytes
   }
 
 }
