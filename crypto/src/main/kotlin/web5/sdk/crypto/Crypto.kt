@@ -102,7 +102,7 @@ public object Crypto {
    * @param options Options for the signing operation, may include specific parameters relevant to the algorithm.
    * @return The digital signature as a byte array.
    */
-  public fun sign(privateKey: JWK, payload: ByteArray, options: SignOptions) {
+  public fun sign(privateKey: JWK, payload: ByteArray, options: SignOptions? = null): ByteArray {
     val rawCurve = privateKey.toJSONObject()["crv"]
     val curve = rawCurve?.let { Curve.parse(it.toString()) }
 
