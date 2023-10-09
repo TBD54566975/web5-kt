@@ -180,7 +180,7 @@ public object Secp256k1 : KeyGenerator, Signer {
   }
 
   override fun sign(privateKey: JWK, payload: ByteArray, options: SignOptions?): ByteArray {
-    val signature = Signature.getInstance("SHA256withECDSA", "BC")
+    val signature = Signature.getInstance("SHA256withPLAIN-ECDSA", "BC")
 
     signature.initSign(privateKey.toECKey().toPrivateKey())
     signature.update(payload)
