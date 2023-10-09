@@ -31,7 +31,6 @@ import web5.credentials.model.PresentationSubmission
 import web5.credentials.model.VerifiableCredentialType
 import web5.credentials.model.VerifiablePresentationType
 import java.net.URI
-import java.util.Base64
 import java.util.Date
 import java.util.UUID
 
@@ -193,7 +192,7 @@ public object VerifiableCredential {
       }
       .build()
 
-    this.validatePayload(vc)
+    validatePayload(vc)
 
     // TODO: This removes issuanceDate which is required https://www.w3.org/TR/vc-data-model/#issuance-date
     return ToJwtConverter.toJwtVerifiableCredential(vc)
