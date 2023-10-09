@@ -30,6 +30,21 @@ import com.danubetech.verifiablecredentials.VerifiableCredential as VcDataModel
  * @property vcDataModel The [VcDataModel] instance representing the core data model of a verifiable credential.
  */
 public class VerifiableCredential(private val vcDataModel: VcDataModel) {
+  /**
+   * Sign a verifiable credential using a specified decentralized identifier ([did]) and an optional key alias ([keyAlias]).
+   *
+   * If the [keyAlias] is null, the function will attempt to use the first available verification method from the [did].
+   * The result is a String in a JWT format.
+   *
+   * @param did The [Did] used to sign the credential.
+   * @param keyAlias An optional alias for the key used to sign the credential.
+   * @return The JWT representing the signed verifiable credential.
+   *
+   * Example:
+   * ```
+   * val signedVc = verifiableCredential.sign(myDid)
+   * ```
+   */
   public fun sign(did: Did, keyAlias: String? = null): String {
     val keyAliaz = keyAlias ?: run {
       val didResolutionResult = DidResolvers.resolve(did.uri)
