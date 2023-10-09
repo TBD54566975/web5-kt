@@ -108,22 +108,37 @@ public object Crypto {
 
     val signer = getSigner(privateKey.algorithm, curve)
 
-    signer.sign(privateKey, payload, options)
+    return signer.sign(privateKey, payload, options)
   }
 
   /**
    * Verifies a signature against a signed payload using a public key.
    *
-   * This function utilizes the relevant verifier to ensure the provided signature is
-   * valid for the signed payload using the provided public key.
+   * This function utilizes the relevant verifier, determined by the algorithm and curve
+   * used in the JWK, to ensure the provided signature is valid for the signed payload
+   * using the provided public key. The algorithm used can either be specified in the
+   * public key JWK or passed explicitly as a parameter. If it is not found in either,
+   * an exception will be thrown.
+   *
+   * ## Note
+   * Algorithm **MUST** either be present on the [JWK] or be provided explicitly
    *
    * @param publicKey The JWK public key to be used for verifying the signature.
    * @param signedPayload The byte array data that was signed.
    * @param signature The signature that will be verified.
+   * @param algorithm Optional parameter: the algorithm used for signing/verification,
+   *                  if not provided in the JWK. Default is null.
+   *
+   * @throws IllegalArgumentException if neither the JWK nor the explicit parameter
+   *                                  provides an algorithm.
+   *
    */
-  public fun verify(publicKey: JWK, signedPayload: ByteArray, signature: ByteArray) {
+  public fun verify(publicKey: JWK, signedPayload: ByteArray, signature: ByteArray, algorithm: Algorithm? = null) {
+    val alg = publicKey.algorithm ?: algorithm
+    ?: throw IllegalArgumentException("Algorithm must either be set on JWK or provided explicitly.")
+
     val curve = getJwkCurve(publicKey)
-    val verifier = getVerifier(publicKey.algorithm, curve)
+    val verifier = getVerifier(alg, curve)
 
     verifier.verify(publicKey, signedPayload, signature)
   }
