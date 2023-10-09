@@ -1,7 +1,7 @@
 package web5.sdk.crypto
 
-import com.nimbusds.jose.Payload
 import com.nimbusds.jose.jwk.JWK
+import java.security.SignatureException
 
 /**
  * A marker interface to represent options used during signing operations.
@@ -78,26 +78,39 @@ public interface VerifyOptions
  */
 public interface Signer {
   /**
-   * Sign a given payload using a private key and optionally some additional options.
+   * Sign a given payload using a private key.
+   *
+   * This function takes a payload and a private key in JWK (JSON Web Key) format,
+   * and returns a signature as a byte array. Additional options for the signing
+   * process can be provided via the `options` parameter.
    *
    * @param privateKey The private key in JWK format to be used for signing.
-   * @param payload The payload/data to be signed.
-   * @param options Additional options to control the signing process.
-   * @return A [String] representing the signature.
+   *                   Must not be null.
+   * @param payload The payload/data to be signed. Must not be null.
+   * @param options Optional parameter containing additional options to control
+   *                the signing process. Default is null.
+   * @return A [ByteArray] representing the signature.
    */
-  public fun sign(privateKey: JWK, payload: Payload, options: SignOptions? = null): String
+  public fun sign(privateKey: JWK, payload: ByteArray, options: SignOptions? = null): ByteArray
 
   /**
-   * Verify a signature given a public key, a JSON Web Signature (JWS), and optionally some additional verification options.
+   * Verify the signature of a given payload using a public key.
    *
-   * Implementations should ensure that the verification process adequately checks
-   * the validity of the signature against the provided payload, respecting any
-   * options provided via [VerifyOptions].
+   * This function attempts to verify the signature of a provided payload using a public key,
+   * supplied in JWK (JSON Web Key) format, and a signature. The verification process checks
+   * the validity of the signature against the provided payload, respecting any optional
+   * verification options provided via [VerifyOptions].
    *
-   * @param publicKey The public key in JWK format to be used for verifying the signature.
-   * @param jws The JSON Web Signature string to verify.
-   * @param options Additional options to control the verification process.
-   * @throws SomeExceptionType If verification fails, implementers should throw a specific exception type.
+   * @param publicKey The public key in JWK format used for verifying the signature.
+   *                  Must not be null.
+   * @param signedPayload The original payload/data that was signed, to be verified
+   *                      against its signature. Must not be null.
+   * @param signature The signature to be verified against the payload and public key.
+   *                  Must not be null.
+   * @param options Optional parameter containing additional options to control the
+   *                verification process. Default is null.
+   *
+   * @throws [SignatureException] if the verification fails.
    */
-  public fun verify(publicKey: JWK, jws: String, options: VerifyOptions? = null)
+  public fun verify(publicKey: JWK, signedPayload: ByteArray, signature: ByteArray, options: VerifyOptions? = null)
 }
