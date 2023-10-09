@@ -2,7 +2,7 @@
 <html class="no-js">
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
-    <title>curve</title>
+    <title>compressPublicKey</title>
 <link href="../../../images/logo-icon.svg" rel="icon" type="image/svg">    <script>var pathToRoot = "../../../";</script>
     <script>document.documentElement.classList.replace("no-js","js");</script>
     <script>const storage = localStorage.getItem("dokka-dark-mode")
@@ -45,7 +45,7 @@
             </div>
         </div>
         <div class="filter-section" id="filter-section">
-                <button class="platform-tag platform-selector jvm-like" data-active="" data-filter=":dids:dokkaHtmlPartial/main">jvm</button>
+                <button class="platform-tag platform-selector jvm-like" data-active="" data-filter=":crypto:dokkaHtmlPartial/main">jvm</button>
         </div>
     </div>
     <div class="navigation-controls">
@@ -58,12 +58,12 @@
                 <div class="sidebar--inner" id="sideMenu"></div>
             </div>
             <div id="main">
-<div class="main-content" data-page-type="member" id="content" pageids="dids::web5.sdk.dids/CreateDidKeyOptions/curve/#/PointingToDeclaration//534392244">
-  <div class="breadcrumbs"><a href="../../index.html">dids</a><span class="delimiter">/</span><a href="../index.html">web5.sdk.dids</a><span class="delimiter">/</span><a href="index.html">CreateDidKeyOptions</a><span class="delimiter">/</span><span class="current">curve</span></div>
+<div class="main-content" data-page-type="member" id="content" pageids="crypto::web5.sdk.crypto/Secp256k1/compressPublicKey/#kotlin.ByteArray/PointingToDeclaration//-688304473">
+  <div class="breadcrumbs"><a href="../../index.html">crypto</a><span class="delimiter">/</span><a href="../index.html">web5.sdk.crypto</a><span class="delimiter">/</span><a href="index.html">Secp256k1</a><span class="delimiter">/</span><span class="current">compressPublicKey</span></div>
   <div class="cover ">
-    <h1 class="cover"><span><span>curve</span></span></h1>
+    <h1 class="cover"><span>compress</span><wbr><span>Public</span><wbr><span><span>Key</span></span></h1>
   </div>
-  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":dids:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">val </span><a href="curve.html">curve</a><span class="token operator">: </span><span data-unresolved-link="com.nimbusds.jose.jwk/Curve///PointingToDeclaration/">Curve</span><span class="clearfix"><span class="floating-right">(<a href="https://github.com/TBD54566975/web5-sdk-kotlin/tree/main/dids/src/main/kotlin/web5/sdk/dids/DidKey.kt#L32">source</a>)</span></span></div></div></div>
+  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":crypto:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="compress-public-key.html"><span class="token function">compressPublicKey</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">publicKeyBytes<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-byte-array/index.html">ByteArray</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-byte-array/index.html">ByteArray</a><span class="clearfix"><span class="floating-right">(<a href="https://github.com/TBD54566975/web5-sdk-kotlin/tree/main/crypto/src/main/kotlin/web5/sdk/crypto/Secp256k1.kt#L244">source</a>)</span></span></div><p class="paragraph">Compresses a public key represented by its X and Y coordinates concatenated in a single byte array.</p><p class="paragraph">Assumes the input starts with a leading 0x04 byte, which is commonly used to denote an uncompressed public key in some elliptic curve representations.</p><span class="kdoc-tag"><h4 class="">Return</h4><p class="paragraph">The compressed public key as a byte array.</p></span><h4 class="">Parameters</h4><div class="table"><div class="table-row" data-filterable-current=":crypto:dokkaHtmlPartial/main" data-filterable-set=":crypto:dokkaHtmlPartial/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><u><span>public</span><wbr><span>Key</span><wbr><span><span>Bytes</span></span></u></div></span></div><div><div class="title"><p class="paragraph">A byte array representing the public key, expected to be 65 bytes with the first byte being 0x04.     The following 32 bytes are for the X coordinate, and the last 32 for the Y coordinate.</p></div></div></div></div></div><h4 class="">Throws</h4><div class="table"><div class="table-row" data-filterable-current=":crypto:dokkaHtmlPartial/main" data-filterable-set=":crypto:dokkaHtmlPartial/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-illegal-argument-exception/index.html"><span>Illegal</span><wbr><span>Argument</span><wbr><span><span>Exception</span></span></a></div></span></div><div><div class="title"><p class="paragraph">if the input byte array is not of expected length or doesn't start with 0x04.</p></div></div></div></div></div></div></div>
 </div>
       <div class="footer">
         <span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2023 Copyright</span><span class="pull-right"><span>Generated by </span><a href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span>

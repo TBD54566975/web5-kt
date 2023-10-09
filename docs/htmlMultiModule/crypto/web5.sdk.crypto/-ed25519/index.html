@@ -62,7 +62,7 @@
   <div class="breadcrumbs"><a href="../../index.html">crypto</a><span class="delimiter">/</span><a href="../index.html">web5.sdk.crypto</a><span class="delimiter">/</span><span class="current">Ed25519</span></div>
   <div class="cover ">
     <h1 class="cover"><span><span>Ed25519</span></span></h1>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":crypto:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">object </span><a href="index.html">Ed25519</a> : <a href="../-key-generator/index.html">KeyGenerator</a>, <a href="../-signer/index.html">Signer</a><span class="clearfix"><span class="floating-right">(<a href="https://github.com/TBD54566975/web5-sdk-kotlin/tree/main/crypto/src/main/kotlin/web5/sdk/crypto/Ed25519.kt#L39">source</a>)</span></span></div><p class="paragraph">Implementation of the <a href="../-key-generator/index.html">KeyGenerator</a> and <a href="../-signer/index.html">Signer</a> interfaces, specifically utilizing the Ed25519 elliptic curve digital signature algorithm. This implementation provides functionality to generate key pairs, compute public keys from private keys, and sign/verify messages utilizing Ed25519.</p><h3 class=""> Example Usage:</h3><p class="paragraph">TODO: Insert example usage here.</p></div></div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":crypto:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">object </span><a href="index.html">Ed25519</a> : <a href="../-key-generator/index.html">KeyGenerator</a>, <a href="../-signer/index.html">Signer</a><span class="clearfix"><span class="floating-right">(<a href="https://github.com/TBD54566975/web5-sdk-kotlin/tree/main/crypto/src/main/kotlin/web5/sdk/crypto/Ed25519.kt#L38">source</a>)</span></span></div><p class="paragraph">Implementation of the <a href="../-key-generator/index.html">KeyGenerator</a> and <a href="../-signer/index.html">Signer</a> interfaces, specifically utilizing the Ed25519 elliptic curve digital signature algorithm. This implementation provides functionality to generate key pairs, compute public keys from private keys, and sign/verify messages utilizing Ed25519.</p><h3 class=""> Example Usage:</h3><p class="paragraph">TODO: Insert example usage here.</p></div></div>
   </div>
   <div class="tabbedcontent">
     <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="CONSTRUCTOR,TYPE,PROPERTY,FUNCTION">Members</button></div>
@@ -163,6 +163,21 @@
               </div>
             </div>
           </div>
+<a data-name="1168250058%2FFunctions%2F-688304473" anchor-label="computePublicKey" id="1168250058%2FFunctions%2F-688304473" data-filterable-set=":crypto:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":crypto:dokkaHtmlPartial/main" data-filterable-set=":crypto:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="compute-public-key.html"><span>compute</span><wbr><span>Public</span><wbr><span><span>Key</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1168250058%2FFunctions%2F-688304473"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":crypto:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="compute-public-key.html"><span class="token function">computePublicKey</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">privateKey<span class="token operator">: </span><span data-unresolved-link="com.nimbusds.jose.jwk/JWK///PointingToDeclaration/">JWK</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="com.nimbusds.jose.jwk/JWK///PointingToDeclaration/">JWK</span></div><div class="brief "><p class="paragraph">Derives the public key corresponding to a given private key.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
 <a data-name="431394861%2FFunctions%2F-688304473" anchor-label="generatePrivateKey" id="431394861%2FFunctions%2F-688304473" data-filterable-set=":crypto:dokkaHtmlPartial/main"></a>
           <div class="table-row" data-filterable-current=":crypto:dokkaHtmlPartial/main" data-filterable-set=":crypto:dokkaHtmlPartial/main">
             <div class="main-subrow keyValue ">
@@ -174,21 +189,6 @@
               <div>
                 <div class="title">
                   <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":crypto:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="generate-private-key.html"><span class="token function">generatePrivateKey</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">options<span class="token operator">: </span><a href="../-key-gen-options/index.html">KeyGenOptions</a><span class="token operator">?</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="com.nimbusds.jose.jwk/JWK///PointingToDeclaration/">JWK</span></div><div class="brief "><p class="paragraph">Generates a private key utilizing the Ed25519 algorithm.</p></div></div></div>
-                </div>
-              </div>
-            </div>
-          </div>
-<a data-name="1802942155%2FFunctions%2F-688304473" anchor-label="getPublicKey" id="1802942155%2FFunctions%2F-688304473" data-filterable-set=":crypto:dokkaHtmlPartial/main"></a>
-          <div class="table-row" data-filterable-current=":crypto:dokkaHtmlPartial/main" data-filterable-set=":crypto:dokkaHtmlPartial/main">
-            <div class="main-subrow keyValue ">
-              <div class=""><span class="inline-flex">
-                  <div><a href="get-public-key.html"><span>get</span><wbr><span>Public</span><wbr><span><span>Key</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1802942155%2FFunctions%2F-688304473"></span>
-                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
-                  </span></span></div>
-              <div>
-                <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":crypto:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="get-public-key.html"><span class="token function">getPublicKey</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">privateKey<span class="token operator">: </span><span data-unresolved-link="com.nimbusds.jose.jwk/JWK///PointingToDeclaration/">JWK</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="com.nimbusds.jose.jwk/JWK///PointingToDeclaration/">JWK</span></div><div class="brief "><p class="paragraph">Derives the public key corresponding to a given private key.</p></div></div></div>
                 </div>
               </div>
             </div>
@@ -218,22 +218,22 @@
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":crypto:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="public-key-to-bytes.html"><span class="token function">publicKeyToBytes</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">publicKey<span class="token operator">: </span><span data-unresolved-link="com.nimbusds.jose.jwk/JWK///PointingToDeclaration/">JWK</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-byte-array/index.html">ByteArray</a></div><div class="brief "><p class="paragraph">Converts a public key to bytes. Applicable for asymmetric Key Generators only. Implementers of symmetric key generators should throw an UnsupportedOperation Exception</p></div></div></div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":crypto:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="public-key-to-bytes.html"><span class="token function">publicKeyToBytes</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">publicKey<span class="token operator">: </span><span data-unresolved-link="com.nimbusds.jose.jwk/JWK///PointingToDeclaration/">JWK</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-byte-array/index.html">ByteArray</a></div><div class="brief "><p class="paragraph">Converts a public key to bytes. Applicable for asymmetric <a href="../-key-generator/index.html">KeyGenerator</a> implementations only. Implementers of symmetric key generators should throw an UnsupportedOperation Exception</p></div></div></div>
                 </div>
               </div>
             </div>
           </div>
-<a data-name="1630249605%2FFunctions%2F-688304473" anchor-label="sign" id="1630249605%2FFunctions%2F-688304473" data-filterable-set=":crypto:dokkaHtmlPartial/main"></a>
+<a data-name="1059548706%2FFunctions%2F-688304473" anchor-label="sign" id="1059548706%2FFunctions%2F-688304473" data-filterable-set=":crypto:dokkaHtmlPartial/main"></a>
           <div class="table-row" data-filterable-current=":crypto:dokkaHtmlPartial/main" data-filterable-set=":crypto:dokkaHtmlPartial/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="sign.html"><span><span>sign</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1630249605%2FFunctions%2F-688304473"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1059548706%2FFunctions%2F-688304473"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":crypto:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="sign.html"><span class="token function">sign</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">privateKey<span class="token operator">: </span><span data-unresolved-link="com.nimbusds.jose.jwk/JWK///PointingToDeclaration/">JWK</span><span class="token punctuation">, </span></span><span class="parameter ">payload<span class="token operator">: </span><span data-unresolved-link="com.nimbusds.jose/Payload///PointingToDeclaration/">Payload</span><span class="token punctuation">, </span></span><span class="parameter ">options<span class="token operator">: </span><a href="../-sign-options/index.html">SignOptions</a><span class="token operator">?</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></div><div class="brief "><p class="paragraph">Sign a given payload using a private key and optionally some additional options.</p></div></div></div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":crypto:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="sign.html"><span class="token function">sign</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">privateKey<span class="token operator">: </span><span data-unresolved-link="com.nimbusds.jose.jwk/JWK///PointingToDeclaration/">JWK</span><span class="token punctuation">, </span></span><span class="parameter ">payload<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-byte-array/index.html">ByteArray</a><span class="token punctuation">, </span></span><span class="parameter ">options<span class="token operator">: </span><a href="../-sign-options/index.html">SignOptions</a><span class="token operator">?</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-byte-array/index.html">ByteArray</a></div><div class="brief "><p class="paragraph">Sign a given payload using a private key.</p></div></div></div>
                 </div>
               </div>
             </div>
@@ -253,17 +253,17 @@
               </div>
             </div>
           </div>
-<a data-name="1501244944%2FFunctions%2F-688304473" anchor-label="verify" id="1501244944%2FFunctions%2F-688304473" data-filterable-set=":crypto:dokkaHtmlPartial/main"></a>
+<a data-name="2142232629%2FFunctions%2F-688304473" anchor-label="verify" id="2142232629%2FFunctions%2F-688304473" data-filterable-set=":crypto:dokkaHtmlPartial/main"></a>
           <div class="table-row" data-filterable-current=":crypto:dokkaHtmlPartial/main" data-filterable-set=":crypto:dokkaHtmlPartial/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="verify.html"><span><span>verify</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1501244944%2FFunctions%2F-688304473"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="2142232629%2FFunctions%2F-688304473"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":crypto:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="verify.html"><span class="token function">verify</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">publicKey<span class="token operator">: </span><span data-unresolved-link="com.nimbusds.jose.jwk/JWK///PointingToDeclaration/">JWK</span><span class="token punctuation">, </span></span><span class="parameter ">jws<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">options<span class="token operator">: </span><a href="../-verify-options/index.html">VerifyOptions</a><span class="token operator">?</span></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Verify a signature given a public key, a JSON Web Signature (JWS), and optionally some additional verification options.</p></div></div></div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":crypto:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="verify.html"><span class="token function">verify</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">publicKey<span class="token operator">: </span><span data-unresolved-link="com.nimbusds.jose.jwk/JWK///PointingToDeclaration/">JWK</span><span class="token punctuation">, </span></span><span class="parameter ">signedPayload<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-byte-array/index.html">ByteArray</a><span class="token punctuation">, </span></span><span class="parameter ">signature<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-byte-array/index.html">ByteArray</a><span class="token punctuation">, </span></span><span class="parameter ">options<span class="token operator">: </span><a href="../-verify-options/index.html">VerifyOptions</a><span class="token operator">?</span></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Verify the signature of a given payload using a public key.</p></div></div></div>
                 </div>
               </div>
             </div>

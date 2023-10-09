@@ -62,7 +62,7 @@
   <div class="breadcrumbs"><a href="../../index.html">crypto</a><span class="delimiter">/</span><a href="../index.html">web5.sdk.crypto</a><span class="delimiter">/</span><span class="current">Secp256k1</span></div>
   <div class="cover ">
     <h1 class="cover"><span><span>Secp256k1</span></span></h1>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":crypto:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">object </span><a href="index.html">Secp256k1</a> : <a href="../-key-generator/index.html">KeyGenerator</a>, <a href="../-signer/index.html">Signer</a><span class="clearfix"><span class="floating-right">(<a href="https://github.com/TBD54566975/web5-sdk-kotlin/tree/main/crypto/src/main/kotlin/web5/sdk/crypto/Secp256k1.kt#L53">source</a>)</span></span></div><p class="paragraph">A cryptographic object responsible for key generation, signature creation, and signature verification utilizing the SECP256K1 elliptic curve, widely used for Bitcoin and Ethereum transactions.</p><p class="paragraph">The object uses the Nimbus JOSE+JWT library and implements the <a href="../-key-generator/index.html">KeyGenerator</a> and <a href="../-signer/index.html">Signer</a> interfaces, providing specific implementation details for SECP256K1.</p><h3 class=""> Key Points:</h3><ul><li><p class="paragraph">Utilizes the ES256K algorithm for signing JWTs.</p></li><li><p class="paragraph">Utilizes BouncyCastle as the underlying security provider.</p></li><li><p class="paragraph">Public and private keys can be encoded with <a href="pub-multicodec.html">pubMulticodec</a> and <a href="priv-multi-codec.html">privMultiCodec</a> respectively.</p></li></ul><h3 class=""> Example Usage:</h3><div class="sample-container"><pre><code class="block lang-kotlin" theme="idea">val privateKey = Secp256k1.generatePrivateKey()<br>val publicKey = Secp256k1.getPublicKey(privateKey)</code></pre><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><h3 class=""> Key Generation and Management:</h3><ul><li><p class="paragraph"><code class="lang-kotlin">generatePrivateKey</code>: Generates a private key for the SECP256K1 curve.</p></li><li><p class="paragraph"><code class="lang-kotlin">getPublicKey</code>: Derives the corresponding public key from a private key.</p></li></ul><h3 class=""> Signing and Verification:</h3><ul><li><p class="paragraph"><code class="lang-kotlin">sign</code>: Generates a digital signature.</p></li><li><p class="paragraph"><code class="lang-kotlin">verify</code>: Verifies a digital signature.</p></li></ul><p class="paragraph"><strong>Note:</strong> The actual byte conversion and cryptographic functions are marked as <code class="lang-kotlin">TODO</code> and need to be implemented as per your requirements.</p><h4 class="">See also</h4><div class="table"><div class="table-row" data-filterable-current=":crypto:dokkaHtmlPartial/main" data-filterable-set=":crypto:dokkaHtmlPartial/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="../-key-generator/index.html"><span>Key</span><wbr><span><span>Generator</span></span></a></div></span></div><div><div class="title"><p class="paragraph">for generating key details.</p></div></div></div></div><div class="table-row" data-filterable-current=":crypto:dokkaHtmlPartial/main" data-filterable-set=":crypto:dokkaHtmlPartial/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="../-signer/index.html"><span><span>Signer</span></span></a></div></span></div><div><div class="title"><p class="paragraph">for handling signing operations.</p></div></div></div></div></div></div></div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":crypto:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">object </span><a href="index.html">Secp256k1</a> : <a href="../-key-generator/index.html">KeyGenerator</a>, <a href="../-signer/index.html">Signer</a><span class="clearfix"><span class="floating-right">(<a href="https://github.com/TBD54566975/web5-sdk-kotlin/tree/main/crypto/src/main/kotlin/web5/sdk/crypto/Secp256k1.kt#L52">source</a>)</span></span></div><p class="paragraph">A cryptographic object responsible for key generation, signature creation, and signature verification utilizing the SECP256K1 elliptic curve, widely used for Bitcoin and Ethereum transactions.</p><p class="paragraph">The object uses the Nimbus JOSE+JWT library and implements the <a href="../-key-generator/index.html">KeyGenerator</a> and <a href="../-signer/index.html">Signer</a> interfaces, providing specific implementation details for SECP256K1.</p><h3 class=""> Key Points:</h3><ul><li><p class="paragraph">Utilizes the ES256K algorithm for signing JWTs.</p></li><li><p class="paragraph">Utilizes BouncyCastle as the underlying security provider.</p></li><li><p class="paragraph">Public and private keys can be encoded with <a href="pub-multicodec.html">pubMulticodec</a> and <a href="priv-multi-codec.html">privMultiCodec</a> respectively.</p></li></ul><h3 class=""> Example Usage:</h3><div class="sample-container"><pre><code class="block lang-kotlin" theme="idea">val privateKey = Secp256k1.generatePrivateKey()<br>val publicKey = Secp256k1.getPublicKey(privateKey)</code></pre><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div><h3 class=""> Key Generation and Management:</h3><ul><li><p class="paragraph"><code class="lang-kotlin">generatePrivateKey</code>: Generates a private key for the SECP256K1 curve.</p></li><li><p class="paragraph"><code class="lang-kotlin">getPublicKey</code>: Derives the corresponding public key from a private key.</p></li></ul><h3 class=""> Signing and Verification:</h3><ul><li><p class="paragraph"><code class="lang-kotlin">sign</code>: Generates a digital signature.</p></li><li><p class="paragraph"><code class="lang-kotlin">verify</code>: Verifies a digital signature.</p></li></ul><h4 class="">See also</h4><div class="table"><div class="table-row" data-filterable-current=":crypto:dokkaHtmlPartial/main" data-filterable-set=":crypto:dokkaHtmlPartial/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="../-key-generator/index.html"><span>Key</span><wbr><span><span>Generator</span></span></a></div></span></div><div><div class="title"><p class="paragraph">for generating key details.</p></div></div></div></div><div class="table-row" data-filterable-current=":crypto:dokkaHtmlPartial/main" data-filterable-set=":crypto:dokkaHtmlPartial/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="../-signer/index.html"><span><span>Signer</span></span></a></div></span></div><div><div class="title"><p class="paragraph">for handling signing operations.</p></div></div></div></div></div></div></div>
   </div>
   <div class="tabbedcontent">
     <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="CONSTRUCTOR,TYPE,PROPERTY,FUNCTION">Members</button></div>
@@ -80,6 +80,51 @@
               <div>
                 <div class="title">
                   <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":crypto:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">val </span><a href="algorithm.html">algorithm</a><span class="token operator">: </span><span data-unresolved-link="com.nimbusds.jose/Algorithm///PointingToDeclaration/">Algorithm</span></div><div class="brief "><p class="paragraph">Indicates the algorithm intended to be used with the key.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1552867215%2FProperties%2F-688304473" anchor-label="compressedKeyEvenYIdentifier" id="-1552867215%2FProperties%2F-688304473" data-filterable-set=":crypto:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":crypto:dokkaHtmlPartial/main" data-filterable-set=":crypto:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="compressed-key-even-y-identifier.html"><span>compressed</span><wbr><span>Key</span><wbr><span>Even</span><wbr><span><span>YIdentifier</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1552867215%2FProperties%2F-688304473"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":crypto:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">const </span><span class="token keyword">val </span><a href="compressed-key-even-y-identifier.html">compressedKeyEvenYIdentifier</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-byte/index.html">Byte</a><span class="token operator"> = </span><span class="token constant">2</span></div><div class="brief "><p class="paragraph">Compressed key leading byte that indicates whether the Y coordinate is even.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1762395662%2FProperties%2F-688304473" anchor-label="compressedKeyOddYIdentifier" id="1762395662%2FProperties%2F-688304473" data-filterable-set=":crypto:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":crypto:dokkaHtmlPartial/main" data-filterable-set=":crypto:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="compressed-key-odd-y-identifier.html"><span>compressed</span><wbr><span>Key</span><wbr><span>Odd</span><wbr><span><span>YIdentifier</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1762395662%2FProperties%2F-688304473"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":crypto:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">const </span><span class="token keyword">val </span><a href="compressed-key-odd-y-identifier.html">compressedKeyOddYIdentifier</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-byte/index.html">Byte</a><span class="token operator"> = </span><span class="token constant">3</span></div><div class="brief "><p class="paragraph">Compressed key leading byte that indicates whether the Y coordinate is odd.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-298653664%2FProperties%2F-688304473" anchor-label="compressedKeySize" id="-298653664%2FProperties%2F-688304473" data-filterable-set=":crypto:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":crypto:dokkaHtmlPartial/main" data-filterable-set=":crypto:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="compressed-key-size.html"><span>compressed</span><wbr><span>Key</span><wbr><span><span>Size</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-298653664%2FProperties%2F-688304473"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":crypto:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">const </span><span class="token keyword">val </span><a href="compressed-key-size.html">compressedKeySize</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a><span class="token operator"> = </span><span class="token constant">33</span></div><div class="brief "><p class="paragraph">The byte size of a compressed public key.</p></div></div></div>
                 </div>
               </div>
             </div>
@@ -114,6 +159,36 @@
               </div>
             </div>
           </div>
+<a data-name="558339556%2FProperties%2F-688304473" anchor-label="publicKeyXRange" id="558339556%2FProperties%2F-688304473" data-filterable-set=":crypto:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":crypto:dokkaHtmlPartial/main" data-filterable-set=":crypto:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="public-key-x-range.html"><span>public</span><wbr><span>Key</span><wbr><span><span>XRange</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="558339556%2FProperties%2F-688304473"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":crypto:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">val </span><a href="public-key-x-range.html">publicKeyXRange</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.ranges/-int-range/index.html">IntRange</a></div><div class="brief "><p class="paragraph">Range that defines the position of the X coordinate in an uncompressed public key byte array.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="909139493%2FProperties%2F-688304473" anchor-label="publicKeyYRange" id="909139493%2FProperties%2F-688304473" data-filterable-set=":crypto:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":crypto:dokkaHtmlPartial/main" data-filterable-set=":crypto:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="public-key-y-range.html"><span>public</span><wbr><span>Key</span><wbr><span><span>YRange</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="909139493%2FProperties%2F-688304473"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":crypto:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">val </span><a href="public-key-y-range.html">publicKeyYRange</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.ranges/-int-range/index.html">IntRange</a></div><div class="brief "><p class="paragraph">Range that defines the position of the Y coordinate in an uncompressed public key byte array.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
 <a data-name="-1523087259%2FProperties%2F-688304473" anchor-label="pubMulticodec" id="-1523087259%2FProperties%2F-688304473" data-filterable-set=":crypto:dokkaHtmlPartial/main"></a>
           <div class="table-row" data-filterable-current=":crypto:dokkaHtmlPartial/main" data-filterable-set=":crypto:dokkaHtmlPartial/main">
             <div class="main-subrow keyValue ">
@@ -125,6 +200,36 @@
               <div>
                 <div class="title">
                   <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":crypto:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">const </span><span class="token keyword">val </span><a href="pub-multicodec.html">pubMulticodec</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a><span class="token operator"> = </span><span class="token constant">231</span></div><div class="brief "><p class="paragraph"><a href="https://github.com/multiformats/multicodec/blob/master/table.csv#L92">reference</a>.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1861334417%2FProperties%2F-688304473" anchor-label="uncompressedKeyIdentifier" id="1861334417%2FProperties%2F-688304473" data-filterable-set=":crypto:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":crypto:dokkaHtmlPartial/main" data-filterable-set=":crypto:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="uncompressed-key-identifier.html"><span>uncompressed</span><wbr><span>Key</span><wbr><span><span>Identifier</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1861334417%2FProperties%2F-688304473"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":crypto:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">const </span><span class="token keyword">val </span><a href="uncompressed-key-identifier.html">uncompressedKeyIdentifier</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-byte/index.html">Byte</a><span class="token operator"> = </span><span class="token constant">4</span></div><div class="brief "><p class="paragraph">uncompressed key leading byte.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1605484281%2FProperties%2F-688304473" anchor-label="uncompressedKeySize" id="1605484281%2FProperties%2F-688304473" data-filterable-set=":crypto:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":crypto:dokkaHtmlPartial/main" data-filterable-set=":crypto:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="uncompressed-key-size.html"><span>uncompressed</span><wbr><span>Key</span><wbr><span><span>Size</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1605484281%2FProperties%2F-688304473"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":crypto:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">const </span><span class="token keyword">val </span><a href="uncompressed-key-size.html">uncompressedKeySize</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-int/index.html">Int</a><span class="token operator"> = </span><span class="token constant">65</span></div><div class="brief "><p class="paragraph">Size of an uncompressed public key in bytes.</p></div></div></div>
                 </div>
               </div>
             </div>
@@ -163,6 +268,36 @@
               </div>
             </div>
           </div>
+<a data-name="971819559%2FFunctions%2F-688304473" anchor-label="compressPublicKey" id="971819559%2FFunctions%2F-688304473" data-filterable-set=":crypto:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":crypto:dokkaHtmlPartial/main" data-filterable-set=":crypto:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="compress-public-key.html"><span>compress</span><wbr><span>Public</span><wbr><span><span>Key</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="971819559%2FFunctions%2F-688304473"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":crypto:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="compress-public-key.html"><span class="token function">compressPublicKey</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">publicKeyBytes<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-byte-array/index.html">ByteArray</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-byte-array/index.html">ByteArray</a></div><div class="brief "><p class="paragraph">Compresses a public key represented by its X and Y coordinates concatenated in a single byte array.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1286258677%2FFunctions%2F-688304473" anchor-label="computePublicKey" id="-1286258677%2FFunctions%2F-688304473" data-filterable-set=":crypto:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":crypto:dokkaHtmlPartial/main" data-filterable-set=":crypto:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="compute-public-key.html"><span>compute</span><wbr><span>Public</span><wbr><span><span>Key</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1286258677%2FFunctions%2F-688304473"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":crypto:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="compute-public-key.html"><span class="token function">computePublicKey</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">privateKey<span class="token operator">: </span><span data-unresolved-link="com.nimbusds.jose.jwk/JWK///PointingToDeclaration/">JWK</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="com.nimbusds.jose.jwk/JWK///PointingToDeclaration/">JWK</span></div><div class="brief "><p class="paragraph">Derives a public key from the private key provided. Applicable for asymmetric Key Generators only. Implementers of symmetric key generators should throw an UnsupportedOperation Exception</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
 <a data-name="-1621530164%2FFunctions%2F-688304473" anchor-label="generatePrivateKey" id="-1621530164%2FFunctions%2F-688304473" data-filterable-set=":crypto:dokkaHtmlPartial/main"></a>
           <div class="table-row" data-filterable-current=":crypto:dokkaHtmlPartial/main" data-filterable-set=":crypto:dokkaHtmlPartial/main">
             <div class="main-subrow keyValue ">
@@ -178,17 +313,17 @@
               </div>
             </div>
           </div>
-<a data-name="1882958476%2FFunctions%2F-688304473" anchor-label="getPublicKey" id="1882958476%2FFunctions%2F-688304473" data-filterable-set=":crypto:dokkaHtmlPartial/main"></a>
+<a data-name="-1297246776%2FFunctions%2F-688304473" anchor-label="inflatePublicKey" id="-1297246776%2FFunctions%2F-688304473" data-filterable-set=":crypto:dokkaHtmlPartial/main"></a>
           <div class="table-row" data-filterable-current=":crypto:dokkaHtmlPartial/main" data-filterable-set=":crypto:dokkaHtmlPartial/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
-                  <div><a href="get-public-key.html"><span>get</span><wbr><span>Public</span><wbr><span><span>Key</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1882958476%2FFunctions%2F-688304473"></span>
+                  <div><a href="inflate-public-key.html"><span>inflate</span><wbr><span>Public</span><wbr><span><span>Key</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1297246776%2FFunctions%2F-688304473"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":crypto:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="get-public-key.html"><span class="token function">getPublicKey</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">privateKey<span class="token operator">: </span><span data-unresolved-link="com.nimbusds.jose.jwk/JWK///PointingToDeclaration/">JWK</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><span data-unresolved-link="com.nimbusds.jose.jwk/JWK///PointingToDeclaration/">JWK</span></div><div class="brief "><p class="paragraph">Derives a public key from the private key provided. Applicable for asymmetric Key Generators only. Implementers of symmetric key generators should throw an UnsupportedOperation Exception</p></div></div></div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":crypto:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">fun </span><a href="inflate-public-key.html"><span class="token function">inflatePublicKey</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">publicKeyBytes<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-byte-array/index.html">ByteArray</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-byte-array/index.html">ByteArray</a></div><div class="brief "><p class="paragraph">Inflates a compressed public key.</p></div></div></div>
                 </div>
               </div>
             </div>
@@ -218,22 +353,22 @@
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":crypto:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="public-key-to-bytes.html"><span class="token function">publicKeyToBytes</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">publicKey<span class="token operator">: </span><span data-unresolved-link="com.nimbusds.jose.jwk/JWK///PointingToDeclaration/">JWK</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-byte-array/index.html">ByteArray</a></div><div class="brief "><p class="paragraph">Converts a public key to bytes. Applicable for asymmetric Key Generators only. Implementers of symmetric key generators should throw an UnsupportedOperation Exception</p></div></div></div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":crypto:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="public-key-to-bytes.html"><span class="token function">publicKeyToBytes</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">publicKey<span class="token operator">: </span><span data-unresolved-link="com.nimbusds.jose.jwk/JWK///PointingToDeclaration/">JWK</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-byte-array/index.html">ByteArray</a></div><div class="brief "><p class="paragraph">Converts a public key to bytes. Applicable for asymmetric <a href="../-key-generator/index.html">KeyGenerator</a> implementations only. Implementers of symmetric key generators should throw an UnsupportedOperation Exception</p></div></div></div>
                 </div>
               </div>
             </div>
           </div>
-<a data-name="-1252894556%2FFunctions%2F-688304473" anchor-label="sign" id="-1252894556%2FFunctions%2F-688304473" data-filterable-set=":crypto:dokkaHtmlPartial/main"></a>
+<a data-name="89688355%2FFunctions%2F-688304473" anchor-label="sign" id="89688355%2FFunctions%2F-688304473" data-filterable-set=":crypto:dokkaHtmlPartial/main"></a>
           <div class="table-row" data-filterable-current=":crypto:dokkaHtmlPartial/main" data-filterable-set=":crypto:dokkaHtmlPartial/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="sign.html"><span><span>sign</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1252894556%2FFunctions%2F-688304473"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="89688355%2FFunctions%2F-688304473"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":crypto:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="sign.html"><span class="token function">sign</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">privateKey<span class="token operator">: </span><span data-unresolved-link="com.nimbusds.jose.jwk/JWK///PointingToDeclaration/">JWK</span><span class="token punctuation">, </span></span><span class="parameter ">payload<span class="token operator">: </span><span data-unresolved-link="com.nimbusds.jose/Payload///PointingToDeclaration/">Payload</span><span class="token punctuation">, </span></span><span class="parameter ">options<span class="token operator">: </span><a href="../-sign-options/index.html">SignOptions</a><span class="token operator">?</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></div><div class="brief "><p class="paragraph">Sign a given payload using a private key and optionally some additional options.</p></div></div></div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":crypto:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="sign.html"><span class="token function">sign</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">privateKey<span class="token operator">: </span><span data-unresolved-link="com.nimbusds.jose.jwk/JWK///PointingToDeclaration/">JWK</span><span class="token punctuation">, </span></span><span class="parameter ">payload<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-byte-array/index.html">ByteArray</a><span class="token punctuation">, </span></span><span class="parameter ">options<span class="token operator">: </span><a href="../-sign-options/index.html">SignOptions</a><span class="token operator">?</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-byte-array/index.html">ByteArray</a></div><div class="brief "><p class="paragraph">Sign a given payload using a private key.</p></div></div></div>
                 </div>
               </div>
             </div>
@@ -253,17 +388,17 @@
               </div>
             </div>
           </div>
-<a data-name="1500345135%2FFunctions%2F-688304473" anchor-label="verify" id="1500345135%2FFunctions%2F-688304473" data-filterable-set=":crypto:dokkaHtmlPartial/main"></a>
+<a data-name="-749510700%2FFunctions%2F-688304473" anchor-label="verify" id="-749510700%2FFunctions%2F-688304473" data-filterable-set=":crypto:dokkaHtmlPartial/main"></a>
           <div class="table-row" data-filterable-current=":crypto:dokkaHtmlPartial/main" data-filterable-set=":crypto:dokkaHtmlPartial/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="verify.html"><span><span>verify</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1500345135%2FFunctions%2F-688304473"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-749510700%2FFunctions%2F-688304473"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":crypto:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="verify.html"><span class="token function">verify</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">publicKey<span class="token operator">: </span><span data-unresolved-link="com.nimbusds.jose.jwk/JWK///PointingToDeclaration/">JWK</span><span class="token punctuation">, </span></span><span class="parameter ">jws<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">options<span class="token operator">: </span><a href="../-verify-options/index.html">VerifyOptions</a><span class="token operator">?</span></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Verify a signature given a public key, a JSON Web Signature (JWS), and optionally some additional verification options.</p></div></div></div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":crypto:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="verify.html"><span class="token function">verify</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">publicKey<span class="token operator">: </span><span data-unresolved-link="com.nimbusds.jose.jwk/JWK///PointingToDeclaration/">JWK</span><span class="token punctuation">, </span></span><span class="parameter ">signedPayload<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-byte-array/index.html">ByteArray</a><span class="token punctuation">, </span></span><span class="parameter ">signature<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-byte-array/index.html">ByteArray</a><span class="token punctuation">, </span></span><span class="parameter ">options<span class="token operator">: </span><a href="../-verify-options/index.html">VerifyOptions</a><span class="token operator">?</span></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Verify the signature of a given payload using a public key.</p></div></div></div>
                 </div>
               </div>
             </div>
