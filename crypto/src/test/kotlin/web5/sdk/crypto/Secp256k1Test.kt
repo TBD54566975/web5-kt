@@ -3,8 +3,11 @@ package web5.sdk.crypto
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.jwk.KeyType
 import com.nimbusds.jose.jwk.KeyUse
-import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 class Secp256k1Test {
   @Test
