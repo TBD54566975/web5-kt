@@ -217,7 +217,7 @@ public object Crypto {
    * @throws IllegalArgumentException if the algorithm or curve is not supported.
    */
   public fun getVerifier(algorithm: Algorithm, curve: Curve? = null): Signer {
-    return getVerifier(algorithm, curve)
+    return getSigner(algorithm, curve)
   }
 
   /**
