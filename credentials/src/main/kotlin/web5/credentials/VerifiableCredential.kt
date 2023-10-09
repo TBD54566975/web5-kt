@@ -14,11 +14,14 @@ import com.nimbusds.jose.util.Base64URL
 import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jwt.JWTParser
 import com.nimbusds.jwt.SignedJWT
+import foundation.identity.did.DIDURL
+import foundation.identity.did.VerificationMethod
 import web5.sdk.common.Convert
 import web5.sdk.crypto.Crypto
 import web5.sdk.dids.Did
 import web5.sdk.dids.DidResolvers
 import java.net.URI
+import java.security.SignatureException
 
 /**
  * Type alias representing the danubetech Verifiable Credential data model.
@@ -189,18 +192,54 @@ public class VerifiableCredential(private val vcDataModel: VcDataModel) {
      * ```
      */
     public fun verify(vcJwt: String) {
-      val jwt = JWTParser.parse(vcJwt) as SignedJWT
+      val jwt = JWTParser.parse(vcJwt) as SignedJWT // validates JWT
+
+      require(jwt.header.algorithm != null && jwt.header.keyID != null) {
+        "Signature verification failed: Expected JWS header to contain alg and kid"
+      }
+
       val verificationMethodId = jwt.header.keyID
+      val parsedDidUrl = DIDURL.fromString(verificationMethodId) // validates vm id which is a DID URL
 
-      val (did, _) = verificationMethodId.split("#")
+      val didResolutionResult = DidResolvers.resolve(parsedDidUrl.did.didString)
+      if (didResolutionResult.didResolutionMetadata.error != null) {
+        throw SignatureException(
+          "Signature verification failed: " +
+            "Failed to resolve DID ${parsedDidUrl.did.didString}. " +
+            "Error: ${didResolutionResult.didResolutionMetadata.error}"
+        )
+      }
 
-      val didResolutionResult = DidResolvers.resolve(did)
-      val verificationMethod = didResolutionResult.didDocument.allVerificationMethodsAsMap
-        .getOrElse(URI.create(verificationMethodId)) {
-          throw IllegalArgumentException("Verification method not found.")
+      // create a set of possible id matches. the DID spec allows for an id to be the entire `did#fragment`
+      // or just `#fragment`. See: https://www.w3.org/TR/did-core/#relative-did-urls.
+      // using a set for fast string comparison. DIDs can be lonnng.
+      val verificationMethodIds = setOf(parsedDidUrl.didUrlString, "#${parsedDidUrl.fragment}")
+      val assertionMethods = didResolutionResult.didDocument.assertionMethodVerificationMethodsDereferenced
+      var assertionMethod: VerificationMethod? = null
+
+      for (method in assertionMethods) {
+        val id = method.id.toString()
+        if (verificationMethodIds.contains(id)) {
+          assertionMethod = method
+          break
         }
+      }
 
-      val publicKeyMap = verificationMethod.publicKeyJwk
+      if (assertionMethod == null) {
+        throw SignatureException(
+          "Signature verification failed: Expected kid in JWS header to dereference " +
+            "a DID Document Verification Method with an Assertion verification relationship"
+        )
+      }
+
+      require(assertionMethod.isType("JsonWebKey2020") && assertionMethod.publicKeyJwk != null) {
+        throw SignatureException(
+          "Signature verification failed: Expected kid in JWS header to dereference " +
+            "a DID Document Verification Method of type JsonWebKey2020 with a publicKeyJwk"
+        )
+      }
+
+      val publicKeyMap = assertionMethod.publicKeyJwk
       val publicKeyJwk = JWK.parse(publicKeyMap)
 
       val toVerifyBytes = jwt.signingInput
