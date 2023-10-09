@@ -5,6 +5,8 @@ import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
+import com.nfeld.jsonpathkt.JsonPath
+import com.nfeld.jsonpathkt.extension.read
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.JWSHeader
 import com.nimbusds.jose.jwk.JWK
@@ -83,22 +85,50 @@ public class VerifiableCredential(private val vcDataModel: VcDataModel) {
   }
 
   /**
-   * Sign a verifiable credential using a specified decentralized identifier ([did]) and an optional key alias ([keyAlias]).
+   * Checks if the given [presentationDefinition] is satisfied based on the provided input descriptors and constraints.
    *
-   * If the [keyAlias] is null, the function will attempt to use the first available verification method from the [did].
-   * The result is a String in a JWT format.
+   * @param presentationDefinition The Presentation Definition to be evaluated.
+   * @return `true` if the Presentation Definition is satisfied, `false` otherwise.
+   * @throws NotImplementedError if certain features like Submission Requirements or Field Filters are not implemented.
+   */
+  public fun satisfiesPresentationDefinition(presentationDefinition: PresentationDefinitionV2): Boolean {
+    if (!presentationDefinition.submissionRequirements.isNullOrEmpty()) {
+      throw NotImplementedError("Presentation Definition's Submission Requirements feature is not implemented")
+    }
+
+    return presentationDefinition.inputDescriptors
+      .filter { !it.constraints.fields.isNullOrEmpty() }
+      .all { inputDescriptorWithFields ->
+        val requiredFields = inputDescriptorWithFields.constraints.fields!!.filter { it.optional != true }
+
+        var satisfied = true
+        for (field in requiredFields) {
+          // we ignore field filters
+          if (field.filter != null) {
+            throw NotImplementedError("Field Filter is not implemented")
+          }
+
+          if (field.path.any { path -> getFieldByJsonPath(path) == null }) {
+            satisfied = false
+            break
+          }
+        }
+        return satisfied
+      }
+  }
+
+  /**
+   * Converts the current object to its JSON representation.
    *
-   * @param did The [Did] used to sign the credential.
-   * @param keyAlias An optional alias for the key used to sign the credential.
-   * @return The JWT representing the signed verifiable credential.
-   *
-   * Example:
-   * ```
-   * val jwt = verifiableCredential.sign(myDid)
-   * ```
+   * @return The JSON representation of the object.
    */
   override fun toString(): String {
     return vcDataModel.toJson()
+  }
+
+  private fun getFieldByJsonPath(path: String): String? {
+    val vcJsonString: String = this.vcDataModel.toJson()
+    return JsonPath.parse(vcJsonString)?.read<String>(path)
   }
 
   public companion object {
@@ -123,6 +153,7 @@ public class VerifiableCredential(private val vcDataModel: VcDataModel) {
      */
     public fun <T> create(type: String, issuer: String, subject: String, data: T): VerifiableCredential {
       val jsonData: JsonNode = objectMapper.valueToTree(data)
+
       @Suppress("UNCHECKED_CAST")
       val mapData = objectMapper.treeToValue(jsonData, Map::class.java) as MutableMap<String, Any>
 
