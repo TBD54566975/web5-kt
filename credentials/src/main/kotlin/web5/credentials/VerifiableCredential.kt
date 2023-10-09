@@ -19,7 +19,12 @@ import web5.sdk.crypto.Crypto
 import web5.sdk.dids.Did
 import web5.sdk.dids.DidResolvers
 import java.net.URI
-import com.danubetech.verifiablecredentials.VerifiableCredential as VcDataModel
+
+/**
+ * Type alias representing the danubetech Verifiable Credential data model.
+ * This typealias simplifies the use of the [com.danubetech.verifiablecredentials.VerifiableCredential] class.
+ */
+public typealias VcDataModel = com.danubetech.verifiablecredentials.VerifiableCredential
 
 /**
  * `VerifiableCredential` represents a digitally verifiable credential according to the
