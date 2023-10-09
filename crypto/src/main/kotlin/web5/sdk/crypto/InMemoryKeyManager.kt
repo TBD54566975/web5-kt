@@ -65,9 +65,10 @@ public class InMemoryKeyManager : KeyManager {
    * The implementation of this method is not yet provided and invoking it will throw a [NotImplementedError].
    *
    * @param keyAlias The alias (key ID) of the private key stored in the keyStore.
-   * @param payload The payload to be signed.
+   * @param signingInput The data to be signed.
+   * @return The signature in JWS R+S format
    */
-  override fun sign(keyAlias: String, payload: Payload) {
+  override fun sign(keyAlias: String, signingInput: ByteArray): ByteArray {
     TODO("Not yet implemented")
   }
 }

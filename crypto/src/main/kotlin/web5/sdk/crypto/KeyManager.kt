@@ -46,11 +46,12 @@ public interface KeyManager {
    * Signs the provided payload using the private key identified by the provided alias.
    *
    * @param keyAlias The alias referencing the stored private key.
-   * @param payload The data/payload to be signed.
+   * @param signingInput The data to be signed.
+   * @return The signature in JWS R+S format
    *
    * Implementations should ensure that the signing process is secured, utilizing secure cryptographic
    * practices and safeguarding the private key during the operation. The specific signing algorithm
    * used may depend on the type and parameters of the stored key.
    */
-  public fun sign(keyAlias: String, payload: Payload)
+  public fun sign(keyAlias: String, signingInput: ByteArray): ByteArray
 }
