@@ -5,20 +5,10 @@ import com.danubetech.verifiablecredentials.jwt.FromJwtConverter
 import com.danubetech.verifiablecredentials.jwt.JwtVerifiableCredential
 import com.danubetech.verifiablecredentials.jwt.JwtVerifiablePresentation
 import com.danubetech.verifiablecredentials.jwt.ToJwtConverter
-import com.identityfoundry.ddi.protocol.multicodec.Multicodec
-import com.identityfoundry.ddi.protocol.multicodec.MulticodecEncoder
 import com.nfeld.jsonpathkt.JsonPath
 import com.nfeld.jsonpathkt.extension.read
-import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.JWK
-import com.nimbusds.jose.jwk.OctetKeyPair
-import com.nimbusds.jose.jwk.gen.OctetKeyPairGenerator
-import com.nimbusds.jose.util.Base64URL
 import com.nimbusds.jwt.SignedJWT
-import foundation.identity.did.DID
-import foundation.identity.did.DIDDocument
-import foundation.identity.did.VerificationMethod
-import io.ipfs.multibase.Multibase
 import uniresolver.result.ResolveDataModelResult
 import uniresolver.w3c.DIDResolver
 import web5.credentials.model.CredentialStatus
@@ -33,77 +23,6 @@ import web5.credentials.model.VerifiablePresentationType
 import java.net.URI
 import java.util.Date
 import java.util.UUID
-
-/**
- * Represents a utility class for DIDKey operations.
- */
-public class DIDKey private constructor() {
-  public companion object {
-    /**
-     * Generates an Ed25519 DIDKey along with its associated JWK, identifier, and DID document.
-     *
-     * @return A [Triple] containing the JWK, identifier, and DID document.
-     */
-    public fun generateEd25519(): Triple<JWK, String, DIDDocument> {
-      val jwk = OctetKeyPairGenerator(Curve.Ed25519)
-        .generate()
-      val publicJWK = jwk.toPublicJWK()
-
-      val methodSpecId: String = Multibase.encode(
-        Multibase.Base.Base58BTC,
-        MulticodecEncoder.encode(Multicodec.ED25519_PUB, publicJWK.decodedX)
-      )
-
-      val identifier = "did:key:$methodSpecId"
-      val didDocument = createDocument(identifier)
-
-      return Triple(
-        jwk,
-        identifier,
-        didDocument,
-      )
-    }
-
-    private fun createSignatureMethod(did: DID): VerificationMethod {
-      val multibaseValue = did.methodSpecificId
-      val decodedMultibase = Multibase.decode(multibaseValue)
-      val decodedData = MulticodecEncoder.decode(decodedMultibase)
-      val multicodecValue = decodedData.codec
-      val rawPublicKeyBytes = decodedData.dataAsBytes
-
-      // The byte len for ed25519-pub
-      require(rawPublicKeyBytes.size == 32)
-
-      return VerificationMethod.builder()
-        .id(URI.create(did.toUri().toString() + "#$multibaseValue"))
-        .type("JsonWebKey2020")
-        .controller(did.toUri())
-        .publicKeyJwk(encodeJWK(multicodecValue, rawPublicKeyBytes)!!.toJSONObject())
-        .build()
-    }
-
-    private fun encodeJWK(multicodecValue: Multicodec?, rawPublicKeyBytes: ByteArray?): OctetKeyPair? {
-      require(multicodecValue == Multicodec.ED25519_PUB)
-      return OctetKeyPair.Builder(Curve.Ed25519, Base64URL.encode(rawPublicKeyBytes)).build()
-    }
-
-    private fun createDocument(identifier: String): DIDDocument {
-      val did = DID.fromString(identifier)
-      require(did.methodName == "key")
-      require(did.methodSpecificId.startsWith('z'))
-      val signatureVerificationMethod: VerificationMethod = createSignatureMethod(did)
-      val idOnly = VerificationMethod.builder().id(signatureVerificationMethod.id).build()
-      return DIDDocument.builder().id(URI.create(identifier))
-        .verificationMethod(signatureVerificationMethod)
-        .authenticationVerificationMethod(idOnly)
-        .assertionMethodVerificationMethod(idOnly)
-        .capabilityInvocationVerificationMethod(idOnly)
-        .capabilityDelegationVerificationMethod(idOnly)
-        .build()
-    }
-
-  }
-}
 
 /**
  * Represents the signing options required to create verifiable credentials or presentations.
