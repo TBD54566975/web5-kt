@@ -189,7 +189,7 @@ public object Secp256k1 : KeyGenerator, Signer {
   }
 
   override fun verify(publicKey: JWK, signedPayload: ByteArray, signature: ByteArray, options: VerifyOptions?) {
-    val verifier = Signature.getInstance("SHA256withECDSA", "BC")
+    val verifier = Signature.getInstance("SHA256withPLAIN-ECDSA", "BC")
 
     verifier.initVerify(publicKey.toECKey().toPublicKey())
     verifier.update(signedPayload)
