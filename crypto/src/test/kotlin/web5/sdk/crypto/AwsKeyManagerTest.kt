@@ -1,6 +1,7 @@
 package web5.sdk.crypto
 
 import com.nimbusds.jose.JWSAlgorithm
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 
@@ -12,6 +13,7 @@ class AwsKeyManagerTest {
    * Test against actual AWS KMS. Will need to comment before committing
    */
   @Test
+  @Disabled
   fun `test against AWS`() {
     val awsKeyManager = AwsKeyManager()
 
