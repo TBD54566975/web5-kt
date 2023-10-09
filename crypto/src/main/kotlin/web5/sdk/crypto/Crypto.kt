@@ -120,7 +120,6 @@ public object Crypto {
    * @param publicKey The JWK public key to be used for verifying the signature.
    * @param signedPayload The byte array data that was signed.
    * @param signature The signature that will be verified.
-   * @return A boolean indicating whether the signature is valid (true) or not (false).
    */
   public fun verify(publicKey: JWK, signedPayload: ByteArray, signature: ByteArray) {
     val curve = getJwkCurve(publicKey)
