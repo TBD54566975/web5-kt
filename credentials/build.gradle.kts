@@ -20,7 +20,11 @@ dependencies {
   api("decentralized-identity:did-common-java:1.9.0")
   api("decentralized-identity:uni-resolver-core:0.13.0")
 
+  implementation(project(":dids"))
+  implementation(project(":common"))
+  implementation(project(":crypto"))
   implementation("com.github.richardbergquist:java-multicodec:main-SNAPSHOT")
+  implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.0")
   implementation("com.google.crypto.tink:tink:1.10.0")
   implementation("com.nfeld.jsonpathkt:jsonpathkt:2.0.1")
 }

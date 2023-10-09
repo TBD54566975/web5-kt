@@ -1,7 +1,6 @@
 package web5.sdk.crypto
 
 import com.nimbusds.jose.Algorithm
-import com.nimbusds.jose.Payload
 import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.JWK
 
@@ -67,7 +66,7 @@ public class InMemoryKeyManager : KeyManager {
    * @param keyAlias The alias (key ID) of the private key stored in the keyStore.
    * @param payload The payload to be signed.
    */
-  override fun sign(keyAlias: String, payload: Payload) {
+  override fun sign(keyAlias: String, payload: ByteArray) {
     TODO("Not yet implemented")
   }
 }
