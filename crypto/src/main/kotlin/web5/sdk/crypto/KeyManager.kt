@@ -54,4 +54,13 @@ public interface KeyManager {
    * used may depend on the type and parameters of the stored key.
    */
   public fun sign(keyAlias: String, signingInput: ByteArray): ByteArray
+
+  /**
+   * Return the alias of [publicKey], as was originally returned by [generatePrivateKey]
+   *
+   * @param publicKey A public key in JWK (JSON Web Key) format
+   * @return The alias belonging to [publicKey]
+   * @throws IllegalArgumentException if the key is not known to the [KeyManager]
+   */
+  public fun getDefaultAlias(publicKey: JWK): String
 }

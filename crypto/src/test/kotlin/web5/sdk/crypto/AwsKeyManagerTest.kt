@@ -1,14 +1,16 @@
-package sdk.crypto
+package web5.sdk.crypto
 
 import com.nimbusds.jose.JWSAlgorithm
 import org.junit.jupiter.api.Test
-import web5.sdk.crypto.AwsKeyManager
-import web5.sdk.crypto.Crypto
+import kotlin.test.assertEquals
 
 class AwsKeyManagerTest {
 
   val signingInput = "The Magic Words are Squeamish Ossifrage".toByteArray()
 
+  /**
+   * Test against actual AWS KMS. Will need to comment before committing
+   */
   @Test
   fun `test against AWS`() {
     val awsKeyManager = AwsKeyManager()
@@ -23,6 +25,9 @@ class AwsKeyManagerTest {
     println("Alias is $alias")
     val publicKeyJwk = awsKeyManager.getPublicKey(alias)
     println("Public Key JWK: $publicKeyJwk")
+    val alias2 = awsKeyManager.getDefaultAlias(publicKeyJwk)
+    assertEquals(alias, alias2)
+
     val signature = awsKeyManager.sign(alias, signingInput)
 
     if (algorithm == JWSAlgorithm.ES256K)
