@@ -123,6 +123,7 @@ public class VerifiableCredential(private val vcDataModel: VcDataModel) {
      */
     public fun <T> create(type: String, issuer: String, subject: String, data: T): VerifiableCredential {
       val jsonData: JsonNode = objectMapper.valueToTree(data)
+      @Suppress("UNCHECKED_CAST")
       val mapData = objectMapper.treeToValue(jsonData, Map::class.java) as MutableMap<String, Any>
 
       val credentialSubject = CredentialSubject.builder()
@@ -155,7 +156,7 @@ public class VerifiableCredential(private val vcDataModel: VcDataModel) {
       val jwt = JWTParser.parse(vcJwt) as SignedJWT
       val verificationMethodId = jwt.header.keyID
 
-      val (did, kid) = verificationMethodId.split("#")
+      val (did, _) = verificationMethodId.split("#")
 
       val didResolutionResult = DidResolvers.resolve(did)
       val verificationMethod = didResolutionResult.didDocument.allVerificationMethodsAsMap
@@ -190,6 +191,7 @@ public class VerifiableCredential(private val vcDataModel: VcDataModel) {
         throw IllegalArgumentException("jwt missing vc object in payload")
       }
 
+      @Suppress("UNCHECKED_CAST")
       val vcDataModel = VcDataModel.fromMap(vcDataModelMap as Map<String, Any>)
 
       return VerifiableCredential(vcDataModel)
