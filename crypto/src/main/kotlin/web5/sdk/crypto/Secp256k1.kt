@@ -8,7 +8,6 @@ import com.nimbusds.jose.jwk.ECKey
 import com.nimbusds.jose.jwk.JWK
 import com.nimbusds.jose.jwk.KeyType
 import com.nimbusds.jose.jwk.KeyUse
-import com.nimbusds.jose.jwk.OctetKeyPair
 import com.nimbusds.jose.jwk.gen.ECKeyGenerator
 import com.nimbusds.jose.util.Base64URL
 import org.bouncycastle.jce.ECNamedCurveTable
@@ -201,7 +200,7 @@ public object Secp256k1 : KeyGenerator, Signer {
    * Validates the provided [JWK] (JSON Web Key) to ensure it conforms to the expected key type and format.
    *
    * This function checks the following:
-   * - The key must be an instance of [OctetKeyPair].
+   * - The key must be an instance of [ECKey].
    * - The key type (`kty`) must be [KeyType.EC] (Elliptic Curve).
    *
    * If any of these checks fail, this function throws an [IllegalArgumentException] with
@@ -223,11 +222,11 @@ public object Secp256k1 : KeyGenerator, Signer {
    * to safeguard against invalid key usage and potential vulnerabilities.
    *
    * @param key The [JWK] to validate.
-   * @throws IllegalArgumentException if the key is not of type [OctetKeyPair] or if the key type is not [KeyType.EC].
+   * @throws IllegalArgumentException if the key is not of type [ECKey] or if the key type is not [KeyType.EC].
    */
   public fun validateKey(key: JWK) {
-    require(key is OctetKeyPair) { "private key must be an Octet Key Pair (kty: OKP)" }
-    require(key.keyType == keyType) { "private key key type must be OKP" }
+    require(key is ECKey) { "private key must be an ECKey (kty: EC)" }
+    require(key.keyType == keyType) { "private key key type must be EC" }
   }
 
   /**
