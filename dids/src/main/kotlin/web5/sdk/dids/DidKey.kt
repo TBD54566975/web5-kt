@@ -123,9 +123,17 @@ public object DidKeyMethod : DidMethod<CreateDidKeyOptions> {
       .type("JsonWebKey2020")
       .build()
 
+    val verificationMethodRef = VerificationMethod.builder()
+      .id(verificationMethodId)
+      .build()
+
     val didDocument = DIDDocument.builder()
       .id(URI(did))
       .verificationMethod(verificationMethod)
+      .assertionMethodVerificationMethod(verificationMethodRef)
+      .authenticationVerificationMethod(verificationMethodRef)
+      .capabilityDelegationVerificationMethod(verificationMethod)
+      .capabilityInvocationVerificationMethod(verificationMethodRef)
       .build()
 
     return DidResolutionResult(didDocument = didDocument, context = "https://w3id.org/did-resolution/v1")
