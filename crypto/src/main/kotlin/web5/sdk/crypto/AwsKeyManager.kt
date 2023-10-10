@@ -31,22 +31,20 @@ import java.security.interfaces.ECPublicKey
 
 /**
  * A [KeyManager] that uses AWS KMS for remote storage of keys and signing operations. Caller is expected to provide
- * connection details for [AWSKMS] client as per [Configure the AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html)
+ * connection details for [AWSKMS] client as per
+ * [Configure the AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html)
  *
  * Key aliases are generated from the key's JWK thumbprint, and stored in AWS KMS.
  * e.g. alias/6uNnyj7xZUgtKTEOFV2mz0f7Hd3cxIH1o5VXsOo4u1M
  *
  * AWS supports a limited set ECDSA curves for signing:
  * - [JWSAlgorithm.ES256K]
- * - [JWSAlgorithm.ES256]
- * - [JWSAlgorithm.ES384]
- * - [JWSAlgorithm.ES512]
  */
 public class AwsKeyManager : KeyManager {
 
   private val kmsClient: AWSKMS = AWSKMSClientBuilder.standard().build()
 
-  private data class Details(
+  private data class AlgorithmDetails(
     val algorithm: JWSAlgorithm,
     val curve: Curve,
     val keySpec: KeySpec,
@@ -55,17 +53,42 @@ public class AwsKeyManager : KeyManager {
   )
 
   private val algorithmDetails = mapOf(
-    JWSAlgorithm.ES256K to Details(JWSAlgorithm.ES256K, Curve.SECP256K1, KeySpec.ECC_SECG_P256K1, SigningAlgorithmSpec.ECDSA_SHA_256) { SHA256Digest() },
-    JWSAlgorithm.ES256 to Details(JWSAlgorithm.ES256, Curve.P_256, KeySpec.ECC_NIST_P256, SigningAlgorithmSpec.ECDSA_SHA_256) { SHA256Digest() },
-    JWSAlgorithm.ES384 to Details(JWSAlgorithm.ES384, Curve.P_384, KeySpec.ECC_NIST_P384, SigningAlgorithmSpec.ECDSA_SHA_384) { SHA384Digest() },
-    JWSAlgorithm.ES512 to Details(JWSAlgorithm.ES512, Curve.P_521, KeySpec.ECC_NIST_P521, SigningAlgorithmSpec.ECDSA_SHA_512) { SHA512Digest() }
+    JWSAlgorithm.ES256K to AlgorithmDetails(
+      algorithm = JWSAlgorithm.ES256K,
+      curve = Curve.SECP256K1,
+      keySpec = KeySpec.ECC_SECG_P256K1,
+      signingAlgorithm = SigningAlgorithmSpec.ECDSA_SHA_256,
+      newDigest = { SHA256Digest() }
+    ),
+    //Disable some algos that AWS supports, but Crypto doesn't yet
+//    JWSAlgorithm.ES256 to AlgorithmDetails(
+//      algorithm = JWSAlgorithm.ES256,
+//      curve = Curve.P_256,
+//      keySpec = KeySpec.ECC_NIST_P256,
+//      signingAlgorithm = SigningAlgorithmSpec.ECDSA_SHA_256,
+//      newDigest = { SHA256Digest() }
+//    ),
+//    JWSAlgorithm.ES384 to AlgorithmDetails(
+//      algorithm = JWSAlgorithm.ES384,
+//      curve = Curve.P_384,
+//      keySpec = KeySpec.ECC_NIST_P384,
+//      signingAlgorithm = SigningAlgorithmSpec.ECDSA_SHA_384,
+//      newDigest = { SHA384Digest() }
+//    ),
+//    JWSAlgorithm.ES512 to AlgorithmDetails(
+//      algorithm = JWSAlgorithm.ES512,
+//      curve = Curve.P_521,
+//      keySpec = KeySpec.ECC_NIST_P521,
+//      signingAlgorithm = SigningAlgorithmSpec.ECDSA_SHA_512,
+//      newDigest = { SHA512Digest() }
+//    )
   )
 
-  private fun getDetails(algorithm: Algorithm): Details {
+  private fun getAlgorithmDetails(algorithm: Algorithm): AlgorithmDetails {
     return algorithmDetails[algorithm] ?: throw IllegalArgumentException("Algorithm $algorithm is not supported")
   }
 
-  private fun getDetails(keySpec: KeySpec): Details {
+  private fun getAlgorithmDetails(keySpec: KeySpec): AlgorithmDetails {
     return algorithmDetails.values.firstOrNull { it.keySpec == keySpec }
       ?: throw IllegalArgumentException("KeySpec $keySpec is not supported")
   }
@@ -82,7 +105,7 @@ public class AwsKeyManager : KeyManager {
    * @throws [AWSKMSException] for any error originating from the [AWSKMS] client
    */
   override fun generatePrivateKey(algorithm: Algorithm, curve: Curve?, options: KeyGenOptions?): String {
-    val keySpec = getDetails(algorithm).keySpec
+    val keySpec = getAlgorithmDetails(algorithm).keySpec
     val createKeyRequest = CreateKeyRequest()
       .withKeySpec(keySpec)
       .withKeyUsage(KeyUsageType.SIGN_VERIFY)
@@ -91,11 +114,7 @@ public class AwsKeyManager : KeyManager {
 
     val publicKey = getPublicKey(keyId)
     val alias = getDefaultAlias(publicKey)
-
-    val createAliasRequest = CreateAliasRequest()
-      .withAliasName(alias)
-      .withTargetKeyId(keyId)
-    kmsClient.createAlias(createAliasRequest)
+    setKeyAlias(keyId, alias)
     return alias
   }
 
@@ -109,16 +128,15 @@ public class AwsKeyManager : KeyManager {
   override fun getPublicKey(keyAlias: String): JWK {
     val getPublicKeyRequest = GetPublicKeyRequest().withKeyId(keyAlias)
     val publicKeyResponse = kmsClient.getPublicKey(getPublicKeyRequest)
-
-    val details = getDetails(publicKeyResponse.keySpec.enum())
     val publicKey = convertToJavaPublicKey(publicKeyResponse.publicKey)
 
+    val algorithmDetails = getAlgorithmDetails(publicKeyResponse.keySpec.enum())
     val jwkBuilder = when (publicKey) {
-      is ECPublicKey -> ECKey.Builder(details.curve, publicKey)
+      is ECPublicKey -> ECKey.Builder(algorithmDetails.curve, publicKey)
       else -> throw IllegalArgumentException("Unknown key type $publicKey")
     }
     return jwkBuilder
-      .algorithm(details.algorithm)
+      .algorithm(algorithmDetails.algorithm)
       .keyID(keyAlias)
       .keyUse(KeyUse.SIGNATURE)
       .build()
@@ -134,22 +152,22 @@ public class AwsKeyManager : KeyManager {
    */
   override fun sign(keyAlias: String, signingInput: ByteArray): ByteArray {
     val keySpec = fetchKeySpec(keyAlias)
-    val details = getDetails(keySpec)
+    val algorithmDetails = getAlgorithmDetails(keySpec)
     //Pre-hash the input because AWS limits the message to 4096 bytes
-    val hashedMessage = shaDigest(details, signingInput)
+    val hashedMessage = shaDigest(algorithmDetails, signingInput)
 
     val signRequest = SignRequest()
       .withKeyId(keyAlias)
       .withMessageType(MessageType.DIGEST)
       .withMessage(hashedMessage.asByteBuffer())
-      .withSigningAlgorithm(details.signingAlgorithm)
+      .withSigningAlgorithm(algorithmDetails.signingAlgorithm)
     val signResponse = kmsClient.sign(signRequest)
     val derSignatureBytes = signResponse.signature.array()
-    return transcodeDerSignatureToConcat(derSignatureBytes, details.algorithm)
+    return transcodeDerSignatureToConcat(derSignatureBytes, algorithmDetails.algorithm)
   }
 
   /**
-   * Return the alias of [publicKey], as was originally returned by [generatePrivateKey]
+   * Return the alias of [publicKey], as was originally returned by [generatePrivateKey].
    *
    * @param publicKey A public key in JWK (JSON Web Key) format
    * @return The alias belonging to [publicKey]
@@ -176,8 +194,8 @@ public class AwsKeyManager : KeyManager {
     return describeKeyResponse.keyMetadata.keySpec.enum()
   }
 
-  private fun shaDigest(details: Details, signingInput: ByteArray): ByteArray {
-    val digest = details.newDigest()
+  private fun shaDigest(algorithmDetails: AlgorithmDetails, signingInput: ByteArray): ByteArray {
+    val digest = algorithmDetails.newDigest()
     digest.update(signingInput, 0, signingInput.size)
     val result = ByteArray(digest.digestSize)
     digest.doFinal(result, 0)

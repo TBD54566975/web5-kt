@@ -1,22 +1,24 @@
 package web5.sdk.crypto
 
 import com.nimbusds.jose.JWSAlgorithm
-import org.junit.jupiter.api.Disabled
+import com.nimbusds.jose.jwk.KeyType
+import com.nimbusds.jose.jwk.KeyUse
 import org.junit.jupiter.api.Test
+import java.util.UUID
 import kotlin.test.assertEquals
 
 class AwsKeyManagerTest {
 
   val signingInput = "The Magic Words are Squeamish Ossifrage".toByteArray()
+  val algs = listOf(JWSAlgorithm.ES256K, JWSAlgorithm.ES256, JWSAlgorithm.ES384, JWSAlgorithm.ES512)
+  val awsKeyManager = AwsKeyManager()
 
   /**
    * Test against actual AWS KMS. Will need to comment before committing
    */
   @Test
-  @Disabled
+//  @Disabled
   fun `test against AWS`() {
-    val awsKeyManager = AwsKeyManager()
-
     val algs = listOf(JWSAlgorithm.ES256K, JWSAlgorithm.ES256, JWSAlgorithm.ES384, JWSAlgorithm.ES512)
     algs.forEach { testSigningAlgo(awsKeyManager, it) }
   }
