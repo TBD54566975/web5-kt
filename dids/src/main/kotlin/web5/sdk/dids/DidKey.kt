@@ -63,7 +63,7 @@ public object DidKeyMethod : DidMethod<CreateDidKeyOptions> {
    *
    * @throws UnsupportedOperationException if the specified curve is not supported.
    */
-  public override suspend fun create(keyManager: KeyManager, options: CreateDidKeyOptions?)
+  public override fun create(keyManager: KeyManager, options: CreateDidKeyOptions?)
     : Pair<DidKey, CreatedDidKeyMetadata> {
     val opts = options ?: CreateDidKeyOptions()
 
@@ -101,7 +101,7 @@ public object DidKeyMethod : DidMethod<CreateDidKeyOptions> {
    *
    * @throws IllegalArgumentException if the provided DID does not conform to the "did:key" method.
    */
-  public override suspend fun resolve(didUrl: String): DidResolutionResult {
+  public override fun resolve(didUrl: String): DidResolutionResult {
     val parsedDid = DID.fromString(didUrl)
 
     require(parsedDid.methodName == method) { throw IllegalArgumentException("expected did:key") }

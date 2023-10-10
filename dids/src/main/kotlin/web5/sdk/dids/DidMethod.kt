@@ -94,7 +94,7 @@ public interface DidMethod<T : CreateDidOptions> {
    * @param options Optional instance of [T], representing method-specific options during the DID creation.
    * @return An instance of [Did] representing the created DID.
    */
-  public suspend fun create(keyManager: KeyManager, options: T? = null): Pair<Did, CreationMetadata>
+  public fun create(keyManager: KeyManager, options: T? = null): Pair<Did, CreationMetadata>
 
   /**
    * Resolves a DID URL into a set of concrete data and metadata, wrapped in a [DidResolutionResult].
@@ -102,5 +102,5 @@ public interface DidMethod<T : CreateDidOptions> {
    * @param didUrl A string representing the DID URL that needs to be resolved.
    * @return An instance of [DidResolutionResult] containing resolved data and possibly related metadata.
    */
-  public suspend fun resolve(didUrl: String): DidResolutionResult
+  public fun resolve(didUrl: String): DidResolutionResult
 }

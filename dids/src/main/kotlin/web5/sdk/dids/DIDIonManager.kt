@@ -19,6 +19,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import io.ktor.serialization.kotlinx.json.json
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -102,7 +103,7 @@ public sealed class DIDIonManager(
    *
    * @return Pair of DID and DIDDocument.
    */
-  override suspend fun create(keyManager: KeyManager, options: CreateDidIonOptions?): Pair<Did, IonCreationMetadata> {
+  override fun create(keyManager: KeyManager, options: CreateDidIonOptions?): Pair<Did, IonCreationMetadata> {
     val (createOp, keys) = createOperation(keyManager, options)
 
     val shortFormDIDSegment =
@@ -115,12 +116,16 @@ public sealed class DIDIonManager(
     )
     val longFormDIDSegment = didUriSegment(initialState)
 
-    val response: HttpResponse = client.post(operationsEndpoint) {
-      contentType(ContentType.Application.Json)
-      setBody(createOp)
+    val response: HttpResponse = runBlocking {
+      client.post(operationsEndpoint) {
+        contentType(ContentType.Application.Json)
+        setBody(createOp)
+      }
     }
 
-    val opBody = response.bodyAsText()
+    val opBody = runBlocking{
+      response.bodyAsText()
+    }
     if (response.status.value in 200..299) {
       val shortFormDID = "did:ion:$shortFormDIDSegment"
       val longFormDID = "$shortFormDID:$longFormDIDSegment"
@@ -161,12 +166,12 @@ public sealed class DIDIonManager(
   /**
    * Given a [didUrl], returns the [DidResolutionResult], which is specified in https://w3c-ccg.github.io/did-resolution/#did-resolution-result
    */
-  override suspend fun resolve(didUrl: String): DidResolutionResult {
+  override fun resolve(didUrl: String): DidResolutionResult {
     val did = DID.fromString(didUrl)
     require(did.methodName == "ion")
 
-    val resp = client.get("$identifiersEndpoint/$did")
-    val body = resp.bodyAsText()
+    val resp = runBlocking { client.get("$identifiersEndpoint/$did") }
+    val body = runBlocking { resp.bodyAsText() }
     if (!resp.status.isSuccess()) {
       throw Exception("resolution error response '$body'")
     }
