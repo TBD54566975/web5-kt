@@ -22,8 +22,6 @@ import com.nimbusds.jose.jwk.KeyUse
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo
 import org.bouncycastle.crypto.ExtendedDigest
 import org.bouncycastle.crypto.digests.SHA256Digest
-import org.bouncycastle.crypto.digests.SHA384Digest
-import org.bouncycastle.crypto.digests.SHA512Digest
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter
 import java.nio.ByteBuffer
 import java.security.PublicKey
@@ -185,7 +183,7 @@ public class AwsKeyManager(
   }
 
   /**
-   * Parse the ASN.1 DER encoded public key that AWS KMS returns, and convert it to a standard PublicKey
+   * Parse the ASN.1 DER encoded public key that AWS KMS returns, and convert it to a standard PublicKey.
    */
   private fun convertToJavaPublicKey(publicKeyDerBytes: ByteBuffer): PublicKey {
     val publicKeyInfo = SubjectPublicKeyInfo.getInstance(publicKeyDerBytes.array())
@@ -193,7 +191,7 @@ public class AwsKeyManager(
   }
 
   /**
-   * Fetch the [KeySpec] from AWS using a [DescribeKeyRequest]
+   * Fetch the [KeySpec] from AWS using a [DescribeKeyRequest].
    */
   private fun fetchKeySpec(keyAlias: String): KeySpec {
     val describeKeyRequest = DescribeKeyRequest().withKeyId(keyAlias)
@@ -213,7 +211,7 @@ public class AwsKeyManager(
   private fun String.enum(): KeySpec = KeySpec.fromValue(this)
 
   /**
-   * KMS returns the signature encoded as ASN.1 DER. Convert to the "R+S" concatenation format required by JWS
+   * KMS returns the signature encoded as ASN.1 DER. Convert to the "R+S" concatenation format required by JWS.
    * https://www.rfc-editor.org/rfc/rfc7515#appendix-A.3.1
    */
   private fun transcodeDerSignatureToConcat(derSignature: ByteArray, algorithm: JWSAlgorithm): ByteArray {
