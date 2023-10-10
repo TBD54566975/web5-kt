@@ -14,128 +14,153 @@ import web5.sdk.crypto.Secp256k1
 import java.net.URI
 
 /**
- * Represents options for creating "did:key" DIDs with specified cryptographic configurations.
+ * Specifies options for creating a new "did:key" Decentralized Identifier (DID).
  *
- * This class is designed to hold specific configurations, namely the [algorithm] and [curve],
- * during the creation of a new "did:key" DID using the [DidKeyMethod] implementation.
+ * @property algorithm Specifies the algorithm to be used for key creation.
+ *                     Defaults to ES256K (Elliptic Curve Digital Signature Algorithm with SHA-256 and secp256k1 curve).
+ * @property curve Specifies the elliptic curve to be used with the algorithm.
+ *                 Optional and can be null if the algorithm does not require an explicit curve specification.
  *
- * @property algorithm A JOSE [Algorithm] to be used for generating the key (defaults to EdDSA).
- * @property curve A cryptographic [Curve] to be used for key generation (defaults to Ed25519).
+ * @constructor Creates an instance of [CreateDidKeyOptions] with the provided [algorithm] and [curve].
  *
- * ### Example Usage:
+ * ### Usage Example:
  * ```
- * val options = CreateDidKeyOptions(algorithm = JWSAlgorithm.EdDSA, curve = Curve.Ed25519)
+ * val options = CreateDidKeyOptions(algorithm = JWSAlgorithm.ES256K, curve = null)
+ * val didKey = DidKey.create(keyManager, options)
  * ```
  */
 public class CreateDidKeyOptions(
-  public val algorithm: Algorithm = JWSAlgorithm.EdDSA,
-  public val curve: Curve = Curve.Ed25519,
+  public val algorithm: Algorithm = JWSAlgorithm.ES256K,
+  public val curve: Curve? = null
 ) : CreateDidOptions
-
-public typealias DidKey = Did
 
 /**
  * Provides a specific implementation for creating and resolving "did:key" method Decentralized Identifiers (DIDs).
  *
- * The "did:key" method is a specific DID method that is intended for use with
- * DIDs that are entirely derived from a single public key, and it's described in detail
- * in the W3C DID specification.
+ * A "did:key" DID is a special type of DID that is formulated directly from a single public key. It's utilized
+ * in scenarios where it's beneficial for verifiable credentials, capabilities, or other assertions about a subject
+ * to be self-verifiable by third parties. This eradicates the necessity for a separate blockchain or ledger.
+ * Further specifics and technical details are outlined in [the DID Key Spec](https://w3c-ccg.github.io/did-method-key/).
+ *
+ * @property uri The URI of the "did:key" which conforms to the DID standard.
+ * @property keyManager A [KeyManager] instance utilized to manage the cryptographic keys associated with the DID.
+ *
+ * @constructor Initializes a new instance of [DidKey] with the provided [uri] and [keyManager].
  *
  * ### Usage Example:
- * ```
+ * ```kotlin
  * val keyManager = InMemoryKeyManager()
- * val did = DidKeyMethod.create(keyManager)
+ * val did = DidKey("did:key:example", keyManager)
  * ```
  */
-public object DidKeyMethod : DidMethod<CreateDidKeyOptions> {
-  override val method: String = "key"
-
+public class DidKey(uri: String, keyManager: KeyManager) : Did(uri, keyManager) {
   /**
-   * Creates a new "did:key" DID, derived from a public key, and stores the associated key in the provided [KeyManager].
+   * Resolves the current instance's [uri] to a [DidResolutionResult], which contains the DID Document
+   * and possible related metadata.
    *
-   * The method-specific identifier of a "did:key" DID is a multibase encoded public key.
-   *
-   * **Note**: Defaults to Ed25519 if no options are provided
-   *
-   * @param keyManager A [KeyManager] instance where the new key will be stored.
-   * @param options Optional parameters ([CreateDidKeyOptions]) to specify algorithm and curve during key creation.
-   * @return A [DidKey] instance representing the newly created "did:key" DID.
-   *
-   * @throws UnsupportedOperationException if the specified curve is not supported.
-   */
-  override fun create(keyManager: KeyManager, options: CreateDidKeyOptions?): DidKey {
-    val opts = options ?: CreateDidKeyOptions()
-
-    val keyAlias = keyManager.generatePrivateKey(opts.algorithm, opts.curve)
-    val publicKey = keyManager.getPublicKey(keyAlias)
-    var publicKeyBytes = Crypto.publicKeyToBytes(publicKey)
-
-    if (opts.algorithm == JWSAlgorithm.ES256K) {
-      publicKeyBytes = Secp256k1.compressPublicKey(publicKeyBytes)
-    }
-
-    val multiCodec = Crypto.getAlgorithmMultiCodec(opts.algorithm, opts.curve)
-      ?: throw UnsupportedOperationException("${opts.curve} curve not supported")
-
-    val multiCodecBytes = Varint.encode(multiCodec)
-    val idBytes = multiCodecBytes + publicKeyBytes
-    val multibaseEncodedId = Multibase.encode(Multibase.Base.Base58BTC, idBytes)
-
-    val did = "did:key:$multibaseEncodedId"
-
-    return DidKey(keyManager, did)
-  }
-
-  /**
-   * Resolves a "did:key" DID into a [DidResolutionResult], which contains the DID Document and possible related metadata.
-   *
-   * This implementation primarily constructs a DID Document with a single verification method derived
-   * from the DID's method-specific identifier (the public key).
-   *
-   * @param did The "did:key" DID that needs to be resolved.
    * @return A [DidResolutionResult] instance containing the DID Document and related context.
    *
    * @throws IllegalArgumentException if the provided DID does not conform to the "did:key" method.
    */
-  override fun resolve(did: String): DidResolutionResult {
-    val parsedDid = DID.fromString(did)
+  public fun resolve(): DidResolutionResult {
+    return resolve(this.uri)
+  }
 
-    require(parsedDid.methodName == method) { throw IllegalArgumentException("expected did:key") }
+  public companion object : DidMethod<DidKey> {
+    override val methodName: String = "key"
 
-    val id = parsedDid.methodSpecificId
-    val idBytes = Multibase.decode(id)
-    val (multiCodec, numBytes) = Varint.decode(idBytes)
+    /**
+     * Creates a new "did:key" DID, derived from a public key, and stores the associated private key in the
+     * provided [KeyManager].
+     *
+     * The method-specific identifier of a "did:key" DID is a multibase encoded public key.
+     *
+     * **Note**: Defaults to ES256K if no options are provided
+     *
+     * @param keyManager A [KeyManager] instance where the new key will be stored.
+     * @param options Optional parameters ([CreateDidKeyOptions]) to specify algorithm and curve during key creation.
+     * @return A [DidKey] instance representing the newly created "did:key" DID.
+     *
+     * @throws UnsupportedOperationException if the specified curve is not supported.
+     */
+    override fun create(keyManager: KeyManager, options: CreateDidOptions?): DidKey {
+      val opts = when (options) {
+        is CreateDidKeyOptions -> options
+        null -> CreateDidKeyOptions()
+        else -> throw IllegalArgumentException("Provided options must be an instance of CreateDidKeyOptions")
+      }
 
-    var publicKeyBytes = idBytes.drop(numBytes).toByteArray()
-    val keyGenerator = Crypto.getKeyGenerator(multiCodec)
+      val keyAlias = keyManager.generatePrivateKey(opts.algorithm, opts.curve)
+      val publicKey = keyManager.getPublicKey(keyAlias)
+      var publicKeyBytes = Crypto.publicKeyToBytes(publicKey)
 
-    if (keyGenerator.algorithm == Secp256k1.algorithm) {
-      publicKeyBytes = Secp256k1.inflatePublicKey(publicKeyBytes)
+      if (opts.algorithm == JWSAlgorithm.ES256K) {
+        publicKeyBytes = Secp256k1.compressPublicKey(publicKeyBytes)
+      }
+
+      val multiCodec = Crypto.getAlgorithmMultiCodec(opts.algorithm, opts.curve)
+        ?: throw UnsupportedOperationException("${opts.curve} curve not supported")
+
+      val multiCodecBytes = Varint.encode(multiCodec)
+      val idBytes = multiCodecBytes + publicKeyBytes
+      val multibaseEncodedId = Multibase.encode(Multibase.Base.Base58BTC, idBytes)
+
+      val did = "did:key:$multibaseEncodedId"
+
+      return DidKey(did, keyManager)
     }
 
-    val publicKeyJwk = keyGenerator.bytesToPublicKey(publicKeyBytes)
+    /**
+     * Resolves a "did:key" DID into a [DidResolutionResult], which contains the DID Document and possible related metadata.
+     *
+     * This implementation primarily constructs a DID Document with a single verification method derived
+     * from the DID's method-specific identifier (the public key).
+     *
+     * @param did The "did:key" DID that needs to be resolved.
+     * @return A [DidResolutionResult] instance containing the DID Document and related context.
+     *
+     * @throws IllegalArgumentException if the provided DID does not conform to the "did:key" method.
+     */
+    override fun resolve(did: String, options: ResolveDidOptions?): DidResolutionResult {
+      val parsedDid = DID.fromString(did)
 
-    val verificationMethodId = URI.create("$did#$id")
-    val verificationMethod = VerificationMethod.builder()
-      .id(verificationMethodId)
-      .publicKeyJwk(publicKeyJwk.toJSONObject())
-      .controller(URI(did))
-      .type("JsonWebKey2020")
-      .build()
+      require(parsedDid.methodName == methodName) { throw IllegalArgumentException("expected did:key") }
 
-    val verificationMethodRef = VerificationMethod.builder()
-      .id(verificationMethodId)
-      .build()
+      val id = parsedDid.methodSpecificId
+      val idBytes = Multibase.decode(id)
+      val (multiCodec, numBytes) = Varint.decode(idBytes)
 
-    val didDocument = DIDDocument.builder()
-      .id(URI(did))
-      .verificationMethod(verificationMethod)
-      .assertionMethodVerificationMethod(verificationMethodRef)
-      .authenticationVerificationMethod(verificationMethodRef)
-      .capabilityDelegationVerificationMethod(verificationMethod)
-      .capabilityInvocationVerificationMethod(verificationMethodRef)
-      .build()
+      var publicKeyBytes = idBytes.drop(numBytes).toByteArray()
+      val keyGenerator = Crypto.getKeyGenerator(multiCodec)
 
-    return DidResolutionResult(didDocument = didDocument, context = "https://w3id.org/did-resolution/v1")
+      if (keyGenerator.algorithm == Secp256k1.algorithm) {
+        publicKeyBytes = Secp256k1.inflatePublicKey(publicKeyBytes)
+      }
+
+      val publicKeyJwk = keyGenerator.bytesToPublicKey(publicKeyBytes)
+
+      val verificationMethodId = URI.create("$did#$id")
+      val verificationMethod = VerificationMethod.builder()
+        .id(verificationMethodId)
+        .publicKeyJwk(publicKeyJwk.toJSONObject())
+        .controller(URI(did))
+        .type("JsonWebKey2020")
+        .build()
+
+      val verificationMethodRef = VerificationMethod.builder()
+        .id(verificationMethodId)
+        .build()
+
+      val didDocument = DIDDocument.builder()
+        .id(URI(did))
+        .verificationMethod(verificationMethod)
+        .assertionMethodVerificationMethod(verificationMethodRef)
+        .authenticationVerificationMethod(verificationMethodRef)
+        .capabilityDelegationVerificationMethod(verificationMethod)
+        .capabilityInvocationVerificationMethod(verificationMethodRef)
+        .build()
+
+      return DidResolutionResult(didDocument = didDocument, context = "https://w3id.org/did-resolution/v1")
+    }
   }
 }
