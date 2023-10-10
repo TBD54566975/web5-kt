@@ -1,7 +1,6 @@
 plugins {
   id("org.jetbrains.kotlin.jvm")
   id("java-library")
-  kotlin("plugin.serialization") version "1.9.10"
 }
 
 version = "1.0"
@@ -40,13 +39,12 @@ dependencies {
   implementation("io.ktor:ktor-client-cio:$ktor_version")
   implementation("io.ktor:ktor-client-content-negotiation:$ktor_version")
   implementation("io.ktor:ktor-serialization-kotlinx-json:$ktor_version")
+  implementation("io.ktor:ktor-serialization-jackson:$ktor_version")
   implementation("io.ktor:ktor-client-logging:$ktor_version")
 
-  implementation(group = "io.github.erdtman", name = "java-json-canonicalization", version = "1.1")
-  implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
+  implementation("io.github.erdtman:java-json-canonicalization:1.1")
 
   testImplementation(kotlin("test"))
-  testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
   testImplementation("io.ktor:ktor-client-mock:$ktor_version")
 }
 

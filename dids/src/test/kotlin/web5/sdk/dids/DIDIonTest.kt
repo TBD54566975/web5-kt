@@ -1,5 +1,7 @@
 package web5.sdk.dids
 
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 import com.nimbusds.jose.jwk.JWK
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
@@ -7,15 +9,11 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
 import io.ktor.utils.io.ByteReadChannel
-import kotlinx.coroutines.test.runTest
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 import org.erdtman.jcs.JsonCanonicalizer
 import org.junit.jupiter.api.assertDoesNotThrow
 import web5.dids.ion.model.PublicKey
 import web5.dids.ion.model.PublicKeyPurpose
 import web5.dids.ion.model.SidetreeCreateOperation
-import web5.dids.ion.model.toJsonWebKey
 import web5.sdk.crypto.InMemoryKeyManager
 import java.io.File
 import kotlin.test.Ignore
@@ -27,13 +25,13 @@ class DIDIonTest {
 
   @Test
   @Ignore("For demonstration purposes only - this makes a network call")
-  fun createWithDefault() = runTest {
+  fun createWithDefault() {
     val (did, _) = DIDIonManager.create(InMemoryKeyManager())
     assertContains(did.uri, "did:ion:")
   }
 
   @Test
-  fun createWithCustom() = runTest {
+  fun createWithCustom() {
     val keyManager = InMemoryKeyManager()
     val verificationKey = readKey("src/test/resources/verification_jwk.json")
     val updateKey = readKey("src/test/resources/update_jwk.json")
@@ -46,11 +44,11 @@ class DIDIonTest {
       verificationPublicKey = PublicKey(
         id = verificationKey.keyID,
         type = "JsonWebKey2020",
-        publicKeyJwk = verificationKey.toJsonWebKey(),
+        publicKeyJwk = verificationKey,
         purposes = listOf(PublicKeyPurpose.AUTHENTICATION),
       ),
-      updatePublicJsonWebKey = updateKey.toJsonWebKey(),
-      recoveryJsonWebKey = recoveryKey.toJsonWebKey()
+      updatePublicJWK = updateKey,
+      recoveryPublicJWK = recoveryKey
     )
     val (did, metadata) = manager.create(keyManager, opts)
     assertContains(did.uri, "did:ion:")
@@ -68,14 +66,15 @@ class DIDIonTest {
     val jsonContent = File("src/test/resources/create_operation.json").readText()
     val expectedContent = JsonCanonicalizer(jsonContent).encodedString
 
-    val createOperation = Json.decodeFromString<SidetreeCreateOperation>(jsonContent)
+    val mapper = jacksonObjectMapper()
+    val createOperation = mapper.readValue<SidetreeCreateOperation>(jsonContent)
 
-    val jsonString = Json.encodeToString(createOperation)
+    val jsonString = mapper.writeValueAsString(createOperation)
     assertEquals(expectedContent, JsonCanonicalizer(jsonString).encodedString)
   }
 
   @Test
-  fun `create changes the key manager state`() = runTest {
+  fun `create changes the key manager state`() {
     val keyManager = InMemoryKeyManager()
     val (did, metadata) = DIDIonManager {
       engine = mockEngine()

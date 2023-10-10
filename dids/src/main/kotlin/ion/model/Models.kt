@@ -1,12 +1,18 @@
 package web5.dids.ion.model
 
+import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.annotation.JsonSubTypes
+import com.fasterxml.jackson.annotation.JsonTypeInfo
+import com.fasterxml.jackson.annotation.JsonValue
+import com.fasterxml.jackson.core.JsonGenerator
+import com.fasterxml.jackson.core.JsonParser
+import com.fasterxml.jackson.databind.DeserializationContext
+import com.fasterxml.jackson.databind.JsonDeserializer
+import com.fasterxml.jackson.databind.JsonSerializer
+import com.fasterxml.jackson.databind.SerializerProvider
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize
+import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import com.nimbusds.jose.jwk.JWK
-import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonClassDiscriminator
 
 /**
  * Represents an ION document containing public keys and services.
@@ -14,7 +20,6 @@ import kotlinx.serialization.json.JsonClassDiscriminator
  * @property publicKeys List of public keys.
  * @property services List of services.
  */
-@Serializable
 public data class Document(
   val publicKeys: List<PublicKey> = emptyList(),
   val services: List<Service> = emptyList()
@@ -27,7 +32,6 @@ public data class Document(
  * @property type The service type.
  * @property serviceEndpoint The service endpoint.
  */
-@Serializable
 public data class Service(
   public val id: String,
   public val type: String,
@@ -37,96 +41,68 @@ public data class Service(
 /**
  * Represents a public key in the ION document as defined in item 3 of https://identity.foundation/sidetree/spec/#add-public-keys
  */
-@Serializable
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public data class PublicKey(
   public val id: String,
   public val type: String,
   public val controller: String? = null,
-  public val publicKeyJwk: JsonWebKey? = null,
+
+  @JsonSerialize(using = JacksonJWK.Serializer::class)
+  @JsonDeserialize(using = JacksonJWK.Deserializer::class)
+  public val publicKeyJwk: JWK? = null,
   public val purposes: List<PublicKeyPurpose> = emptyList()
 )
 
 /**
- * Represents a JSON Web Key (JWK) for public keys.
- *
- * @property kty Key Type.
- * @property use Key Use.
- * @property keyOps List of Key Operations.
- * @property alg Algorithm.
- * @property kid Key ID.
- * @property x5u X.509 URL.
- * @property x5c List of X.509 Certificate Chain.
- * @property x5t X.509 Certificate SHA-1 Thumbprint.
- * @property x5tS256 X.509 Certificate SHA-256 Thumbprint.
- * @property x5uHeaderParam Custom X.509 URL Header Parameter.
- * @property x5cHeaderParam List of Custom X.509 Certificate Chain Header Parameters.
- * @property crv Curve.
- * @property x X Coordinate.
- * @property y Y Coordinate.
- * @property d D.
+ * JacksonJWK is a utility class that facilitates serialization for [JWK] types, so that it's easy to integrate with any
+ * class that is meant to be serialized to/from JSON.
  */
-@Serializable
-public data class JsonWebKey(
-  public val kty: String? = null,
-  public val use: String? = null,
-  public val keyOps: List<String>? = null,
-  public val alg: String? = null,
-  public val kid: String? = null,
-  public val x5u: String? = null,
-  public val x5c: List<String>? = null,
-  public val x5t: String? = null,
-  public val x5tS256: String? = null,
-  public val x5uHeaderParam: String? = null,
-  public val x5cHeaderParam: List<String>? = null,
-  public val crv: String? = null,
-  public val x: String? = null,
-  public val y: String? = null,
-  public val d: String? = null
-)
+public class JacksonJWK {
+  /**
+   * [Serializer] implements [JsonSerializer] for use with the [JsonSerialize] annotation from Jackson.
+   */
+  public object Serializer : JsonSerializer<JWK>() {
+    override fun serialize(value: JWK, gen: JsonGenerator, serializers: SerializerProvider) {
+      with(gen) {
+        writeObject(value.toJSONObject())
+      }
+    }
+  }
 
-/**
- * Converts a [JWK] (from the nimbus library) to a JSON Web Key ([JsonWebKey]) object, which can be serialized in
- * kotlin.
- */
-public fun JWK.toJsonWebKey(): JsonWebKey {
-  return Json.decodeFromString<JsonWebKey>(toJSONString())
-}
-
-/**
- * Converts a [JsonWebKey] object to a [JWK] (from the nimbus library).
- *
- * @return JWK representation.
- */
-public fun JsonWebKey.toJWK(): JWK {
-  return JWK.parse(Json.encodeToString(this))
+  /**
+   * [Deserializer] implements [JsonDeserializer] for use with the [JsonDeserialize] annotation from Jackson.
+   */
+  public object Deserializer : JsonDeserializer<JWK>() {
+    override fun deserialize(p: JsonParser, ctxt: DeserializationContext?): JWK {
+      val node = p.readValueAs(Map::class.java) as MutableMap<String, Any>
+      return JWK.parse(node)
+    }
+  }
 }
 
 /**
  * Enum representing the purpose of a public key.
  */
-public enum class PublicKeyPurpose {
-  @SerialName("authentication")
-  AUTHENTICATION,
-
-  @SerialName("keyAgreement")
-  KEY_AGREEMENT,
-
-  @SerialName("assertionMethod")
-  ASSERTION_METHOD,
-
-  @SerialName("capabilityDelegation")
-  CAPABILITY_DELEGATION,
-
-  @SerialName("capabilityInvocation")
-  CAPABILITY_INVOCATION
+public enum class PublicKeyPurpose(@get:JsonValue public val code: String) {
+  AUTHENTICATION("authentication"),
+  KEY_AGREEMENT("keyAgreement"),
+  ASSERTION_METHOD("assertionMethod"),
+  CAPABILITY_DELEGATION("capabilityDelegation"),
+  CAPABILITY_INVOCATIO("capabilityInvocation"),
 }
 
 /**
  * Sealed class representing a patch action in the ION document.
  */
-@OptIn(ExperimentalSerializationApi::class)
-@Serializable
-@JsonClassDiscriminator("action")
+@JsonTypeInfo(
+  use = JsonTypeInfo.Id.NAME,
+  include = JsonTypeInfo.As.PROPERTY,
+  property = "action"
+)
+@JsonSubTypes(
+  JsonSubTypes.Type(AddServicesAction::class, name = "add-services"),
+  JsonSubTypes.Type(ReplaceAction::class, name = "replace")
+)
 public sealed class PatchAction
 
 /**
@@ -143,8 +119,6 @@ public data class AddServicesAction(
  *
  * @property document The document to replace.
  */
-@Serializable
-@SerialName("replace")
 public data class ReplaceAction(
   val document: Document? = null
 ) : PatchAction()
@@ -155,7 +129,6 @@ public data class ReplaceAction(
  * @property patches List of patch actions.
  * @property updateCommitment Update commitment.
  */
-@Serializable
 public data class Delta(
   public val patches: List<PatchAction>,
   public val updateCommitment: String
@@ -167,7 +140,6 @@ public data class Delta(
  * @property deltaHash Delta hash.
  * @property recoveryCommitment Recovery commitment.
  */
-@Serializable
 public data class OperationSuffixDataObject(
   public val deltaHash: String,
   public val recoveryCommitment: String
@@ -181,7 +153,6 @@ public typealias Commitment = String
 /**
  * Sidetree create operation.
  */
-@Serializable
 public data class SidetreeCreateOperation(
   public val type: String,
   public val delta: Delta,
@@ -193,7 +164,6 @@ public data class SidetreeCreateOperation(
  * InitialState is the initial state of a DID Document as defined in the spec
  * https://identity.foundation/sidetree/spec/#long-form-did-uris
  */
-@Serializable
 internal data class InitialState(
   val suffixData: OperationSuffixDataObject,
   val delta: Delta,

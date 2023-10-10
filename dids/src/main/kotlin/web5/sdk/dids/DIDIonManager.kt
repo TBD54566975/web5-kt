@@ -18,11 +18,8 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
-import io.ktor.serialization.kotlinx.json.json
+import io.ktor.serialization.jackson.jackson
 import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 import org.erdtman.jcs.JsonCanonicalizer
 import org.erwinkok.multiformat.multicodec.Multicodec
 import org.erwinkok.multiformat.multihash.Multihash
@@ -31,14 +28,11 @@ import web5.dids.ion.model.Commitment
 import web5.dids.ion.model.Delta
 import web5.dids.ion.model.Document
 import web5.dids.ion.model.InitialState
-import web5.dids.ion.model.JsonWebKey
 import web5.dids.ion.model.OperationSuffixDataObject
 import web5.dids.ion.model.PublicKey
 import web5.dids.ion.model.PublicKeyPurpose
 import web5.dids.ion.model.ReplaceAction
 import web5.dids.ion.model.SidetreeCreateOperation
-import web5.dids.ion.model.toJWK
-import web5.dids.ion.model.toJsonWebKey
 import web5.sdk.crypto.KeyManager
 
 private const val operationsPath = "/operations"
@@ -74,11 +68,7 @@ public sealed class DIDIonManager(
   private val configuration: DIDIonConfiguration
 ) : DidMethod<CreateDidIonOptions> {
 
-  @OptIn(ExperimentalSerializationApi::class)
-  private val json = Json {
-    prettyPrint = true
-    explicitNulls = false
-  }
+  private val mapper = jacksonObjectMapper()
 
   private val operationsEndpoint = configuration.ionHost + operationsPath
   private val identifiersEndpoint = configuration.ionHost + identifiersPath
@@ -91,7 +81,7 @@ public sealed class DIDIonManager(
 
   private val client = HttpClient(engine) {
     install(ContentNegotiation) {
-      json(json)
+      jackson { mapper }
     }
   }
 
@@ -123,7 +113,7 @@ public sealed class DIDIonManager(
       }
     }
 
-    val opBody = runBlocking{
+    val opBody = runBlocking {
       response.bodyAsText()
     }
     if (response.status.value in 200..299) {
@@ -153,7 +143,7 @@ public sealed class DIDIonManager(
   }
 
   private inline fun <reified T> canonicalized(data: T): ByteArray {
-    val jsonString = json.encodeToString(data)
+    val jsonString = mapper.writeValueAsString(data)
     return JsonCanonicalizer(jsonString).encodedUTF8
   }
 
@@ -181,11 +171,11 @@ public sealed class DIDIonManager(
 
   private fun createOperation(keyManager: KeyManager, options: CreateDidIonOptions?)
     : Pair<SidetreeCreateOperation, KeyAliases> {
-    val updatePublicJWK: JWK = if (options?.updatePublicJsonWebKey == null) {
+    val updatePublicJWK: JWK = if (options?.updatePublicJWK == null) {
       val alias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K, Curve.SECP256K1)
       keyManager.getPublicKey(alias)
     } else {
-      options.updatePublicJsonWebKey!!.toJWK()
+      options.updatePublicJWK!!
     }
     val publicKeyCommitment: String = publicKeyCommitment(updatePublicJWK)
 
@@ -195,7 +185,7 @@ public sealed class DIDIonManager(
       PublicKey(
         id = "#${verificationJWK.keyID}}",
         type = "JsonWebKey2020",
-        publicKeyJwk = verificationJWK.toJsonWebKey(),
+        publicKeyJwk = verificationJWK,
         purposes = listOf(PublicKeyPurpose.AUTHENTICATION),
       )
     } else {
@@ -207,11 +197,11 @@ public sealed class DIDIonManager(
       updateCommitment = publicKeyCommitment
     )
 
-    val recoveryPublicJWK = if (options?.recoveryJsonWebKey == null) {
+    val recoveryPublicJWK = if (options?.recoveryPublicJWK == null) {
       val alias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K, Curve.SECP256K1)
       keyManager.getPublicKey(alias)
     } else {
-      options.recoveryJsonWebKey!!.toJWK()
+      options.recoveryPublicJWK!!
     }
     val recoveryCommitment = publicKeyCommitment(recoveryPublicJWK)
 
@@ -226,7 +216,7 @@ public sealed class DIDIonManager(
       ),
       KeyAliases(
         updateKeyAlias = updatePublicJWK.keyID,
-        verificationKeyAlias = verificationPublicKey.publicKeyJwk!!.kid!!,
+        verificationKeyAlias = verificationPublicKey.publicKeyJwk!!.keyID,
         recoveryKeyAlias = recoveryPublicJWK.keyID
       )
     )
@@ -235,7 +225,7 @@ public sealed class DIDIonManager(
   private fun createOperationSuffixDataObject(
     createOperationDeltaObject: Delta,
     recoveryCommitment: String): OperationSuffixDataObject {
-    val jsonString = json.encodeToString(createOperationDeltaObject)
+    val jsonString = mapper.writeValueAsString(createOperationDeltaObject)
     val canonicalized = JsonCanonicalizer(jsonString).encodedUTF8
     val deltaHash = Multihash.sum(Multicodec.SHA2_256, canonicalized).get()?.bytes()
     return OperationSuffixDataObject(
@@ -279,13 +269,13 @@ public data class KeyAliases(
  * Options available when creating an ion did.
  *
  * @param verificationPublicKey When provided, will be used as the verification key in the DID document.
- * @param updatePublicJsonWebKey When provided, will be used to create the update key commitment.
- * @param recoveryJsonWebKey When provided, will be used to create the recovery key commitment.
+ * @param updatePublicJWK When provided, will be used to create the update key commitment.
+ * @param recoveryPublicJWK When provided, will be used to create the recovery key commitment.
  */
 public class CreateDidIonOptions(
   public val verificationPublicKey: PublicKey? = null,
-  public var updatePublicJsonWebKey: JsonWebKey? = null,
-  public var recoveryJsonWebKey: JsonWebKey? = null) : CreateDidOptions
+  public var updatePublicJWK: JWK? = null,
+  public var recoveryPublicJWK: JWK? = null) : CreateDidOptions
 
 /**
  * Metadata related to the creation of a DID (Decentralized Identifier) on the Sidetree protocol.
