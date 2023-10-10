@@ -73,7 +73,7 @@ public class InMemoryKeyManager : KeyManager {
   }
 
   /**
-   * Return the alias of [publicKey], as was originally returned by [generatePrivateKey]
+   * Return the alias of [publicKey], as was originally returned by [generatePrivateKey].
    *
    * @param publicKey A public key in JWK (JSON Web Key) format
    * @return The alias belonging to [publicKey]
