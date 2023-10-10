@@ -1,5 +1,7 @@
 package web5.sdk.dids
 
+import com.nimbusds.jose.jwk.JWK
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import web5.sdk.crypto.InMemoryKeyManager
@@ -10,7 +12,19 @@ class DidKeyTest {
   inner class CreateTest {
     @Test
     fun `it works`() {
-      val did = DidKey.create(InMemoryKeyManager())
+      val manager = InMemoryKeyManager()
+      val did = DidKey.create(manager)
+
+      val keyAliaz = run {
+        val didResolutionResult = DidResolvers.resolve(did.uri)
+        val verificationMethod = didResolutionResult.didDocument.allVerificationMethods[0]
+
+        require(verificationMethod != null) { "no verification method found" }
+
+        val jwk = JWK.parse(verificationMethod.publicKeyJwk)
+        jwk.keyID
+      }
+      val publicKey = did.keyManager.getPublicKey(keyAliaz)
     }
   }
 

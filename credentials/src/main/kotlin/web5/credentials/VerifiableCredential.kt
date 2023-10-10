@@ -60,9 +60,11 @@ public class VerifiableCredential(public val vcDataModel: VcDataModel) {
       val didResolutionResult = DidResolvers.resolve(did.uri)
       val verificationMethod = didResolutionResult.didDocument.allVerificationMethods[0]
 
-      require(verificationMethod != null) { "no key alias found" }
+      require(verificationMethod != null) { "no verification method found" }
 
-      verificationMethod.id.toString()
+      val jwk = JWK.parse(verificationMethod.publicKeyJwk)
+      // TODO plug in did.keyManager.getDefaultAlias(jwk) once tom's PR is merged
+      jwk.keyID
     }
 
     // TODO: figure out how to make more reliable since algorithm is technically not a required property of a JWK
