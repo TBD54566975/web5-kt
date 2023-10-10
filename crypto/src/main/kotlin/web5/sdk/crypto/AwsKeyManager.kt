@@ -38,7 +38,7 @@ import java.security.interfaces.ECPublicKey
  * AWSKeyManager supports a limited set ECDSA curves for signing:
  * - [JWSAlgorithm.ES256K]
  */
-public class AwsKeyManager(
+public class AwsKeyManager @JvmOverloads constructor(
   private val kmsClient: AWSKMS = AWSKMSClientBuilder.standard().build()
 ) : KeyManager {
 
