@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.nfeld.jsonpathkt.JsonPath
 import com.nfeld.jsonpathkt.extension.read
+import com.nimbusds.jose.JOSEObjectType
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.JWSHeader
 import com.nimbusds.jose.jwk.JWK
@@ -22,6 +23,8 @@ import web5.sdk.dids.Did
 import web5.sdk.dids.DidResolvers
 import java.net.URI
 import java.security.SignatureException
+import java.util.Date
+import java.util.UUID
 
 /**
  * Type alias representing the danubetech Verifiable Credential data model.
@@ -55,41 +58,42 @@ public class VerifiableCredential(public val vcDataModel: VcDataModel) {
    * val signedVc = verifiableCredential.sign(myDid)
    * ```
    */
-  public fun sign(did: Did, keyAlias: String? = null): String {
-    val keyAliaz = keyAlias ?: run {
-      val didResolutionResult = DidResolvers.resolve(did.uri)
-      val verificationMethod = didResolutionResult.didDocument.allVerificationMethods[0]
+  public fun sign(did: Did, assertionMethodId: String? = null): String {
+    val didResolutionResult = DidResolvers.resolve(did.uri)
+    val assertionMethods = didResolutionResult.didDocument.assertionMethodVerificationMethodsDereferenced
 
-      require(verificationMethod != null) { "no verification method found" }
+    val assertionMethod: VerificationMethod = when {
+      assertionMethodId != null -> assertionMethods.find { it.id.toString() == assertionMethodId }
+      else -> assertionMethods.firstOrNull()
+    } ?: throw SignatureException("assertion method $assertionMethodId not found")
 
-      val jwk = JWK.parse(verificationMethod.publicKeyJwk)
-      // TODO plug in did.keyManager.getDefaultAlias(jwk) once tom's PR is merged
-      jwk.keyID
-    }
+    // TODO: ensure that publicKeyJwk is not null
+    val publicKeyJwk = JWK.parse(assertionMethod.publicKeyJwk)
+    val keyAlias = publicKeyJwk.computeThumbprint().toString()
 
     // TODO: figure out how to make more reliable since algorithm is technically not a required property of a JWK
-    // BUT we always include it in our JWKs
-    val publicKey = did.keyManager.getPublicKey(keyAliaz)
-    val algorithm = publicKey.algorithm
+    val algorithm = publicKeyJwk.algorithm
     val jwsAlgorithm = JWSAlgorithm.parse(algorithm.toString())
 
     val jwtHeader = JWSHeader.Builder(jwsAlgorithm)
-      .keyID(keyAlias)
+      .type(JOSEObjectType.JWT)
+      .keyID(assertionMethod.id.toString())
       .build()
 
     val jwtPayload = JWTClaimsSet.Builder()
+      .issuer(vcDataModel.issuer.toString())
+      .issueTime(vcDataModel.issuanceDate)
       .subject(vcDataModel.credentialSubject.id.toString())
       .claim("vc", vcDataModel.toMap())
       .build()
 
     val jwtObject = SignedJWT(jwtHeader, jwtPayload)
     val toSign = jwtObject.signingInput
+    val signatureBytes = did.keyManager.sign(keyAlias, toSign)
 
-    val signatureBytes = did.keyManager.sign(keyAliaz, toSign)
-
-    val base64UrlEncodedSignature = Base64URL(Convert(signatureBytes).toBase64Url(padding = false))
     val base64UrlEncodedHeader = jwtHeader.toBase64URL()
     val base64UrlEncodedPayload = jwtPayload.toPayload().toBase64URL()
+    val base64UrlEncodedSignature = Base64URL(Convert(signatureBytes).toBase64Url(padding = false))
 
     return "$base64UrlEncodedHeader.$base64UrlEncodedPayload.$base64UrlEncodedSignature"
   }
@@ -147,23 +151,40 @@ public class VerifiableCredential(public val vcDataModel: VcDataModel) {
 
       val vcDataModel = VcDataModel.builder()
         .type(type)
+        .id(URI.create("urn:uuid:${UUID.randomUUID()}"))
         .issuer(URI.create(issuer))
+        .issuanceDate(Date())
         .credentialSubject(credentialSubject)
         .build()
 
       return VerifiableCredential(vcDataModel)
     }
-
+    
     /**
-     * Verifies the integrity and authenticity of a verifiable credential JWT.
+     * Verifies the integrity and authenticity of a Verifiable Credential (VC) encoded as a JSON Web Token (JWT).
      *
-     * Validates the signature and ensures the credential has not been tampered with.
+     * This function performs several crucial validation steps to ensure the trustworthiness of the provided VC:
+     * - Parses and validates the structure of the JWT.
+     * - Ensures the presence of critical header elements `alg` and `kid` in the JWT header.
+     * - Resolves the Decentralized Identifier (DID) and retrieves the associated DID Document.
+     * - Validates the DID and establishes a set of valid verification method IDs.
+     * - Identifies the correct Verification Method from the DID Document based on the `kid` parameter.
+     * - Verifies the JWT's signature using the public key associated with the Verification Method.
      *
-     * @param vcJwt The verifiable credential JWT as a [String].
+     * If any of these steps fail, the function will throw a [SignatureException] with a message indicating the nature of the failure.
      *
-     * Example:
+     * @param vcJwt The Verifiable Credential in JWT format as a [String].
+     * @throws SignatureException if the verification fails at any step, providing a message with failure details.
+     * @throws IllegalArgumentException if critical JWT header elements are absent.
+     *
+     * ### Example:
      * ```
-     * val vc = VerifiableCredential.verify(signedVcJwt)
+     * try {
+     *     VerifiableCredential.verify(signedVcJwt)
+     *     println("VC Verification successful!")
+     * } catch (e: SignatureException) {
+     *     println("VC Verification failed: ${e.message}")
+     * }
      * ```
      */
     public fun verify(vcJwt: String) {
