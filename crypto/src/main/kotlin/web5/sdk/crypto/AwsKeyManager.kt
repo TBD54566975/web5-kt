@@ -177,6 +177,13 @@ public class AwsKeyManager(
     return "alias/$jwkThumbprint"
   }
 
+  private fun setKeyAlias(existingAlias: String, newAlias: String) {
+    val createAliasRequest = CreateAliasRequest()
+      .withAliasName(newAlias)
+      .withTargetKeyId(existingAlias)
+    kmsClient.createAlias(createAliasRequest)
+  }
+
   /**
    * Parse the ASN.1 DER encoded public key that AWS KMS returns, and convert it to a standard PublicKey
    */

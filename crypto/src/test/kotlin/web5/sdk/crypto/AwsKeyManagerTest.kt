@@ -47,7 +47,11 @@ class AwsKeyManagerTest {
     val signature = awsKeyManager.sign(alias, signingInput)
 
     //Verify the signature with BouncyCastle via Crypto
-    Crypto.verify(awsKeyManager.getPublicKey(alias), signingInput, signature)
+    Crypto.verify(
+      publicKey = awsKeyManager.getPublicKey(alias),
+      signedPayload = signingInput,
+      signature = signature
+    )
   }
 
   @Test
