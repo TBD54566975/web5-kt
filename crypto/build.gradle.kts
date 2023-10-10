@@ -15,6 +15,7 @@ dependencies {
   implementation("org.bouncycastle:bcprov-jdk15on:1.70")
   implementation("org.bouncycastle:bcpkix-jdk15on:1.70")
   implementation(project(":common"))
+  testImplementation(kotlin("test"))
 }
 
 tasks.test {

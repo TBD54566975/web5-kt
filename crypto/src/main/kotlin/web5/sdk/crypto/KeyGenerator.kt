@@ -76,7 +76,7 @@ public interface KeyGenerator {
    * Derives a public key from the private key provided. Applicable for asymmetric Key Generators only.
    * Implementers of symmetric key generators should throw an UnsupportedOperation Exception
    */
-  public fun getPublicKey(privateKey: JWK): JWK
+  public fun computePublicKey(privateKey: JWK): JWK
 
   /**
    * Converts a private key to bytes.
@@ -84,7 +84,7 @@ public interface KeyGenerator {
   public fun privateKeyToBytes(privateKey: JWK): ByteArray
 
   /**
-   * Converts a public key to bytes. Applicable for asymmetric Key Generators only.
+   * Converts a public key to bytes. Applicable for asymmetric [KeyGenerator] implementations only.
    * Implementers of symmetric key generators should throw an UnsupportedOperation Exception
    */
   public fun publicKeyToBytes(publicKey: JWK): ByteArray
