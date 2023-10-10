@@ -37,12 +37,12 @@ import java.security.interfaces.ECPublicKey
  * Key aliases are generated from the key's JWK thumbprint, and stored in AWS KMS.
  * e.g. alias/6uNnyj7xZUgtKTEOFV2mz0f7Hd3cxIH1o5VXsOo4u1M
  *
- * AWS supports a limited set ECDSA curves for signing:
+ * AWSKeyManager supports a limited set ECDSA curves for signing:
  * - [JWSAlgorithm.ES256K]
  */
-public class AwsKeyManager : KeyManager {
-
+public class AwsKeyManager(
   private val kmsClient: AWSKMS = AWSKMSClientBuilder.standard().build()
+) : KeyManager {
 
   private data class AlgorithmDetails(
     val algorithm: JWSAlgorithm,
