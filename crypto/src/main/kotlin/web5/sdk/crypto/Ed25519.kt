@@ -1,12 +1,9 @@
 package web5.sdk.crypto
 
+import com.google.crypto.tink.subtle.Ed25519Sign
+import com.google.crypto.tink.subtle.Ed25519Verify
 import com.nimbusds.jose.Algorithm
 import com.nimbusds.jose.JWSAlgorithm
-import com.nimbusds.jose.JWSHeader
-import com.nimbusds.jose.JWSObject
-import com.nimbusds.jose.Payload
-import com.nimbusds.jose.crypto.Ed25519Signer
-import com.nimbusds.jose.crypto.Ed25519Verifier
 import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.JWK
 import com.nimbusds.jose.jwk.KeyType
@@ -20,6 +17,8 @@ import web5.sdk.crypto.Ed25519.algorithm
 import web5.sdk.crypto.Ed25519.keyType
 import web5.sdk.crypto.Ed25519.privMultiCodec
 import web5.sdk.crypto.Ed25519.pubMulticodec
+import java.security.GeneralSecurityException
+import java.security.SignatureException
 
 /**
  * Implementation of the [KeyGenerator] and [Signer] interfaces, specifically utilizing
@@ -64,7 +63,7 @@ public object Ed25519 : KeyGenerator, Signer {
    * @param privateKey The private key in JWK format.
    * @return The corresponding public key in JWK format.
    */
-  override fun getPublicKey(privateKey: JWK): JWK {
+  override fun computePublicKey(privateKey: JWK): JWK {
     require(privateKey is OctetKeyPair) { "private key must be an Octet Key Pair (kty: OKP)" }
 
     return privateKey.toOctetKeyPair().toPublicJWK()
@@ -107,25 +106,26 @@ public object Ed25519 : KeyGenerator, Signer {
       .build()
   }
 
-  override fun sign(privateKey: JWK, payload: Payload, options: SignOptions?): String {
-    val jwsHeader = JWSHeader.Builder(JWSAlgorithm.EdDSA)
-      .keyID(privateKey.keyID)
-      .build()
+  override fun sign(privateKey: JWK, payload: ByteArray, options: SignOptions?): ByteArray {
+    validateKey(privateKey)
 
-    val jws = JWSObject(jwsHeader, payload)
-    val signer = Ed25519Signer(privateKey as OctetKeyPair)
-    jws.sign(signer)
+    val privateKeyBytes = privateKeyToBytes(privateKey)
+    val signer = Ed25519Sign(privateKeyBytes)
 
-    return jws.serialize()
+    return signer.sign(payload)
   }
 
-  override fun verify(publicKey: JWK, jws: String, options: VerifyOptions?) {
+  override fun verify(publicKey: JWK, signedPayload: ByteArray, signature: ByteArray, options: VerifyOptions?) {
     validateKey(publicKey)
 
-    val parsedJws = JWSObject.parse(jws)
-    val verifier = Ed25519Verifier(publicKey.toOctetKeyPair())
+    val publicKeyBytes = publicKeyToBytes(publicKey)
+    val verifier = Ed25519Verify(publicKeyBytes)
 
-    parsedJws.verify(verifier)
+    try {
+      verifier.verify(signature, signedPayload)
+    } catch (e: GeneralSecurityException) {
+      throw SignatureException(e.message, e)
+    }
   }
 
   /**

@@ -10,13 +10,8 @@ import io.ipfs.multibase.Multibase
 import web5.sdk.common.Varint
 import web5.sdk.crypto.Crypto
 import web5.sdk.crypto.KeyManager
+import web5.sdk.crypto.Secp256k1
 import java.net.URI
-
-// TODO: move this to Crypto
-private val CURVE_CODEC_IDS = mapOf(
-  Curve.Ed25519 to Varint.encode(0xed),
-  Curve.SECP256K1 to Varint.encode(0xe7)
-)
 
 /**
  * Represents options for creating "did:key" DIDs with specified cryptographic configurations.
@@ -74,13 +69,17 @@ public object DidKeyMethod : DidMethod<CreateDidKeyOptions> {
 
     val keyAlias = keyManager.generatePrivateKey(opts.algorithm, opts.curve)
     val publicKey = keyManager.getPublicKey(keyAlias)
-    val publicKeyBytes = Crypto.getPublicKeyBytes(publicKey)
+    var publicKeyBytes = Crypto.publicKeyToBytes(publicKey)
 
-    val codecId = CURVE_CODEC_IDS.getOrElse(opts.curve) {
-      throw UnsupportedOperationException("${opts.curve} curve not supported")
+    if (opts.algorithm == JWSAlgorithm.ES256K) {
+      publicKeyBytes = Secp256k1.compressPublicKey(publicKeyBytes)
     }
 
-    val idBytes = codecId + publicKeyBytes
+    val multiCodec = Crypto.getAlgorithmMultiCodec(opts.algorithm, opts.curve)
+      ?: throw UnsupportedOperationException("${opts.curve} curve not supported")
+
+    val multiCodecBytes = Varint.encode(multiCodec)
+    val idBytes = multiCodecBytes + publicKeyBytes
     val multibaseEncodedId = Multibase.encode(Multibase.Base.Base58BTC, idBytes)
 
     val did = "did:key:$multibaseEncodedId"
@@ -111,9 +110,13 @@ public object DidKeyMethod : DidMethod<CreateDidKeyOptions> {
     val idBytes = Multibase.decode(id)
     val (multiCodec, numBytes) = Varint.decode(idBytes)
 
-    val publicKeyBytes = idBytes.drop(numBytes).toByteArray()
-
+    var publicKeyBytes = idBytes.drop(numBytes).toByteArray()
     val keyGenerator = Crypto.getKeyGenerator(multiCodec)
+
+    if (keyGenerator.algorithm == Secp256k1.algorithm) {
+      publicKeyBytes = Secp256k1.inflatePublicKey(publicKeyBytes)
+    }
+
     val publicKeyJwk = keyGenerator.bytesToPublicKey(publicKeyBytes)
 
     val verificationMethodId = URI.create("$didUrl#$id")
