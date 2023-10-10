@@ -22,7 +22,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.plugins.ResponseException
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.client.request.*
+import io.ktor.client.request.get
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.isSuccess
@@ -347,20 +347,30 @@ public object VerifiableCredential {
    *
    * The function takes in a credential representing the one to be validated.
    * It fetches the status list credential from a URL present in the provided credential.
+   * Supports using close user created http client or a default client when no client is passed in
    * It then checks if the given credential's status list index is present in the expanded status list derived from the status list credential.
    */
   @Throws(Exception::class)
   public suspend fun validateCredentialInStatusList(
     credentialToValidate: VerifiableCredentialType,
-    httpClient: HttpClient = defaultHttpClient() // default HTTP client but can be overridden
+    httpClient: HttpClient? = null // default HTTP client but can be overridden
   ): Boolean {
 
-    val statusListEntryValue: StatusList2021Entry =
-      StatusList2021Entry.fromJsonObject(credentialToValidate.credentialStatus.jsonObject)
-    val statusListCredential =
-      httpClient.fetchStatusListCredential(statusListEntryValue.statusListCredential.toString())
+    var isDefaultClient = false
+    val clientToUse = httpClient ?: defaultHttpClient().also { isDefaultClient = true }
 
-    return validateCredentialInStatusList(credentialToValidate, statusListCredential)
+    try {
+      val statusListEntryValue: StatusList2021Entry =
+        StatusList2021Entry.fromJsonObject(credentialToValidate.credentialStatus.jsonObject)
+      val statusListCredential =
+        clientToUse.fetchStatusListCredential(statusListEntryValue.statusListCredential.toString())
+
+      return validateCredentialInStatusList(credentialToValidate, statusListCredential)
+    } finally {
+      if (isDefaultClient) {
+        clientToUse.close()
+      }
+    }
   }
 
   private fun defaultHttpClient(): HttpClient {

@@ -15,6 +15,7 @@ import web5.credentials.model.CredentialSubject
 import web5.credentials.model.StatusList2021Entry
 import web5.credentials.model.StatusPurpose
 import web5.credentials.model.VerifiableCredentialType
+import java.io.File
 import java.net.URI
 import java.util.Date
 import java.util.UUID
@@ -46,29 +47,10 @@ class SSICredStatusListTest {
 
   @Test
   fun `valid credential with credentialStatus spec example`() {
+    val specExampleRevocableVcText = File("src/test/testdata/revocableVc.json").readText()
 
     val specExampleRevocableVc = VerifiableCredentialType.fromJson(
-      """{
-              "@context": [
-                "https://www.w3.org/ns/credentials/v2",
-                "https://www.w3.org/ns/credentials/examples/v2"
-              ],
-              "id": "https://example.com/credentials/23894672394",
-              "type": ["VerifiableCredential"],
-              "issuer": "did:example:12345",
-              "validFrom": "2021-04-05T14:27:42Z",
-              "credentialStatus": {
-                "id": "https://example.com/credentials/status/3#94567",
-                "type": "BitStringStatusListEntry",
-                "statusPurpose": "revocation",
-                "statusListIndex": "94567",
-                "statusListCredential": "https://example.com/credentials/status/3"
-              },
-              "credentialSubject": {
-                "id": "did:example:6789",
-                "type": "Person"
-              }
-            }"""
+      specExampleRevocableVcText
     )
 
     assertTrue(
@@ -220,7 +202,7 @@ class SSICredStatusListTest {
   }
 
   @Test
-  fun `fails when duplicate statusListIndex`() {
+  fun `generating list with duplicate statusListIndex fails`() {
     val revocationID = "revocation-id"
     val testIssuer = did
 
@@ -254,7 +236,7 @@ class SSICredStatusListTest {
   }
 
   @Test
-  fun `invalid index value`() {
+  fun `generating list with negative index value fails`() {
     val revocationID = "revocation-id"
     val testIssuer = did
 
@@ -281,7 +263,7 @@ class SSICredStatusListTest {
   }
 
   @Test
-  fun `invalid value too large for bitset`() {
+  fun `generating list with large index value fails`() {
     val revocationID = "revocation-id"
     val testIssuer = did
 
