@@ -24,7 +24,6 @@ comments:
     searchInInnerClass: true
     searchInInnerObject: true
     searchInInnerInterface: true
-    searchInProtectedClass: false
   UndocumentedPublicFunction:
     active: true
     excludes: [ '**/test/**' ]
@@ -45,9 +44,6 @@ complexity:
     threshold: 10
     includeStaticDeclarations: false
     includePrivateDeclarations: false
-  CyclomaticComplexMethod:
-    active: true
-    ignoreSingleWhenExpression: true
   LongParameterList:
     constructorThreshold: 10
   MethodOverloading:

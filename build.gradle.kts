@@ -4,11 +4,11 @@ import org.jetbrains.dokka.gradle.DokkaTaskPartial
 import java.net.URL
 
 plugins {
-  id("org.jetbrains.kotlin.jvm") version "1.9.0"
+  kotlin("jvm") version "1.7.20"
   id("java-library")
-  id("io.gitlab.arturbosch.detekt") version "1.23.1"
+  id("io.gitlab.arturbosch.detekt") version "1.21.0"
   `maven-publish`
-  id("org.jetbrains.dokka") version "1.9.0"
+  id("org.jetbrains.dokka") version "1.7.20"
   id("org.jetbrains.kotlinx.kover") version "0.7.3"
 }
 
@@ -17,7 +17,7 @@ repositories {
 }
 
 dependencies {
-  detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.23.1")
+  detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.21.0")
 }
 
 allprojects {
@@ -38,8 +38,9 @@ subprojects {
   tasks.withType<Detekt>().configureEach {
     jvmTarget = "1.8"
   }
+
   dependencies {
-    detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.23.1")
+    detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.21.0")
   }
 
   detekt {

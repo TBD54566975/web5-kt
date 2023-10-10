@@ -3,6 +3,7 @@ package web5.sdk.dids
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import web5.sdk.crypto.InMemoryKeyManager
+import kotlin.test.assertContains
 
 class DidKeyTest {
   @Nested
@@ -10,6 +11,7 @@ class DidKeyTest {
     @Test
     fun `it works`() {
       val did = DidKeyMethod.create(InMemoryKeyManager())
+      assertContains(did.uri, "did:key:")
     }
   }
 
