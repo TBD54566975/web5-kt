@@ -39,7 +39,7 @@ public typealias VcDataModel = com.danubetech.verifiablecredentials.VerifiableCr
  *
  * @property vcDataModel The [VcDataModel] instance representing the core data model of a verifiable credential.
  */
-public class VerifiableCredential(private val vcDataModel: VcDataModel) {
+public class VerifiableCredential(public val vcDataModel: VcDataModel) {
   /**
    * Sign a verifiable credential using a specified decentralized identifier ([did]) and an optional key alias ([keyAlias]).
    *
@@ -93,36 +93,14 @@ public class VerifiableCredential(private val vcDataModel: VcDataModel) {
   }
 
   /**
-   * Checks if the given [presentationDefinition] is satisfied based on the provided input descriptors and constraints.
+   * Retrieves a field from a verifiable credential by its JSON path.
    *
-   * @param presentationDefinition The Presentation Definition to be evaluated.
-   * @return `true` if the Presentation Definition is satisfied, `false` otherwise.
-   * @throws NotImplementedError if certain features like Submission Requirements or Field Filters are not implemented.
+   * @param path The JSON path to the desired field.
+   * @return The field's value if found, or null if the field is not present.
    */
-  public fun satisfiesPresentationDefinition(presentationDefinition: PresentationDefinitionV2): Boolean {
-    if (!presentationDefinition.submissionRequirements.isNullOrEmpty()) {
-      throw NotImplementedError("Presentation Definition's Submission Requirements feature is not implemented")
-    }
-
-    return presentationDefinition.inputDescriptors
-      .filter { !it.constraints.fields.isNullOrEmpty() }
-      .all { inputDescriptorWithFields ->
-        val requiredFields = inputDescriptorWithFields.constraints.fields!!.filter { it.optional != true }
-
-        var satisfied = true
-        for (field in requiredFields) {
-          // we ignore field filters
-          if (field.filter != null) {
-            throw NotImplementedError("Field Filter is not implemented")
-          }
-
-          if (field.path.any { path -> getFieldByJsonPath(path) == null }) {
-            satisfied = false
-            break
-          }
-        }
-        return satisfied
-      }
+  public fun getFieldByJsonPath(path: String): String? {
+    val vcJsonString: String = this.vcDataModel.toJson()
+    return JsonPath.parse(vcJsonString)?.read<String>(path)
   }
 
   /**
@@ -132,11 +110,6 @@ public class VerifiableCredential(private val vcDataModel: VcDataModel) {
    */
   override fun toString(): String {
     return vcDataModel.toJson()
-  }
-
-  private fun getFieldByJsonPath(path: String): String? {
-    val vcJsonString: String = this.vcDataModel.toJson()
-    return JsonPath.parse(vcJsonString)?.read<String>(path)
   }
 
   public companion object {
