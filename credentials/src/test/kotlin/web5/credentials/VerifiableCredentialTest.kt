@@ -17,7 +17,7 @@ class VerifiableCredentialTest {
     val issuerDid = DidKey.create(keyManager)
     val holderDid = DidKey.create(keyManager)
 
-    VerifiableCredential.create(
+    val vc = VerifiableCredential.create(
       type = "StreetCred",
       issuer = issuerDid.uri,
       subject = holderDid.uri,
@@ -60,5 +60,22 @@ class VerifiableCredentialTest {
 
     assertEquals(holderDid.uri, vcDataModel.credentialSubject.id.toString())
     assertContains(vcDataModel.types, "StreetCred")
+  }
+
+  @Test
+  fun `verify does not throw an exception if vc is legit`() {
+    val keyManager = InMemoryKeyManager()
+    val issuerDid = DidKey.create(keyManager)
+    val holderDid = DidKey.create(keyManager)
+
+    val vc = VerifiableCredential.create(
+      type = "StreetCred",
+      issuer = issuerDid.uri,
+      subject = holderDid.uri,
+      data = StreetCredibility(localRespect = "high", legit = true)
+    )
+
+    val vcJwt = vc.sign(issuerDid)
+    VerifiableCredential.verify(vcJwt)
   }
 }

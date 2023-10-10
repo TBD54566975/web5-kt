@@ -156,8 +156,9 @@ public class DidKey(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
         .verificationMethod(verificationMethod)
         .assertionMethodVerificationMethod(verificationMethodRef)
         .authenticationVerificationMethod(verificationMethodRef)
-        .capabilityDelegationVerificationMethod(verificationMethod)
+        .capabilityDelegationVerificationMethods(listOf(verificationMethodRef)) // have to do it like this bc bug in underlying lib
         .capabilityInvocationVerificationMethod(verificationMethodRef)
+        .keyAgreementVerificationMethod(verificationMethodRef)
         .build()
 
       return DidResolutionResult(didDocument = didDocument, context = "https://w3id.org/did-resolution/v1")
