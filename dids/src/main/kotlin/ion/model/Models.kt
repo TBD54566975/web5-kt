@@ -74,6 +74,7 @@ public class JacksonJWK {
    */
   public object Deserializer : JsonDeserializer<JWK>() {
     override fun deserialize(p: JsonParser, ctxt: DeserializationContext?): JWK {
+      @Suppress("UNCHECKED_CAST")
       val node = p.readValueAs(Map::class.java) as MutableMap<String, Any>
       return JWK.parse(node)
     }
