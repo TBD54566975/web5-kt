@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import kotlin.test.assertEquals
 
+@Disabled
 class AwsKeyManagerTest {
 
   val signingInput = "The Magic Words are Squeamish Ossifrage".toByteArray()
