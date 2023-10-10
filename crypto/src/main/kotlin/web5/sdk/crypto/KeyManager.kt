@@ -1,6 +1,7 @@
 package web5.sdk.crypto
 
 import com.nimbusds.jose.Algorithm
+import com.nimbusds.jose.JWSObject
 import com.nimbusds.jose.Payload
 import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.JWK
@@ -52,7 +53,7 @@ public interface KeyManager {
    * practices and safeguarding the private key during the operation. The specific signing algorithm
    * used may depend on the type and parameters of the stored key.
    */
-  public fun sign(keyAlias: String, payload: Payload)
+  public fun sign(keyAlias: String, payload: Payload): JWSObject
 
   /**
    * Imports a private [jwk] into this keyManager. Any error should throw an exception.

@@ -1,6 +1,7 @@
 package web5.sdk.crypto
 
 import com.nimbusds.jose.Algorithm
+import com.nimbusds.jose.JWSObject
 import com.nimbusds.jose.Payload
 import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.JWK
@@ -68,8 +69,9 @@ public class InMemoryKeyManager : KeyManager {
    * @param keyAlias The alias (key ID) of the private key stored in the keyStore.
    * @param payload The payload to be signed.
    */
-  override fun sign(keyAlias: String, payload: Payload) {
-    TODO("Not yet implemented")
+  override fun sign(keyAlias: String, payload: Payload): JWSObject {
+    val privateKey = keyStore[keyAlias] ?: throw IllegalArgumentException("key with alias $keyAlias not found")
+    return Crypto.sign(privateKey, payload, null)
   }
 
   override fun import(jwk: JWK): String {

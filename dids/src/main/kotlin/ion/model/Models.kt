@@ -111,6 +111,8 @@ public sealed class PatchAction
  *
  * @property services List of services to add.
  */
+@Serializable
+@SerialName("add-services")
 public data class AddServicesAction(
   public val services: List<Service> = emptyList()
 ) : PatchAction()
@@ -122,6 +124,27 @@ public data class AddServicesAction(
  */
 public data class ReplaceAction(
   val document: Document? = null
+) : PatchAction()
+
+/** Model for https://identity.foundation/sidetree/spec/#remove-services */
+@Serializable
+@SerialName("remove-services")
+public data class RemoveServicesAction(
+  val ids: List<String>
+) : PatchAction()
+
+/** Model for https://identity.foundation/sidetree/spec/#add-public-keys */
+@Serializable
+@SerialName("add-public-keys")
+public data class AddPublicKeysAction(
+  val publicKeys: List<PublicKey>
+) : PatchAction()
+
+/** Model for https://identity.foundation/sidetree/spec/#remove-public-keys */
+@Serializable
+@SerialName("remove-public-keys")
+public data class RemovePublicKeysAction(
+  val ids: List<String>
 ) : PatchAction()
 
 /**
@@ -152,6 +175,11 @@ public data class OperationSuffixDataObject(
 public typealias Commitment = String
 
 /**
+ * Type alias for reveal value.
+ */
+public typealias Reveal = String
+
+/**
  * Sidetree create operation.
  */
 public data class SidetreeCreateOperation(
@@ -160,6 +188,27 @@ public data class SidetreeCreateOperation(
   public val suffixData: OperationSuffixDataObject) {
 
 }
+
+/**
+ * Sidetree update operation as defined in https://identity.foundation/sidetree/api/#update
+ */
+@Serializable
+public data class SidetreeUpdateOperation(
+  public val type: String,
+  public val didSuffix: String,
+  public val revealValue: String,
+  public val delta: Delta,
+  public val signedData: String,
+)
+
+/**
+ * Update operation signed data object as defined in https://identity.foundation/sidetree/spec/#update-signed-data-object
+ */
+@Serializable
+public data class UpdateOperationSignedData(
+  public val updateKey: JsonWebKey,
+  public val deltaHash: String,
+)
 
 /**
  * InitialState is the initial state of a DID Document as defined in the spec
