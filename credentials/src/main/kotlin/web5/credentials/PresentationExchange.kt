@@ -26,7 +26,10 @@ public object PresentationExchange {
    * @return `true` if the Presentation Definition is satisfied, `false` otherwise.
    * @throws NotImplementedError if certain features like Submission Requirements or Field Filters are not implemented.
    */
-  public fun satisfiesPresentationDefinition(credential: VerifiableCredential, presentationDefinition: PresentationDefinitionV2): Boolean {
+  public fun satisfiesPresentationDefinition(
+    credential: VerifiableCredential,
+    presentationDefinition: PresentationDefinitionV2
+  ): Boolean {
     if (!presentationDefinition.submissionRequirements.isNullOrEmpty()) {
       throw NotImplementedError("Presentation Definition's Submission Requirements feature is not implemented")
     }
