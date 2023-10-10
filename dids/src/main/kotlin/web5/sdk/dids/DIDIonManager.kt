@@ -165,7 +165,6 @@ public sealed class DIDIonManager(
     if (!resp.status.isSuccess()) {
       throw Exception("resolution error response '$body'")
     }
-    val mapper = jacksonObjectMapper()
     return mapper.readValue(body, DidResolutionResult::class.java)
   }
 
