@@ -30,7 +30,7 @@ public object DidResolvers {
    * @return A [DidResolutionResult] containing the resolved DID document or an error message.
    * @throws IllegalArgumentException if resolving the specified DID method is not supported.
    */
-  public fun resolve(didUrl: String, options: ResolveDidOptions?): DidResolutionResult {
+  public fun resolve(didUrl: String, options: ResolveDidOptions? = null): DidResolutionResult {
     val parsedDid = DID.fromString(didUrl)
     val resolver = methodResolvers.getOrElse(parsedDid.methodName) {
       throw IllegalArgumentException("Resolving did:${parsedDid.methodName} not supported")
