@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
+import com.fasterxml.jackson.module.kotlin.convertValue
 import com.nfeld.jsonpathkt.JsonPath
 import com.nfeld.jsonpathkt.extension.read
 import com.nimbusds.jose.JOSEObjectType
@@ -140,9 +141,10 @@ public class VerifiableCredential(public val vcDataModel: VcDataModel) {
      */
     public fun <T> create(type: String, issuer: String, subject: String, data: T): VerifiableCredential {
       val jsonData: JsonNode = objectMapper.valueToTree(data)
-
-      @Suppress("UNCHECKED_CAST")
-      val mapData = objectMapper.treeToValue(jsonData, Map::class.java) as MutableMap<String, Any>
+      val mapData: Map<String, Any> = when (jsonData.isObject) {
+        true -> objectMapper.convertValue<Map<String, Any>>(jsonData)
+        false -> throw IllegalArgumentException("expected data to be parseable into a JSON object")
+      }
 
       val credentialSubject = CredentialSubject.builder()
         .id(URI.create(subject))
@@ -258,12 +260,15 @@ public class VerifiableCredential(public val vcDataModel: VcDataModel) {
     public fun parseJwt(vcJwt: String): VerifiableCredential {
       val jwt = JWTParser.parse(vcJwt) as SignedJWT
       val jwtPayload = jwt.payload.toJSONObject()
-      val vcDataModelMap = jwtPayload.getOrElse("vc") {
-        throw IllegalArgumentException("jwt missing vc object in payload")
+      val vcDataModelValue = jwtPayload.getOrElse("vc") {
+        throw IllegalArgumentException("jwt payload missing vc property")
       }
 
-      @Suppress("UNCHECKED_CAST")
-      val vcDataModel = VcDataModel.fromMap(vcDataModelMap as Map<String, Any>)
+      @Suppress("UNCHECKED_CAST") // only partially unchecked. can only safely cast to Map<*, *>
+      val vcDataModelMap = vcDataModelValue as? Map<String, Any>
+        ?: throw IllegalArgumentException("expected vc property in JWT payload to be an object")
+
+      val vcDataModel = VcDataModel.fromMap(vcDataModelMap)
 
       return VerifiableCredential(vcDataModel)
     }
