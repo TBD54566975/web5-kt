@@ -24,6 +24,7 @@ dependencies {
   implementation("decentralized-identity:did-common-java:1.9.0")
 
   testImplementation(kotlin("test"))
+  testImplementation("org.junit.jupiter:junit-jupiter:5.10.0")
 }
 
 tasks.test {

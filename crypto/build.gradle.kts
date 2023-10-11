@@ -16,6 +16,7 @@ dependencies {
   implementation("org.bouncycastle:bcpkix-jdk15on:1.70")
   implementation(project(":common"))
   testImplementation(kotlin("test"))
+  testImplementation("org.junit.jupiter:junit-jupiter:5.10.0")
 }
 
 tasks.test {
