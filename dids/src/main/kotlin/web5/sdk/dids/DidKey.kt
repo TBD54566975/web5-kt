@@ -83,6 +83,7 @@ public class DidKey(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
      *
      * @throws UnsupportedOperationException if the specified curve is not supported.
      */
+    @JvmStatic
     override fun create(keyManager: KeyManager, options: CreateDidOptions?): DidKey {
       val opts = when (options) {
         is CreateDidKeyOptions -> options
@@ -121,6 +122,7 @@ public class DidKey(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
      *
      * @throws IllegalArgumentException if the provided DID does not conform to the "did:key" method.
      */
+    @JvmStatic
     override fun resolve(did: String, options: ResolveDidOptions?): DidResolutionResult {
       val parsedDid = DID.fromString(did)
 
