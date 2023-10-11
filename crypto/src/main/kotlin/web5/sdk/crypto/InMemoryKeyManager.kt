@@ -1,7 +1,6 @@
 package web5.sdk.crypto
 
 import com.nimbusds.jose.Algorithm
-import com.nimbusds.jose.Payload
 import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.JWK
 import java.util.UUID
@@ -56,7 +55,7 @@ public class InMemoryKeyManager : KeyManager {
    */
   override fun getPublicKey(keyAlias: String): JWK {
     // TODO: decide whether to return null or throw an exception
-    val privateKey = keyStore[keyAlias] ?: throw IllegalArgumentException("key with alias $keyAlias not found")
+    val privateKey = getPrivateKey(keyAlias)
     return Crypto.computePublicKey(privateKey)
   }
 
@@ -66,13 +65,35 @@ public class InMemoryKeyManager : KeyManager {
    * The implementation of this method is not yet provided and invoking it will throw a [NotImplementedError].
    *
    * @param keyAlias The alias (key ID) of the private key stored in the keyStore.
-   * @param payload The payload to be signed.
+   * @param signingInput The data to be signed.
+   * @return The signature in JWS R+S format
    */
-  override fun sign(keyAlias: String, payload: Payload) {
-    TODO("Not yet implemented")
+  override fun sign(keyAlias: String, signingInput: ByteArray): ByteArray {
+    val privateKey = getPrivateKey(keyAlias)
+    return Crypto.sign(privateKey, signingInput)
   }
 
-  override fun import(jwk: JWK): String {
+  /**
+   * Return the alias of [publicKey], as was originally returned by [generatePrivateKey].
+   *
+   * @param publicKey A public key in JWK (JSON Web Key) format
+   * @return The alias belonging to [publicKey]
+   * @throws IllegalArgumentException if the key is not known to the [KeyManager]
+   */
+  override fun getDeterministicAlias(publicKey: JWK): String {
+    return publicKey.keyID
+  }
+
+  private fun getPrivateKey(keyAlias: String) =
+    keyStore[keyAlias] ?: throw IllegalArgumentException("key with alias $keyAlias not found")
+
+  /**
+   * Imports [jwk] and returns the alias that refers to it.
+   */
+  public fun import(jwk: JWK): String {
+    require(jwk.isPrivate) {
+      "Importing a non-private key is not permitted"
+    }
     var kid = jwk.keyID
     if (kid.isNullOrEmpty()) {
       kid = UUID.randomUUID().toString()
