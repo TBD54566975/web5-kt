@@ -4,6 +4,7 @@ import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.jwk.KeyType
 import com.nimbusds.jose.jwk.KeyUse
 import org.junit.jupiter.api.Test
+import web5.sdk.common.Convert
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
@@ -34,5 +35,24 @@ class Secp256k1Test {
     assertEquals(KeyUse.SIGNATURE, publicKey.keyUse)
     assertEquals(KeyType.EC, publicKey.keyType)
     assertFalse(publicKey.isPrivate)
+  }
+
+  @Test
+  fun `signing the same payload with the same key should produce the same signature`() {
+    val privateKey = Secp256k1.generatePrivateKey()
+    val publicKey = Secp256k1.computePublicKey(privateKey)
+    val payload = "hello".toByteArray()
+
+    val sig1 = Secp256k1.sign(privateKey, payload)
+    Secp256k1.verify(publicKey, payload, sig1)
+
+    val sig2 = Secp256k1.sign(privateKey, payload)
+    Secp256k1.verify(publicKey, payload, sig2)
+
+    val base64UrlEncodedSig1 = Convert(sig1).toBase64Url(padding = false)
+    val base64UrlEncodedSig2 = Convert(sig2).toBase64Url(padding = false)
+
+    assertEquals(base64UrlEncodedSig1, base64UrlEncodedSig2)
+
   }
 }
