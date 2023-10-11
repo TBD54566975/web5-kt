@@ -56,7 +56,7 @@ public class InMemoryKeyManager : KeyManager {
   override fun getPublicKey(keyAlias: String): JWK {
     // TODO: decide whether to return null or throw an exception
     val privateKey = getPrivateKey(keyAlias)
-    return Crypto.computePublicKey(privateKey)
+    return privateKey.toPublicJWK()
   }
 
   /**
