@@ -218,8 +218,17 @@ public object Secp256k1 : KeyGenerator, Signer {
     val sha256 = MessageDigest.getInstance("SHA-256")
     val payloadDigest = sha256.digest(payload)
 
-    val (r, s) = signer.generateSignature(payloadDigest)
-    return r.toByteArray() + s.toByteArray()
+    val (rBigint, sBigint) = signer.generateSignature(payloadDigest)
+
+    // Secp256k1 signatures are always 64 bytes. When using BigInteger.toByteArray() in Java/Kotlin,
+    // there can sometimes be a leading zero byte added. This occurs when the most significant bit of the most
+    // significant byte is 1. This leading zero byte is added to ensure that the number is interpreted as positive
+    // when the byte array is treated as a two's complement signed integer.
+    // as a precautionary measure always take the last 32 which will ignore the leading 0 if present
+    val rBytes = rBigint.toByteArray().takeLast(32).toByteArray()
+    val sBytes = sBigint.toByteArray().takeLast(32).toByteArray()
+
+    return rBytes + sBytes
   }
 
   override fun verify(publicKey: JWK, signedPayload: ByteArray, signature: ByteArray, options: VerifyOptions?) {
