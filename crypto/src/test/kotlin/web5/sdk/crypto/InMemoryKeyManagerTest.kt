@@ -10,7 +10,7 @@ class InMemoryKeyManagerTest {
     val keyManager = InMemoryKeyManager()
     val alias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K)
     val publicKey = keyManager.getPublicKey(alias)
-    val defaultAlias = keyManager.getDefaultAlias(publicKey)
+    val defaultAlias = keyManager.getDeterministicAlias(publicKey)
 
     assertEquals(alias, defaultAlias)
   }

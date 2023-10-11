@@ -79,7 +79,7 @@ public class InMemoryKeyManager : KeyManager {
    * @return The alias belonging to [publicKey]
    * @throws IllegalArgumentException if the key is not known to the [KeyManager]
    */
-  override fun getDefaultAlias(publicKey: JWK): String {
+  override fun getDeterministicAlias(publicKey: JWK): String {
     return publicKey.keyID
   }
 

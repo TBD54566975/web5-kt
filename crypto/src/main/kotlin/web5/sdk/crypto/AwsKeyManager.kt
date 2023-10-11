@@ -111,7 +111,7 @@ public class AwsKeyManager @JvmOverloads constructor(
     val keyId = createKeyResponse.keyMetadata.keyId
 
     val publicKey = getPublicKey(keyId)
-    val alias = getDefaultAlias(publicKey)
+    val alias = getDeterministicAlias(publicKey)
     setKeyAlias(keyId, alias)
     return alias
   }
@@ -170,7 +170,7 @@ public class AwsKeyManager @JvmOverloads constructor(
    * @param publicKey A public key in JWK (JSON Web Key) format
    * @return The alias belonging to [publicKey]
    */
-  override fun getDefaultAlias(publicKey: JWK): String {
+  override fun getDeterministicAlias(publicKey: JWK): String {
     val jwkThumbprint = publicKey.computeThumbprint()
     return "alias/$jwkThumbprint"
   }

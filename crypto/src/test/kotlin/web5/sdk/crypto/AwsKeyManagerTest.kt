@@ -35,7 +35,7 @@ class AwsKeyManagerTest {
     val awsKeyManager = AwsKeyManager()
     val alias = awsKeyManager.generatePrivateKey(JWSAlgorithm.ES256K)
     val publicKey = awsKeyManager.getPublicKey(alias)
-    val defaultAlias = awsKeyManager.getDefaultAlias(publicKey)
+    val defaultAlias = awsKeyManager.getDeterministicAlias(publicKey)
 
     assertEquals(alias, defaultAlias)
   }

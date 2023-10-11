@@ -61,5 +61,5 @@ public interface KeyManager {
    * @return The alias belonging to [publicKey]
    * @throws IllegalArgumentException if the key is not known to the [KeyManager]
    */
-  public fun getDefaultAlias(publicKey: JWK): String
+  public fun getDeterministicAlias(publicKey: JWK): String
 }
