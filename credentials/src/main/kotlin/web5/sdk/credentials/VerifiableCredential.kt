@@ -69,7 +69,7 @@ public class VerifiableCredential(public val vcDataModel: VcDataModel) {
 
     // TODO: ensure that publicKeyJwk is not null
     val publicKeyJwk = JWK.parse(assertionMethod.publicKeyJwk)
-    val keyAlias = publicKeyJwk.computeThumbprint().toString()
+    val keyAlias = did.keyManager.getDeterministicAlias(publicKeyJwk)
 
     // TODO: figure out how to make more reliable since algorithm is technically not a required property of a JWK
     val algorithm = publicKeyJwk.algorithm
