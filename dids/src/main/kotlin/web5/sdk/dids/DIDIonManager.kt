@@ -89,9 +89,12 @@ public sealed class DIDIonManager(
     get() = "ion"
 
   /**
-   * Creates a DID and DID Document.
+   * Creates a DID and DID Document. In order to ensure the creation works appropriately, the DID is resolved
+   * immediately after it's created.
    *
    * @return Pair of DID and DIDDocument.
+   * @throws [ResolutionException] When there is an error after resolution.
+   * @throws [InvalidStatusException] When any of the network requests return an invalid HTTP status code.
    */
   override fun create(keyManager: KeyManager, options: CreateDidIonOptions?): Pair<Did, IonCreationMetadata> {
     val (createOp, keys) = createOperation(keyManager, options)
@@ -122,7 +125,9 @@ public sealed class DIDIonManager(
       val resolutionResult = resolve(longFormDID)
 
       if (!resolutionResult.didResolutionMetadata.error.isNullOrEmpty()) {
-        throw Exception("error when resolving after creation: ${resolutionResult.didResolutionMetadata.error}")
+        throw ResolutionException(
+          "error when resolving after creation: ${resolutionResult.didResolutionMetadata.error}"
+        )
       }
 
       return Pair(
@@ -139,7 +144,7 @@ public sealed class DIDIonManager(
         )
       )
     }
-    throw Exception("received error response '$opBody'")
+    throw InvalidStatusException("received error response '$opBody'")
   }
 
   private inline fun <reified T> canonicalized(data: T): ByteArray {
@@ -155,6 +160,8 @@ public sealed class DIDIonManager(
 
   /**
    * Given a [didUrl], returns the [DidResolutionResult], which is specified in https://w3c-ccg.github.io/did-resolution/#did-resolution-result
+   *
+   * @throws [InvalidStatusException] When any of the network requests return an invalid HTTP status code.
    */
   override fun resolve(didUrl: String): DidResolutionResult {
     val did = DID.fromString(didUrl)
@@ -163,7 +170,7 @@ public sealed class DIDIonManager(
     val resp = runBlocking { client.get("$identifiersEndpoint/$did") }
     val body = runBlocking { resp.bodyAsText() }
     if (!resp.status.isSuccess()) {
-      throw Exception("resolution error response '$body'")
+      throw InvalidStatusException("resolution error response '$body'")
     }
     return mapper.readValue(body, DidResolutionResult::class.java)
   }
@@ -255,6 +262,14 @@ public sealed class DIDIonManager(
    */
   public companion object Default : DIDIonManager(DIDIonConfiguration())
 }
+
+/**
+ * Represents an HTTP response where the status code is outside the range considered success.
+ */
+public class InvalidStatusException(s: String) : Exception(s)
+
+/** Wraps an exception during resolution where the [DidResolutionMetadata.error] is not empty. */
+public class ResolutionException(s: String) : Exception(s)
 
 /**
  * Container for the key aliases for an ION did.
