@@ -18,7 +18,6 @@ import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 
-
 data class StreetCredibility(val localRespect: String, val legit: Boolean)
 class VerifiableCredentialTest {
   @Test
