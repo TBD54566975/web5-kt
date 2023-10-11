@@ -44,6 +44,15 @@ public typealias VcDataModel = com.danubetech.verifiablecredentials.VerifiableCr
  * @property vcDataModel The [VcDataModel] instance representing the core data model of a verifiable credential.
  */
 public class VerifiableCredential(public val vcDataModel: VcDataModel) {
+
+  public val type: String
+    get() = vcDataModel.types.last()
+  public val issuer: String
+    get() = vcDataModel.issuer.toString()
+
+  public val subject: String
+    get() = vcDataModel.credentialSubject.id.toString()
+
   /**
    * Sign a verifiable credential using a specified decentralized identifier ([did]) and an optional key alias ([keyAlias]).
    *

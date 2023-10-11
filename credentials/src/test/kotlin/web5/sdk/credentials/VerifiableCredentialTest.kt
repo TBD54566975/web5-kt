@@ -161,4 +161,27 @@ class VerifiableCredentialTest {
 
     assertEquals("expected vc property in JWT payload to be an object", exception.message)
   }
+
+  @Test
+  fun `parseJwt returns an instance of VerifiableCredential on success`() {
+    val keyManager = InMemoryKeyManager()
+    val issuerDid = DidKey.create(keyManager)
+    val holderDid = DidKey.create(keyManager)
+
+    val vc = VerifiableCredential.create(
+      type = "StreetCred",
+      issuer = issuerDid.uri,
+      subject = holderDid.uri,
+      data = StreetCredibility(localRespect = "high", legit = true)
+    )
+
+    val vcJwt = vc.sign(issuerDid)
+
+    val parsedVc = VerifiableCredential.parseJwt(vcJwt)
+    assertNotNull(parsedVc)
+
+    assertEquals(vc.type, parsedVc.type)
+    assertEquals(vc.issuer, parsedVc.issuer)
+    assertEquals(vc.subject, parsedVc.subject)
+  }
 }
