@@ -1,4 +1,4 @@
-package web5.credentials
+package web5.sdk.credentials
 
 import com.danubetech.verifiablecredentials.CredentialSubject
 import com.fasterxml.jackson.annotation.JsonInclude
@@ -159,7 +159,7 @@ public class VerifiableCredential(public val vcDataModel: VcDataModel) {
 
       return VerifiableCredential(vcDataModel)
     }
-    
+
     /**
      * Verifies the integrity and authenticity of a Verifiable Credential (VC) encoded as a JSON Web Token (JWT).
      *

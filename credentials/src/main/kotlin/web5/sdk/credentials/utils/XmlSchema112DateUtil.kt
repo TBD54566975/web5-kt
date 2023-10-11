@@ -1,4 +1,4 @@
-package web5.credentials.utils
+package web5.sdk.credentials.utils
 
 import java.text.ParseException
 import java.text.SimpleDateFormat

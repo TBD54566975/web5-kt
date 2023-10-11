@@ -1,4 +1,4 @@
-package web5.credentials
+package web5.sdk.credentials
 
 /**
  * A utility object for performing operations related to presentation exchanges.
