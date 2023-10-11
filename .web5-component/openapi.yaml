@@ -1,0 +1,165 @@
+openapi: 3.1.0
+info:
+  title: web5 SDK test server
+  version: 1.0.0
+paths:
+  /credentials/issue:
+    post:
+      operationId: credentialIssue
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CredentialIssuanceRequest"
+        required: true
+      responses:
+        "200":
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CredentialIssuanceResponse"
+components:
+  schemas:
+    CredentialIssuanceRequest:
+      type: object
+      required:
+        - credential
+        - options
+      properties:
+        credential:
+          $ref: "#/components/schemas/CredentialIssuanceRequestCredential"
+        options:
+          $ref: "#/components/schemas/CredentialIssuanceRequestOptions"
+    CredentialIssuanceRequestCredential:
+      type: object
+      required:
+        - "@context"
+        - id
+        - type
+        - issuer
+        - issuanceDate
+        - expirationDate
+        - credentialSubject
+      properties:
+        "@context":
+          type: array
+          items:
+            type: string
+        id:
+          type: string
+        type:
+          type: array
+          items:
+            type: string
+        issuer:
+          $ref: "#/components/schemas/CredentialIssuer"
+        issuanceDate:
+          type: string
+        expirationDate:
+          type: string
+        credentialSubject:
+          $ref: "#/components/schemas/CredentialSubject"
+    CredentialIssuanceRequestOptions:
+      type: object
+      required:
+        - created
+        - challenge
+        - domain
+        - credentialStatus
+      properties:
+        created:
+          type: string
+        challenge:
+          type: string
+        domain:
+          type: string
+        credentialStatus:
+          $ref: "#/components/schemas/CredentialStatus"
+    CredentialIssuer:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+    CredentialSubject:
+      type: object
+      additionalProperties: true
+    CredentialStatus:
+      type: object
+      required:
+        - type
+      properties:
+        type:
+          type: string
+    CredentialIssuanceResponse:
+      type: object
+      required:
+        - verifiableCredential
+      properties:
+        verifiableCredential:
+          $ref: "#/components/schemas/VerifiableCredential"
+    VerifiableCredential:
+      type: object
+      required:
+        - "@context"
+        - id
+        - type
+        - issuer
+        - issuanceDate
+        - expirationDate
+        - credentialSubject
+        - proof
+      properties:
+        "@context":
+          type: array
+          items:
+            type: string
+        id:
+          type: string
+        type:
+          type: array
+          items:
+            type: string
+        issuer:
+          $ref: "#/components/schemas/CredentialIssuer"
+        issuanceDate:
+          type: string
+        expirationDate:
+          type: string
+        credentialSubject:
+          $ref: "#/components/schemas/CredentialSubject"
+        proof:
+          $ref: "#/components/schemas/CredentialProof"
+    CredentialProof:
+      type: object
+      required:
+        - type
+        - created
+        - challenge
+        - domain
+        - nonce
+        - verificationMethod
+        - proofPurpose
+        - jws
+        - proofValue
+      properties:
+        type:
+          type: string
+        created:
+          type: string
+        challenge:
+          type: string
+        domain:
+          type: string
+        nonce:
+          type: string
+        verificationMethod:
+          type: string
+        proofPurpose:
+          type: string
+        jws:
+          type: string
+        proofValue:
+          type: string
