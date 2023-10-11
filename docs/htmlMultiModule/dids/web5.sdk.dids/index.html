@@ -78,7 +78,7 @@
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":dids:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">class </span><a href="-create-did-key-options/index.html">CreateDidKeyOptions</a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword">val </span>algorithm<span class="token operator">: </span><span data-unresolved-link="com.nimbusds.jose/Algorithm///PointingToDeclaration/">Algorithm</span><span class="token operator"> = </span>JWSAlgorithm.EdDSA<span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>curve<span class="token operator">: </span><span data-unresolved-link="com.nimbusds.jose.jwk/Curve///PointingToDeclaration/">Curve</span><span class="token operator"> = </span>Curve.Ed25519</span></span><span class="token punctuation">)</span> : <a href="-create-did-options/index.html">CreateDidOptions</a></div><div class="brief "><p class="paragraph">Represents options for creating "did:key" DIDs with specified cryptographic configurations.</p></div></div></div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":dids:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">class </span><a href="-create-did-key-options/index.html">CreateDidKeyOptions</a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword">val </span>algorithm<span class="token operator">: </span><span data-unresolved-link="com.nimbusds.jose/Algorithm///PointingToDeclaration/">Algorithm</span><span class="token operator"> = </span>JWSAlgorithm.ES256K<span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>curve<span class="token operator">: </span><span data-unresolved-link="com.nimbusds.jose.jwk/Curve///PointingToDeclaration/">Curve</span><span class="token operator">?</span><span class="token operator"> = </span>null</span></span><span class="token punctuation">)</span> : <a href="-create-did-options/index.html">CreateDidOptions</a></div><div class="brief "><p class="paragraph">Specifies options for creating a new "did:key" Decentralized Identifier (DID).</p></div></div></div>
                 </div>
               </div>
             </div>
@@ -108,7 +108,7 @@
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":dids:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">class </span><a href="-did/index.html">Did</a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword">val </span>keyManager<span class="token operator">: </span><a href="../../crypto/web5.sdk.crypto/-key-manager/index.html">KeyManager</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>uri<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Represents a Decentralized Identifier (DID) as per the W3C DID specification.</p></div></div></div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":dids:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">class </span><a href="-did/index.html">Did</a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword">val </span>uri<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>keyManager<span class="token operator">: </span><a href="../../crypto/web5.sdk.crypto/-key-manager/index.html">KeyManager</a></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">A base abstraction for Decentralized Identifiers (DID) compliant with the W3C DID standard.</p></div></div></div>
                 </div>
               </div>
             </div>
@@ -138,22 +138,7 @@
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":dids:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">typealias </span><a href="-did-key/index.html">DidKey</a><span class="token operator"> = </span><a href="-did/index.html">Did</a></div></div></div>
-                </div>
-              </div>
-            </div>
-          </div>
-<a data-name="-1469832906%2FClasslikes%2F534392244" anchor-label="DidKeyMethod" id="-1469832906%2FClasslikes%2F534392244" data-filterable-set=":dids:dokkaHtmlPartial/main"></a>
-          <div class="table-row" data-filterable-current=":dids:dokkaHtmlPartial/main" data-filterable-set=":dids:dokkaHtmlPartial/main">
-            <div class="main-subrow keyValue ">
-              <div class=""><span class="inline-flex">
-                  <div><a href="-did-key-method/index.html"><span>Did</span><wbr><span>Key</span><wbr><span><span>Method</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1469832906%2FClasslikes%2F534392244"></span>
-                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
-                  </span></span></div>
-              <div>
-                <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":dids:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">object </span><a href="-did-key-method/index.html">DidKeyMethod</a> : <a href="-did-method/index.html">DidMethod</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="-create-did-key-options/index.html">CreateDidKeyOptions</a><span class="token operator">&gt; </span></div><div class="brief "><p class="paragraph">Provides a specific implementation for creating and resolving "did:key" method Decentralized Identifiers (DIDs).</p></div></div></div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":dids:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">class </span><a href="-did-key/index.html">DidKey</a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword">val </span>uri<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">val </span>keyManager<span class="token operator">: </span><a href="../../crypto/web5.sdk.crypto/-key-manager/index.html">KeyManager</a></span></span><span class="token punctuation">)</span> : <a href="-did/index.html">Did</a></div><div class="brief "><p class="paragraph">Provides a specific implementation for creating and resolving "did:key" method Decentralized Identifiers (DIDs).</p></div></div></div>
                 </div>
               </div>
             </div>
@@ -168,7 +153,7 @@
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":dids:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">interface </span><a href="-did-method/index.html">DidMethod</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="-did-method/index.html">T</a><span class="token operator"> : </span><a href="-create-did-options/index.html">CreateDidOptions</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">Defines the contract for DID methods, facilitating creation and resolution of DIDs.</p></div></div></div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":dids:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">interface </span><a href="-did-method/index.html">DidMethod</a><span class="token operator">&lt;</span><span class="token keyword"></span><a href="-did-method/index.html">T</a><span class="token operator"> : </span><a href="-did/index.html">Did</a><span class="token operator">&gt;</span></div><div class="brief "><p class="paragraph">An interface defining operations for DID methods in accordance with the W3C DID standard.</p></div></div></div>
                 </div>
               </div>
             </div>
@@ -199,6 +184,51 @@
               <div>
                 <div class="title">
                   <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":dids:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">class </span><a href="-did-resolution-result/index.html">DidResolutionResult</a><span class="token punctuation">(</span><span class="parameters "><span class="parameter "><span class="token keyword">var </span>context<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token operator">?</span><span class="token operator"> = </span>null<span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">var </span>didDocument<span class="token operator">: </span><span data-unresolved-link="foundation.identity.did/DIDDocument///PointingToDeclaration/">DIDDocument</span><span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">var </span>didResolutionMetadata<span class="token operator">: </span><a href="-did-resolution-metadata/index.html">DidResolutionMetadata</a><span class="token operator"> = </span>DidResolutionMetadata()<span class="token punctuation">, </span></span><span class="parameter "><span class="token keyword">var </span>didDocumentMetadata<span class="token operator">: </span><a href="-did-document-metadata/index.html">DidDocumentMetadata</a><span class="token operator"> = </span>DidDocumentMetadata()</span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Represents the result of DID resolution as per the W3C DID Core specification. Includes the DID document and related metadata.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-383462106%2FClasslikes%2F534392244" anchor-label="DidResolver" id="-383462106%2FClasslikes%2F534392244" data-filterable-set=":dids:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":dids:dokkaHtmlPartial/main" data-filterable-set=":dids:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-did-resolver/index.html"><span>Did</span><wbr><span><span>Resolver</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-383462106%2FClasslikes%2F534392244"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":dids:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">typealias </span><a href="-did-resolver/index.html">DidResolver</a><span class="token operator"> = </span><span class="token punctuation">(</span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span><span class="token keyword"></span><a href="-resolve-did-options/index.html">ResolveDidOptions</a><span class="token operator">?</span><span class="token punctuation">)</span><span class="token operator"> -&gt; </span><span class="token keyword"></span><a href="-did-resolution-result/index.html">DidResolutionResult</a></div><div class="brief "><p class="paragraph">Type alias for a DID resolver function. A DID resolver takes a DID URL as input and returns a <a href="-did-resolution-result/index.html">DidResolutionResult</a>.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="916458697%2FClasslikes%2F534392244" anchor-label="DidResolvers" id="916458697%2FClasslikes%2F534392244" data-filterable-set=":dids:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":dids:dokkaHtmlPartial/main" data-filterable-set=":dids:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-did-resolvers/index.html"><span>Did</span><wbr><span><span>Resolvers</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="916458697%2FClasslikes%2F534392244"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":dids:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">object </span><a href="-did-resolvers/index.html">DidResolvers</a></div><div class="brief "><p class="paragraph">Singleton object representing a collection of DID resolvers.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1926391264%2FClasslikes%2F534392244" anchor-label="ResolveDidOptions" id="1926391264%2FClasslikes%2F534392244" data-filterable-set=":dids:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":dids:dokkaHtmlPartial/main" data-filterable-set=":dids:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-resolve-did-options/index.html"><span>Resolve</span><wbr><span>Did</span><wbr><span><span>Options</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1926391264%2FClasslikes%2F534392244"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":dids:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">interface </span><a href="-resolve-did-options/index.html">ResolveDidOptions</a></div><div class="brief "><p class="paragraph">Represents options during the resolution of a Decentralized Identifier (DID).</p></div></div></div>
                 </div>
               </div>
             </div>

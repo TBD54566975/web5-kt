@@ -4,9 +4,7 @@ $dokka.linkExtension:html
 module:common
 web5.sdk.common
 module:credentials
-web5.credentials
-web5.credentials.model
-web5.credentials.utils
+web5.sdk.credentials
 module:crypto
 web5.sdk.crypto
 module:dids
