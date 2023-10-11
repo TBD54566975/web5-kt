@@ -7,19 +7,19 @@ import com.amazonaws.services.kms.AWSKMSClient
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.jwk.KeyType
 import com.nimbusds.jose.jwk.KeyUse
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
-import kotlin.test.Ignore
 import kotlin.test.assertEquals
 
 class AwsKeyManagerTest {
 
   val signingInput = "The Magic Words are Squeamish Ossifrage".toByteArray()
-  val awsKeyManager = AwsKeyManager()
 
   @Test
-  @Ignore
+  @Disabled("Needs an AWS connection")
   fun `test key generation`() {
+    val awsKeyManager = AwsKeyManager()
     val alias = awsKeyManager.generatePrivateKey(JWSAlgorithm.ES256K)
     val publicKey = awsKeyManager.getPublicKey(alias)
 
@@ -27,12 +27,12 @@ class AwsKeyManagerTest {
     assertEquals(KeyType.EC, publicKey.keyType)
     assertEquals(KeyUse.SIGNATURE, publicKey.keyUse)
     assertEquals(JWSAlgorithm.ES256K, publicKey.algorithm)
-
   }
 
   @Test
-  @Ignore
+  @Disabled("Needs an AWS connection")
   fun `test alias is stable`() {
+    val awsKeyManager = AwsKeyManager()
     val alias = awsKeyManager.generatePrivateKey(JWSAlgorithm.ES256K)
     val publicKey = awsKeyManager.getPublicKey(alias)
     val defaultAlias = awsKeyManager.getDefaultAlias(publicKey)
@@ -41,8 +41,9 @@ class AwsKeyManagerTest {
   }
 
   @Test
-  @Ignore
+  @Disabled("Needs an AWS connection")
   fun `test signing`() {
+    val awsKeyManager = AwsKeyManager()
     val alias = awsKeyManager.generatePrivateKey(JWSAlgorithm.ES256K)
     val signature = awsKeyManager.sign(alias, signingInput)
 
@@ -55,7 +56,7 @@ class AwsKeyManagerTest {
   }
 
   @Test
-  @Ignore
+  @Disabled("Needs an AWS connection")
   fun `test a custom KMS client`() {
     val kmsClient = AWSKMSClient.builder()
       .withCredentials(AWSStaticCredentialsProvider(BasicAWSCredentials("foo", "bar")))
