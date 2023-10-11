@@ -51,5 +51,5 @@ public interface KeyManager {
    * practices and safeguarding the private key during the operation. The specific signing algorithm
    * used may depend on the type and parameters of the stored key.
    */
-  public fun sign(keyAlias: String, payload: ByteArray)
+  public fun sign(keyAlias: String, payload: ByteArray): ByteArray
 }

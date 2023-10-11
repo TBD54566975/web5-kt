@@ -166,8 +166,6 @@ public object Secp256k1 : KeyGenerator, Signer {
   }
 
   override fun bytesToPublicKey(publicKeyBytes: ByteArray): JWK {
-    // require(publicKeyBytes[0] == 0x04.toByte()) { "compressed public keys not supported yet" }
-
     val xBytes = publicKeyBytes.sliceArray(1..32)
     val yBytes = publicKeyBytes.sliceArray(33..64)
 
