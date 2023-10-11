@@ -156,7 +156,7 @@ public class DidKey(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
         .verificationMethod(verificationMethod)
         .assertionMethodVerificationMethod(verificationMethodRef)
         .authenticationVerificationMethod(verificationMethodRef)
-        .capabilityDelegationVerificationMethods(listOf(verificationMethodRef)) // have to do it like this bc bug in underlying lib
+        .capabilityDelegationVerificationMethods(listOf(verificationMethodRef))
         .capabilityInvocationVerificationMethod(verificationMethodRef)
         .keyAgreementVerificationMethod(verificationMethodRef)
         .build()
