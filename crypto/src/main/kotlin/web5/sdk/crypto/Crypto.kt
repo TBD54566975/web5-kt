@@ -1,6 +1,7 @@
 package web5.sdk.crypto
 
 import com.nimbusds.jose.Algorithm
+import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.JWK
 import web5.sdk.crypto.Crypto.generatePrivateKey
@@ -84,11 +85,7 @@ public object Crypto {
    * @return The computed public key as a JWK object.
    */
   public fun computePublicKey(privateKey: JWK): JWK {
-    val rawCurve = privateKey.toJSONObject()["crv"]
-    val curve = rawCurve?.let { Curve.parse(it.toString()) }
-    val generator = getKeyGenerator(privateKey.algorithm, curve)
-
-    return generator.computePublicKey(privateKey)
+    return privateKey.toPublicJWK()
   }
 
   /**
@@ -106,7 +103,11 @@ public object Crypto {
     val rawCurve = privateKey.toJSONObject()["crv"]
     val curve = rawCurve?.let { Curve.parse(it.toString()) }
 
-    val signer = getSigner(privateKey.algorithm, curve)
+    val signer = if (curve == Curve.SECP256K1 && privateKey.algorithm == null) {
+      getSigner(JWSAlgorithm.ES256K, curve)
+    } else {
+      getSigner(privateKey.algorithm, curve)
+    }
 
     return signer.sign(privateKey, payload, options)
   }

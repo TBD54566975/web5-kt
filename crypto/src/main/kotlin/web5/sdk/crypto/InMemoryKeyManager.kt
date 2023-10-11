@@ -1,8 +1,13 @@
 package web5.sdk.crypto
 
 import com.nimbusds.jose.Algorithm
+import com.nimbusds.jose.JWSAlgorithm
+import com.nimbusds.jose.JWSHeader
 import com.nimbusds.jose.JWSObject
 import com.nimbusds.jose.Payload
+import com.nimbusds.jose.crypto.ECDSASigner
+import com.nimbusds.jose.crypto.bc.BouncyCastleProviderSingleton
+import com.nimbusds.jose.crypto.factories.DefaultJWSSignerFactory
 import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.JWK
 import java.util.UUID
@@ -71,7 +76,13 @@ public class InMemoryKeyManager : KeyManager {
    */
   override fun sign(keyAlias: String, payload: Payload): JWSObject {
     val privateKey = keyStore[keyAlias] ?: throw IllegalArgumentException("key with alias $keyAlias not found")
-    return Crypto.sign(privateKey, payload, null)
+    val header = JWSHeader.Builder(JWSAlgorithm.ES256K).build()
+
+    val jws = JWSObject(header, payload)
+    val signer = DefaultJWSSignerFactory().createJWSSigner(privateKey) as ECDSASigner
+    signer.jcaContext.provider = BouncyCastleProviderSingleton.getInstance()
+    jws.sign(signer)
+    return jws
   }
 
   override fun import(jwk: JWK): String {

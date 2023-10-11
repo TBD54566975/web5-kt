@@ -102,7 +102,10 @@ public enum class PublicKeyPurpose(@get:JsonValue public val code: String) {
 )
 @JsonSubTypes(
   JsonSubTypes.Type(AddServicesAction::class, name = "add-services"),
-  JsonSubTypes.Type(ReplaceAction::class, name = "replace")
+  JsonSubTypes.Type(ReplaceAction::class, name = "replace"),
+  JsonSubTypes.Type(RemoveServicesAction::class, name = "remove-services"),
+  JsonSubTypes.Type(AddPublicKeysAction::class, name = "add-public-keys"),
+  JsonSubTypes.Type(RemovePublicKeysAction::class, name = "remove-public-keys"),
 )
 public sealed class PatchAction
 
@@ -111,8 +114,6 @@ public sealed class PatchAction
  *
  * @property services List of services to add.
  */
-@Serializable
-@SerialName("add-services")
 public data class AddServicesAction(
   public val services: List<Service> = emptyList()
 ) : PatchAction()
@@ -127,22 +128,16 @@ public data class ReplaceAction(
 ) : PatchAction()
 
 /** Model for https://identity.foundation/sidetree/spec/#remove-services */
-@Serializable
-@SerialName("remove-services")
 public data class RemoveServicesAction(
   val ids: List<String>
 ) : PatchAction()
 
 /** Model for https://identity.foundation/sidetree/spec/#add-public-keys */
-@Serializable
-@SerialName("add-public-keys")
 public data class AddPublicKeysAction(
   val publicKeys: List<PublicKey>
 ) : PatchAction()
 
 /** Model for https://identity.foundation/sidetree/spec/#remove-public-keys */
-@Serializable
-@SerialName("remove-public-keys")
 public data class RemovePublicKeysAction(
   val ids: List<String>
 ) : PatchAction()
@@ -192,7 +187,6 @@ public data class SidetreeCreateOperation(
 /**
  * Sidetree update operation as defined in https://identity.foundation/sidetree/api/#update
  */
-@Serializable
 public data class SidetreeUpdateOperation(
   public val type: String,
   public val didSuffix: String,
@@ -204,9 +198,10 @@ public data class SidetreeUpdateOperation(
 /**
  * Update operation signed data object as defined in https://identity.foundation/sidetree/spec/#update-signed-data-object
  */
-@Serializable
 public data class UpdateOperationSignedData(
-  public val updateKey: JsonWebKey,
+  @JsonSerialize(using = JacksonJWK.Serializer::class)
+  @JsonDeserialize(using = JacksonJWK.Deserializer::class)
+  public val updateKey: JWK,
   public val deltaHash: String,
 )
 
