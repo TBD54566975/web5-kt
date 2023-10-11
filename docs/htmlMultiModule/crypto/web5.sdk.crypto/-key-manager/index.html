@@ -62,7 +62,7 @@
   <div class="breadcrumbs"><a href="../../index.html">crypto</a><span class="delimiter">/</span><a href="../index.html">web5.sdk.crypto</a><span class="delimiter">/</span><span class="current">KeyManager</span></div>
   <div class="cover ">
     <h1 class="cover"><span>Key</span><wbr><span><span>Manager</span></span></h1>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":crypto:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">interface </span><a href="index.html">KeyManager</a><span class="clearfix"><span class="floating-right">(<a href="https://github.com/TBD54566975/web5-sdk-kotlin/tree/main/crypto/src/main/kotlin/web5/sdk/crypto/KeyManager.kt#L18">source</a>)</span></span></div><p class="paragraph">A key management interface that provides functionality for generating, storing, and utilizing private keys and their associated public keys. Implementations of this interface should handle the secure generation and storage of keys, providing mechanisms for utilizing them in cryptographic operations like signing.</p><p class="paragraph">Example implementations might provide key management through various Key Management Systems (KMS), such as AWS KMS, Google Cloud KMS, Hardware Security Modules (HSM), or simple in-memory storage, each adhering to the same consistent API for usage within applications.</p><h4 class="">Inheritors</h4><div class="table"><div class="table-row" data-filterable-current=":crypto:dokkaHtmlPartial/main" data-filterable-set=":crypto:dokkaHtmlPartial/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="../-in-memory-key-manager/index.html">InMemoryKeyManager</a></div></span></div><div></div></div></div></div></div></div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":crypto:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">interface </span><a href="index.html">KeyManager</a><span class="clearfix"><span class="floating-right">(<a href="https://github.com/TBD54566975/web5-sdk-kotlin/tree/main/crypto/src/main/kotlin/web5/sdk/crypto/KeyManager.kt#L17">source</a>)</span></span></div><p class="paragraph">A key management interface that provides functionality for generating, storing, and utilizing private keys and their associated public keys. Implementations of this interface should handle the secure generation and storage of keys, providing mechanisms for utilizing them in cryptographic operations like signing.</p><p class="paragraph">Example implementations might provide key management through various Key Management Systems (KMS), such as AWS KMS, Google Cloud KMS, Hardware Security Modules (HSM), or simple in-memory storage, each adhering to the same consistent API for usage within applications.</p><h4 class="">Inheritors</h4><div class="table"><div class="table-row" data-filterable-current=":crypto:dokkaHtmlPartial/main" data-filterable-set=":crypto:dokkaHtmlPartial/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="../-aws-key-manager/index.html">AwsKeyManager</a></div></span></div><div></div></div></div><div class="table-row" data-filterable-current=":crypto:dokkaHtmlPartial/main" data-filterable-set=":crypto:dokkaHtmlPartial/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="../-in-memory-key-manager/index.html">InMemoryKeyManager</a></div></span></div><div></div></div></div></div></div></div>
   </div>
   <div class="tabbedcontent">
     <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="CONSTRUCTOR,TYPE,PROPERTY,FUNCTION">Members</button></div>
@@ -84,6 +84,21 @@
               </div>
             </div>
           </div>
+<a data-name="269846154%2FFunctions%2F-688304473" anchor-label="getDeterministicAlias" id="269846154%2FFunctions%2F-688304473" data-filterable-set=":crypto:dokkaHtmlPartial/main"></a>
+          <div class="table-row" data-filterable-current=":crypto:dokkaHtmlPartial/main" data-filterable-set=":crypto:dokkaHtmlPartial/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="get-deterministic-alias.html"><span>get</span><wbr><span>Deterministic</span><wbr><span><span>Alias</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="269846154%2FFunctions%2F-688304473"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":crypto:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="get-deterministic-alias.html"><span class="token function">getDeterministicAlias</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">publicKey<span class="token operator">: </span><span data-unresolved-link="com.nimbusds.jose.jwk/JWK///PointingToDeclaration/">JWK</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></div><div class="brief "><p class="paragraph">Return the alias of <a href="get-deterministic-alias.html">publicKey</a>, as was originally returned by <a href="generate-private-key.html">generatePrivateKey</a>.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
 <a data-name="36332667%2FFunctions%2F-688304473" anchor-label="getPublicKey" id="36332667%2FFunctions%2F-688304473" data-filterable-set=":crypto:dokkaHtmlPartial/main"></a>
           <div class="table-row" data-filterable-current=":crypto:dokkaHtmlPartial/main" data-filterable-set=":crypto:dokkaHtmlPartial/main">
             <div class="main-subrow keyValue ">
@@ -99,17 +114,17 @@
               </div>
             </div>
           </div>
-<a data-name="1386994368%2FFunctions%2F-688304473" anchor-label="sign" id="1386994368%2FFunctions%2F-688304473" data-filterable-set=":crypto:dokkaHtmlPartial/main"></a>
+<a data-name="-196373597%2FFunctions%2F-688304473" anchor-label="sign" id="-196373597%2FFunctions%2F-688304473" data-filterable-set=":crypto:dokkaHtmlPartial/main"></a>
           <div class="table-row" data-filterable-current=":crypto:dokkaHtmlPartial/main" data-filterable-set=":crypto:dokkaHtmlPartial/main">
             <div class="main-subrow keyValue ">
               <div class=""><span class="inline-flex">
                   <div><a href="sign.html"><span><span>sign</span></span></a></div>
-<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1386994368%2FFunctions%2F-688304473"></span>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-196373597%2FFunctions%2F-688304473"></span>
                     <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
                   </span></span></div>
               <div>
                 <div class="title">
-                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":crypto:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="sign.html"><span class="token function">sign</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">keyAlias<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">payload<span class="token operator">: </span><span data-unresolved-link="com.nimbusds.jose/Payload///PointingToDeclaration/">Payload</span></span></span><span class="token punctuation">)</span></div><div class="brief "><p class="paragraph">Signs the provided payload using the private key identified by the provided alias.</p></div></div></div>
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":crypto:dokkaHtmlPartial/main"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword"></span><span class="token keyword">fun </span><a href="sign.html"><span class="token function">sign</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">keyAlias<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a><span class="token punctuation">, </span></span><span class="parameter ">signingInput<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-byte-array/index.html">ByteArray</a></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-byte-array/index.html">ByteArray</a></div><div class="brief "><p class="paragraph">Signs the provided payload using the private key identified by the provided alias.</p></div></div></div>
                 </div>
               </div>
             </div>
