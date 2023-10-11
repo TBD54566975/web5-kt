@@ -130,7 +130,6 @@ class VerifiableCredentialTest {
 
     signedJWT.sign(signer)
     val randomJwt = signedJWT.serialize()
-
     val exception = assertThrows(IllegalArgumentException::class.java) {
       VerifiableCredential.parseJwt(randomJwt)
     }
