@@ -34,6 +34,7 @@ import web5.sdk.dids.ion.model.PublicKey
 import web5.sdk.dids.ion.model.PublicKeyPurpose
 import web5.sdk.dids.ion.model.ReplaceAction
 import web5.sdk.dids.ion.model.SidetreeCreateOperation
+import java.util.UUID
 
 private const val operationsPath = "/operations"
 private const val identifiersPath = "/identifiers"
@@ -81,6 +82,8 @@ public class DidIonHandle(
   uri: String,
   keyManager: KeyManager,
   public val creationMetadata: IonCreationMetadata? = null) : Did(uri, keyManager)
+
+private const val maxVerificationMethodIdLength = 50
 
 /**
  * Base class for managing DID Ion operations. Uses the given [configuration].
@@ -146,9 +149,9 @@ public sealed class DidIonManager(
       val longFormDid = "$shortFormDid:$longFormDidSegment"
       val resolutionResult = resolve(longFormDid)
 
-      if (!resolutionResult.didResolutionMetadata.error.isNullOrEmpty()) {
+      if (!resolutionResult.didResolutionMetadata?.error.isNullOrEmpty()) {
         throw ResolutionException(
-          "error when resolving after creation: ${resolutionResult.didResolutionMetadata.error}"
+          "error when resolving after creation: ${resolutionResult.didResolutionMetadata?.error}"
         )
       }
 
@@ -200,15 +203,17 @@ public sealed class DidIonManager(
       val alias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K, Curve.SECP256K1)
       keyManager.getPublicKey(alias)
     } else {
-      options.updatePublicJWK!!
+      options.updatePublicJWK
     }
     val publicKeyCommitment: String = publicKeyCommitment(updatePublicJWK)
 
+    val verificationMethodId = options?.verificationMethodId ?: UUID.randomUUID().toString()
+    validateVerificationMethodId(verificationMethodId)
     val verificationPublicKey = if (options?.verificationPublicKey == null) {
       val alias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K, Curve.SECP256K1)
       val verificationJWK = keyManager.getPublicKey(alias)
       PublicKey(
-        id = "#${verificationJWK.keyID}}",
+        id = verificationMethodId,
         type = "JsonWebKey2020",
         publicKeyJwk = verificationJWK,
         purposes = listOf(PublicKeyPurpose.AUTHENTICATION),
@@ -226,7 +231,7 @@ public sealed class DidIonManager(
       val alias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K, Curve.SECP256K1)
       keyManager.getPublicKey(alias)
     } else {
-      options.recoveryPublicJWK!!
+      options.recoveryPublicJWK
     }
     val recoveryCommitment = publicKeyCommitment(recoveryPublicJWK)
 
@@ -245,6 +250,23 @@ public sealed class DidIonManager(
         recoveryKeyAlias = recoveryPublicJWK.keyID
       )
     )
+  }
+
+  private fun validateVerificationMethodId(id: String) {
+    if (!isBase64UrlString(id)) {
+      throw IllegalArgumentException("verification method id \"$id\" is not base 64 url charset")
+    }
+
+    if (id.length > maxVerificationMethodIdLength) {
+      throw IllegalArgumentException(
+        "verification method id \"$id\" exceeds max allowed length of $maxVerificationMethodIdLength"
+      )
+    }
+  }
+
+  private fun isBase64UrlString(input: String?): Boolean {
+    val regex = "^[A-Za-z0-9_-]+$".toRegex()
+    return regex.matches(input!!)
   }
 
   private fun createOperationSuffixDataObject(
@@ -304,11 +326,15 @@ public data class KeyAliases(
  * @param verificationPublicKey When provided, will be used as the verification key in the DID document.
  * @param updatePublicJWK When provided, will be used to create the update key commitment.
  * @param recoveryPublicJWK When provided, will be used to create the recovery key commitment.
+ * @param verificationMethodId When provided, will be used as the verification method id. Cannot be over 50 chars and
+ * must only use characters from the Base64URL character set.
  */
 public class CreateDidIonOptions(
   public val verificationPublicKey: PublicKey? = null,
-  public var updatePublicJWK: JWK? = null,
-  public var recoveryPublicJWK: JWK? = null) : CreateDidOptions
+  public val updatePublicJWK: JWK? = null,
+  public val recoveryPublicJWK: JWK? = null,
+  public val verificationMethodId: String? = null,
+) : CreateDidOptions
 
 /**
  * Metadata related to the creation of a DID (Decentralized Identifier) on the Sidetree protocol.

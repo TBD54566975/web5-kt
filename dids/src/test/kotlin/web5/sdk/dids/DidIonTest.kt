@@ -11,6 +11,7 @@ import io.ktor.http.headersOf
 import io.ktor.utils.io.ByteReadChannel
 import org.erdtman.jcs.JsonCanonicalizer
 import org.junit.jupiter.api.assertDoesNotThrow
+import org.junit.jupiter.api.assertThrows
 import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.dids.ion.model.PublicKey
 import web5.sdk.dids.ion.model.PublicKeyPurpose
@@ -20,6 +21,7 @@ import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class DIDIonTest {
 
@@ -28,6 +30,33 @@ class DIDIonTest {
   fun createWithDefault() {
     val did = DidIonManager.create(InMemoryKeyManager())
     assertContains(did.uri, "did:ion:")
+    assertTrue(did.creationMetadata!!.longFormDid.startsWith(did.uri))
+  }
+
+  @Test
+  fun `invalid charset verificationMethodId throws exception`() {
+    val exception = assertThrows<IllegalArgumentException> {
+      DidIonManager.create(
+        InMemoryKeyManager(),
+        CreateDidIonOptions(
+          verificationMethodId = "space is not part of the base64 url chars"
+        )
+      )
+    }
+    assertContains(exception.message!!, "is not base 64 url charset")
+  }
+
+  @Test
+  fun `very long verificationMethodId throws exception`() {
+    val exception = assertThrows<IllegalArgumentException> {
+      DidIonManager.create(
+        InMemoryKeyManager(),
+        CreateDidIonOptions(
+          verificationMethodId = "something_thats_really_really_really_really_really_really_long"
+        )
+      )
+    }
+    assertContains(exception.message!!, "exceeds max allowed length")
   }
 
   @Test
