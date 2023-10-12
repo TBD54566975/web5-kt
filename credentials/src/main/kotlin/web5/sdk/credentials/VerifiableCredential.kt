@@ -54,13 +54,15 @@ public class VerifiableCredential(public val vcDataModel: VcDataModel) {
     get() = vcDataModel.credentialSubject.id.toString()
 
   /**
-   * Sign a verifiable credential using a specified decentralized identifier ([did]) and an optional key alias ([keyAlias]).
+   * Sign a verifiable credential using a specified decentralized identifier ([did]) with the private key that pairs
+   * with the public key identified by [assertionMethodId].
    *
-   * If the [keyAlias] is null, the function will attempt to use the first available verification method from the [did].
-   * The result is a String in a JWT format.
+   * If the [assertionMethodId] is null, the function will attempt to use the first available verification method from
+   * the [did]. The result is a String in a JWT format.
    *
    * @param did The [Did] used to sign the credential.
-   * @param keyAlias An optional alias for the key used to sign the credential.
+   * @param assertionMethodId An optional identifier for the assertion method that will be used for verification of the
+   *        produces signature.
    * @return The JWT representing the signed verifiable credential.
    *
    * Example:
@@ -209,11 +211,11 @@ public class VerifiableCredential(public val vcDataModel: VcDataModel) {
       val parsedDidUrl = DIDURL.fromString(verificationMethodId) // validates vm id which is a DID URL
 
       val didResolutionResult = DidResolvers.resolve(parsedDidUrl.did.didString)
-      if (didResolutionResult.didResolutionMetadata.error != null) {
+      if (didResolutionResult.didResolutionMetadata?.error != null) {
         throw SignatureException(
           "Signature verification failed: " +
             "Failed to resolve DID ${parsedDidUrl.did.didString}. " +
-            "Error: ${didResolutionResult.didResolutionMetadata.error}"
+            "Error: ${didResolutionResult.didResolutionMetadata?.error}"
         )
       }
 
