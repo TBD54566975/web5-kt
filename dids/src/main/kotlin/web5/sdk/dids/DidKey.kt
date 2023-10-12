@@ -62,7 +62,7 @@ public class DidKey(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
    *
    * @throws IllegalArgumentException if the provided DID does not conform to the "did:key" method.
    */
-  public fun resolve(): DidResolutionResult {
+  override fun resolve(): DidResolutionResult {
     return resolve(this.uri)
   }
 

@@ -25,6 +25,18 @@ import web5.sdk.crypto.KeyManager
  * and interoperability across different DID networks.
  */
 public abstract class Did(public val uri: String, public val keyManager: KeyManager) {
+  /**
+   * Resolves a DID to its associated DID Document.
+   *
+   * This function should retrieve and return the DID Document associated with the provided
+   * DID URI, in accordance with the rules and mechanisms of the specific DID method being
+   * implemented, and optionally considering any provided [ResolveDidOptions].
+
+   * @return An instance of [DidResolutionResult] containing the resolved DID Document and
+   *         any associated metadata.
+   */
+  public abstract fun resolve(): DidResolutionResult
+
   public companion object {
     // static helper methods here
   }
