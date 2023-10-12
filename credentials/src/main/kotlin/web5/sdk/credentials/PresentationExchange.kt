@@ -11,6 +11,7 @@ public object PresentationExchange {
    * @param presentationDefinition The Presentation Definition to be satisfied.
    * @return A list of verifiable credentials that meet the presentation definition criteria.
    */
+  @Suppress("UNUSED_PARAMETER")
   public fun selectCredentials(
     credentials: List<VerifiableCredential>,
     presentationDefinition: PresentationDefinitionV2

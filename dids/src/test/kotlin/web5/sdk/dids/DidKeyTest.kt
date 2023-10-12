@@ -28,6 +28,8 @@ class DidKeyTest {
       val jwk = JWK.parse(verificationMethod.publicKeyJwk)
       val keyAlias = did.keyManager.getDeterministicAlias(jwk)
       val publicKey = did.keyManager.getPublicKey(keyAlias)
+
+      assertNotNull(publicKey)
     }
   }
 
