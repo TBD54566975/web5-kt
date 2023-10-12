@@ -11,10 +11,10 @@ import io.ktor.http.headersOf
 import io.ktor.utils.io.ByteReadChannel
 import org.erdtman.jcs.JsonCanonicalizer
 import org.junit.jupiter.api.assertDoesNotThrow
-import web5.dids.ion.model.PublicKey
-import web5.dids.ion.model.PublicKeyPurpose
-import web5.dids.ion.model.SidetreeCreateOperation
 import web5.sdk.crypto.InMemoryKeyManager
+import web5.sdk.dids.ion.model.PublicKey
+import web5.sdk.dids.ion.model.PublicKeyPurpose
+import web5.sdk.dids.ion.model.SidetreeCreateOperation
 import java.io.File
 import kotlin.test.Ignore
 import kotlin.test.Test
@@ -26,7 +26,7 @@ class DIDIonTest {
   @Test
   @Ignore("For demonstration purposes only - this makes a network call")
   fun createWithDefault() {
-    val (did, _) = DIDIonManager.create(InMemoryKeyManager())
+    val did = DidIonManager.create(InMemoryKeyManager())
     assertContains(did.uri, "did:ion:")
   }
 
@@ -36,7 +36,7 @@ class DIDIonTest {
     val verificationKey = readKey("src/test/resources/verification_jwk.json")
     val updateKey = readKey("src/test/resources/update_jwk.json")
     val recoveryKey = readKey("src/test/resources/recovery_jwk.json")
-    val manager = DIDIonManager {
+    val manager = DidIonManager {
       ionHost = "madeuphost"
       engine = mockEngine()
     }
@@ -50,9 +50,9 @@ class DIDIonTest {
       updatePublicJWK = updateKey,
       recoveryPublicJWK = recoveryKey
     )
-    val (did, metadata) = manager.create(keyManager, opts)
+    val did = manager.create(keyManager, opts)
     assertContains(did.uri, "did:ion:")
-    assertContains(metadata.longFormDID, metadata.shortFormDID)
+    assertContains(did.creationMetadata!!.longFormDid, did.creationMetadata!!.shortFormDid)
   }
 
   private fun readKey(pathname: String): JWK {
@@ -76,12 +76,13 @@ class DIDIonTest {
   @Test
   fun `create changes the key manager state`() {
     val keyManager = InMemoryKeyManager()
-    val (did, metadata) = DIDIonManager {
+    val did = DidIonManager {
       engine = mockEngine()
     }.create(keyManager)
+    val metadata = did.creationMetadata!!
 
     assertContains(did.uri, "did:ion:")
-    assertContains(metadata.longFormDID, metadata.shortFormDID)
+    assertContains(metadata.longFormDid, metadata.shortFormDid)
     assertDoesNotThrow {
       keyManager.getPublicKey(metadata.keyAliases.recoveryKeyAlias)
       keyManager.getPublicKey(metadata.keyAliases.updateKeyAlias)

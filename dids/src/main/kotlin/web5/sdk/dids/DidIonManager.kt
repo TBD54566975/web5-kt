@@ -24,49 +24,70 @@ import org.erdtman.jcs.JsonCanonicalizer
 import org.erwinkok.multiformat.multicodec.Multicodec
 import org.erwinkok.multiformat.multihash.Multihash
 import org.erwinkok.result.get
-import web5.dids.ion.model.Commitment
-import web5.dids.ion.model.Delta
-import web5.dids.ion.model.Document
-import web5.dids.ion.model.InitialState
-import web5.dids.ion.model.OperationSuffixDataObject
-import web5.dids.ion.model.PublicKey
-import web5.dids.ion.model.PublicKeyPurpose
-import web5.dids.ion.model.ReplaceAction
-import web5.dids.ion.model.SidetreeCreateOperation
 import web5.sdk.crypto.KeyManager
+import web5.sdk.dids.ion.model.Commitment
+import web5.sdk.dids.ion.model.Delta
+import web5.sdk.dids.ion.model.Document
+import web5.sdk.dids.ion.model.InitialState
+import web5.sdk.dids.ion.model.OperationSuffixDataObject
+import web5.sdk.dids.ion.model.PublicKey
+import web5.sdk.dids.ion.model.PublicKeyPurpose
+import web5.sdk.dids.ion.model.ReplaceAction
+import web5.sdk.dids.ion.model.SidetreeCreateOperation
 
 private const val operationsPath = "/operations"
 private const val identifiersPath = "/identifiers"
 
 /**
- * Configuration for the DIDIonManager.
+ * Configuration for the [DidIonManager].
  *
  * @property ionHost The ION host URL.
  * @property engine The engine to use. When absent, a new one will be created from the [CIO] factory.
  */
-public class DIDIonConfiguration internal constructor(
+public class DidIonConfiguration internal constructor(
   public var ionHost: String = "https://ion.tbddev.org",
   public var engine: HttpClientEngine? = null,
 )
 
 
 /**
- * Returns a DIDIonManager after applying the provided configuration [builderAction].
+ * Returns a [DidIonManager] after applying the provided configuration [builderAction].
  */
-public fun DIDIonManager(builderAction: DIDIonConfiguration.() -> Unit): DIDIonManager {
-  val conf = DIDIonConfiguration().apply(builderAction)
-  return DIDIonManagerImpl(conf)
+public fun DidIonManager(builderAction: DidIonConfiguration.() -> Unit): DidIonManager {
+  val conf = DidIonConfiguration().apply(builderAction)
+  return DidIonManagerImpl(conf)
 }
 
-/** DIDIonCreator is sealed, so we provide an impl so the constructor can be called from the function above. */
-private class DIDIonManagerImpl(configuration: DIDIonConfiguration) : DIDIonManager(configuration)
+/** [DidIonManager] is sealed, so we provide an impl so the constructor can be called. */
+private class DidIonManagerImpl(configuration: DidIonConfiguration) : DidIonManager(configuration)
 
 /**
- * Base class for managing DIDIon operations. Uses the given [configuration].
+ * Provides a specific implementation for creating and resolving "did:ion" method Decentralized Identifiers (DIDs).
+ *
+ * A "did:ion" DID is an implementation of the Sidetree protocol that uses Bitcoin as it's anchoring system.
+ * Further specifics and technical details are outlined in [the DID Sidetree Spec](https://identity.foundation/sidetree/spec/).
+ *
+ * @property uri The URI of the "did:ion" which conforms to the DID standard.
+ * @property keyManager A [KeyManager] instance utilized to manage the cryptographic keys associated with the DID.
+ * @property creationMetadata Metadata related to the creation of a DID. Useful for debugging purposes.
+ *
+ * ### Usage Example:
+ * ```kotlin
+ * val keyManager = InMemoryKeyManager()
+ * val did = DidKey("did:key:example", keyManager)
+ * ```
  */
-public sealed class DIDIonManager(
-  private val configuration: DIDIonConfiguration
-) : DidMethod<CreateDidIonOptions> {
+public class DidIonHandle(
+  uri: String,
+  keyManager: KeyManager,
+  public val creationMetadata: IonCreationMetadata? = null) : Did(uri, keyManager)
+
+/**
+ * Base class for managing DID Ion operations. Uses the given [configuration].
+ */
+public sealed class DidIonManager(
+  private val configuration: DidIonConfiguration
+) : DidMethod<DidIonHandle, CreateDidIonOptions> {
 
   private val mapper = jacksonObjectMapper()
 
@@ -85,21 +106,22 @@ public sealed class DIDIonManager(
     }
   }
 
-  override val method: String
-    get() = "ion"
+  override val methodName: String
+    get() = "web5/sdk/dids/ion"
 
   /**
-   * Creates a DID and DID Document. In order to ensure the creation works appropriately, the DID is resolved
-   * immediately after it's created.
+   * Creates a [DidIonHandle], which includes a DID and it's associated DID Document. In order to ensure the creation
+   * works appropriately, the DID is resolved immediately after it's created.
    *
-   * @return Pair of DID and DIDDocument.
+   * Note: [options] must be of type [CreateDidIonOptions].
    * @throws [ResolutionException] When there is an error after resolution.
    * @throws [InvalidStatusException] When any of the network requests return an invalid HTTP status code.
+   * @see [DidMethod.create] for details of each parameter.
    */
-  override fun create(keyManager: KeyManager, options: CreateDidIonOptions?): Pair<Did, IonCreationMetadata> {
+  override fun create(keyManager: KeyManager, options: CreateDidIonOptions?): DidIonHandle {
     val (createOp, keys) = createOperation(keyManager, options)
 
-    val shortFormDIDSegment =
+    val shortFormDidSegment =
       Base64URL.encode(
         Multihash.sum(Multicodec.SHA2_256, canonicalized(createOp.suffixData)).get()?.bytes()
       ).toString()
@@ -107,7 +129,7 @@ public sealed class DIDIonManager(
       suffixData = createOp.suffixData,
       delta = createOp.delta,
     )
-    val longFormDIDSegment = didUriSegment(initialState)
+    val longFormDidSegment = didUriSegment(initialState)
 
     val response: HttpResponse = runBlocking {
       client.post(operationsEndpoint) {
@@ -120,9 +142,9 @@ public sealed class DIDIonManager(
       response.bodyAsText()
     }
     if (response.status.value in 200..299) {
-      val shortFormDID = "did:ion:$shortFormDIDSegment"
-      val longFormDID = "$shortFormDID:$longFormDIDSegment"
-      val resolutionResult = resolve(longFormDID)
+      val shortFormDid = "did:ion:$shortFormDidSegment"
+      val longFormDid = "$shortFormDid:$longFormDidSegment"
+      val resolutionResult = resolve(longFormDid)
 
       if (!resolutionResult.didResolutionMetadata.error.isNullOrEmpty()) {
         throw ResolutionException(
@@ -130,15 +152,13 @@ public sealed class DIDIonManager(
         )
       }
 
-      return Pair(
-        Did(
-          keyManager,
-          resolutionResult.didDocument.id.toString()
-        ),
+      return DidIonHandle(
+        resolutionResult.didDocument.id.toString(),
+        keyManager,
         IonCreationMetadata(
           createOp,
-          shortFormDID,
-          longFormDID,
+          shortFormDid,
+          longFormDid,
           opBody,
           keys
         )
@@ -154,20 +174,19 @@ public sealed class DIDIonManager(
 
   private inline fun <reified T> didUriSegment(initialState: T): String {
     val canonicalized = canonicalized(initialState)
-    val longFormDIDSegment = Base64URL.encode(canonicalized).toString()
-    return longFormDIDSegment
+    return Base64URL.encode(canonicalized).toString()
   }
 
   /**
-   * Given a [didUrl], returns the [DidResolutionResult], which is specified in https://w3c-ccg.github.io/did-resolution/#did-resolution-result
+   * Given a [did], returns the [DidResolutionResult], which is specified in https://w3c-ccg.github.io/did-resolution/#did-resolution-result
    *
    * @throws [InvalidStatusException] When any of the network requests return an invalid HTTP status code.
    */
-  override fun resolve(didUrl: String): DidResolutionResult {
-    val did = DID.fromString(didUrl)
-    require(did.methodName == "ion")
+  override fun resolve(did: String, options: ResolveDidOptions?): DidResolutionResult {
+    val didObj = DID.fromString(did)
+    require(didObj.methodName == "ion")
 
-    val resp = runBlocking { client.get("$identifiersEndpoint/$did") }
+    val resp = runBlocking { client.get("$identifiersEndpoint/$didObj") }
     val body = runBlocking { resp.bodyAsText() }
     if (!resp.status.isSuccess()) {
       throw InvalidStatusException("resolution error response '$body'")
@@ -258,9 +277,9 @@ public sealed class DIDIonManager(
   }
 
   /**
-   * Default companion object for creating a DIDIonManager with a default configuration.
+   * Default companion object for creating a [DidIonManager] with a default configuration.
    */
-  public companion object Default : DIDIonManager(DIDIonConfiguration())
+  public companion object Default : DidIonManager(DidIonConfiguration())
 }
 
 /**
@@ -295,14 +314,14 @@ public class CreateDidIonOptions(
  * Metadata related to the creation of a DID (Decentralized Identifier) on the Sidetree protocol.
  *
  * @property createOperation The Sidetree create operation used to create the DID.
- * @property shortFormDID The short-form DID representing the DID created.
- * @property longFormDID The long-form DID representing the DID created.
+ * @property shortFormDid The short-form DID representing the DID created.
+ * @property longFormDid The long-form DID representing the DID created.
  * @property operationsResponseBody The response body received after submitting the create operation.
  */
 public data class IonCreationMetadata(
   public val createOperation: SidetreeCreateOperation,
-  public val shortFormDID: String,
-  public val longFormDID: String,
+  public val shortFormDid: String,
+  public val longFormDid: String,
   public val operationsResponseBody: String,
   public val keyAliases: KeyAliases,
 ) : CreationMetadata

@@ -21,15 +21,12 @@ val ktor_version = "2.3.4"
 
 dependencies {
   api("decentralized-identity:did-common-java:1.9.0")
-  api("decentralized-identity:uni-resolver-core:0.13.0")
 
   implementation(project(":common"))
   implementation(project(":crypto"))
   implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.0")
   implementation("com.nimbusds:nimbus-jose-jwt:9.34")
   implementation("com.github.multiformats:java-multibase:1.1.0")
-  implementation("com.google.crypto.tink:tink:1.10.0")
-  implementation("org.bouncycastle:bcprov-jdk15on:1.70")
   implementation("org.erwinkok.multiformat:multiformat:1.1.0")
   implementation("org.erwinkok.result:result-monad:1.4.0")
 
@@ -38,9 +35,7 @@ dependencies {
   implementation("io.ktor:ktor-client-core:$ktor_version")
   implementation("io.ktor:ktor-client-cio:$ktor_version")
   implementation("io.ktor:ktor-client-content-negotiation:$ktor_version")
-  implementation("io.ktor:ktor-serialization-kotlinx-json:$ktor_version")
   implementation("io.ktor:ktor-serialization-jackson:$ktor_version")
-  implementation("io.ktor:ktor-client-logging:$ktor_version")
 
   implementation("io.github.erdtman:java-json-canonicalization:1.1")
 

@@ -98,10 +98,10 @@ public interface ResolveDidOptions
  *
  * ### Example of a Custom DID Method Implementation:
  * ```
- * class ExampleDidMethod : DidMethod<ExampleDid> {
+ * class ExampleDidMethod : DidMethod<ExampleDid, ExampleCreateDidOptions> {
  *     override val methodName: String = "example"
  *
- *     override fun create(keyManager: KeyManager, options: CreateDidOpts?): ExampleDid {
+ *     override fun create(keyManager: KeyManager, options: ExampleCreateDidOptions?): ExampleDid {
  *         // Implementation-specific logic for creating DIDs.
  *     }
  *
@@ -117,7 +117,7 @@ public interface ResolveDidOptions
  * - Ensure that cryptographic operations utilize secure and tested libraries, ensuring
  *   the reliability and security of DIDs managed by this method.
  */
-public interface DidMethod<T : Did> {
+public interface DidMethod<T : Did, O : CreateDidOptions> {
   /**
    * A string that specifies the name of the DID method.
    *
@@ -137,7 +137,7 @@ public interface DidMethod<T : Did> {
    *                or requirements for DID creation.
    * @return A new instance of type [T], representing the created DID.
    */
-  public fun create(keyManager: KeyManager, options: CreateDidOptions? = null): T
+  public fun create(keyManager: KeyManager, options: O? = null): T
 
   /**
    * Resolves a DID to its associated DID Document.
