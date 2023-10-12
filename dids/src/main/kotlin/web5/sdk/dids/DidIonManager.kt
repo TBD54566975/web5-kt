@@ -106,8 +106,7 @@ public sealed class DidIonManager(
     }
   }
 
-  override val methodName: String
-    get() = "web5/sdk/dids/ion"
+  override val methodName: String = "ion"
 
   /**
    * Creates a [DidIonHandle], which includes a DID and it's associated DID Document. In order to ensure the creation
@@ -141,7 +140,8 @@ public sealed class DidIonManager(
     val opBody = runBlocking {
       response.bodyAsText()
     }
-    if (response.status.value in 200..299) {
+
+    if (response.status.isSuccess()) {
       val shortFormDid = "did:ion:$shortFormDidSegment"
       val longFormDid = "$shortFormDid:$longFormDidSegment"
       val resolutionResult = resolve(longFormDid)
@@ -184,7 +184,7 @@ public sealed class DidIonManager(
    */
   override fun resolve(did: String, options: ResolveDidOptions?): DidResolutionResult {
     val didObj = DID.fromString(did)
-    require(didObj.methodName == "ion")
+    require(didObj.methodName == methodName)
 
     val resp = runBlocking { client.get("$identifiersEndpoint/$didObj") }
     val body = runBlocking { resp.bodyAsText() }

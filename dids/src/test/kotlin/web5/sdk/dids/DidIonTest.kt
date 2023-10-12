@@ -74,6 +74,11 @@ class DIDIonTest {
   }
 
   @Test
+  fun `method name is ion`() {
+    assertEquals("ion", DidIonManager.methodName)
+  }
+
+  @Test
   fun `create changes the key manager state`() {
     val keyManager = InMemoryKeyManager()
     val did = DidIonManager {
