@@ -47,7 +47,3 @@ dependencies {
   testImplementation(kotlin("test"))
   testImplementation("io.ktor:ktor-client-mock:$ktor_version")
 }
-
-tasks.test {
-  useJUnitPlatform()
-}

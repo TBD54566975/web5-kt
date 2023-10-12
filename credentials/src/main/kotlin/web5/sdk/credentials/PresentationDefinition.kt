@@ -1,29 +1,4 @@
-package web5.credentials.model
-
-import com.fasterxml.jackson.annotation.JsonInclude
-
-/** Verifiable Credentials
- *
- * A verifiable credential is a tamper-evident credential that has authorship that can be cryptographically verified.
- *
- * @see [VC Data Model](https://www.w3.org/TR/vc-data-model/)
- */
-public typealias VerifiableCredentialType = com.danubetech.verifiablecredentials.VerifiableCredential
-
-/**
- * Represents the status of a credential.
- */
-public typealias CredentialStatus = com.danubetech.verifiablecredentials.credentialstatus.CredentialStatus
-
-/**
- * Represents the subject of a verifiable credential.
- */
-public typealias CredentialSubject = com.danubetech.verifiablecredentials.CredentialSubject
-
-/**
- * Represents a verifiable presentation.
- */
-public typealias VerifiablePresentationType = com.danubetech.verifiablecredentials.VerifiablePresentation
+package web5.sdk.credentials
 
 /**
  * Presentation Exchange
@@ -91,6 +66,7 @@ public enum class ConformantConsumerDisclosure(public val str: String) {
   REQUIRED("required"),
   PREFERRED("preferred")
 }
+
 
 /**
  * Represents the format of a presentation definition.
@@ -176,24 +152,3 @@ public class FilterV2(
   public val type: String
 )
 
-/**
- * Represents a presentation submission object.
- *
- * @see [Presentation Submission](https://identity.foundation/presentation-exchange/spec/v2.0.0/#presentation-submission)
- */
-public data class PresentationSubmission(
-  val id: String,
-  val definitionId: String,
-  val descriptorMap: List<DescriptorMap>
-)
-
-/**
- * Represents descriptor map for a presentation submission.
- */
-@JsonInclude(JsonInclude.Include.NON_NULL)
-public data class DescriptorMap(
-  val id: String,
-  val path: String,
-  val pathNested: DescriptorMap? = null,
-  val format: String
-)
