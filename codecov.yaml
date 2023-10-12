@@ -1,0 +1,17 @@
+component_management:
+  individual_components:
+    - component_id: "credentials"
+      paths:
+        - "credentials/"
+    - component_id: "crypto"
+      paths:
+        - "crypto/"
+    - component_id: "dids"
+      paths:
+        - "dids/"
+    - component_id: "common"
+      paths:
+        - "common/"
+
+comment:
+  layout: "header, diff, components"
