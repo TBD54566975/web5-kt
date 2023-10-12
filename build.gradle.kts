@@ -54,7 +54,7 @@ subprojects {
 
   kotlin {
     explicitApi()
-    jvmToolchain(11)
+    jvmToolchain(8)
     compilerOptions {
       jvmTarget.set(JvmTarget.JVM_11)
       apiVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_1_7)
