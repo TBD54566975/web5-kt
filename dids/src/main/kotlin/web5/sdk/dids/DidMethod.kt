@@ -24,6 +24,7 @@ import web5.sdk.crypto.KeyManager
  * Implementers should adhere to the respective DID method specifications ensuring both compliance
  * and interoperability across different DID networks.
  */
+@Suppress("UnnecessaryAbstractClass")
 public abstract class Did(public val uri: String, public val keyManager: KeyManager) {
   public companion object {
     // static helper methods here
