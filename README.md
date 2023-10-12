@@ -23,7 +23,8 @@ dependencies {
 }
 ```
 
-NOTE: The repository at `https://repo.danubetech.com/repository/maven-public/` is required for resolving transitive
+> [!IMPORTANT]
+> The repository at `https://repo.danubetech.com/repository/maven-public/` is required for resolving transitive
 dependencies.
 
 If you want to refer to a specific release, then replace the `main-SNAPSHOT` with release tag.
