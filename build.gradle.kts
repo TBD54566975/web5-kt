@@ -1,4 +1,5 @@
 import io.gitlab.arturbosch.detekt.Detekt
+import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.jetbrains.dokka.DokkaConfiguration
 import org.jetbrains.dokka.gradle.DokkaTaskPartial
 import java.net.URL
@@ -41,6 +42,9 @@ subprojects {
 
   dependencies {
     detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.21.0")
+
+    testImplementation("org.junit.jupiter:junit-jupiter:5.9.2")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
   }
 
   detekt {
@@ -83,6 +87,17 @@ subprojects {
         remoteUrl.set(URL(exampleDir))
         remoteLineSuffix.set("#L")
       }
+    }
+  }
+
+  tasks.test {
+    useJUnitPlatform()
+    testLogging {
+      events("passed", "skipped", "failed", "standardOut", "standardError")
+      exceptionFormat = TestExceptionFormat.FULL
+      showExceptions = true
+      showCauses = true
+      showStackTraces = true
     }
   }
 }
