@@ -212,7 +212,7 @@ public sealed class DidIonManager(
       }
     }
     val verificationPublicKey = if (options?.verificationPublicKey == null) {
-      val alias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K, Curve.SECP256K1)
+      val alias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K)
       val verificationJWK = keyManager.getPublicKey(alias)
       PublicKey(
         id = verificationMethodId,
