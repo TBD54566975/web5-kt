@@ -15,7 +15,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import com.nimbusds.jose.jwk.JWK
 
 /**
- * Represents an ION document containing public keys and services.
+ * Represents an ION document containing public keys and services. See bullet 2 in https://identity.foundation/sidetree/spec/#replace.
  *
  * @property publicKeys List of public keys.
  * @property services List of services.
@@ -26,7 +26,7 @@ public data class Document(
 )
 
 /**
- * Represents an ION service.
+ * Represents an ION service. See bullet 3 in https://identity.foundation/sidetree/spec/#add-services.
  *
  * @property id The service ID.
  * @property type The service type.
@@ -82,7 +82,7 @@ private class JacksonJWK {
 }
 
 /**
- * Enum representing the purpose of a public key.
+ * Enum representing the purpose of a public key. See bullet 3.5 of https://identity.foundation/sidetree/spec/#add-public-keys
  */
 public enum class PublicKeyPurpose(@get:JsonValue public val code: String) {
   AUTHENTICATION("authentication"),
@@ -93,7 +93,7 @@ public enum class PublicKeyPurpose(@get:JsonValue public val code: String) {
 }
 
 /**
- * Sealed class representing a patch action in the ION document.
+ * Sealed class representing a patch action in the ION document. See https://identity.foundation/sidetree/spec/#did-state-patches
  */
 @JsonTypeInfo(
   use = JsonTypeInfo.Id.NAME,
@@ -107,7 +107,7 @@ public enum class PublicKeyPurpose(@get:JsonValue public val code: String) {
 public sealed class PatchAction
 
 /**
- * Represents an "add_services" patch action in the ION document.
+ * Represents an "add_services" patch action in the ION document as defined in https://identity.foundation/sidetree/spec/#add-services.
  *
  * @property services List of services to add.
  */
@@ -116,7 +116,7 @@ public data class AddServicesAction(
 ) : PatchAction()
 
 /**
- * Represents a "replace" patch action in the ION document.
+ * Represents a "replace" patch action in the ION document as defined in https://identity.foundation/sidetree/spec/#replace.
  *
  * @property document The document to replace.
  */
@@ -125,7 +125,7 @@ public data class ReplaceAction(
 ) : PatchAction()
 
 /**
- * Represents a delta in the ION document.
+ * Represents a delta in the ION document as defined in bullet 3 of https://identity.foundation/sidetree/spec/#create
  *
  * @property patches List of patch actions.
  * @property updateCommitment Update commitment.
@@ -136,7 +136,7 @@ public data class Delta(
 )
 
 /**
- * Represents operation suffix data object.
+ * Represents operation suffix data object as defined in bullet 6 of https://identity.foundation/sidetree/spec/#create
  *
  * @property deltaHash Delta hash.
  * @property recoveryCommitment Recovery commitment.
@@ -152,7 +152,7 @@ public data class OperationSuffixDataObject(
 public typealias Commitment = String
 
 /**
- * Sidetree create operation.
+ * Sidetree API create operation as defined in https://identity.foundation/sidetree/api/#create
  */
 public data class SidetreeCreateOperation(
   public val type: String,
@@ -171,10 +171,10 @@ internal data class InitialState(
 )
 
 /**
- * Metadata about the did method.
+ * Metadata about the did method as defined in bullet 3 (subitem 'method') of https://identity.foundation/sidetree/spec/#did-resolver-output
  */
 public class MetadataMethod(
   public val published: Boolean,
-  public val recoveryCommitment: String? = null,
-  public val updateCommitment: String? = null,
+  public val recoveryCommitment: String,
+  public val updateCommitment: String,
 )
