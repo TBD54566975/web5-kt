@@ -167,7 +167,7 @@ public sealed class DidIonManager(
         )
       )
     }
-    throw InvalidStatusException("received error response '$opBody'")
+    throw InvalidStatusException(response.status.value, "received error response '$opBody'")
   }
 
   private fun canonicalized(data: Any): ByteArray {
@@ -192,7 +192,7 @@ public sealed class DidIonManager(
     val resp = runBlocking { client.get("$identifiersEndpoint/$didObj") }
     val body = runBlocking { resp.bodyAsText() }
     if (!resp.status.isSuccess()) {
-      throw InvalidStatusException("resolution error response '$body'")
+      throw InvalidStatusException(resp.status.value, "resolution error response '$body'")
     }
     return mapper.readValue(body, DidResolutionResult::class.java)
   }
@@ -309,10 +309,10 @@ public sealed class DidIonManager(
 /**
  * Represents an HTTP response where the status code is outside the range considered success.
  */
-public class InvalidStatusException(s: String) : Exception(s)
+public class InvalidStatusException(status: Int, msg: String) : RuntimeException(msg)
 
 /** Wraps an exception during resolution where the [DidResolutionMetadata.error] is not empty. */
-public class ResolutionException(s: String) : Exception(s)
+public class ResolutionException(msg: String) : RuntimeException(msg)
 
 /**
  * Container for the key aliases for an ION did.
