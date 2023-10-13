@@ -47,8 +47,8 @@ public data class PublicKey(
   public val type: String,
   public val controller: String? = null,
 
-  @JsonSerialize(using = JacksonJWK.Serializer::class)
-  @JsonDeserialize(using = JacksonJWK.Deserializer::class)
+  @JsonSerialize(using = JacksonJwk.Serializer::class)
+  @JsonDeserialize(using = JacksonJwk.Deserializer::class)
   public val publicKeyJwk: JWK? = null,
   public val purposes: List<PublicKeyPurpose> = emptyList()
 )
@@ -57,7 +57,7 @@ public data class PublicKey(
  * JacksonJWK is a utility class that facilitates serialization for [JWK] types, so that it's easy to integrate with any
  * class that is meant to be serialized to/from JSON.
  */
-private class JacksonJWK {
+private class JacksonJwk {
   /**
    * [Serializer] implements [JsonSerializer] for use with the [JsonSerialize] annotation from Jackson.
    */
