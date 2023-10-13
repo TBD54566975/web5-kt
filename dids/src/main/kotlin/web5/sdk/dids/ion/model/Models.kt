@@ -57,11 +57,11 @@ public data class PublicKey(
  * JacksonJWK is a utility class that facilitates serialization for [JWK] types, so that it's easy to integrate with any
  * class that is meant to be serialized to/from JSON.
  */
-public class JacksonJWK {
+private class JacksonJWK {
   /**
    * [Serializer] implements [JsonSerializer] for use with the [JsonSerialize] annotation from Jackson.
    */
-  public object Serializer : JsonSerializer<JWK>() {
+  object Serializer : JsonSerializer<JWK>() {
     override fun serialize(value: JWK, gen: JsonGenerator, serializers: SerializerProvider) {
       with(gen) {
         writeObject(value.toJSONObject())
@@ -72,7 +72,7 @@ public class JacksonJWK {
   /**
    * [Deserializer] implements [JsonDeserializer] for use with the [JsonDeserialize] annotation from Jackson.
    */
-  public object Deserializer : JsonDeserializer<JWK>() {
+  object Deserializer : JsonDeserializer<JWK>() {
     override fun deserialize(p: JsonParser, ctxt: DeserializationContext?): JWK {
       @Suppress("UNCHECKED_CAST")
       val node = p.readValueAs(Map::class.java) as MutableMap<String, Any>
