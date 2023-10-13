@@ -3,7 +3,6 @@ package web5.sdk.crypto
 import com.nimbusds.jose.Algorithm
 import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.JWK
-import java.util.UUID
 
 /**
  * A class for managing cryptographic keys in-memory.
@@ -96,7 +95,7 @@ public class InMemoryKeyManager : KeyManager {
     }
     var kid = jwk.keyID
     if (kid.isNullOrEmpty()) {
-      kid = UUID.randomUUID().toString()
+      kid = jwk.computeThumbprint().toString()
     }
     keyStore.putIfAbsent(kid, jwk)
     return kid
