@@ -195,12 +195,13 @@ public sealed class DidIonManager(
 
   private fun createOperation(keyManager: KeyManager, options: CreateDidIonOptions?)
     : Pair<SidetreeCreateOperation, KeyAliases> {
-    val updatePublicJWK: JWK = if (options?.updatePublicJWK == null) {
-      val alias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K, Curve.SECP256K1)
-      keyManager.getPublicKey(alias)
-    } else {
-      options.updatePublicJWK
-    }
+    val updatePublicJWK: JWK = options?.updatePublicJWK ?: keyManager.getPublicKey(
+      keyManager.generatePrivateKey(
+        JWSAlgorithm.ES256K,
+        Curve.SECP256K1
+      )
+    )
+
     val publicKeyCommitment: String = publicKeyCommitment(updatePublicJWK)
 
     val verificationMethodId = options?.verificationMethodId ?: UUID.randomUUID().toString()
