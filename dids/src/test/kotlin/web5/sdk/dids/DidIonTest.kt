@@ -23,7 +23,7 @@ import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-class DIDIonTest {
+class DidIonTest {
 
   @Test
   @Ignore("For demonstration purposes only - this makes a network call")
@@ -76,8 +76,8 @@ class DIDIonTest {
         publicKeyJwk = verificationKey,
         purposes = listOf(PublicKeyPurpose.AUTHENTICATION),
       ),
-      updatePublicJWK = updateKey,
-      recoveryPublicJWK = recoveryKey
+      updatePublicJwk = updateKey,
+      recoveryPublicJwk = recoveryKey
     )
     val did = manager.create(keyManager, opts)
     assertContains(did.uri, "did:ion:")

@@ -198,7 +198,7 @@ public sealed class DidIonManager(
 
   private fun createOperation(keyManager: KeyManager, options: CreateDidIonOptions?)
     : Pair<SidetreeCreateOperation, KeyAliases> {
-    val updatePublicJWK: JWK = options?.updatePublicJWK ?: keyManager.getPublicKey(
+    val updatePublicJWK: JWK = options?.updatePublicJwk ?: keyManager.getPublicKey(
       keyManager.generatePrivateKey(JWSAlgorithm.ES256K)
     )
 
@@ -229,11 +229,11 @@ public sealed class DidIonManager(
       updateCommitment = publicKeyCommitment
     )
 
-    val recoveryPublicJWK = if (options?.recoveryPublicJWK == null) {
+    val recoveryPublicJWK = if (options?.recoveryPublicJwk == null) {
       val alias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K)
       keyManager.getPublicKey(alias)
     } else {
-      options.recoveryPublicJWK
+      options.recoveryPublicJwk
     }
     val recoveryCommitment = publicKeyCommitment(recoveryPublicJWK)
 
@@ -327,15 +327,15 @@ public data class KeyAliases(
  * Options available when creating an ion did.
  *
  * @param verificationPublicKey When provided, will be used as the verification key in the DID document.
- * @param updatePublicJWK When provided, will be used to create the update key commitment.
- * @param recoveryPublicJWK When provided, will be used to create the recovery key commitment.
+ * @param updatePublicJwk When provided, will be used to create the update key commitment.
+ * @param recoveryPublicJwk When provided, will be used to create the recovery key commitment.
  * @param verificationMethodId When provided, will be used as the verification method id. Cannot be over 50 chars and
  * must only use characters from the Base64URL character set.
  */
 public class CreateDidIonOptions(
   public val verificationPublicKey: PublicKey? = null,
-  public val updatePublicJWK: JWK? = null,
-  public val recoveryPublicJWK: JWK? = null,
+  public val updatePublicJwk: JWK? = null,
+  public val recoveryPublicJwk: JWK? = null,
   public val verificationMethodId: String? = null,
 ) : CreateDidOptions
 
