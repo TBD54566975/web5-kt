@@ -97,11 +97,7 @@ public sealed class DidIonManager(
   private val operationsEndpoint = configuration.ionHost + operationsPath
   private val identifiersEndpoint = configuration.ionHost + identifiersPath
 
-  private val engine: HttpClientEngine = if (configuration.engine == null) {
-    CIO.create {}
-  } else {
-    configuration.engine!!
-  }
+  private val engine: HttpClientEngine = configuration.engine ?: CIO.create {}
 
   private val client = HttpClient(engine) {
     install(ContentNegotiation) {
