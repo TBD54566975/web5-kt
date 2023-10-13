@@ -39,12 +39,14 @@ import web5.sdk.dids.ion.model.OperationSuffixDataObject
 import web5.sdk.dids.ion.model.PatchAction
 import web5.sdk.dids.ion.model.PublicKey
 import web5.sdk.dids.ion.model.PublicKeyPurpose
+import web5.sdk.dids.ion.model.RecoveryUpdateSignedData
 import web5.sdk.dids.ion.model.RemovePublicKeysAction
 import web5.sdk.dids.ion.model.RemoveServicesAction
 import web5.sdk.dids.ion.model.ReplaceAction
 import web5.sdk.dids.ion.model.Reveal
 import web5.sdk.dids.ion.model.Service
 import web5.sdk.dids.ion.model.SidetreeCreateOperation
+import web5.sdk.dids.ion.model.SidetreeRecoverOperation
 import web5.sdk.dids.ion.model.SidetreeUpdateOperation
 import web5.sdk.dids.ion.model.UpdateOperationSignedData
 import java.util.UUID
@@ -109,6 +111,17 @@ public class UpdateDidIonOptions(
       }
     }
   }
+}
+
+/**
+ * The options when recovering an ION did.
+ */
+public class RecoverDidIonOptions(
+  public val didString: String,
+  public val recoveryKeyAlias: String,
+  public val document: Document,
+) {
+  internal fun toPatches(): List<PatchAction> = listOf(ReplaceAction(document))
 }
 
 /**
@@ -281,25 +294,13 @@ public sealed class DidIonManager(
       updateCommitment = commitment
     )
 
-    val canonicalized = canonicalized(updateOpDeltaObject)
-    val deltaHashBytes = Multihash.sum(Multicodec.SHA2_256, canonicalized).getOrThrow().bytes()
-    val deltaHash = Base64URL.encode(deltaHashBytes).toString()
+    val deltaHash = deltaHash(updateOpDeltaObject)
 
     val updateOpSignedData = UpdateOperationSignedData(
       updateKey = updatePublicKey,
       deltaHash = deltaHash,
     )
-    val header = JWSHeader.Builder(JWSAlgorithm.ES256K).build()
-    val payload = Payload(mapper.writeValueAsString(updateOpSignedData))
-    val jwsObject = JWSObject(header, payload)
-    val signatureBytes = keyManager.sign(options.updateKeyAlias, jwsObject.signingInput)
-
-    val base64UrlEncodedSignature = Base64URL(Convert(signatureBytes).toBase64Url(padding = false))
-    val signedJwsObject = JWSObject(
-      header.toBase64URL(),
-      payload.toBase64URL(),
-      base64UrlEncodedSignature,
-    )
+    val signedJwsObject = sign(updateOpSignedData, keyManager, options.updateKeyAlias)
 
     val did = DID.fromString(options.didString)
     return Pair(
@@ -312,6 +313,27 @@ public sealed class DidIonManager(
       ),
       newUpdateKeyAlias,
     )
+  }
+
+  private fun sign(serializableObject: Any, keyManager: KeyManager, signKeyAlias: String): JWSObject {
+    val header = JWSHeader.Builder(JWSAlgorithm.ES256K).build()
+    val payload = Payload(mapper.writeValueAsString(serializableObject))
+    val jwsObject = JWSObject(header, payload)
+    val signatureBytes = keyManager.sign(signKeyAlias, jwsObject.signingInput)
+
+    val base64UrlEncodedSignature = Base64URL(Convert(signatureBytes).toBase64Url(padding = false))
+    return JWSObject(
+      header.toBase64URL(),
+      payload.toBase64URL(),
+      base64UrlEncodedSignature,
+    )
+  }
+
+  private fun deltaHash(updateOpDeltaObject: Delta): String {
+    val canonicalized = canonicalized(updateOpDeltaObject)
+    val deltaHashBytes = Multihash.sum(Multicodec.SHA2_256, canonicalized).getOrThrow().bytes()
+    val deltaHash = Base64URL.encode(deltaHashBytes).toString()
+    return deltaHash
   }
 
   private fun createOperation(keyManager: KeyManager, options: CreateDidIonOptions?)
@@ -419,6 +441,48 @@ public sealed class DidIonManager(
     val hashOfHash = Multihash.sum(Multicodec.SHA2_256, intermediate).getOrThrow().bytes()
     return Pair(Convert(hashOfHash).toBase64Url(padding = false), reveal)
   }
+
+  internal fun createRecoverOperation(keyManager: KeyManager, options: RecoverDidIonOptions):
+    Pair<SidetreeRecoverOperation, String> {
+    val recoveryPublicKey = keyManager.getPublicKey(options.recoveryKeyAlias)
+    val (_, reveal) = publicKeyCommitment(recoveryPublicKey)
+
+    val nextRecoveryKeyAlias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K)
+    val nextRecoveryPublicKey = keyManager.getPublicKey(nextRecoveryKeyAlias)
+    val (nextRecoveryCommitment, _) = publicKeyCommitment(nextRecoveryPublicKey)
+
+    val nextUpdateKeyAlias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K)
+    val nextUpdatePublicKey = keyManager.getPublicKey(nextUpdateKeyAlias)
+    val (nextUpdateCommitment, _) = publicKeyCommitment(nextUpdatePublicKey)
+
+    val delta = Delta(
+      patches = options.toPatches(),
+      updateCommitment = nextUpdateCommitment
+    )
+    val deltaHash = deltaHash(delta)
+
+    val dataToBeSigned = RecoveryUpdateSignedData(
+      recoveryCommitment = nextRecoveryCommitment,
+      recoveryKey = recoveryPublicKey,
+      deltaHash = deltaHash
+    )
+
+    val jwsObject = sign(dataToBeSigned, keyManager, options.recoveryKeyAlias)
+
+    val did = DID.fromString(options.didString)
+    return Pair(
+      SidetreeRecoverOperation(
+        type = "recover",
+        didSuffix = did.methodSpecificId,
+        revealValue = reveal,
+        delta = delta,
+        signedData = jwsObject.serialize(),
+      ),
+      nextUpdateKeyAlias
+    )
+
+  }
+
 
   /**
    * Default companion object for creating a [DidIonManager] with a default configuration.

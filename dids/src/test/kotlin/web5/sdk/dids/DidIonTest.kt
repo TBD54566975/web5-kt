@@ -3,6 +3,7 @@ package web5.sdk.dids
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.nimbusds.jose.JWSAlgorithm
+import com.nimbusds.jose.JWSObject
 import com.nimbusds.jose.jwk.JWK
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
@@ -18,7 +19,9 @@ import org.junit.jupiter.api.assertThrows
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.spy
 import org.mockito.kotlin.whenever
+import web5.sdk.crypto.Crypto
 import web5.sdk.crypto.InMemoryKeyManager
+import web5.sdk.dids.ion.model.Document
 import web5.sdk.dids.ion.model.PublicKey
 import web5.sdk.dids.ion.model.PublicKeyPurpose
 import web5.sdk.dids.ion.model.Service
@@ -200,6 +203,58 @@ class DidIonTest {
 
     assertTrue(updateMetadata.updateKeyAlias.isNotEmpty())
     assertEquals("""{"hello":"world"}""", updateMetadata.operationsResponseBody)
+  }
+
+  @Test
+  fun `recover operation is the expected one`() {
+    val mapper = jacksonObjectMapper()
+
+    val publicKey1: PublicKey = mapper.readValue(
+      File("src/test/resources/publicKeyModel1.json").readText()
+    )
+    val service: Service = mapper.readValue(File("src/test/resources/service1.json").readText())
+
+    val keyManager = spy(InMemoryKeyManager())
+    val recoveryKey = readKey("src/test/resources/jwkEs256k1Private.json")
+    val recoveryKeyAlias = keyManager.import(recoveryKey)
+
+    val nextRecoveryKey = readKey("src/test/resources/jwkEs256k2Public.json")
+    val nextRecoveryKeyId = keyManager.import(nextRecoveryKey)
+
+    val nextUpdateKey = readKey("src/test/resources/jwkEs256k3Public.json")
+    val nextUpdateKeyId = keyManager.import(nextUpdateKey)
+
+    doReturn(nextRecoveryKeyId, nextUpdateKeyId).whenever(keyManager).generatePrivateKey(JWSAlgorithm.ES256K)
+
+    val (recoverOperation, updateKeyAlias) = DidIonManager.createRecoverOperation(
+      keyManager,
+      RecoverDidIonOptions(
+        didString = "did:ion:EiDyOQbbZAa3aiRzeCkV7LOx3SERjjH93EXoIM3UoN4oWg",
+        recoveryKeyAlias = recoveryKeyAlias,
+        document = Document(
+          publicKeys = listOf(publicKey1),
+          services = listOf(service),
+        )
+      )
+    )
+
+    assertEquals("EiDyOQbbZAa3aiRzeCkV7LOx3SERjjH93EXoIM3UoN4oWg", recoverOperation.didSuffix)
+    assertEquals("EiAJ-97Is59is6FKAProwDo870nmwCeP8n5nRRFwPpUZVQ", recoverOperation.revealValue);
+    assertEquals("recover", recoverOperation.type);
+    assertEquals("EiBJGXo0XUiqZQy0r-fQUHKS3RRVXw5nwUpqGVXEGuTs-g", recoverOperation.delta.updateCommitment);
+    val jws = JWSObject.parse(recoverOperation.signedData)
+    assertDoesNotThrow {
+      Crypto.verify(recoveryKey.toPublicJWK(), jws.signingInput, jws.signature.decode(), jws.header.algorithm)
+    }
+    assertEquals(
+      "eyJhbGciOiJFUzI1NksifQ.eyJyZWNvdmVyeUNvbW1pdG1lbnQiOiJFaURLSWt3cU82OUlQRzNwT2xIa2RiODZuWXQwYU54U" +
+        "0hadTJyLWJoRXpuamRBIiwicmVjb3ZlcnlLZXkiOnsia3R5IjoiRUMiLCJjcnYiOiJzZWNwMjU2azEiLCJ4IjoibklxbFJDeDBleUJT" +
+        "WGNRbnFEcFJlU3Y0enVXaHdDUldzc29jOUxfbmo2QSIsInkiOiJpRzI5Vks2bDJVNXNLQlpVU0plUHZ5RnVzWGdTbEsyZERGbFdhQ00" +
+        "4RjdrIn0sImRlbHRhSGFzaCI6IkVpQm9HNlFtamlTSm5ON2phaldnaV9vZDhjR3dYSm9Nc2RlWGlWWTc3NXZ2SkEifQ",
+      jws.signingInput.decodeToString()
+    );
+    assertEquals(1, recoverOperation.delta.patches.size)
+    assertEquals(nextUpdateKeyId, updateKeyAlias)
   }
 
   @Test

@@ -196,6 +196,17 @@ public data class SidetreeUpdateOperation(
 )
 
 /**
+ * Sidetree recover operation as defined in https://identity.foundation/sidetree/api/#recover
+ */
+public data class SidetreeRecoverOperation(
+  public val type: String,
+  public val didSuffix: String,
+  public val revealValue: String,
+  public val delta: Delta,
+  public val signedData: String,
+)
+
+/**
  * Update operation signed data object as defined in https://identity.foundation/sidetree/spec/#update-signed-data-object
  */
 public data class UpdateOperationSignedData(
@@ -222,3 +233,16 @@ public class MetadataMethod(
   public val recoveryCommitment: String,
   public val updateCommitment: String,
 )
+
+/**
+ * Recovery operation signed data object as defined in https://identity.foundation/sidetree/spec/#recovery-signed-data-object
+ */
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class RecoveryUpdateSignedData(
+  public val recoveryCommitment: Commitment,
+
+  @JsonSerialize(using = JacksonJWK.Serializer::class)
+  @JsonDeserialize(using = JacksonJWK.Deserializer::class)
+  public val recoveryKey: JWK,
+  public val deltaHash: String,
+  public val anchorOrigin: String? = null)
