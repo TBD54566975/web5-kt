@@ -24,6 +24,7 @@ import org.erdtman.jcs.JsonCanonicalizer
 import org.erwinkok.multiformat.multicodec.Multicodec
 import org.erwinkok.multiformat.multihash.Multihash
 import org.erwinkok.result.get
+import web5.sdk.common.Convert
 import web5.sdk.crypto.KeyManager
 import web5.sdk.dids.ion.model.Commitment
 import web5.sdk.dids.ion.model.Delta
@@ -119,10 +120,9 @@ public sealed class DidIonManager(
   override fun create(keyManager: KeyManager, options: CreateDidIonOptions?): DidIonHandle {
     val (createOp, keys) = createOperation(keyManager, options)
 
-    val shortFormDidSegment =
-      Base64URL.encode(
-        Multihash.sum(Multicodec.SHA2_256, canonicalized(createOp.suffixData)).get()?.bytes()
-      ).toString()
+    val shortFormDidSegment = Convert(
+      Multihash.sum(Multicodec.SHA2_256, canonicalized(createOp.suffixData)).get()?.bytes()
+    ).toBase64Url(padding = false)
     val initialState = InitialState(
       suffixData = createOp.suffixData,
       delta = createOp.delta,
@@ -166,12 +166,12 @@ public sealed class DidIonManager(
     throw InvalidStatusException("received error response '$opBody'")
   }
 
-  private inline fun <reified T> canonicalized(data: T): ByteArray {
+  private fun canonicalized(data: Any): ByteArray {
     val jsonString = mapper.writeValueAsString(data)
     return JsonCanonicalizer(jsonString).encodedUTF8
   }
 
-  private inline fun <reified T> didUriSegment(initialState: T): String {
+  private fun didUriSegment(initialState: InitialState): String {
     val canonicalized = canonicalized(initialState)
     return Base64URL.encode(canonicalized).toString()
   }
