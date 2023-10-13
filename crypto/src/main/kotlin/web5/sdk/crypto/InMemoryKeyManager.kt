@@ -1,13 +1,6 @@
 package web5.sdk.crypto
 
 import com.nimbusds.jose.Algorithm
-import com.nimbusds.jose.JWSAlgorithm
-import com.nimbusds.jose.JWSHeader
-import com.nimbusds.jose.JWSObject
-import com.nimbusds.jose.Payload
-import com.nimbusds.jose.crypto.ECDSASigner
-import com.nimbusds.jose.crypto.bc.BouncyCastleProviderSingleton
-import com.nimbusds.jose.crypto.factories.DefaultJWSSignerFactory
 import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.JWK
 
@@ -86,24 +79,6 @@ public class InMemoryKeyManager : KeyManager {
    * @return The alias belonging to [publicKey]
    * @throws IllegalArgumentException if the key is not known to the [KeyManager]
    */
-  override fun sign(keyAlias: String, payload: Payload): JWSObject {
-    val privateKey = keyStore[keyAlias] ?: throw IllegalArgumentException("key with alias $keyAlias not found")
-    val header = JWSHeader.Builder(JWSAlgorithm.ES256K).build()
-
-    val jws = JWSObject(header, payload)
-    val signer = DefaultJWSSignerFactory().createJWSSigner(privateKey) as ECDSASigner
-    signer.jcaContext.provider = BouncyCastleProviderSingleton.getInstance()
-    jws.sign(signer)
-    return jws
-  }
-
-  /**
-   * Return the alias of [publicKey], as was originally returned by [generatePrivateKey].
-   *
-   * @param publicKey A public key in JWK (JSON Web Key) format
-   * @return The alias belonging to [publicKey]
-   * @throws IllegalArgumentException if the key is not known to the [KeyManager]
-   */
   override fun getDeterministicAlias(publicKey: JWK): String {
     return publicKey.keyID
   }
@@ -115,9 +90,6 @@ public class InMemoryKeyManager : KeyManager {
    * Imports [jwk] and returns the alias that refers to it.
    */
   public fun import(jwk: JWK): String {
-    require(jwk.isPrivate) {
-      "Importing a non-private key is not permitted"
-    }
     var kid = jwk.keyID
     if (kid.isNullOrEmpty()) {
       kid = jwk.computeThumbprint().toString()

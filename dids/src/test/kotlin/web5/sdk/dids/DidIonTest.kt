@@ -3,10 +3,6 @@ package web5.sdk.dids
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.nimbusds.jose.JWSAlgorithm
-import com.nimbusds.jose.JWSObject
-import com.nimbusds.jose.crypto.bc.BouncyCastleProviderSingleton
-import com.nimbusds.jose.crypto.factories.DefaultJWSVerifierFactory
-import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.JWK
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
@@ -25,7 +21,9 @@ import org.mockito.kotlin.whenever
 import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.dids.ion.model.PublicKey
 import web5.sdk.dids.ion.model.PublicKeyPurpose
+import web5.sdk.dids.ion.model.Service
 import web5.sdk.dids.ion.model.SidetreeCreateOperation
+import web5.sdk.dids.ion.model.SidetreeUpdateOperation
 import java.io.File
 import kotlin.test.Ignore
 import kotlin.test.Test
@@ -33,7 +31,7 @@ import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-class DIDIonTest {
+class DidIonTest {
 
   @Test
   @Ignore("For demonstration purposes only - this makes a network call")
@@ -137,7 +135,7 @@ class DIDIonTest {
   @Test
   fun `update fails when update key is absent`() {
     val result = assertThrows<Exception> {
-      DIDIonManager.update(
+      DidIonManager.update(
         InMemoryKeyManager(),
         UpdateDidIonOptions(
           didString = "did:ion:123",
@@ -159,7 +157,7 @@ class DIDIonTest {
 
     val nextUpdateKey = readKey("src/test/resources/jwkEs256k2Public.json")
     val nextUpdateKeyId = keyManager.import(nextUpdateKey)
-    doReturn(nextUpdateKeyId).whenever(keyManager).generatePrivateKey(JWSAlgorithm.ES256K, Curve.SECP256K1)
+    doReturn(nextUpdateKeyId).whenever(keyManager).generatePrivateKey(JWSAlgorithm.ES256K)
 
     val service: Service = mapper.readValue(File("src/test/resources/service1.json").readText())
     val publicKey1: PublicKey = mapper.readValue(
@@ -171,17 +169,13 @@ class DIDIonTest {
       assertEquals("EiDyOQbbZAa3aiRzeCkV7LOx3SERjjH93EXoIM3UoN4oWg", updateOp.didSuffix)
       assertEquals("update", updateOp.type)
       assertEquals("EiAJ-97Is59is6FKAProwDo870nmwCeP8n5nRRFwPpUZVQ", updateOp.revealValue)
-      val jws = JWSObject.parse(updateOp.signedData)
-      assertEquals("eyJhbGciOiJFUzI1NksifQ", jws.header.toBase64URL().toString())
       assertEquals(
-        "eyJ1cGRhdGVLZXkiOnsia3R5IjoiRUMiLCJjcnYiOiJzZWNwMjU2azEiLCJ4IjoibklxbFJDeDB" +
+        "eyJhbGciOiJFUzI1NksifQ.eyJ1cGRhdGVLZXkiOnsia3R5IjoiRUMiLCJjcnYiOiJzZWNwMjU2azEiLCJ4IjoibklxbFJDeDB" +
           "leUJTWGNRbnFEcFJlU3Y0enVXaHdDUldzc29jOUxfbmo2QSIsInkiOiJpRzI5Vks2bDJVNXNLQlpVU0plUHZ5RnVzWGdTbEsyZERGbFdh" +
-          "Q004RjdrIn0sImRlbHRhSGFzaCI6IkVpQXZsbVVRYy1jaDg0Slp5bmdQdkJzUkc3eWh4aUFSenlYOE5lNFQ4LTlyTncifQ",
-        jws.payload.toBase64URL().toString()
+          "Q004RjdrIn0sImRlbHRhSGFzaCI6IkVpQXZsbVVRYy1jaDg0Slp5bmdQdkJzUkc3eWh4aUFSenlYOE5lNFQ4LTlyTncifQ." +
+          "Q9MuoQqFlhYhuLDgx4f-0UM9QyCfZp_cXt7vnQ4ict5P4_ZWKwG4OXxxqFvdzE-e3ZkEbvfR0YxEIpYO9MrPFw",
+        updateOp.signedData
       )
-      val verifier = DefaultJWSVerifierFactory().createJWSVerifier(jws.header, updateKey.toECKey().toPublicKey())
-      verifier.jcaContext.provider = BouncyCastleProviderSingleton.getInstance()
-      assertTrue(jws.verify(verifier))
       assertEquals("EiDKIkwqO69IPG3pOlHkdb86nYt0aNxSHZu2r-bhEznjdA", updateOp.delta.updateCommitment)
       assertEquals(4, updateOp.delta.patches.size)
       respond(
@@ -190,7 +184,7 @@ class DIDIonTest {
         status = HttpStatusCode.OK,
       )
     }
-    val updateMetadata = DIDIonManager {
+    val updateMetadata = DidIonManager {
       engine = validatinMockEngine
     }.update(
       keyManager,
