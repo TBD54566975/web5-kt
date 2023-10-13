@@ -199,8 +199,8 @@ public data class SidetreeUpdateOperation(
  * Update operation signed data object as defined in https://identity.foundation/sidetree/spec/#update-signed-data-object
  */
 public data class UpdateOperationSignedData(
-  @JsonSerialize(using = JacksonJWK.Serializer::class)
-  @JsonDeserialize(using = JacksonJWK.Deserializer::class)
+  @JsonSerialize(using = JacksonJwk.Serializer::class)
+  @JsonDeserialize(using = JacksonJwk.Deserializer::class)
   public val updateKey: JWK,
   public val deltaHash: String,
 )
