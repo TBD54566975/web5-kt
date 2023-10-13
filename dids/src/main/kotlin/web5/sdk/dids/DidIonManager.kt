@@ -23,6 +23,7 @@ import org.erdtman.jcs.JsonCanonicalizer
 import org.erwinkok.multiformat.multicodec.Multicodec
 import org.erwinkok.multiformat.multihash.Multihash
 import org.erwinkok.result.get
+import org.erwinkok.result.getOrThrow
 import web5.sdk.common.Convert
 import web5.sdk.crypto.KeyManager
 import web5.sdk.dids.ion.model.Commitment
@@ -84,6 +85,10 @@ public class DidIonHandle(
   public val creationMetadata: IonCreationMetadata? = null) : Did(uri, keyManager)
 
 private const val maxVerificationMethodIdLength = 50
+
+private const val base64UrlCharsetRegexStr = "^[A-Za-z0-9_-]+$"
+
+private val base64UrlCharsetRegex = base64UrlCharsetRegexStr.toRegex()
 
 /**
  * Base class for managing DID Ion operations. Uses the given [configuration].
@@ -182,7 +187,7 @@ public sealed class DidIonManager(
    */
   override fun resolve(did: String, options: ResolveDidOptions?): DidResolutionResult {
     val didObj = DID.fromString(did)
-    require(didObj.methodName == methodName)
+    require(didObj.methodName == methodName) { throw IllegalArgumentException("expected did:ion") }
 
     val resp = runBlocking { client.get("$identifiersEndpoint/$didObj") }
     val body = runBlocking { resp.bodyAsText() }
@@ -263,8 +268,7 @@ public sealed class DidIonManager(
   }
 
   private fun isBase64UrlString(input: String?): Boolean {
-    val regex = "^[A-Za-z0-9_-]+$".toRegex()
-    return regex.matches(input!!)
+    return base64UrlCharsetRegex.matches(input!!)
   }
 
   private fun createOperationSuffixDataObject(
@@ -280,7 +284,7 @@ public sealed class DidIonManager(
   }
 
   private fun publicKeyCommitment(publicKeyJWK: JWK): Commitment {
-    require(!publicKeyJWK.isPrivate)
+    require(!publicKeyJWK.isPrivate) { throw IllegalArgumentException("provided JWK must not be a private key") }
     // 1. Encode the public key into the form of a valid JWK.
     val pkJson = publicKeyJWK.toJSONString()
 
@@ -288,11 +292,11 @@ public sealed class DidIonManager(
     val canonicalized = JsonCanonicalizer(pkJson).encodedUTF8
 
     // 3. Use the implementation’s HASH_PROTOCOL to Multihash the canonicalized public key to generate the REVEAL_VALUE,
-    val intermediate = Multihash.sum(Multicodec.SHA2_256, canonicalized).get()?.digest!!
+    val intermediate = Multihash.sum(Multicodec.SHA2_256, canonicalized).getOrThrow().digest
 
     // then Multihash the resulting Multihash value again using the implementation’s HASH_PROTOCOL to produce
     // the public key commitment.
-    val hashOfHash = Multihash.sum(Multicodec.SHA2_256, intermediate).get()?.bytes()
+    val hashOfHash = Multihash.sum(Multicodec.SHA2_256, intermediate).getOrThrow().bytes()
     return Base64URL.encode(hashOfHash).toString()
   }
 
