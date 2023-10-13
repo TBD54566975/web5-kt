@@ -1,6 +1,7 @@
 package web5.sdk.crypto
 
 import com.nimbusds.jose.JWSAlgorithm
+import com.nimbusds.jose.crypto.bc.BouncyCastleProviderSingleton
 import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.gen.ECKeyGenerator
 import org.junit.jupiter.api.Test
@@ -42,7 +43,7 @@ class InMemoryKeyManagerTest {
 
   @Test
   fun `key without kid can be imported`() {
-    val jwk = ECKeyGenerator(Curve.P_256).generate()
+    val jwk = ECKeyGenerator(Curve.SECP256K1).provider(BouncyCastleProviderSingleton.getInstance()).generate()
     val keyManager = InMemoryKeyManager()
 
     val alias = keyManager.import(jwk)
