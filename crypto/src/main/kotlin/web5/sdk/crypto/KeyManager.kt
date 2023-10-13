@@ -1,8 +1,6 @@
 package web5.sdk.crypto
 
 import com.nimbusds.jose.Algorithm
-import com.nimbusds.jose.JWSObject
-import com.nimbusds.jose.Payload
 import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.JWK
 
@@ -47,18 +45,21 @@ public interface KeyManager {
    * Signs the provided payload using the private key identified by the provided alias.
    *
    * @param keyAlias The alias referencing the stored private key.
-   * @param payload The data/payload to be signed.
+   * @param signingInput The data to be signed.
+   * @return The signature in JWS R+S format
    *
    * Implementations should ensure that the signing process is secured, utilizing secure cryptographic
    * practices and safeguarding the private key during the operation. The specific signing algorithm
    * used may depend on the type and parameters of the stored key.
    */
-  public fun sign(keyAlias: String, payload: Payload): JWSObject
+  public fun sign(keyAlias: String, signingInput: ByteArray): ByteArray
 
   /**
-   * Imports a private [jwk] into this keyManager. Any error should throw an exception.
+   * Return the alias of [publicKey], as was originally returned by [generatePrivateKey].
    *
-   * @return A unique alias (String) that can be used to reference the imported key.
+   * @param publicKey A public key in JWK (JSON Web Key) format
+   * @return The alias belonging to [publicKey]
+   * @throws IllegalArgumentException if the key is not known to the [KeyManager]
    */
-  public fun import(jwk: JWK): String
+  public fun getDeterministicAlias(publicKey: JWK): String
 }

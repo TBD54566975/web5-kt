@@ -1,0 +1,54 @@
+package web5.sdk.crypto
+
+import com.nimbusds.jose.JWSAlgorithm
+import com.nimbusds.jose.crypto.bc.BouncyCastleProviderSingleton
+import com.nimbusds.jose.jwk.Curve
+import com.nimbusds.jose.jwk.gen.ECKeyGenerator
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
+import kotlin.test.assertEquals
+
+class InMemoryKeyManagerTest {
+  @Test
+  fun `test alias is consistent`() {
+    val keyManager = InMemoryKeyManager()
+    val alias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K)
+    val publicKey = keyManager.getPublicKey(alias)
+    val defaultAlias = keyManager.getDeterministicAlias(publicKey)
+
+    assertEquals(alias, defaultAlias)
+  }
+
+  @Test
+  fun `public key is available after import`() {
+    val jwk = Crypto.generatePrivateKey(JWSAlgorithm.ES256K)
+    val keyManager = InMemoryKeyManager()
+
+    val alias = keyManager.import(jwk)
+
+    val publicKey = keyManager.getPublicKey(alias)
+    assertEquals(jwk.toPublicJWK(), publicKey)
+  }
+
+  @Test
+  fun `public keys cannot be imported`() {
+    val jwk = Crypto.generatePrivateKey(JWSAlgorithm.ES256K)
+
+    val keyManager = InMemoryKeyManager()
+
+    assertThrows<IllegalArgumentException> {
+      keyManager.import(jwk.toPublicJWK())
+    }
+  }
+
+  @Test
+  fun `key without kid can be imported`() {
+    val jwk = ECKeyGenerator(Curve.SECP256K1).provider(BouncyCastleProviderSingleton.getInstance()).generate()
+    val keyManager = InMemoryKeyManager()
+
+    val alias = keyManager.import(jwk)
+
+    val publicKey = keyManager.getPublicKey(alias)
+    assertEquals(jwk.toPublicJWK(), publicKey)
+  }
+}

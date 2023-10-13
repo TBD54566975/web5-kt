@@ -1,4 +1,4 @@
-package web5.dids.ion.model
+package web5.sdk.dids.ion.model
 
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonSubTypes
@@ -15,7 +15,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import com.nimbusds.jose.jwk.JWK
 
 /**
- * Represents an ION document containing public keys and services.
+ * Represents an ION document containing public keys and services. See bullet 2 in https://identity.foundation/sidetree/spec/#replace.
  *
  * @property publicKeys List of public keys.
  * @property services List of services.
@@ -26,7 +26,7 @@ public data class Document(
 )
 
 /**
- * Represents an ION service.
+ * Represents an ION service. See bullet 3 in https://identity.foundation/sidetree/spec/#add-services.
  *
  * @property id The service ID.
  * @property type The service type.
@@ -57,11 +57,11 @@ public data class PublicKey(
  * JacksonJWK is a utility class that facilitates serialization for [JWK] types, so that it's easy to integrate with any
  * class that is meant to be serialized to/from JSON.
  */
-public class JacksonJWK {
+private class JacksonJWK {
   /**
    * [Serializer] implements [JsonSerializer] for use with the [JsonSerialize] annotation from Jackson.
    */
-  public object Serializer : JsonSerializer<JWK>() {
+  object Serializer : JsonSerializer<JWK>() {
     override fun serialize(value: JWK, gen: JsonGenerator, serializers: SerializerProvider) {
       with(gen) {
         writeObject(value.toJSONObject())
@@ -72,7 +72,7 @@ public class JacksonJWK {
   /**
    * [Deserializer] implements [JsonDeserializer] for use with the [JsonDeserialize] annotation from Jackson.
    */
-  public object Deserializer : JsonDeserializer<JWK>() {
+  object Deserializer : JsonDeserializer<JWK>() {
     override fun deserialize(p: JsonParser, ctxt: DeserializationContext?): JWK {
       @Suppress("UNCHECKED_CAST")
       val node = p.readValueAs(Map::class.java) as MutableMap<String, Any>
@@ -82,7 +82,7 @@ public class JacksonJWK {
 }
 
 /**
- * Enum representing the purpose of a public key.
+ * Enum representing the purpose of a public key. See bullet 3.5 of https://identity.foundation/sidetree/spec/#add-public-keys
  */
 public enum class PublicKeyPurpose(@get:JsonValue public val code: String) {
   AUTHENTICATION("authentication"),
@@ -93,7 +93,7 @@ public enum class PublicKeyPurpose(@get:JsonValue public val code: String) {
 }
 
 /**
- * Sealed class representing a patch action in the ION document.
+ * Sealed class representing a patch action in the ION document. See https://identity.foundation/sidetree/spec/#did-state-patches
  */
 @JsonTypeInfo(
   use = JsonTypeInfo.Id.NAME,
@@ -110,7 +110,7 @@ public enum class PublicKeyPurpose(@get:JsonValue public val code: String) {
 public sealed class PatchAction
 
 /**
- * Represents an "add_services" patch action in the ION document.
+ * Represents an "add_services" patch action in the ION document as defined in https://identity.foundation/sidetree/spec/#add-services.
  *
  * @property services List of services to add.
  */
@@ -119,7 +119,7 @@ public data class AddServicesAction(
 ) : PatchAction()
 
 /**
- * Represents a "replace" patch action in the ION document.
+ * Represents a "replace" patch action in the ION document as defined in https://identity.foundation/sidetree/spec/#replace.
  *
  * @property document The document to replace.
  */
@@ -143,7 +143,7 @@ public data class RemovePublicKeysAction(
 ) : PatchAction()
 
 /**
- * Represents a delta in the ION document.
+ * Represents a delta in the ION document as defined in bullet 3 of https://identity.foundation/sidetree/spec/#create
  *
  * @property patches List of patch actions.
  * @property updateCommitment Update commitment.
@@ -154,7 +154,7 @@ public data class Delta(
 )
 
 /**
- * Represents operation suffix data object.
+ * Represents operation suffix data object as defined in bullet 6 of https://identity.foundation/sidetree/spec/#create
  *
  * @property deltaHash Delta hash.
  * @property recoveryCommitment Recovery commitment.
@@ -175,7 +175,7 @@ public typealias Commitment = String
 public typealias Reveal = String
 
 /**
- * Sidetree create operation.
+ * Sidetree API create operation as defined in https://identity.foundation/sidetree/api/#create
  */
 public data class SidetreeCreateOperation(
   public val type: String,
@@ -212,4 +212,13 @@ public data class UpdateOperationSignedData(
 internal data class InitialState(
   val suffixData: OperationSuffixDataObject,
   val delta: Delta,
+)
+
+/**
+ * Metadata about the did method as defined in bullet 3 (subitem 'method') of https://identity.foundation/sidetree/spec/#did-resolver-output
+ */
+public class MetadataMethod(
+  public val published: Boolean,
+  public val recoveryCommitment: String,
+  public val updateCommitment: String,
 )
