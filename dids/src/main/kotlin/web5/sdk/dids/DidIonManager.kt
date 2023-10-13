@@ -255,14 +255,10 @@ public sealed class DidIonManager(
   }
 
   private fun validateVerificationMethodId(id: String) {
-    if (!isBase64UrlString(id)) {
-      throw IllegalArgumentException("verification method id \"$id\" is not base 64 url charset")
-    }
+    require(isBase64UrlString(id)) { "verification method id \"$id\" is not base 64 url charset" }
 
-    if (id.length > maxVerificationMethodIdLength) {
-      throw IllegalArgumentException(
-        "verification method id \"$id\" exceeds max allowed length of $maxVerificationMethodIdLength"
-      )
+    require(id.length <= maxVerificationMethodIdLength) {
+      "verification method id \"$id\" exceeds max allowed length of $maxVerificationMethodIdLength"
     }
   }
 
