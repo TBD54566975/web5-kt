@@ -3,7 +3,6 @@ package web5.sdk.dids
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.jwk.JWK
-import com.nimbusds.jose.util.Base64URL
 import foundation.identity.did.DID
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.HttpClientEngine
@@ -177,7 +176,7 @@ public sealed class DidIonManager(
 
   private fun didUriSegment(initialState: InitialState): String {
     val canonicalized = canonicalized(initialState)
-    return Base64URL.encode(canonicalized).toString()
+    return Convert(canonicalized).toBase64Url(padding = false)
   }
 
   /**
@@ -278,7 +277,7 @@ public sealed class DidIonManager(
     val canonicalized = JsonCanonicalizer(jsonString).encodedUTF8
     val deltaHash = Multihash.sum(Multicodec.SHA2_256, canonicalized).get()?.bytes()
     return OperationSuffixDataObject(
-      deltaHash = Base64URL.encode(deltaHash).toString(),
+      deltaHash = Convert(deltaHash).toBase64Url(padding = false),
       recoveryCommitment = recoveryCommitment
     )
   }
@@ -297,7 +296,7 @@ public sealed class DidIonManager(
     // then Multihash the resulting Multihash value again using the implementation’s HASH_PROTOCOL to produce
     // the public key commitment.
     val hashOfHash = Multihash.sum(Multicodec.SHA2_256, intermediate).getOrThrow().bytes()
-    return Base64URL.encode(hashOfHash).toString()
+    return Convert(hashOfHash).toBase64Url(padding = false)
   }
 
   /**
