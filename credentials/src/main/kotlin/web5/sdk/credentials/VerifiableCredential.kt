@@ -1,6 +1,7 @@
 package web5.sdk.credentials
 
 import com.danubetech.verifiablecredentials.CredentialSubject
+import com.danubetech.verifiablecredentials.credentialstatus.CredentialStatus
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -148,7 +149,14 @@ public class VerifiableCredential(public val vcDataModel: VcDataModel) {
      * val vc = VerifiableCredential.create("ExampleCredential", "http://example.com/issuers/1", "http://example.com/subjects/1", myData)
      * ```
      */
-    public fun <T> create(type: String, issuer: String, subject: String, data: T): VerifiableCredential {
+    public fun <T> create(
+      type: String,
+      issuer: String,
+      subject: String,
+      data: T,
+      credentialStatus: CredentialStatus? = null
+    ): VerifiableCredential {
+
       val jsonData: JsonNode = objectMapper.valueToTree(data)
       val mapData: Map<String, Any> = when (jsonData.isObject) {
         true -> objectMapper.convertValue<Map<String, Any>>(jsonData)
@@ -166,6 +174,12 @@ public class VerifiableCredential(public val vcDataModel: VcDataModel) {
         .issuer(URI.create(issuer))
         .issuanceDate(Date())
         .credentialSubject(credentialSubject)
+        .apply {
+          credentialStatus?.let {
+            credentialStatus(it)
+            context(URI.create("https://w3id.org/vc/status-list/2021/v1"))
+          }
+        }
         .build()
 
       return VerifiableCredential(vcDataModel)
@@ -280,6 +294,21 @@ public class VerifiableCredential(public val vcDataModel: VcDataModel) {
       val vcDataModel = VcDataModel.fromMap(vcDataModelMap)
 
       return VerifiableCredential(vcDataModel)
+    }
+
+    /**
+     * Parses a JSON string into a [VerifiableCredential] instance.
+     *
+     * @param vcJson The verifiable credential JSON as a [String].
+     * @return A [VerifiableCredential] instance derived from the JSON.
+     *
+     * Example:
+     * ```
+     * val vc = VerifiableCredential.fromJson(vcJsonString)
+     * ```
+     */
+    public fun fromJson(vcJson: String): VerifiableCredential {
+      return VerifiableCredential(VcDataModel.fromJson(vcJson))
     }
   }
 }
