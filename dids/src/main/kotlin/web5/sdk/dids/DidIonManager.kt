@@ -311,7 +311,13 @@ public sealed class DidIonManager(
  */
 public class InvalidStatusException(status: Int, msg: String) : RuntimeException(msg)
 
-/** Wraps an exception during resolution where the [DidResolutionMetadata.error] is not empty. */
+/**
+ * Represents an exception where the response from calling [DidIonManager.resolve] contains a non-empty value in
+ * [DidResolutionMetadata.error].
+ *
+ * Note: This exception is only thrown when calling [DidIonManager.create]. Callers of [DidIonManager.resolve] should
+ * handle possible values of [DidResolutionMetadata.error] within [DidResolutionResult].
+ */
 public class ResolutionException(msg: String) : RuntimeException(msg)
 
 /**
