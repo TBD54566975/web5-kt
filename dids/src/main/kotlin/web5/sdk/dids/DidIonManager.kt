@@ -137,7 +137,7 @@ public class RecoverDidIonOptions(
  * ### Usage Example:
  * ```kotlin
  * val keyManager = InMemoryKeyManager()
- * val did = DidKey("did:key:example", keyManager)
+ * val did = DidIonHandle("did:ion:example", keyManager)
  * ```
  */
 public class DidIonHandle(
@@ -338,11 +338,11 @@ public sealed class DidIonManager(
 
   private fun createOperation(keyManager: KeyManager, options: CreateDidIonOptions?)
     : Pair<SidetreeCreateOperation, KeyAliases> {
-    val updatePublicJWK: JWK = options?.updatePublicJWK ?: keyManager.getPublicKey(
+    val updatePublicJwk: JWK = options?.updatePublicJwk ?: keyManager.getPublicKey(
       keyManager.generatePrivateKey(JWSAlgorithm.ES256K)
     )
 
-    val (publicKeyCommitment, _) = publicKeyCommitment(updatePublicJWK)
+    val (publicKeyCommitment, _) = publicKeyCommitment(updatePublicJwk)
 
     val verificationMethodId = when (options?.verificationMethodId) {
       null -> UUID.randomUUID().toString()
@@ -353,11 +353,11 @@ public sealed class DidIonManager(
     }
     val verificationPublicKey = if (options?.verificationPublicKey == null) {
       val alias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K)
-      val verificationJWK = keyManager.getPublicKey(alias)
+      val verificationJwk = keyManager.getPublicKey(alias)
       PublicKey(
         id = verificationMethodId,
         type = "JsonWebKey2020",
-        publicKeyJwk = verificationJWK,
+        publicKeyJwk = verificationJwk,
         purposes = listOf(PublicKeyPurpose.AUTHENTICATION),
       )
     } else {
@@ -369,13 +369,13 @@ public sealed class DidIonManager(
       updateCommitment = publicKeyCommitment
     )
 
-    val recoveryPublicJWK = if (options?.recoveryPublicJWK == null) {
+    val recoveryPublicJwk = if (options?.recoveryPublicJwk == null) {
       val alias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K)
       keyManager.getPublicKey(alias)
     } else {
-      options.recoveryPublicJWK
+      options.recoveryPublicJwk
     }
-    val (recoveryCommitment, _) = publicKeyCommitment(recoveryPublicJWK)
+    val (recoveryCommitment, _) = publicKeyCommitment(recoveryPublicJwk)
 
     val operation: OperationSuffixDataObject =
       createOperationSuffixDataObject(createOperationDelta, recoveryCommitment)
@@ -387,22 +387,18 @@ public sealed class DidIonManager(
         delta = createOperationDelta,
       ),
       KeyAliases(
-        updateKeyAlias = updatePublicJWK.keyID,
+        updateKeyAlias = updatePublicJwk.keyID,
         verificationKeyAlias = verificationPublicKey.publicKeyJwk!!.keyID,
-        recoveryKeyAlias = recoveryPublicJWK.keyID
+        recoveryKeyAlias = recoveryPublicJwk.keyID
       )
     )
   }
 
   private fun validateVerificationMethodId(id: String) {
-    if (!isBase64UrlString(id)) {
-      throw IllegalArgumentException("verification method id \"$id\" is not base 64 url charset")
-    }
+    require(isBase64UrlString(id)) { "verification method id \"$id\" is not base 64 url charset" }
 
-    if (id.length > maxVerificationMethodIdLength) {
-      throw IllegalArgumentException(
-        "verification method id \"$id\" exceeds max allowed length of $maxVerificationMethodIdLength"
-      )
+    require(id.length <= maxVerificationMethodIdLength) {
+      "verification method id \"$id\" exceeds max allowed length of $maxVerificationMethodIdLength"
     }
   }
 
@@ -423,10 +419,10 @@ public sealed class DidIonManager(
     )
   }
 
-  private fun publicKeyCommitment(publicKeyJWK: JWK): Pair<Commitment, Reveal> {
-    require(!publicKeyJWK.isPrivate) { throw IllegalArgumentException("provided JWK must not be a private key") }
+  private fun publicKeyCommitment(publicKeyJwk: JWK): Pair<Commitment, Reveal> {
+    require(!publicKeyJwk.isPrivate) { throw IllegalArgumentException("provided JWK must not be a private key") }
     // 1. Encode the public key into the form of a valid JWK.
-    val pkJson = publicKeyJWK.toJSONString()
+    val pkJson = publicKeyJwk.toJSONString()
 
     // 2. Canonicalize the JWK encoded public key using the implementation’s JSON_CANONICALIZATION_SCHEME.
     val canonicalized = JsonCanonicalizer(pkJson).encodedUTF8
@@ -524,15 +520,15 @@ public data class KeyAliases(
  * Options available when creating an ion did.
  *
  * @param verificationPublicKey When provided, will be used as the verification key in the DID document.
- * @param updatePublicJWK When provided, will be used to create the update key commitment.
- * @param recoveryPublicJWK When provided, will be used to create the recovery key commitment.
+ * @param updatePublicJwk When provided, will be used to create the update key commitment.
+ * @param recoveryPublicJwk When provided, will be used to create the recovery key commitment.
  * @param verificationMethodId When provided, will be used as the verification method id. Cannot be over 50 chars and
  * must only use characters from the Base64URL character set.
  */
 public class CreateDidIonOptions(
   public val verificationPublicKey: PublicKey? = null,
-  public val updatePublicJWK: JWK? = null,
-  public val recoveryPublicJWK: JWK? = null,
+  public val updatePublicJwk: JWK? = null,
+  public val recoveryPublicJwk: JWK? = null,
   public val verificationMethodId: String? = null,
 ) : CreateDidOptions
 

@@ -43,6 +43,10 @@ dependencies {
 }
 ```
 
+# Examples
+
+We maintain a [web5 cookbook](./docs/examples.md). Check it out for a comprehensive set of examples.
+
 # Building
 
 To build and run test just run:
