@@ -2,7 +2,6 @@ package web5.sdk.dids
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.nimbusds.jose.JWSAlgorithm
-import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.JWK
 import com.nimbusds.jose.util.Base64URL
 import foundation.identity.did.DID
@@ -196,10 +195,7 @@ public sealed class DidIonManager(
   private fun createOperation(keyManager: KeyManager, options: CreateDidIonOptions?)
     : Pair<SidetreeCreateOperation, KeyAliases> {
     val updatePublicJWK: JWK = options?.updatePublicJWK ?: keyManager.getPublicKey(
-      keyManager.generatePrivateKey(
-        JWSAlgorithm.ES256K,
-        Curve.SECP256K1
-      )
+      keyManager.generatePrivateKey(JWSAlgorithm.ES256K)
     )
 
     val publicKeyCommitment: String = publicKeyCommitment(updatePublicJWK)
@@ -230,7 +226,7 @@ public sealed class DidIonManager(
     )
 
     val recoveryPublicJWK = if (options?.recoveryPublicJWK == null) {
-      val alias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K, Curve.SECP256K1)
+      val alias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K)
       keyManager.getPublicKey(alias)
     } else {
       options.recoveryPublicJWK
