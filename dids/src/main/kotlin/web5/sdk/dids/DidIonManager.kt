@@ -215,7 +215,7 @@ public sealed class DidIonManager(
         )
       )
     }
-    throw InvalidStatusException(response.status.value, "received error response '$opBody'")
+    throw InvalidStatusException(response.status.value, "received error response: '$opBody'")
   }
 
   private fun canonicalized(data: Any): ByteArray {
@@ -240,7 +240,7 @@ public sealed class DidIonManager(
     val resp = runBlocking { client.get("$identifiersEndpoint/$didObj") }
     val body = runBlocking { resp.bodyAsText() }
     if (!resp.status.isSuccess()) {
-      throw InvalidStatusException(resp.status.value, "resolution error response '$body'")
+      throw InvalidStatusException(resp.status.value, "resolution error response: '$body'")
     }
     return mapper.readValue(body, DidResolutionResult::class.java)
   }

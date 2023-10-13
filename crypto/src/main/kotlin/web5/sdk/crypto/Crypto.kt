@@ -1,7 +1,6 @@
 package web5.sdk.crypto
 
 import com.nimbusds.jose.Algorithm
-import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.JWK
 import web5.sdk.crypto.Crypto.generatePrivateKey
@@ -60,6 +59,7 @@ public object Crypto {
   )
 
   private val signers = mapOf<CryptoAlgorithm, Signer>(
+    Pair(null, Curve.SECP256K1) to Secp256k1,
     Pair(Secp256k1.algorithm, null) to Secp256k1,
     Pair(Secp256k1.algorithm, Curve.SECP256K1) to Secp256k1,
     Pair(Ed25519.algorithm, Curve.Ed25519) to Ed25519
@@ -86,7 +86,11 @@ public object Crypto {
    * @return The computed public key as a JWK object.
    */
   public fun computePublicKey(privateKey: JWK): JWK {
-    return privateKey.toPublicJWK()
+    val rawCurve = privateKey.toJSONObject()["crv"]
+    val curve = rawCurve?.let { Curve.parse(it.toString()) }
+    val generator = getKeyGenerator(privateKey.algorithm, curve)
+
+    return generator.computePublicKey(privateKey)
   }
 
   /**
@@ -104,11 +108,7 @@ public object Crypto {
     val rawCurve = privateKey.toJSONObject()["crv"]
     val curve = rawCurve?.let { Curve.parse(it.toString()) }
 
-    val signer = if (curve == Curve.SECP256K1 && privateKey.algorithm == null) {
-      getSigner(JWSAlgorithm.ES256K, curve)
-    } else {
-      getSigner(privateKey.algorithm, curve)
-    }
+    val signer = getSigner(privateKey.algorithm, curve)
 
     return signer.sign(privateKey, payload, options)
   }
@@ -216,7 +216,7 @@ public object Crypto {
    * @return The corresponding [Signer].
    * @throws IllegalArgumentException if the algorithm or curve is not supported.
    */
-  public fun getSigner(algorithm: Algorithm, curve: Curve? = null): Signer {
+  public fun getSigner(algorithm: Algorithm?, curve: Curve? = null): Signer {
     return signers.getOrElse(Pair(algorithm, curve)) {
       throw IllegalArgumentException("Algorithm $algorithm not supported")
     }
