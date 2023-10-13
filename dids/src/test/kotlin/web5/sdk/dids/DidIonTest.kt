@@ -124,6 +124,25 @@ class DIDIonTest {
     }
   }
 
+  @Test
+  fun `bad request throws exception`() {
+    val exception = assertThrows<InvalidStatusException> {
+      DidIonManager {
+        engine = badRequestMockEngine()
+      }.resolve("did:ion:foobar")
+    }
+
+    assertEquals(HttpStatusCode.BadRequest.value, exception.statusCode)
+  }
+
+  private fun badRequestMockEngine() = MockEngine {
+    respond(
+      content = ByteReadChannel("""{}"""),
+      status = HttpStatusCode.BadRequest,
+      headers = headersOf(HttpHeaders.ContentType, "application/json")
+    )
+  }
+
   private fun mockEngine() = MockEngine { request ->
     when (request.url.encodedPath) {
       "/operations" -> {

@@ -308,7 +308,7 @@ public sealed class DidIonManager(
 /**
  * Represents an HTTP response where the status code is outside the range considered success.
  */
-public class InvalidStatusException(status: Int, msg: String) : RuntimeException(msg)
+public class InvalidStatusException(public val statusCode: Int, msg: String) : RuntimeException(msg)
 
 /**
  * Represents an exception where the response from calling [DidIonManager.resolve] contains a non-empty value in
