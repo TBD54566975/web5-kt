@@ -169,3 +169,12 @@ internal data class InitialState(
   val suffixData: OperationSuffixDataObject,
   val delta: Delta,
 )
+
+/**
+ * Metadata about the did method.
+ */
+public class MetadataMethod(
+  public val published: Boolean,
+  public val recoveryCommitment: String? = null,
+  public val updateCommitment: String? = null,
+)

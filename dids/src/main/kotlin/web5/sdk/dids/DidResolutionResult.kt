@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import foundation.identity.did.DIDDocument
+import web5.sdk.dids.ion.model.MetadataMethod
 
 /**
  * Represents the result of DID resolution as per the W3C DID Core specification.
@@ -71,11 +72,3 @@ public class DidDocumentMetadata(
   public val method: MetadataMethod? = null,
 )
 
-/**
- * Metadata about the did method.
- */
-public class MetadataMethod(
-  public val published: Boolean,
-  public val recoveryCommitment: String? = null,
-  public val updateCommitment: String? = null,
-)
