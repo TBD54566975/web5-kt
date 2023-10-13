@@ -204,8 +204,13 @@ public sealed class DidIonManager(
 
     val publicKeyCommitment: String = publicKeyCommitment(updatePublicJWK)
 
-    val verificationMethodId = options?.verificationMethodId ?: UUID.randomUUID().toString()
-    validateVerificationMethodId(verificationMethodId)
+    val verificationMethodId = when (options?.verificationMethodId) {
+      null -> UUID.randomUUID().toString()
+      else -> {
+        validateVerificationMethodId(options.verificationMethodId)
+        options.verificationMethodId
+      }
+    }
     val verificationPublicKey = if (options?.verificationPublicKey == null) {
       val alias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K, Curve.SECP256K1)
       val verificationJWK = keyManager.getPublicKey(alias)
