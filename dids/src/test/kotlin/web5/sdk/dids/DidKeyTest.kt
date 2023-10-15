@@ -20,16 +20,14 @@ class DidKeyTest {
       val manager = InMemoryKeyManager()
       val did = DidKey.create(manager)
 
-      val keyAliaz = run {
-        val didResolutionResult = DidResolvers.resolve(did.uri)
-        val verificationMethod = didResolutionResult.didDocument.allVerificationMethods[0]
+      val didResolutionResult = DidResolvers.resolve(did.uri)
+      val verificationMethod = didResolutionResult.didDocument.allVerificationMethods[0]
 
-        require(verificationMethod != null) { "no verification method found" }
+      require(verificationMethod != null) { "no verification method found" }
 
-        val jwk = JWK.parse(verificationMethod.publicKeyJwk)
-        jwk.keyID
-      }
-      val publicKey = did.keyManager.getPublicKey(keyAliaz)
+      val jwk = JWK.parse(verificationMethod.publicKeyJwk)
+      val keyAlias = did.keyManager.getDeterministicAlias(jwk)
+      val publicKey = did.keyManager.getPublicKey(keyAlias)
     }
   }
 

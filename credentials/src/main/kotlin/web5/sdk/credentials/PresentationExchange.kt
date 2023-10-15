@@ -1,4 +1,4 @@
-package web5.credentials
+package web5.sdk.credentials
 
 /**
  * A utility object for performing operations related to presentation exchanges.
@@ -15,7 +15,7 @@ public object PresentationExchange {
     credentials: List<VerifiableCredential>,
     presentationDefinition: PresentationDefinitionV2
   ): List<VerifiableCredential> {
-    throw NotImplementedError("pex is untested")
+    throw UnsupportedOperationException("pex is untested")
 //    return credentials.filter { satisfiesPresentationDefinition(it, presentationDefinition) }
   }
 
@@ -24,14 +24,16 @@ public object PresentationExchange {
    *
    * @param presentationDefinition The Presentation Definition to be evaluated.
    * @return `true` if the Presentation Definition is satisfied, `false` otherwise.
-   * @throws NotImplementedError if certain features like Submission Requirements or Field Filters are not implemented.
+   * @throws UnsupportedOperationException if certain features like Submission Requirements or Field Filters are not implemented.
    */
   public fun satisfiesPresentationDefinition(
     credential: VerifiableCredential,
     presentationDefinition: PresentationDefinitionV2
   ): Boolean {
     if (!presentationDefinition.submissionRequirements.isNullOrEmpty()) {
-      throw NotImplementedError("Presentation Definition's Submission Requirements feature is not implemented")
+      throw UnsupportedOperationException(
+        "Presentation Definition's Submission Requirements feature is not implemented"
+      )
     }
 
     return presentationDefinition.inputDescriptors
@@ -43,7 +45,7 @@ public object PresentationExchange {
         for (field in requiredFields) {
           // we ignore field filters
           if (field.filter != null) {
-            throw NotImplementedError("Field Filter is not implemented")
+            throw UnsupportedOperationException("Field Filter is not implemented")
           }
 
           if (field.path.any { path -> credential.getFieldByJsonPath(path) == null }) {

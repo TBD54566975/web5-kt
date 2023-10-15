@@ -64,12 +64,23 @@ public class InMemoryKeyManager : KeyManager {
    * The implementation of this method is not yet provided and invoking it will throw a [NotImplementedError].
    *
    * @param keyAlias The alias (key ID) of the private key stored in the keyStore.
-   * @param payload The payload to be signed.
+   * @param signingInput The data to be signed.
+   * @return The signature in JWS R+S format
    */
-  override fun sign(keyAlias: String, payload: ByteArray): ByteArray {
+  override fun sign(keyAlias: String, signingInput: ByteArray): ByteArray {
     val privateKey = getPrivateKey(keyAlias)
+    return Crypto.sign(privateKey, signingInput)
+  }
 
-    return Crypto.sign(privateKey, payload)
+  /**
+   * Return the alias of [publicKey], as was originally returned by [generatePrivateKey].
+   *
+   * @param publicKey A public key in JWK (JSON Web Key) format
+   * @return The alias belonging to [publicKey]
+   * @throws IllegalArgumentException if the key is not known to the [KeyManager]
+   */
+  override fun getDeterministicAlias(publicKey: JWK): String {
+    return publicKey.keyID
   }
 
   private fun getPrivateKey(keyAlias: String) =

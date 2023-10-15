@@ -15,10 +15,9 @@ dependencies {
   implementation("org.bouncycastle:bcprov-jdk15on:1.70")
   implementation("org.bouncycastle:bcpkix-jdk15on:1.70")
   implementation(project(":common"))
+
+  api("com.amazonaws:aws-java-sdk-kms:1.12.538")
+
   testImplementation(kotlin("test"))
   testImplementation("org.junit.jupiter:junit-jupiter:5.10.0")
-}
-
-tasks.test {
-  useJUnitPlatform()
 }

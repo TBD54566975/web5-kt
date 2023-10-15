@@ -1,10 +1,11 @@
-package web5.credentials
+package web5.sdk.credentials
 
 import com.danubetech.verifiablecredentials.CredentialSubject
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
+import com.fasterxml.jackson.module.kotlin.convertValue
 import com.nfeld.jsonpathkt.JsonPath
 import com.nfeld.jsonpathkt.extension.read
 import com.nimbusds.jose.JOSEObjectType
@@ -43,6 +44,15 @@ public typealias VcDataModel = com.danubetech.verifiablecredentials.VerifiableCr
  * @property vcDataModel The [VcDataModel] instance representing the core data model of a verifiable credential.
  */
 public class VerifiableCredential(public val vcDataModel: VcDataModel) {
+
+  public val type: String
+    get() = vcDataModel.types.last()
+  public val issuer: String
+    get() = vcDataModel.issuer.toString()
+
+  public val subject: String
+    get() = vcDataModel.credentialSubject.id.toString()
+
   /**
    * Sign a verifiable credential using a specified decentralized identifier ([did]) and an optional key alias ([keyAlias]).
    *
@@ -70,7 +80,7 @@ public class VerifiableCredential(public val vcDataModel: VcDataModel) {
 
     // TODO: ensure that publicKeyJwk is not null
     val publicKeyJwk = JWK.parse(assertionMethod.publicKeyJwk)
-    val keyAlias = publicKeyJwk.computeThumbprint().toString()
+    val keyAlias = did.keyManager.getDeterministicAlias(publicKeyJwk)
 
     // TODO: figure out how to make more reliable since algorithm is technically not a required property of a JWK
     val algorithm = publicKeyJwk.algorithm
@@ -142,9 +152,10 @@ public class VerifiableCredential(public val vcDataModel: VcDataModel) {
     @JvmStatic
     public fun <T> create(type: String, issuer: String, subject: String, data: T): VerifiableCredential {
       val jsonData: JsonNode = objectMapper.valueToTree(data)
-
-      @Suppress("UNCHECKED_CAST")
-      val mapData = objectMapper.treeToValue(jsonData, Map::class.java) as MutableMap<String, Any>
+      val mapData: Map<String, Any> = when (jsonData.isObject) {
+        true -> objectMapper.convertValue<Map<String, Any>>(jsonData)
+        false -> throw IllegalArgumentException("expected data to be parseable into a JSON object")
+      }
 
       val credentialSubject = CredentialSubject.builder()
         .id(URI.create(subject))
@@ -262,12 +273,15 @@ public class VerifiableCredential(public val vcDataModel: VcDataModel) {
     public fun parseJwt(vcJwt: String): VerifiableCredential {
       val jwt = JWTParser.parse(vcJwt) as SignedJWT
       val jwtPayload = jwt.payload.toJSONObject()
-      val vcDataModelMap = jwtPayload.getOrElse("vc") {
-        throw IllegalArgumentException("jwt missing vc object in payload")
+      val vcDataModelValue = jwtPayload.getOrElse("vc") {
+        throw IllegalArgumentException("jwt payload missing vc property")
       }
 
-      @Suppress("UNCHECKED_CAST")
-      val vcDataModel = VcDataModel.fromMap(vcDataModelMap as Map<String, Any>)
+      @Suppress("UNCHECKED_CAST") // only partially unchecked. can only safely cast to Map<*, *>
+      val vcDataModelMap = vcDataModelValue as? Map<String, Any>
+        ?: throw IllegalArgumentException("expected vc property in JWT payload to be an object")
+
+      val vcDataModel = VcDataModel.fromMap(vcDataModelMap)
 
       return VerifiableCredential(vcDataModel)
     }
