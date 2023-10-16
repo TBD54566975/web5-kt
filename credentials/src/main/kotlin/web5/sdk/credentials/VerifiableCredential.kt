@@ -68,6 +68,7 @@ public class VerifiableCredential(public val vcDataModel: VcDataModel) {
    * val signedVc = verifiableCredential.sign(myDid)
    * ```
    */
+  @JvmOverloads
   public fun sign(did: Did, assertionMethodId: String? = null): String {
     val didResolutionResult = DidResolvers.resolve(did.uri)
     val assertionMethods = didResolutionResult.didDocument.assertionMethodVerificationMethodsDereferenced
@@ -148,6 +149,7 @@ public class VerifiableCredential(public val vcDataModel: VcDataModel) {
      * val vc = VerifiableCredential.create("ExampleCredential", "http://example.com/issuers/1", "http://example.com/subjects/1", myData)
      * ```
      */
+    @JvmStatic
     public fun <T> create(type: String, issuer: String, subject: String, data: T): VerifiableCredential {
       val jsonData: JsonNode = objectMapper.valueToTree(data)
       val mapData: Map<String, Any> = when (jsonData.isObject) {
@@ -198,6 +200,7 @@ public class VerifiableCredential(public val vcDataModel: VcDataModel) {
      * }
      * ```
      */
+    @JvmStatic
     public fun verify(vcJwt: String) {
       val jwt = JWTParser.parse(vcJwt) as SignedJWT // validates JWT
 
@@ -266,6 +269,7 @@ public class VerifiableCredential(public val vcDataModel: VcDataModel) {
      * val vc = VerifiableCredential.parseJwt(signedVcJwt)
      * ```
      */
+    @JvmStatic
     public fun parseJwt(vcJwt: String): VerifiableCredential {
       val jwt = JWTParser.parse(vcJwt) as SignedJWT
       val jwtPayload = jwt.payload.toJSONObject()

@@ -15,10 +15,10 @@ import foundation.identity.did.DIDDocument
  * @property didDocumentMetadata Metadata about the DID document. Optional.
  */
 public class DidResolutionResult(
-  public var context: String? = null,
-  public var didDocument: DIDDocument,
-  public var didResolutionMetadata: DidResolutionMetadata = DidResolutionMetadata(),
-  public var didDocumentMetadata: DidDocumentMetadata = DidDocumentMetadata()
+  @JvmField public var context: String? = null,
+  @JvmField public var didDocument: DIDDocument,
+  @JvmField public var didResolutionMetadata: DidResolutionMetadata = DidResolutionMetadata(),
+  @JvmField public var didDocumentMetadata: DidDocumentMetadata = DidDocumentMetadata()
 ) {
   override fun toString(): String {
     return objectMapper.writeValueAsString(this)
@@ -40,9 +40,9 @@ public class DidResolutionResult(
  * @property additionalProperties Additional properties that may include other DID resolution metadata parameters.
  */
 public class DidResolutionMetadata(
-  public var contentType: String? = null,
-  public var error: String? = null,
-  public var additionalProperties: MutableMap<String, Any> = mutableMapOf()
+  @JvmField public var contentType: String? = null,
+  @JvmField public var error: String? = null,
+  @JvmField public var additionalProperties: MutableMap<String, Any> = mutableMapOf()
 )
 
 /**
@@ -58,12 +58,12 @@ public class DidResolutionMetadata(
  * @property canonicalId The canonical ID of the DID as per method-specific rules.
  */
 public class DidDocumentMetadata(
-  public var created: String? = null,
-  public var updated: String? = null,
-  public var deactivated: Boolean? = null,
-  public var versionId: String? = null,
-  public var nextUpdate: String? = null,
-  public var nextVersionId: String? = null,
-  public var equivalentId: String? = null,
-  public var canonicalId: String? = null,
+  @JvmField public var created: String? = null,
+  @JvmField public var updated: String? = null,
+  @JvmField public var deactivated: Boolean? = null,
+  @JvmField public var versionId: String? = null,
+  @JvmField public var nextUpdate: String? = null,
+  @JvmField public var nextVersionId: String? = null,
+  @JvmField public var equivalentId: String? = null,
+  @JvmField public var canonicalId: String? = null,
 )

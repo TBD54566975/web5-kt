@@ -72,6 +72,8 @@ public object Crypto {
    * @return The generated private key as a JWK object.
    * @throws IllegalArgumentException if the provided algorithm or curve is not supported.
    */
+  @JvmOverloads
+  @JvmStatic
   public fun generatePrivateKey(algorithm: Algorithm, curve: Curve? = null, options: KeyGenOptions? = null): JWK {
     val keyGenerator = getKeyGenerator(algorithm, curve)
     return keyGenerator.generatePrivateKey(options)
@@ -83,6 +85,7 @@ public object Crypto {
    * @param privateKey The private key used to compute the public key.
    * @return The computed public key as a JWK object.
    */
+  @JvmStatic
   public fun computePublicKey(privateKey: JWK): JWK {
     val rawCurve = privateKey.toJSONObject()["crv"]
     val curve = rawCurve?.let { Curve.parse(it.toString()) }
@@ -102,6 +105,8 @@ public object Crypto {
    * @param options Options for the signing operation, may include specific parameters relevant to the algorithm.
    * @return The digital signature as a byte array.
    */
+  @JvmOverloads
+  @JvmStatic
   public fun sign(privateKey: JWK, payload: ByteArray, options: SignOptions? = null): ByteArray {
     val rawCurve = privateKey.toJSONObject()["crv"]
     val curve = rawCurve?.let { Curve.parse(it.toString()) }
@@ -133,6 +138,8 @@ public object Crypto {
    *                                  provides an algorithm.
    *
    */
+  @JvmStatic
+  @JvmOverloads
   public fun verify(publicKey: JWK, signedPayload: ByteArray, signature: ByteArray, algorithm: Algorithm? = null) {
     val alg = publicKey.algorithm ?: algorithm
     ?: throw IllegalArgumentException("Algorithm must either be set on JWK or provided explicitly.")
@@ -163,6 +170,7 @@ public object Crypto {
    * ### Throws
    * - [IllegalArgumentException] If the algorithm or curve in [JWK] is not supported or invalid.
    */
+  @JvmStatic
   public fun publicKeyToBytes(publicKey: JWK): ByteArray {
     val curve = getJwkCurve(publicKey)
     val generator = getKeyGenerator(publicKey.algorithm, curve)
@@ -181,6 +189,8 @@ public object Crypto {
    * @return The corresponding [KeyGenerator].
    * @throws IllegalArgumentException if the algorithm or curve is not supported.
    */
+  @JvmStatic
+  @JvmOverloads
   public fun getKeyGenerator(algorithm: Algorithm, curve: Curve? = null): KeyGenerator {
     return keyGenerators.getOrElse(Pair(algorithm, curve)) {
       throw IllegalArgumentException("Algorithm $algorithm not supported")
@@ -197,6 +207,7 @@ public object Crypto {
    * @return The corresponding [KeyGenerator].
    * @throws IllegalArgumentException if the multicodec is not supported.
    */
+  @JvmStatic
   public fun getKeyGenerator(multiCodec: Int): KeyGenerator {
     return keyGeneratorsByMultiCodec.getOrElse(multiCodec) {
       throw IllegalArgumentException("multicodec not supported")
@@ -214,6 +225,8 @@ public object Crypto {
    * @return The corresponding [Signer].
    * @throws IllegalArgumentException if the algorithm or curve is not supported.
    */
+  @JvmOverloads
+  @JvmStatic
   public fun getSigner(algorithm: Algorithm, curve: Curve? = null): Signer {
     return signers.getOrElse(Pair(algorithm, curve)) {
       throw IllegalArgumentException("Algorithm $algorithm not supported")
@@ -231,6 +244,8 @@ public object Crypto {
    * @return The corresponding [Signer] capable of verification.
    * @throws IllegalArgumentException if the algorithm or curve is not supported.
    */
+  @JvmStatic
+  @JvmOverloads
   public fun getVerifier(algorithm: Algorithm, curve: Curve? = null): Signer {
     return getSigner(algorithm, curve)
   }
@@ -244,6 +259,7 @@ public object Crypto {
    * @param jwk The JWK object from which to extract curve information.
    * @return The [Curve] used in the JWK, or `null` if the curve is not defined or recognized.
    */
+  @JvmStatic
   public fun getJwkCurve(jwk: JWK): Curve? {
     val rawCurve = jwk.toJSONObject()["crv"]
 
@@ -268,6 +284,7 @@ public object Crypto {
    * val multicodec = getAlgorithmMultiCodec(JWSAlgorithm.EdDSA, Curve.Ed25519)
    * ```
    */
+  @JvmStatic
   public fun getAlgorithmMultiCodec(algorithm: Algorithm, curve: Curve?): Int? {
     return multiCodecsByAlgorithm[Pair(algorithm, curve)]
   }

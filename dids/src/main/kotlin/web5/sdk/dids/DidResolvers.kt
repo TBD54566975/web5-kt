@@ -30,6 +30,8 @@ public object DidResolvers {
    * @return A [DidResolutionResult] containing the resolved DID document or an error message.
    * @throws IllegalArgumentException if resolving the specified DID method is not supported.
    */
+  @JvmOverloads
+  @JvmStatic
   public fun resolve(didUrl: String, options: ResolveDidOptions? = null): DidResolutionResult {
     val parsedDid = DID.fromString(didUrl)
     val resolver = methodResolvers.getOrElse(parsedDid.methodName) {
@@ -45,6 +47,7 @@ public object DidResolvers {
    * @param methodName The name of the DID method for which the resolver is being added.
    * @param resolver The resolver function for the specified DID method.
    */
+  @JvmStatic
   public fun addResolver(methodName: String, resolver: DidResolver) {
     methodResolvers[methodName] = resolver
   }
