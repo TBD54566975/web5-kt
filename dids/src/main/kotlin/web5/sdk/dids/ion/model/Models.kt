@@ -249,7 +249,7 @@ public data class SidetreeUpdateOperation(
 public data class SidetreeRecoverOperation(
   public val type: String,
   public val didSuffix: String,
-  public val revealValue: String,
+  public val revealValue: Reveal,
   public val delta: Delta,
   public val signedData: String,
 )
