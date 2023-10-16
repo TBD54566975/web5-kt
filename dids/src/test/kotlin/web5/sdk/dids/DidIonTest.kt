@@ -239,9 +239,12 @@ class DidIonTest {
     )
 
     assertEquals("EiDyOQbbZAa3aiRzeCkV7LOx3SERjjH93EXoIM3UoN4oWg", recoverOperation.didSuffix)
-    assertEquals("EiAJ-97Is59is6FKAProwDo870nmwCeP8n5nRRFwPpUZVQ", recoverOperation.revealValue);
+    assertEquals("EiAJ-97Is59is6FKAProwDo870nmwCeP8n5nRRFwPpUZVQ", recoverOperation.revealValue.toBase64Url());
     assertEquals("recover", recoverOperation.type);
-    assertEquals("EiBJGXo0XUiqZQy0r-fQUHKS3RRVXw5nwUpqGVXEGuTs-g", recoverOperation.delta.updateCommitment);
+    assertEquals(
+      "EiBJGXo0XUiqZQy0r-fQUHKS3RRVXw5nwUpqGVXEGuTs-g",
+      recoverOperation.delta.updateCommitment.toBase64Url()
+    );
     val jws = JWSObject.parse(recoverOperation.signedData)
     assertDoesNotThrow {
       Crypto.verify(recoveryKey.toPublicJWK(), jws.signingInput, jws.signature.decode(), jws.header.algorithm)
@@ -253,7 +256,7 @@ class DidIonTest {
         "4RjdrIn0sImRlbHRhSGFzaCI6IkVpQm9HNlFtamlTSm5ON2phaldnaV9vZDhjR3dYSm9Nc2RlWGlWWTc3NXZ2SkEifQ",
       jws.signingInput.decodeToString()
     );
-    assertEquals(1, recoverOperation.delta.patches.size)
+    assertEquals(1, recoverOperation.delta.patches.count())
     assertEquals(nextUpdateKeyId, updateKeyAlias)
   }
 
