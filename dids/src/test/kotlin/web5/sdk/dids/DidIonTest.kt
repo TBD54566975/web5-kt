@@ -134,7 +134,7 @@ class DidIonTest {
 
   @Test
   fun `update fails when update key is absent`() {
-    val result = assertThrows<Exception> {
+    val result = assertThrows<IllegalArgumentException> {
       DidIonManager.update(
         InMemoryKeyManager(),
         UpdateDidIonOptions(
@@ -168,7 +168,7 @@ class DidIonTest {
       val updateOp: SidetreeUpdateOperation = mapper.readValue((request.body as OutputStreamContent).toByteArray())
       assertEquals("EiDyOQbbZAa3aiRzeCkV7LOx3SERjjH93EXoIM3UoN4oWg", updateOp.didSuffix)
       assertEquals("update", updateOp.type)
-      assertEquals("EiAJ-97Is59is6FKAProwDo870nmwCeP8n5nRRFwPpUZVQ", updateOp.revealValue)
+      assertEquals("EiAJ-97Is59is6FKAProwDo870nmwCeP8n5nRRFwPpUZVQ", updateOp.revealValue.toBase64Url())
       assertEquals(
         "eyJhbGciOiJFUzI1NksifQ.eyJ1cGRhdGVLZXkiOnsia3R5IjoiRUMiLCJjcnYiOiJzZWNwMjU2azEiLCJ4IjoibklxbFJDeDB" +
           "leUJTWGNRbnFEcFJlU3Y0enVXaHdDUldzc29jOUxfbmo2QSIsInkiOiJpRzI5Vks2bDJVNXNLQlpVU0plUHZ5RnVzWGdTbEsyZERGbFdh" +
@@ -176,7 +176,7 @@ class DidIonTest {
           "Q9MuoQqFlhYhuLDgx4f-0UM9QyCfZp_cXt7vnQ4ict5P4_ZWKwG4OXxxqFvdzE-e3ZkEbvfR0YxEIpYO9MrPFw",
         updateOp.signedData
       )
-      assertEquals("EiDKIkwqO69IPG3pOlHkdb86nYt0aNxSHZu2r-bhEznjdA", updateOp.delta.updateCommitment)
+      assertEquals("EiDKIkwqO69IPG3pOlHkdb86nYt0aNxSHZu2r-bhEznjdA", updateOp.delta.updateCommitment.toBase64Url())
       assertEquals(4, updateOp.delta.patches.size)
       respond(
         content = ByteReadChannel("""{"hello":"world"}"""),

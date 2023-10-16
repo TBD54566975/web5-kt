@@ -13,7 +13,11 @@ import com.fasterxml.jackson.databind.JsonSerializer
 import com.fasterxml.jackson.databind.SerializerProvider
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import com.fasterxml.jackson.databind.annotation.JsonSerialize
+import com.fasterxml.jackson.databind.deser.std.FromStringDeserializer
+import com.fasterxml.jackson.databind.ser.std.StdSerializer
 import com.nimbusds.jose.jwk.JWK
+import web5.sdk.common.Convert
+import web5.sdk.common.EncodingFormat
 
 /**
  * Represents an ION document containing public keys and services. See bullet 2 in https://identity.foundation/sidetree/spec/#replace.
@@ -151,7 +155,7 @@ public data class RemovePublicKeysAction(
  */
 public data class Delta(
   public val patches: List<PatchAction>,
-  public val updateCommitment: String
+  public val updateCommitment: Commitment
 )
 
 /**
@@ -162,18 +166,61 @@ public data class Delta(
  */
 public data class OperationSuffixDataObject(
   public val deltaHash: String,
-  public val recoveryCommitment: String
+  public val recoveryCommitment: Commitment
 )
 
 /**
- * Type alias for commitment.
+ * Represents the commitment value as defined in item 3 of https://identity.foundation/sidetree/spec/#public-key-commitment-scheme.
  */
-public typealias Commitment = String
+@JsonSerialize(using = CommitmentSerializer::class)
+@JsonDeserialize(using = CommitmentDeserializer::class)
+public class Commitment(public override val bytes: ByteArray) : BytesField
+
+private class CommitmentSerializer : StdSerializer<Commitment>(Commitment::class.java) {
+  override fun serialize(value: Commitment?, gen: JsonGenerator, provider: SerializerProvider?) {
+    with(gen) {
+      writeString(value?.toBase64Url())
+    }
+  }
+}
+
+private class CommitmentDeserializer : FromStringDeserializer<Commitment>(Commitment::class.java) {
+  override fun _deserialize(value: String?, ctxt: DeserializationContext?): Commitment {
+    return Commitment(Convert(value, EncodingFormat.Base64Url).toByteArray())
+  }
+}
 
 /**
- * Type alias for reveal value.
+ * Represents the reveal value as defined in item 3 of https://identity.foundation/sidetree/spec/#public-key-commitment-scheme.
  */
-public typealias Reveal = String
+@JsonSerialize(using = RevealSerializer::class)
+@JsonDeserialize(using = RevealDeserializer::class)
+public class Reveal(public override val bytes: ByteArray) : BytesField
+
+private class RevealSerializer : StdSerializer<Reveal>(Reveal::class.java) {
+  override fun serialize(value: Reveal?, gen: JsonGenerator, provider: SerializerProvider?) {
+    with(gen) {
+      writeString(value?.toBase64Url())
+    }
+  }
+}
+
+internal interface BytesField {
+  val bytes: ByteArray
+
+  fun toBase64Url(): String {
+    return Convert(bytes).toBase64Url(padding = false)
+  }
+}
+
+private class RevealDeserializer : FromStringDeserializer<Reveal>(
+  Reveal::class.java
+) {
+  override fun _deserialize(value: String?, ctxt: DeserializationContext?): Reveal {
+    return Reveal(Convert(value, EncodingFormat.Base64Url).toByteArray())
+  }
+}
+
 
 /**
  * Sidetree API create operation as defined in https://identity.foundation/sidetree/api/#create
@@ -191,7 +238,7 @@ public data class SidetreeCreateOperation(
 public data class SidetreeUpdateOperation(
   public val type: String,
   public val didSuffix: String,
-  public val revealValue: String,
+  public val revealValue: Reveal,
   public val delta: Delta,
   public val signedData: String,
 )
@@ -220,6 +267,6 @@ internal data class InitialState(
  */
 public class MetadataMethod(
   public val published: Boolean,
-  public val recoveryCommitment: String,
-  public val updateCommitment: String,
+  public val recoveryCommitment: Commitment,
+  public val updateCommitment: Commitment,
 )

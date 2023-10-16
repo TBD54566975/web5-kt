@@ -273,8 +273,8 @@ public sealed class DidIonManager(
     val newUpdateKeyAlias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K)
     val newUpdatePublicKey = keyManager.getPublicKey(newUpdateKeyAlias)
 
-    val (_, reveal) = publicKeyCommitment(updatePublicKey)
-    val (commitment, _) = publicKeyCommitment(newUpdatePublicKey)
+    val reveal = updatePublicKey.reveal()
+    val commitment = newUpdatePublicKey.commitment()
 
     val updateOpDeltaObject = Delta(
       patches = options.toPatches(),
@@ -320,7 +320,7 @@ public sealed class DidIonManager(
       keyManager.generatePrivateKey(JWSAlgorithm.ES256K)
     )
 
-    val (publicKeyCommitment, _) = publicKeyCommitment(updatePublicJwk)
+    val publicKeyCommitment = updatePublicJwk.commitment()
 
     val verificationMethodId = when (options?.verificationMethodId) {
       null -> UUID.randomUUID().toString()
@@ -353,7 +353,7 @@ public sealed class DidIonManager(
     } else {
       options.recoveryPublicJwk
     }
-    val (recoveryCommitment, _) = publicKeyCommitment(recoveryPublicJwk)
+    val recoveryCommitment = recoveryPublicJwk.commitment()
 
     val operation: OperationSuffixDataObject =
       createOperationSuffixDataObject(createOperationDelta, recoveryCommitment)
@@ -386,7 +386,7 @@ public sealed class DidIonManager(
 
   private fun createOperationSuffixDataObject(
     createOperationDeltaObject: Delta,
-    recoveryCommitment: String): OperationSuffixDataObject {
+    recoveryCommitment: Commitment): OperationSuffixDataObject {
     val jsonString = mapper.writeValueAsString(createOperationDeltaObject)
     val canonicalized = JsonCanonicalizer(jsonString).encodedUTF8
     val deltaHashBytes = Multihash.sum(Multicodec.SHA2_256, canonicalized).getOrThrow().bytes()
@@ -397,29 +397,41 @@ public sealed class DidIonManager(
     )
   }
 
-  private fun publicKeyCommitment(publicKeyJwk: JWK): Pair<Commitment, Reveal> {
-    require(!publicKeyJwk.isPrivate) { throw IllegalArgumentException("provided JWK must not be a private key") }
-    // 1. Encode the public key into the form of a valid JWK.
-    val pkJson = publicKeyJwk.toJSONString()
-
-    // 2. Canonicalize the JWK encoded public key using the implementation’s JSON_CANONICALIZATION_SCHEME.
-    val canonicalized = JsonCanonicalizer(pkJson).encodedUTF8
-
-    // 3. Use the implementation’s HASH_PROTOCOL to Multihash the canonicalized public key to generate the REVEAL_VALUE,
-    val mh = Multihash.sum(Multicodec.SHA2_256, canonicalized).getOrThrow()
-    val reveal = Convert(mh.bytes()).toBase64Url(padding = false)
-    val intermediate = mh.digest
-
-    // then Multihash the resulting Multihash value again using the implementation’s HASH_PROTOCOL to produce
-    // the public key commitment.
-    val hashOfHash = Multihash.sum(Multicodec.SHA2_256, intermediate).getOrThrow().bytes()
-    return Pair(Convert(hashOfHash).toBase64Url(padding = false), reveal)
-  }
-
   /**
    * Default companion object for creating a [DidIonManager] with a default configuration.
    */
   public companion object Default : DidIonManager(DidIonConfiguration())
+}
+
+private fun JWK.commitment(): Commitment {
+  require(!this.isPrivate) { throw IllegalArgumentException("provided JWK must not be a private key") }
+  // 1. Encode the public key into the form of a valid JWK.
+  val pkJson = this.toJSONString()
+
+  // 2. Canonicalize the JWK encoded public key using the implementation’s JSON_CANONICALIZATION_SCHEME.
+  val canonicalized = JsonCanonicalizer(pkJson).encodedUTF8
+
+  // 3. Use the implementation’s HASH_PROTOCOL to Multihash the canonicalized public key to generate the REVEAL_VALUE,
+  val mh = Multihash.sum(Multicodec.SHA2_256, canonicalized).getOrThrow()
+  val intermediate = mh.digest
+
+  // then Multihash the resulting Multihash value again using the implementation’s HASH_PROTOCOL to produce
+  // the public key commitment.
+  val hashOfHash = Multihash.sum(Multicodec.SHA2_256, intermediate).getOrThrow().bytes()
+  return Commitment(hashOfHash)
+}
+
+private fun JWK.reveal(): Reveal {
+  require(!this.isPrivate) { throw IllegalArgumentException("provided JWK must not be a private key") }
+  // 1. Encode the public key into the form of a valid JWK.
+  val pkJson = this.toJSONString()
+
+  // 2. Canonicalize the JWK encoded public key using the implementation’s JSON_CANONICALIZATION_SCHEME.
+  val canonicalized = JsonCanonicalizer(pkJson).encodedUTF8
+
+  // 3. Use the implementation’s HASH_PROTOCOL to Multihash the canonicalized public key to generate the REVEAL_VALUE,
+  val mh = Multihash.sum(Multicodec.SHA2_256, canonicalized).getOrThrow()
+  return Reveal(mh.bytes())
 }
 
 /**
