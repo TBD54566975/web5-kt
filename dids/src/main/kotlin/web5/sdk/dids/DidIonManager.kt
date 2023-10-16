@@ -87,28 +87,24 @@ private class DidIonManagerImpl(configuration: DidIonConfiguration) : DidIonMana
  * @param publicKeysToAdd PublicKeys to add to the DID document.
  * @param idsOfPublicKeysToRemove Keys to remove from the DID document.
  */
-public class UpdateDidIonOptions(
-  public val didString: String,
-  public val updateKeyAlias: String,
-  public val servicesToAdd: Iterable<Service>? = null,
-  public val idsOfServicesToRemove: Set<String>? = null,
-  public val publicKeysToAdd: Iterable<PublicKey>? = null,
-  public val idsOfPublicKeysToRemove: Set<String>? = null,
+public data class UpdateDidIonOptions(
+  val didString: String,
+  val updateKeyAlias: String,
+  val servicesToAdd: Iterable<Service> = emptyList(),
+  val idsOfServicesToRemove: Iterable<String> = emptyList(),
+  val publicKeysToAdd: Iterable<PublicKey> = emptyList(),
+  val idsOfPublicKeysToRemove: Iterable<String> = emptyList()
 ) {
   internal fun toPatches(): List<PatchAction> {
-    return buildList<PatchAction> {
-      if (servicesToAdd != null) {
-        add(AddServicesAction(servicesToAdd.toList()))
-      }
-      if (idsOfServicesToRemove != null) {
-        add(RemoveServicesAction(idsOfServicesToRemove.toList()))
-      }
-      if (publicKeysToAdd != null) {
-        add(AddPublicKeysAction(publicKeysToAdd.toList()))
-      }
-      if (idsOfPublicKeysToRemove != null) {
-        add(RemovePublicKeysAction(idsOfPublicKeysToRemove.toList()))
-      }
+    fun <T> MutableList<PatchAction>.addIfNotEmpty(iter: Iterable<T>, action: (Iterable<T>) -> PatchAction) {
+      iter.takeIf { it.count() != 0 }?.let { this.add(action(it)) }
+    }
+
+    return buildList {
+      addIfNotEmpty(servicesToAdd, ::AddServicesAction)
+      addIfNotEmpty(idsOfServicesToRemove, ::RemoveServicesAction)
+      addIfNotEmpty(publicKeysToAdd, ::AddPublicKeysAction)
+      addIfNotEmpty(idsOfPublicKeysToRemove, ::RemovePublicKeysAction)
     }
   }
 }
@@ -286,8 +282,8 @@ public sealed class DidIonManager(
     val newUpdateKeyAlias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K)
     val newUpdatePublicKey = keyManager.getPublicKey(newUpdateKeyAlias)
 
-    val (_, reveal) = publicKeyCommitment(updatePublicKey)
-    val (commitment, _) = publicKeyCommitment(newUpdatePublicKey)
+    val reveal = updatePublicKey.reveal()
+    val commitment = newUpdatePublicKey.commitment()
 
     val updateOpDeltaObject = Delta(
       patches = options.toPatches(),
@@ -342,7 +338,7 @@ public sealed class DidIonManager(
       keyManager.generatePrivateKey(JWSAlgorithm.ES256K)
     )
 
-    val (publicKeyCommitment, _) = publicKeyCommitment(updatePublicJwk)
+    val publicKeyCommitment = updatePublicJwk.commitment()
 
     val verificationMethodId = when (options?.verificationMethodId) {
       null -> UUID.randomUUID().toString()
@@ -375,7 +371,7 @@ public sealed class DidIonManager(
     } else {
       options.recoveryPublicJwk
     }
-    val (recoveryCommitment, _) = publicKeyCommitment(recoveryPublicJwk)
+    val recoveryCommitment = recoveryPublicJwk.commitment()
 
     val operation: OperationSuffixDataObject =
       createOperationSuffixDataObject(createOperationDelta, recoveryCommitment)
@@ -388,7 +384,7 @@ public sealed class DidIonManager(
       ),
       KeyAliases(
         updateKeyAlias = updatePublicJwk.keyID,
-        verificationKeyAlias = verificationPublicKey.publicKeyJwk!!.keyID,
+        verificationKeyAlias = verificationPublicKey.publicKeyJwk.keyID,
         recoveryKeyAlias = recoveryPublicJwk.keyID
       )
     )
@@ -402,13 +398,13 @@ public sealed class DidIonManager(
     }
   }
 
-  private fun isBase64UrlString(input: String?): Boolean {
-    return base64UrlCharsetRegex.matches(input!!)
+  private fun isBase64UrlString(input: String): Boolean {
+    return base64UrlCharsetRegex.matches(input)
   }
 
   private fun createOperationSuffixDataObject(
     createOperationDeltaObject: Delta,
-    recoveryCommitment: String): OperationSuffixDataObject {
+    recoveryCommitment: Commitment): OperationSuffixDataObject {
     val jsonString = mapper.writeValueAsString(createOperationDeltaObject)
     val canonicalized = JsonCanonicalizer(jsonString).encodedUTF8
     val deltaHashBytes = Multihash.sum(Multicodec.SHA2_256, canonicalized).getOrThrow().bytes()
@@ -419,37 +415,18 @@ public sealed class DidIonManager(
     )
   }
 
-  private fun publicKeyCommitment(publicKeyJwk: JWK): Pair<Commitment, Reveal> {
-    require(!publicKeyJwk.isPrivate) { throw IllegalArgumentException("provided JWK must not be a private key") }
-    // 1. Encode the public key into the form of a valid JWK.
-    val pkJson = publicKeyJwk.toJSONString()
-
-    // 2. Canonicalize the JWK encoded public key using the implementation’s JSON_CANONICALIZATION_SCHEME.
-    val canonicalized = JsonCanonicalizer(pkJson).encodedUTF8
-
-    // 3. Use the implementation’s HASH_PROTOCOL to Multihash the canonicalized public key to generate the REVEAL_VALUE,
-    val mh = Multihash.sum(Multicodec.SHA2_256, canonicalized).getOrThrow()
-    val reveal = Convert(mh.bytes()).toBase64Url(padding = false)
-    val intermediate = mh.digest
-
-    // then Multihash the resulting Multihash value again using the implementation’s HASH_PROTOCOL to produce
-    // the public key commitment.
-    val hashOfHash = Multihash.sum(Multicodec.SHA2_256, intermediate).getOrThrow().bytes()
-    return Pair(Convert(hashOfHash).toBase64Url(padding = false), reveal)
-  }
-
   internal fun createRecoverOperation(keyManager: KeyManager, options: RecoverDidIonOptions):
     Pair<SidetreeRecoverOperation, String> {
     val recoveryPublicKey = keyManager.getPublicKey(options.recoveryKeyAlias)
-    val (_, reveal) = publicKeyCommitment(recoveryPublicKey)
+    val reveal = recoveryPublicKey.reveal()
 
     val nextRecoveryKeyAlias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K)
     val nextRecoveryPublicKey = keyManager.getPublicKey(nextRecoveryKeyAlias)
-    val (nextRecoveryCommitment, _) = publicKeyCommitment(nextRecoveryPublicKey)
+    val nextRecoveryCommitment = nextRecoveryPublicKey.commitment()
 
     val nextUpdateKeyAlias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K)
     val nextUpdatePublicKey = keyManager.getPublicKey(nextUpdateKeyAlias)
-    val (nextUpdateCommitment, _) = publicKeyCommitment(nextUpdatePublicKey)
+    val nextUpdateCommitment = nextUpdatePublicKey.commitment()
 
     val delta = Delta(
       patches = options.toPatches(),
@@ -486,6 +463,36 @@ public sealed class DidIonManager(
   public companion object Default : DidIonManager(DidIonConfiguration())
 }
 
+private fun JWK.commitment(): Commitment {
+  require(!this.isPrivate) { throw IllegalArgumentException("provided JWK must not be a private key") }
+  // 1. Encode the public key into the form of a valid JWK.
+  val pkJson = this.toJSONString()
+
+  // 2. Canonicalize the JWK encoded public key using the implementation’s JSON_CANONICALIZATION_SCHEME.
+  val canonicalized = JsonCanonicalizer(pkJson).encodedUTF8
+
+  // 3. Use the implementation’s HASH_PROTOCOL to Multihash the canonicalized public key to generate the REVEAL_VALUE,
+  val mh = Multihash.sum(Multicodec.SHA2_256, canonicalized).getOrThrow()
+  val intermediate = mh.digest
+
+  // then Multihash the resulting Multihash value again using the implementation’s HASH_PROTOCOL to produce
+  // the public key commitment.
+  val hashOfHash = Multihash.sum(Multicodec.SHA2_256, intermediate).getOrThrow().bytes()
+  return Commitment(hashOfHash)
+}
+
+private fun JWK.reveal(): Reveal {
+  require(!this.isPrivate) { throw IllegalArgumentException("provided JWK must not be a private key") }
+  // 1. Encode the public key into the form of a valid JWK.
+  val pkJson = this.toJSONString()
+
+  // 2. Canonicalize the JWK encoded public key using the implementation’s JSON_CANONICALIZATION_SCHEME.
+  val canonicalized = JsonCanonicalizer(pkJson).encodedUTF8
+
+  // 3. Use the implementation’s HASH_PROTOCOL to Multihash the canonicalized public key to generate the REVEAL_VALUE,
+  val mh = Multihash.sum(Multicodec.SHA2_256, canonicalized).getOrThrow()
+  return Reveal(mh.bytes())
+}
 /**
  * Metadata related to the update of an ion DID.
  */

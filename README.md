@@ -23,23 +23,24 @@ repositories {
 }
 
 dependencies {
-  implementation("com.github.TBD54566975:web5-sdk-kotlin:master-SNAPSHOT")
+  implementation("com.github.TBD54566975:web5-kt:main-SNAPSHOT")
 }
 ```
 
-NOTE: The repository at `https://repo.danubetech.com/repository/maven-public/` is required for resolving transitive
+> [!IMPORTANT]
+> The repository at `https://repo.danubetech.com/repository/maven-public/` is required for resolving transitive
 dependencies.
 
-If you want to refer to a specific release, then replace the `master-SNAPSHOT` with release tag.
+If you want to refer to a specific release, then replace the `main-SNAPSHOT` with release tag.
 
-If you want to pull a PR, then replace `master-SNAPSHOT` using the template `PR<NR>-SNAPSHOT`. For
+If you want to pull a PR, then replace `main-SNAPSHOT` using the template `PR<NR>-SNAPSHOT`. For
 example `PR40-SNAPSHOT`.
 
 If you want to depend on a single module, like `credentials`, then use the following dependencies
 
 ```kotlin
 dependencies {
-  implementation("com.github.TBD54566975.web5-sdk-kotlin:credentials:master-SNAPSHOT")
+  implementation("com.github.TBD54566975.web5-kt:credentials:master-SNAPSHOT")
 }
 ```
 
@@ -47,12 +48,12 @@ dependencies {
 
 We maintain a [web5 cookbook](./docs/examples.md). Check it out for a comprehensive set of examples.
 
-# Building
+# Development
 
 To build and run test just run:
 
 ```bash
-./gradlew build check cleanTest test --console=rich
+./gradlew build --console=rich
 ```
 
 # Other Docs

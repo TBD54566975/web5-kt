@@ -6,23 +6,28 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonValue
 import com.fasterxml.jackson.core.JsonGenerator
 import com.fasterxml.jackson.core.JsonParser
+import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.DeserializationContext
 import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.JsonSerializer
 import com.fasterxml.jackson.databind.SerializerProvider
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import com.fasterxml.jackson.databind.annotation.JsonSerialize
+import com.fasterxml.jackson.databind.deser.std.FromStringDeserializer
+import com.fasterxml.jackson.databind.ser.std.StdSerializer
 import com.nimbusds.jose.jwk.JWK
+import web5.sdk.common.Convert
+import web5.sdk.common.EncodingFormat
 
 /**
  * Represents an ION document containing public keys and services. See bullet 2 in https://identity.foundation/sidetree/spec/#replace.
  *
- * @property publicKeys List of public keys.
- * @property services List of services.
+ * @property publicKeys Iterable of public keys.
+ * @property services Iterable of services.
  */
 public data class Document(
-  val publicKeys: List<PublicKey> = emptyList(),
-  val services: List<Service> = emptyList()
+  val publicKeys: Iterable<PublicKey> = emptyList(),
+  val services: Iterable<Service> = emptyList()
 )
 
 /**
@@ -49,8 +54,8 @@ public data class PublicKey(
 
   @JsonSerialize(using = JacksonJwk.Serializer::class)
   @JsonDeserialize(using = JacksonJwk.Deserializer::class)
-  public val publicKeyJwk: JWK? = null,
-  public val purposes: List<PublicKeyPurpose> = emptyList()
+  public val publicKeyJwk: JWK,
+  public val purposes: Iterable<PublicKeyPurpose> = emptyList()
 )
 
 /**
@@ -74,8 +79,8 @@ private class JacksonJwk {
    */
   object Deserializer : JsonDeserializer<JWK>() {
     override fun deserialize(p: JsonParser, ctxt: DeserializationContext?): JWK {
-      @Suppress("UNCHECKED_CAST")
-      val node = p.readValueAs(Map::class.java) as MutableMap<String, Any>
+      val typeRef = object : TypeReference<HashMap<String, Any>>() {}
+      val node = p.readValueAs(typeRef) as HashMap<String, Any>
       return JWK.parse(node)
     }
   }
@@ -89,7 +94,7 @@ public enum class PublicKeyPurpose(@get:JsonValue public val code: String) {
   KEY_AGREEMENT("keyAgreement"),
   ASSERTION_METHOD("assertionMethod"),
   CAPABILITY_DELEGATION("capabilityDelegation"),
-  CAPABILITY_INVOCATIO("capabilityInvocation"),
+  CAPABILITY_INVOCATION("capabilityInvocation"),
 }
 
 /**
@@ -107,16 +112,16 @@ public enum class PublicKeyPurpose(@get:JsonValue public val code: String) {
   JsonSubTypes.Type(AddPublicKeysAction::class, name = "add-public-keys"),
   JsonSubTypes.Type(RemovePublicKeysAction::class, name = "remove-public-keys"),
 )
-public sealed class PatchAction
+public interface PatchAction
 
 /**
  * Represents an "add_services" patch action in the ION document as defined in https://identity.foundation/sidetree/spec/#add-services.
  *
- * @property services List of services to add.
+ * @property services Iterable of services to add.
  */
 public data class AddServicesAction(
-  public val services: List<Service> = emptyList()
-) : PatchAction()
+  public val services: Iterable<Service> = emptyList()
+) : PatchAction
 
 /**
  * Represents a "replace" patch action in the ION document as defined in https://identity.foundation/sidetree/spec/#replace.
@@ -125,32 +130,32 @@ public data class AddServicesAction(
  */
 public data class ReplaceAction(
   val document: Document? = null
-) : PatchAction()
+) : PatchAction
 
 /** Model for https://identity.foundation/sidetree/spec/#remove-services */
 public data class RemoveServicesAction(
-  val ids: List<String>
-) : PatchAction()
+  val ids: Iterable<String>
+) : PatchAction
 
 /** Model for https://identity.foundation/sidetree/spec/#add-public-keys */
 public data class AddPublicKeysAction(
-  val publicKeys: List<PublicKey>
-) : PatchAction()
+  val publicKeys: Iterable<PublicKey>
+) : PatchAction
 
 /** Model for https://identity.foundation/sidetree/spec/#remove-public-keys */
 public data class RemovePublicKeysAction(
-  val ids: List<String>
-) : PatchAction()
+  val ids: Iterable<String>
+) : PatchAction
 
 /**
  * Represents a delta in the ION document as defined in bullet 3 of https://identity.foundation/sidetree/spec/#create
  *
- * @property patches List of patch actions.
+ * @property patches Iterable of patch actions.
  * @property updateCommitment Update commitment.
  */
 public data class Delta(
-  public val patches: List<PatchAction>,
-  public val updateCommitment: String
+  public val patches: Iterable<PatchAction>,
+  public val updateCommitment: Commitment
 )
 
 /**
@@ -161,18 +166,61 @@ public data class Delta(
  */
 public data class OperationSuffixDataObject(
   public val deltaHash: String,
-  public val recoveryCommitment: String
+  public val recoveryCommitment: Commitment
 )
 
 /**
- * Type alias for commitment.
+ * Represents the commitment value as defined in item 3 of https://identity.foundation/sidetree/spec/#public-key-commitment-scheme.
  */
-public typealias Commitment = String
+@JsonSerialize(using = CommitmentSerializer::class)
+@JsonDeserialize(using = CommitmentDeserializer::class)
+public class Commitment(public override val bytes: ByteArray) : BytesField
+
+private class CommitmentSerializer : StdSerializer<Commitment>(Commitment::class.java) {
+  override fun serialize(value: Commitment?, gen: JsonGenerator, provider: SerializerProvider?) {
+    with(gen) {
+      writeString(value?.toBase64Url())
+    }
+  }
+}
+
+private class CommitmentDeserializer : FromStringDeserializer<Commitment>(Commitment::class.java) {
+  override fun _deserialize(value: String?, ctxt: DeserializationContext?): Commitment {
+    return Commitment(Convert(value, EncodingFormat.Base64Url).toByteArray())
+  }
+}
 
 /**
- * Type alias for reveal value.
+ * Represents the reveal value as defined in item 3 of https://identity.foundation/sidetree/spec/#public-key-commitment-scheme.
  */
-public typealias Reveal = String
+@JsonSerialize(using = RevealSerializer::class)
+@JsonDeserialize(using = RevealDeserializer::class)
+public class Reveal(public override val bytes: ByteArray) : BytesField
+
+private class RevealSerializer : StdSerializer<Reveal>(Reveal::class.java) {
+  override fun serialize(value: Reveal?, gen: JsonGenerator, provider: SerializerProvider?) {
+    with(gen) {
+      writeString(value?.toBase64Url())
+    }
+  }
+}
+
+internal interface BytesField {
+  val bytes: ByteArray
+
+  fun toBase64Url(): String {
+    return Convert(bytes).toBase64Url(padding = false)
+  }
+}
+
+private class RevealDeserializer : FromStringDeserializer<Reveal>(
+  Reveal::class.java
+) {
+  override fun _deserialize(value: String?, ctxt: DeserializationContext?): Reveal {
+    return Reveal(Convert(value, EncodingFormat.Base64Url).toByteArray())
+  }
+}
+
 
 /**
  * Sidetree API create operation as defined in https://identity.foundation/sidetree/api/#create
@@ -190,7 +238,7 @@ public data class SidetreeCreateOperation(
 public data class SidetreeUpdateOperation(
   public val type: String,
   public val didSuffix: String,
-  public val revealValue: String,
+  public val revealValue: Reveal,
   public val delta: Delta,
   public val signedData: String,
 )
@@ -230,8 +278,8 @@ internal data class InitialState(
  */
 public class MetadataMethod(
   public val published: Boolean,
-  public val recoveryCommitment: String,
-  public val updateCommitment: String,
+  public val recoveryCommitment: Commitment,
+  public val updateCommitment: Commitment,
 )
 
 /**
@@ -241,8 +289,8 @@ public class MetadataMethod(
 public class RecoveryUpdateSignedData(
   public val recoveryCommitment: Commitment,
 
-  @JsonSerialize(using = JacksonJWK.Serializer::class)
-  @JsonDeserialize(using = JacksonJWK.Deserializer::class)
+  @JsonSerialize(using = JacksonJwk.Serializer::class)
+  @JsonDeserialize(using = JacksonJwk.Deserializer::class)
   public val recoveryKey: JWK,
   public val deltaHash: String,
   public val anchorOrigin: String? = null)
