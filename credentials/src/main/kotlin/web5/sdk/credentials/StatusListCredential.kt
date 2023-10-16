@@ -34,12 +34,12 @@ public enum class StatusPurpose {
 /**
  * The JSON property key for an encoded list.
  */
-public const val ENCODED_LIST: String = "encodedList"
+private const val ENCODED_LIST: String = "encodedList"
 
 /**
  * The JSON property key for a status purpose.
  */
-public const val STATUS_PURPOSE: String = "statusPurpose"
+private const val STATUS_PURPOSE: String = "statusPurpose"
 
 /**
  * `StatusListCredential` represents a digitally verifiable status list credential according to the
@@ -63,14 +63,22 @@ public object StatusListCredential {
    * val statusListCredential = StatusListCredential.create("http://example.com/statuslistcred/id123", "http://example.com/issuers/1", StatusPurpose.REVOCATION, listOf(vc1,vc2))
    * ```
    */
+  @Throws(RuntimeException::class)
   public fun create(
     statusListCredentialId: String,
     issuer: String,
     statusPurpose: StatusPurpose,
     issuedCredentials: List<VerifiableCredential>
   ): VerifiableCredential {
-    val statusListIndexes = prepareCredentialsForStatusList(statusPurpose, issuedCredentials)
-    val bitString = bitstringGeneration(statusListIndexes)
+    val statusListIndexes: List<String>
+    val bitString: String
+
+    try {
+      statusListIndexes = prepareCredentialsForStatusList(statusPurpose, issuedCredentials)
+      bitString = bitstringGeneration(statusListIndexes)
+    } catch (e: Exception) {
+      throw RuntimeException("An error occurred during the creation of the status list credential: ${e.message}", e)
+    }
 
     val claims = mapOf(STATUS_PURPOSE to statusPurpose.toString().lowercase(), ENCODED_LIST to bitString)
     val credSubject = CredentialSubject.builder()
@@ -112,24 +120,34 @@ public object StatusListCredential {
     val statusListEntryValue: StatusList2021Entry =
       StatusList2021Entry.fromJsonObject(credentialToValidate.vcDataModel.credentialStatus.jsonObject)
 
-    val statusLisCredStatusPurpose: String? =
+    val statusListCredStatusPurpose: String? =
       statusListCredential.vcDataModel.credentialSubject.jsonObject[STATUS_PURPOSE] as? String?
 
-    requireNotNull(statusListEntryValue.statusPurpose)
-    requireNotNull(statusLisCredStatusPurpose)
-    require(statusListEntryValue.statusPurpose == statusLisCredStatusPurpose)
+    if (statusListEntryValue.statusPurpose == null) {
+      throw IllegalArgumentException("Status purpose in the credential to validate is null")
+    }
+
+    if (statusListCredStatusPurpose == null) {
+      throw IllegalArgumentException("Status purpose in the status list credential is null")
+    }
+
+    if (statusListEntryValue.statusPurpose != statusListCredStatusPurpose) {
+      throw IllegalArgumentException("Status purposes do not match between the credentials")
+    }
 
     val compressedBitstring: String? =
       statusListCredential.vcDataModel.credentialSubject.jsonObject[ENCODED_LIST] as? String?
 
-    requireNotNull(compressedBitstring)
-    require(compressedBitstring.isNotEmpty())
+    if (compressedBitstring == null || compressedBitstring.isEmpty()) {
+      throw IllegalArgumentException("Compressed bitstring is null or empty")
+    }
 
     val credentialIndex = statusListEntryValue.statusListIndex
     val expandedValues: List<String> = bitstringExpansion(compressedBitstring)
 
     return expandedValues.any { it == credentialIndex }
   }
+
 
   /**
    * Validates if a given credential is part of the status list.
@@ -196,9 +214,7 @@ public object StatusListCredential {
    * - Ensures all provided credentials use the `StatusList2021` format for their status.
    * - Validates that all credentials use the `StatusList2021` in the `credentialStatus` property.
    * - Assembles a list of `statusListIndex` values for the bitstring generation algorithm.
-   *
    */
-  @Throws(Exception::class)
   private fun prepareCredentialsForStatusList(
     statusPurpose: StatusPurpose,
     credentials: List<VerifiableCredential>
@@ -213,7 +229,7 @@ public object StatusListCredential {
       require(statusListEntry.statusPurpose == statusPurpose.toString().lowercase()) { "status purpose mismatch" }
 
       if (!duplicateSet.add(statusListEntry.statusListIndex)) {
-        throw Exception("duplicate entry found with index: ${statusListEntry.statusListIndex}")
+        throw IllegalArgumentException("duplicate entry found with index: ${statusListEntry.statusListIndex}")
       }
     }
 
@@ -242,15 +258,15 @@ public object StatusListCredential {
       val indexInt = index.toIntOrNull()
 
       if (indexInt == null || indexInt < 0) {
-        throw Exception("invalid status list index: $index")
+        throw IllegalArgumentException("invalid status list index: $index")
       }
 
       if (indexInt >= bitSetSize) {
-        throw Exception("invalid status list index: $index, index is larger than the bitset size")
+        throw IndexOutOfBoundsException("invalid status list index: $index, index is larger than the bitset size")
       }
 
       if (!duplicateCheck.add(indexInt)) {
-        throw Exception("duplicate status list index value found: $indexInt")
+        throw IllegalArgumentException("duplicate status list index value found: $indexInt")
       }
 
       bitSet.set(indexInt)
