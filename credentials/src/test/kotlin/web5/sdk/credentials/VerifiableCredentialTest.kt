@@ -32,6 +32,7 @@ class VerifiableCredentialTest {
       subject = holderDid.uri,
       data = StreetCredibility(localRespect = "high", legit = true)
     )
+    assertNotNull(vc)
   }
 
   @Test
