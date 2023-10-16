@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.annotation.JsonValue
 import com.fasterxml.jackson.core.JsonGenerator
 import com.fasterxml.jackson.core.JsonParser
+import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.DeserializationContext
 import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.JsonSerializer
@@ -49,7 +50,7 @@ public data class PublicKey(
 
   @JsonSerialize(using = JacksonJwk.Serializer::class)
   @JsonDeserialize(using = JacksonJwk.Deserializer::class)
-  public val publicKeyJwk: JWK? = null,
+  public val publicKeyJwk: JWK,
   public val purposes: List<PublicKeyPurpose> = emptyList()
 )
 
@@ -74,8 +75,8 @@ private class JacksonJwk {
    */
   object Deserializer : JsonDeserializer<JWK>() {
     override fun deserialize(p: JsonParser, ctxt: DeserializationContext?): JWK {
-      @Suppress("UNCHECKED_CAST")
-      val node = p.readValueAs(Map::class.java) as MutableMap<String, Any>
+      val typeRef = object : TypeReference<HashMap<String, Any>>() {}
+      val node = p.readValueAs(typeRef) as HashMap<String, Any>
       return JWK.parse(node)
     }
   }
@@ -89,7 +90,7 @@ public enum class PublicKeyPurpose(@get:JsonValue public val code: String) {
   KEY_AGREEMENT("keyAgreement"),
   ASSERTION_METHOD("assertionMethod"),
   CAPABILITY_DELEGATION("capabilityDelegation"),
-  CAPABILITY_INVOCATIO("capabilityInvocation"),
+  CAPABILITY_INVOCATION("capabilityInvocation"),
 }
 
 /**
@@ -107,7 +108,7 @@ public enum class PublicKeyPurpose(@get:JsonValue public val code: String) {
   JsonSubTypes.Type(AddPublicKeysAction::class, name = "add-public-keys"),
   JsonSubTypes.Type(RemovePublicKeysAction::class, name = "remove-public-keys"),
 )
-public sealed class PatchAction
+public interface PatchAction
 
 /**
  * Represents an "add_services" patch action in the ION document as defined in https://identity.foundation/sidetree/spec/#add-services.
@@ -116,7 +117,7 @@ public sealed class PatchAction
  */
 public data class AddServicesAction(
   public val services: List<Service> = emptyList()
-) : PatchAction()
+) : PatchAction
 
 /**
  * Represents a "replace" patch action in the ION document as defined in https://identity.foundation/sidetree/spec/#replace.
@@ -125,7 +126,7 @@ public data class AddServicesAction(
  */
 public data class ReplaceAction(
   val document: Document? = null
-) : PatchAction()
+) : PatchAction
 
 /** Model for https://identity.foundation/sidetree/spec/#remove-services */
 public data class RemoveServicesAction(

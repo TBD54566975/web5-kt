@@ -366,7 +366,7 @@ public sealed class DidIonManager(
       ),
       KeyAliases(
         updateKeyAlias = updatePublicJwk.keyID,
-        verificationKeyAlias = verificationPublicKey.publicKeyJwk!!.keyID,
+        verificationKeyAlias = verificationPublicKey.publicKeyJwk.keyID,
         recoveryKeyAlias = recoveryPublicJwk.keyID
       )
     )
@@ -380,8 +380,8 @@ public sealed class DidIonManager(
     }
   }
 
-  private fun isBase64UrlString(input: String?): Boolean {
-    return base64UrlCharsetRegex.matches(input!!)
+  private fun isBase64UrlString(input: String): Boolean {
+    return base64UrlCharsetRegex.matches(input)
   }
 
   private fun createOperationSuffixDataObject(
