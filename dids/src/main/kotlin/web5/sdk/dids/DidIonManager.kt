@@ -85,28 +85,25 @@ private class DidIonManagerImpl(configuration: DidIonConfiguration) : DidIonMana
  * @param publicKeysToAdd PublicKeys to add to the DID document.
  * @param idsOfPublicKeysToRemove Keys to remove from the DID document.
  */
-public class UpdateDidIonOptions(
-  public val didString: String,
-  public val updateKeyAlias: String,
-  public val servicesToAdd: Iterable<Service>? = null,
-  public val idsOfServicesToRemove: Set<String>? = null,
-  public val publicKeysToAdd: Iterable<PublicKey>? = null,
-  public val idsOfPublicKeysToRemove: Set<String>? = null,
+public data class UpdateDidIonOptions(
+  val didString: String,
+  val updateKeyAlias: String,
+  val servicesToAdd: Iterable<Service> = emptyList(),
+  val idsOfServicesToRemove: Iterable<String> = emptyList(),
+  val publicKeysToAdd: Iterable<PublicKey> = emptyList(),
+  val idsOfPublicKeysToRemove: Iterable<String> = emptyList()
 ) {
   internal fun toPatches(): List<PatchAction> {
-    return buildList<PatchAction> {
-      if (servicesToAdd != null) {
-        add(AddServicesAction(servicesToAdd.toList()))
-      }
-      if (idsOfServicesToRemove != null) {
-        add(RemoveServicesAction(idsOfServicesToRemove.toList()))
-      }
-      if (publicKeysToAdd != null) {
-        add(AddPublicKeysAction(publicKeysToAdd.toList()))
-      }
-      if (idsOfPublicKeysToRemove != null) {
-        add(RemovePublicKeysAction(idsOfPublicKeysToRemove.toList()))
-      }
+    fun <T> MutableList<PatchAction>.addIfNotEmpty(iter: Iterable<T>, action: (List<T>) -> PatchAction) {
+      val list = iter.toList()
+      list.takeIf { it.isNotEmpty() }?.let { this.add(action(it)) }
+    }
+
+    return buildList {
+      addIfNotEmpty(servicesToAdd, ::AddServicesAction)
+      addIfNotEmpty(idsOfServicesToRemove, ::RemoveServicesAction)
+      addIfNotEmpty(publicKeysToAdd, ::AddPublicKeysAction)
+      addIfNotEmpty(idsOfPublicKeysToRemove, ::RemovePublicKeysAction)
     }
   }
 }
