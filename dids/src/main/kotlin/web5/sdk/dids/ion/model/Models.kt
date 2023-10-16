@@ -49,7 +49,7 @@ public data class PublicKey(
 
   @JsonSerialize(using = JacksonJwk.Serializer::class)
   @JsonDeserialize(using = JacksonJwk.Deserializer::class)
-  public val publicKeyJwk: JWK? = null,
+  public val publicKeyJwk: JWK,
   public val purposes: List<PublicKeyPurpose> = emptyList()
 )
 
