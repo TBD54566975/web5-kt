@@ -131,17 +131,17 @@ public data class ReplaceAction(
 /** Model for https://identity.foundation/sidetree/spec/#remove-services */
 public data class RemoveServicesAction(
   val ids: List<String>
-) : PatchAction()
+) : PatchAction
 
 /** Model for https://identity.foundation/sidetree/spec/#add-public-keys */
 public data class AddPublicKeysAction(
   val publicKeys: List<PublicKey>
-) : PatchAction()
+) : PatchAction
 
 /** Model for https://identity.foundation/sidetree/spec/#remove-public-keys */
 public data class RemovePublicKeysAction(
   val ids: List<String>
-) : PatchAction()
+) : PatchAction
 
 /**
  * Represents a delta in the ION document as defined in bullet 3 of https://identity.foundation/sidetree/spec/#create
