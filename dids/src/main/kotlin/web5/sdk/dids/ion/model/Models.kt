@@ -22,12 +22,12 @@ import web5.sdk.common.EncodingFormat
 /**
  * Represents an ION document containing public keys and services. See bullet 2 in https://identity.foundation/sidetree/spec/#replace.
  *
- * @property publicKeys List of public keys.
- * @property services List of services.
+ * @property publicKeys Iterable of public keys.
+ * @property services Iterable of services.
  */
 public data class Document(
-  val publicKeys: List<PublicKey> = emptyList(),
-  val services: List<Service> = emptyList()
+  val publicKeys: Iterable<PublicKey> = emptyList(),
+  val services: Iterable<Service> = emptyList()
 )
 
 /**
@@ -55,7 +55,7 @@ public data class PublicKey(
   @JsonSerialize(using = JacksonJwk.Serializer::class)
   @JsonDeserialize(using = JacksonJwk.Deserializer::class)
   public val publicKeyJwk: JWK,
-  public val purposes: List<PublicKeyPurpose> = emptyList()
+  public val purposes: Iterable<PublicKeyPurpose> = emptyList()
 )
 
 /**
@@ -117,10 +117,10 @@ public interface PatchAction
 /**
  * Represents an "add_services" patch action in the ION document as defined in https://identity.foundation/sidetree/spec/#add-services.
  *
- * @property services List of services to add.
+ * @property services Iterable of services to add.
  */
 public data class AddServicesAction(
-  public val services: List<Service> = emptyList()
+  public val services: Iterable<Service> = emptyList()
 ) : PatchAction
 
 /**
@@ -134,27 +134,27 @@ public data class ReplaceAction(
 
 /** Model for https://identity.foundation/sidetree/spec/#remove-services */
 public data class RemoveServicesAction(
-  val ids: List<String>
+  val ids: Iterable<String>
 ) : PatchAction
 
 /** Model for https://identity.foundation/sidetree/spec/#add-public-keys */
 public data class AddPublicKeysAction(
-  val publicKeys: List<PublicKey>
+  val publicKeys: Iterable<PublicKey>
 ) : PatchAction
 
 /** Model for https://identity.foundation/sidetree/spec/#remove-public-keys */
 public data class RemovePublicKeysAction(
-  val ids: List<String>
+  val ids: Iterable<String>
 ) : PatchAction
 
 /**
  * Represents a delta in the ION document as defined in bullet 3 of https://identity.foundation/sidetree/spec/#create
  *
- * @property patches List of patch actions.
+ * @property patches Iterable of patch actions.
  * @property updateCommitment Update commitment.
  */
 public data class Delta(
-  public val patches: List<PatchAction>,
+  public val patches: Iterable<PatchAction>,
   public val updateCommitment: Commitment
 )
 

@@ -94,9 +94,8 @@ public data class UpdateDidIonOptions(
   val idsOfPublicKeysToRemove: Iterable<String> = emptyList()
 ) {
   internal fun toPatches(): List<PatchAction> {
-    fun <T> MutableList<PatchAction>.addIfNotEmpty(iter: Iterable<T>, action: (List<T>) -> PatchAction) {
-      val list = iter.toList()
-      list.takeIf { it.isNotEmpty() }?.let { this.add(action(it)) }
+    fun <T> MutableList<PatchAction>.addIfNotEmpty(iter: Iterable<T>, action: (Iterable<T>) -> PatchAction) {
+      iter.takeIf { it.count() != 0 }?.let { this.add(action(it)) }
     }
 
     return buildList {

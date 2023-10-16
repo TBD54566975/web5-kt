@@ -177,7 +177,7 @@ class DidIonTest {
         updateOp.signedData
       )
       assertEquals("EiDKIkwqO69IPG3pOlHkdb86nYt0aNxSHZu2r-bhEznjdA", updateOp.delta.updateCommitment.toBase64Url())
-      assertEquals(4, updateOp.delta.patches.size)
+      assertEquals(4, updateOp.delta.patches.count())
       respond(
         content = ByteReadChannel("""{"hello":"world"}"""),
         headers = headersOf(HttpHeaders.ContentType, "application/json"),
