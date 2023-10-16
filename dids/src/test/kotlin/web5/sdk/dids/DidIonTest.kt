@@ -67,7 +67,7 @@ class DidIonTest {
     val recoveryKey = readKey("src/test/resources/recovery_jwk.json")
     val manager = DidIonManager {
       ionHost = "madeuphost"
-      engine = mockEngine()
+      client = mockClient()
     }
     val opts = CreateDidIonOptions(
       verificationPublicKey = PublicKey(
@@ -111,7 +111,7 @@ class DidIonTest {
   fun `create changes the key manager state`() {
     val keyManager = InMemoryKeyManager()
     val did = DidIonManager {
-      engine = mockEngine()
+      client = mockClient()
     }.create(keyManager)
     val metadata = did.creationMetadata!!
 
@@ -128,36 +128,40 @@ class DidIonTest {
   fun `bad request throws exception`() {
     val exception = assertThrows<InvalidStatusException> {
       DidIonManager {
-        engine = badRequestMockEngine()
+        client = badRequestMockClient()
       }.resolve("did:ion:foobar")
     }
 
     assertEquals(HttpStatusCode.BadRequest.value, exception.statusCode)
   }
 
-  private fun badRequestMockEngine() = MockEngine {
-    respond(
-      content = ByteReadChannel("""{}"""),
-      status = HttpStatusCode.BadRequest,
-      headers = headersOf(HttpHeaders.ContentType, "application/json")
-    )
+  private fun badRequestMockClient(): HttpClient {
+    return KtorClient(MockEngine {
+      respond(
+        content = ByteReadChannel("""{}"""),
+        status = HttpStatusCode.BadRequest,
+        headers = headersOf(HttpHeaders.ContentType, "application/json")
+      )
+    })
   }
 
-  private fun mockEngine() = MockEngine { request ->
-    when (request.url.encodedPath) {
-      "/operations" -> {
-        respond(
-          content = ByteReadChannel("""{}"""),
+  private fun mockClient(): HttpClient {
+    return KtorClient(MockEngine { request ->
+      when (request.url.encodedPath) {
+        "/operations" -> {
+          respond(
+            content = ByteReadChannel("""{}"""),
+            status = HttpStatusCode.OK,
+            headers = headersOf(HttpHeaders.ContentType, "application/json")
+          )
+        }
+
+        else -> respond(
+          content = ByteReadChannel(File("src/test/resources/basic_did_resolution.json").readText()),
           status = HttpStatusCode.OK,
           headers = headersOf(HttpHeaders.ContentType, "application/json")
         )
       }
-
-      else -> respond(
-        content = ByteReadChannel(File("src/test/resources/basic_did_resolution.json").readText()),
-        status = HttpStatusCode.OK,
-        headers = headersOf(HttpHeaders.ContentType, "application/json")
-      )
-    }
+    })
   }
 }

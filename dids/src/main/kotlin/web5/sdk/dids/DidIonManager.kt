@@ -4,20 +4,6 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.jwk.JWK
 import foundation.identity.did.DID
-import io.ktor.client.HttpClient
-import io.ktor.client.engine.HttpClientEngine
-import io.ktor.client.engine.cio.CIO
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.client.request.get
-import io.ktor.client.request.post
-import io.ktor.client.request.setBody
-import io.ktor.client.statement.HttpResponse
-import io.ktor.client.statement.bodyAsText
-import io.ktor.http.ContentType
-import io.ktor.http.contentType
-import io.ktor.http.isSuccess
-import io.ktor.serialization.jackson.jackson
-import kotlinx.coroutines.runBlocking
 import org.erdtman.jcs.JsonCanonicalizer
 import org.erwinkok.multiformat.multicodec.Multicodec
 import org.erwinkok.multiformat.multihash.Multihash
@@ -39,15 +25,72 @@ import java.util.UUID
 private const val operationsPath = "/operations"
 private const val identifiersPath = "/identifiers"
 
+
+/**
+ * Interface representing an HTTP client for making POST and GET requests.
+ */
+public interface HttpClient {
+  /**
+   * [post] performs an HTTP POST request to the specified URL with the given request body.
+   *
+   * [url] The URL to which the POST request is sent.
+   * [body] The request body to be sent with the POST request.
+   *
+   * Returns the HTTP response received after the POST request.
+   */
+  public fun post(url: String, body: Any): HttpResponse
+
+  /**
+   * [get] performs an HTTP GET request to the specified URL.
+   *
+   * [url] The URL for the GET request.
+   *
+   * Returns the HTTP response received after the GET request.
+   */
+  public fun get(url: String): HttpResponse
+}
+
+/**
+ * Data class representing an HTTP response with a response body and status information.
+ *
+ * [body] The response body as a string.
+ * [status] The status information of the HTTP response.
+ */
+public data class HttpResponse(
+  public val body: String,
+  public val status: HttpStatus
+)
+
+/**
+ * Data class representing the status information of an HTTP response.
+ *
+ * [value] The HTTP status code value.
+ * [description] A description of the status code.
+ */
+public data class HttpStatus(
+  public val value: Int,
+  public val description: String
+) {
+  /**
+   * Check if the HTTP status code indicates a successful response (status code in the 2xx range).
+   *
+   * Returns `true` if the status code indicates success, `false` otherwise.
+   */
+  public fun isSuccess(): Boolean {
+    return value in (200 until 300)
+  }
+}
+
+
 /**
  * Configuration for the [DidIonManager].
  *
  * @property ionHost The ION host URL.
- * @property engine The engine to use. When absent, a new one will be created from the [CIO] factory.
+ * @property client The [HttpClient] implementation to use. When absent, the KtorClient implementation will be used.
  */
 public class DidIonConfiguration internal constructor(
   public var ionHost: String = "https://ion.tbddev.org",
-  public var engine: HttpClientEngine? = null,
+  public var client: HttpClient? = null,
 )
 
 
@@ -101,13 +144,7 @@ public sealed class DidIonManager(
   private val operationsEndpoint = configuration.ionHost + operationsPath
   private val identifiersEndpoint = configuration.ionHost + identifiersPath
 
-  private val engine: HttpClientEngine = configuration.engine ?: CIO.create {}
-
-  private val client = HttpClient(engine) {
-    install(ContentNegotiation) {
-      jackson { mapper }
-    }
-  }
+  private val client: HttpClient = configuration.client ?: KtorClient(mapper = mapper)
 
   override val methodName: String = "ion"
 
@@ -132,16 +169,7 @@ public sealed class DidIonManager(
     )
     val longFormDidSegment = didUriSegment(initialState)
 
-    val response: HttpResponse = runBlocking {
-      client.post(operationsEndpoint) {
-        contentType(ContentType.Application.Json)
-        setBody(createOp)
-      }
-    }
-
-    val opBody = runBlocking {
-      response.bodyAsText()
-    }
+    val response: HttpResponse = client.post(operationsEndpoint, createOp)
 
     if (response.status.isSuccess()) {
       val shortFormDid = "did:ion:$shortFormDidSegment"
@@ -161,12 +189,12 @@ public sealed class DidIonManager(
           createOp,
           shortFormDid,
           longFormDid,
-          opBody,
+          response.body,
           keys
         )
       )
     }
-    throw InvalidStatusException(response.status.value, "received error response '$opBody'")
+    throw InvalidStatusException(response.status.value, "received error response '${response.body}'")
   }
 
   private fun canonicalized(data: Any): ByteArray {
@@ -188,12 +216,11 @@ public sealed class DidIonManager(
     val didObj = DID.fromString(did)
     require(didObj.methodName == methodName) { throw IllegalArgumentException("expected did:ion") }
 
-    val resp = runBlocking { client.get("$identifiersEndpoint/$didObj") }
-    val body = runBlocking { resp.bodyAsText() }
+    val resp: HttpResponse = client.get("$identifiersEndpoint/$didObj")
     if (!resp.status.isSuccess()) {
-      throw InvalidStatusException(resp.status.value, "resolution error response '$body'")
+      throw InvalidStatusException(resp.status.value, "resolution error response '${resp.body}'")
     }
-    return mapper.readValue(body, DidResolutionResult::class.java)
+    return mapper.readValue(resp.body, DidResolutionResult::class.java)
   }
 
   private fun createOperation(keyManager: KeyManager, options: CreateDidIonOptions?)
