@@ -365,8 +365,7 @@ public sealed class DidIonManager(
   private fun deltaHash(updateOpDeltaObject: Delta): String {
     val canonicalized = canonicalized(updateOpDeltaObject)
     val deltaHashBytes = Multihash.sum(Multicodec.SHA2_256, canonicalized).getOrThrow().bytes()
-    val deltaHash = Base64URL.encode(deltaHashBytes).toString()
-    return deltaHash
+    return Base64URL.encode(deltaHashBytes).toString()
   }
 
   private fun createOperation(keyManager: KeyManager, options: CreateDidIonOptions?)
@@ -538,8 +537,8 @@ public sealed class DidIonManager(
    * Depending on the options provided, will create new keys using [keyManager]. See [RecoverDidIonOptions] for more
    * details.
    */
-  public fun recover(keyManager: KeyManager, opts: RecoverDidIonOptions): RecoverResult {
-    val (recoverOp, keyAliases) = createRecoverOperation(keyManager, opts)
+  public fun recover(keyManager: KeyManager, options: RecoverDidIonOptions): RecoverResult {
+    val (recoverOp, keyAliases) = createRecoverOperation(keyManager, options)
 
     val response: HttpResponse = runBlocking {
       client.post(operationsEndpoint) {
@@ -561,8 +560,8 @@ public sealed class DidIonManager(
   /**
    * Deactivates an ION did with the given [options]. The `recoveryKeyAlias` value must be available in the [keyManager].
    */
-  public fun deactivate(keyManager: KeyManager, opts: DeactivateDidIonOptions): DeactivateResult {
-    val deactivateOp = createDeactivateOperation(keyManager, opts)
+  public fun deactivate(keyManager: KeyManager, options: DeactivateDidIonOptions): DeactivateResult {
+    val deactivateOp = createDeactivateOperation(keyManager, options)
 
     val response: HttpResponse = runBlocking {
       client.post(operationsEndpoint) {
@@ -589,7 +588,7 @@ public sealed class DidIonManager(
 }
 
 /**
- * Data associated with the [deactivate] call. Useful for debugging and testing purposes.
+ * Data associated with the [DidIonManager.deactivate] call. Useful for debugging and testing purposes.
  */
 public class DeactivateResult(
   public val deactivateOperation: SidetreeDeactivateOperation,

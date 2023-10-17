@@ -236,12 +236,12 @@ class DidIonTest {
     )
 
     assertEquals("EiDyOQbbZAa3aiRzeCkV7LOx3SERjjH93EXoIM3UoN4oWg", recoverOperation.didSuffix)
-    assertEquals("EiAJ-97Is59is6FKAProwDo870nmwCeP8n5nRRFwPpUZVQ", recoverOperation.revealValue.toBase64Url());
-    assertEquals("recover", recoverOperation.type);
+    assertEquals("EiAJ-97Is59is6FKAProwDo870nmwCeP8n5nRRFwPpUZVQ", recoverOperation.revealValue.toBase64Url())
+    assertEquals("recover", recoverOperation.type)
     assertEquals(
       "EiBJGXo0XUiqZQy0r-fQUHKS3RRVXw5nwUpqGVXEGuTs-g",
       recoverOperation.delta.updateCommitment.toBase64Url()
-    );
+    )
     assertEquals(
       "eyJhbGciOiJFUzI1NksifQ.eyJyZWNvdmVyeUNvbW1pdG1lbnQiOiJFaURLSWt3cU82OUlQRzNwT2xIa2RiODZuWXQwYU54U" +
         "0hadTJyLWJoRXpuamRBIiwicmVjb3ZlcnlLZXkiOnsia3R5IjoiRUMiLCJjcnYiOiJzZWNwMjU2azEiLCJ4IjoibklxbFJDeDBleUJT" +
@@ -249,7 +249,7 @@ class DidIonTest {
         "4RjdrIn0sImRlbHRhSGFzaCI6IkVpQm9HNlFtamlTSm5ON2phaldnaV9vZDhjR3dYSm9Nc2RlWGlWWTc3NXZ2SkEifQ.58n6Fel9DmR" +
         "AXxwcJMUwYaUhmj5kigKMNrGjr7eJaJcjOmjvwlKLSjiovWiYrb9yjkfMAjpgbAdU_2EDI1_lZw",
       recoverOperation.signedData
-    );
+    )
     assertEquals(1, recoverOperation.delta.patches.count())
     assertEquals(nextUpdateKeyId, keyAliases.updateKeyAlias)
     assertEquals(nextRecoveryKeyId, keyAliases.recoveryKeyAlias)
