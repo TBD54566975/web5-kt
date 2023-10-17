@@ -294,7 +294,7 @@ public sealed class DidIonManager(
   /**
    * Updates an ION did with the given [options]. The update key must be available in the [keyManager].
    */
-  public fun update(keyManager: KeyManager, options: UpdateDidIonOptions): IonUpdateMetadata {
+  public fun update(keyManager: KeyManager, options: UpdateDidIonOptions): IonUpdateResult {
     val (updateOp, newUpdateKeyAlias) = createUpdateOperation(keyManager, options)
     val response: HttpResponse = runBlocking {
       client.post(operationsEndpoint) {
@@ -304,7 +304,7 @@ public sealed class DidIonManager(
     }
     val opBody = runBlocking { response.bodyAsText() }
     if (response.status.isSuccess()) {
-      return IonUpdateMetadata(
+      return IonUpdateResult(
         operationsResponseBody = opBody,
         updateKeyAlias = newUpdateKeyAlias,
       )
@@ -537,7 +537,7 @@ public sealed class DidIonManager(
    * Depending on the options provided, will create new keys using [keyManager]. See [RecoverDidIonOptions] for more
    * details.
    */
-  public fun recover(keyManager: KeyManager, options: RecoverDidIonOptions): RecoverResult {
+  public fun recover(keyManager: KeyManager, options: RecoverDidIonOptions): IonRecoverResult {
     val (recoverOp, keyAliases) = createRecoverOperation(keyManager, options)
 
     val response: HttpResponse = runBlocking {
@@ -550,7 +550,7 @@ public sealed class DidIonManager(
     val opBody = runBlocking {
       response.bodyAsText()
     }
-    return RecoverResult(
+    return IonRecoverResult(
       keyAliases = keyAliases,
       recoverOperation = recoverOp,
       operationsResponse = opBody,
@@ -560,7 +560,7 @@ public sealed class DidIonManager(
   /**
    * Deactivates an ION did with the given [options]. The `recoveryKeyAlias` value must be available in the [keyManager].
    */
-  public fun deactivate(keyManager: KeyManager, options: DeactivateDidIonOptions): DeactivateResult {
+  public fun deactivate(keyManager: KeyManager, options: DeactivateDidIonOptions): IonDeactivateResult {
     val deactivateOp = createDeactivateOperation(keyManager, options)
 
     val response: HttpResponse = runBlocking {
@@ -574,7 +574,7 @@ public sealed class DidIonManager(
       response.bodyAsText()
     }
 
-    return DeactivateResult(
+    return IonDeactivateResult(
       deactivateOperation = deactivateOp,
       operationsResponse = opBody,
     )
@@ -590,14 +590,14 @@ public sealed class DidIonManager(
 /**
  * Data associated with the [DidIonManager.deactivate] call. Useful for debugging and testing purposes.
  */
-public class DeactivateResult(
+public class IonDeactivateResult(
   public val deactivateOperation: SidetreeDeactivateOperation,
   public val operationsResponse: String)
 
 /**
  * All the data associated with the [recover] call. Useful for advanced, and debugging, purposes.
  */
-public class RecoverResult(
+public class IonRecoverResult(
   public val keyAliases: KeyAliases,
   public val recoverOperation: SidetreeRecoverOperation,
   public val operationsResponse: String)
@@ -641,7 +641,7 @@ private fun JWK.reveal(): Reveal {
 /**
  * Metadata related to the update of an ion DID.
  */
-public data class IonUpdateMetadata(
+public data class IonUpdateResult(
   public val operationsResponseBody: String,
   public val updateKeyAlias: String
 )
