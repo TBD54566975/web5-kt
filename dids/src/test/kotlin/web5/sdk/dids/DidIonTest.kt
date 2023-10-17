@@ -18,6 +18,7 @@ import org.junit.jupiter.api.assertThrows
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.spy
 import org.mockito.kotlin.whenever
+import web5.sdk.crypto.AwsKeyManager
 import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.dids.ion.model.PublicKey
 import web5.sdk.dids.ion.model.PublicKeyPurpose
@@ -41,6 +42,19 @@ class DidIonTest {
     val did = DidIonManager.create(InMemoryKeyManager())
     assertContains(did.uri, "did:ion:")
     assertTrue(did.creationMetadata!!.longFormDid.startsWith(did.uri))
+  }
+
+  @Test
+  @Ignore("For demonstration purposes only - relies on network and AWS configuration")
+  fun `create with AWS key manager`() {
+    val keyManager = AwsKeyManager()
+    val ionManager = DidIonManager
+    val didsCreated = buildList {
+      repeat(32) {
+        add(ionManager.create(keyManager))
+      }
+    }
+    didsCreated.forEach { println(it.uri) }
   }
 
   @Test
