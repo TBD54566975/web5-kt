@@ -291,7 +291,9 @@ class DidIonTest {
     val recoveryKey = readKey("src/test/resources/jwkEs256k1Private.json")
     val recoveryKeyAlias = keyManager.import(recoveryKey)
 
-    val result = DidIonManager.createDeactivateOperation(
+    val deactivateResult = DidIonManager{
+      engine = mockEngine()
+    }.deactivate(
       keyManager,
       DeactivateDidIonOptions(
         did = "did:ion:EiDyOQbbZAa3aiRzeCkV7LOx3SERjjH93EXoIM3UoN4oWg",
@@ -299,15 +301,19 @@ class DidIonTest {
       )
     )
 
-    assertEquals("EiDyOQbbZAa3aiRzeCkV7LOx3SERjjH93EXoIM3UoN4oWg", result.didSuffix)
-    assertEquals("deactivate", result.type)
-    assertEquals("EiAJ-97Is59is6FKAProwDo870nmwCeP8n5nRRFwPpUZVQ", result.revealValue.toBase64Url())
+    val deactivateOperation = deactivateResult.deactivateOperation
+    assertEquals("EiDyOQbbZAa3aiRzeCkV7LOx3SERjjH93EXoIM3UoN4oWg", deactivateOperation.didSuffix)
+    assertEquals("deactivate", deactivateOperation.type)
+    assertEquals(
+      "EiAJ-97Is59is6FKAProwDo870nmwCeP8n5nRRFwPpUZVQ",
+      deactivateOperation.revealValue.toBase64Url()
+    )
     assertEquals(
       "eyJhbGciOiJFUzI1NksifQ.eyJkaWRTdWZmaXgiOiJFaUR5T1FiYlpBYTNhaVJ6ZUNrVjdMT3gzU0VSampIOTNFWG9JTTNVb040b1" +
         "dnIiwicmVjb3ZlcnlLZXkiOnsia3R5IjoiRUMiLCJjcnYiOiJzZWNwMjU2azEiLCJ4IjoibklxbFJDeDBleUJTWGNRbnFEcFJlU3Y0enVXaH" +
         "dDUldzc29jOUxfbmo2QSIsInkiOiJpRzI5Vks2bDJVNXNLQlpVU0plUHZ5RnVzWGdTbEsyZERGbFdhQ004RjdrIn19.uLgnDBmmFzST4VTmd" +
         "JcmFKVicF0kQaBqEnRQLbqJydgIg_2oreihCA5sBBIUBlSXwvnA9xdK97ksJGmPQ7asPQ",
-      result.signedData
+      deactivateOperation.signedData
     )
   }
 

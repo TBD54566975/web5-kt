@@ -113,6 +113,18 @@ public data class UpdateDidIonOptions(
 
 /**
  * The options when recovering an ION did.
+ *
+ * - [did] is the did to recover. I.e. "did:ion:1234".
+ * - [recoveryKeyAlias] is the alias under which the recovery private key is stored inside the [KeyManager] used.
+ * - [verificationPublicKey] When provided, will be used as the verification key in the DID document.
+ * - [updatePublicJwk] When provided, will be used to create the update key commitment. Otherwise, it will be generated
+ *   and stored within the [KeyManager] used.
+ * - [recoveryPublicJwk] When provided, will be used to create the recovery key commitment. Otherwise, it will be
+ *   generated and stored within the [KeyManager] used.
+ * - [verificationMethodId] When provided, will be used as the verification method id. Cannot be over 50 chars and
+ *   must only use characters from the Base64URL character set. When absent, a [UUID] will be generated.
+ * - [servicesToAdd] List of services which will be added into the DID document that results after the update
+ *   operation.
  */
 public class RecoverDidIonOptions(
   public val did: String,
@@ -498,7 +510,7 @@ public sealed class DidIonManager(
     )
   }
 
-  internal fun createDeactivateOperation(
+  private fun createDeactivateOperation(
     keyManager: KeyManager,
     options: DeactivateDidIonOptions): SidetreeDeactivateOperation {
     val recoveryPublicKey = keyManager.getPublicKey(options.recoveryKeyAlias)
@@ -523,6 +535,8 @@ public sealed class DidIonManager(
 
   /**
    * Recovers an ION did with the given [options]. The `recoveryKeyAlias` value must be available in the [keyManager].
+   * Depending on the options provided, will create new keys using [keyManager]. See [RecoverDidIonOptions] for more
+   * details.
    */
   public fun recover(keyManager: KeyManager, opts: RecoverDidIonOptions): RecoverResult {
     val (recoverOp, keyAliases) = createRecoverOperation(keyManager, opts)
@@ -544,12 +558,42 @@ public sealed class DidIonManager(
     )
   }
 
+  /**
+   * Deactivates an ION did with the given [options]. The `recoveryKeyAlias` value must be available in the [keyManager].
+   */
+  public fun deactivate(keyManager: KeyManager, opts: DeactivateDidIonOptions): DeactivateResult {
+    val deactivateOp = createDeactivateOperation(keyManager, opts)
+
+    val response: HttpResponse = runBlocking {
+      client.post(operationsEndpoint) {
+        contentType(ContentType.Application.Json)
+        setBody(deactivateOp)
+      }
+    }
+
+    val opBody = runBlocking {
+      response.bodyAsText()
+    }
+
+    return DeactivateResult(
+      deactivateOperation = deactivateOp,
+      operationsResponse = opBody,
+    )
+  }
+
 
   /**
    * Default companion object for creating a [DidIonManager] with a default configuration.
    */
   public companion object Default : DidIonManager(DidIonConfiguration())
 }
+
+/**
+ * Data associated with the [deactivate] call. Useful for debugging and testing purposes.
+ */
+public class DeactivateResult(
+  public val deactivateOperation: SidetreeDeactivateOperation,
+  public val operationsResponse: String)
 
 /**
  * All the data associated with the [recover] call. Useful for advanced, and debugging, purposes.
