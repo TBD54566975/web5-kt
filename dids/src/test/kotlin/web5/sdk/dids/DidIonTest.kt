@@ -3,7 +3,6 @@ package web5.sdk.dids
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.nimbusds.jose.JWSAlgorithm
-import com.nimbusds.jose.JWSObject
 import com.nimbusds.jose.jwk.JWK
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
@@ -19,9 +18,7 @@ import org.junit.jupiter.api.assertThrows
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.spy
 import org.mockito.kotlin.whenever
-import web5.sdk.crypto.Crypto
 import web5.sdk.crypto.InMemoryKeyManager
-import web5.sdk.dids.ion.model.Document
 import web5.sdk.dids.ion.model.PublicKey
 import web5.sdk.dids.ion.model.PublicKeyPurpose
 import web5.sdk.dids.ion.model.Service
@@ -32,6 +29,8 @@ import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 class DidIonTest {
@@ -129,9 +128,9 @@ class DidIonTest {
     assertContains(did.uri, "did:ion:")
     assertContains(metadata.longFormDid, metadata.shortFormDid)
     assertDoesNotThrow {
-      keyManager.getPublicKey(metadata.keyAliases.recoveryKeyAlias)
-      keyManager.getPublicKey(metadata.keyAliases.updateKeyAlias)
-      keyManager.getPublicKey(metadata.keyAliases.verificationKeyAlias)
+      keyManager.getPublicKey(metadata.keyAliases.recoveryKeyAlias!!)
+      keyManager.getPublicKey(metadata.keyAliases.updateKeyAlias!!)
+      keyManager.getPublicKey(metadata.keyAliases.verificationKeyAlias!!)
     }
   }
 
@@ -226,15 +225,13 @@ class DidIonTest {
 
     doReturn(nextRecoveryKeyId, nextUpdateKeyId).whenever(keyManager).generatePrivateKey(JWSAlgorithm.ES256K)
 
-    val (recoverOperation, updateKeyAlias) = DidIonManager.createRecoverOperation(
+    val (recoverOperation, keyAliases) = DidIonManager.createRecoverOperation(
       keyManager,
       RecoverDidIonOptions(
-        didString = "did:ion:EiDyOQbbZAa3aiRzeCkV7LOx3SERjjH93EXoIM3UoN4oWg",
+        did = "did:ion:EiDyOQbbZAa3aiRzeCkV7LOx3SERjjH93EXoIM3UoN4oWg",
         recoveryKeyAlias = recoveryKeyAlias,
-        document = Document(
-          publicKeys = listOf(publicKey1),
-          services = listOf(service),
-        )
+        verificationPublicKey = publicKey1,
+        servicesToAdd = listOf(service),
       )
     )
 
@@ -245,19 +242,73 @@ class DidIonTest {
       "EiBJGXo0XUiqZQy0r-fQUHKS3RRVXw5nwUpqGVXEGuTs-g",
       recoverOperation.delta.updateCommitment.toBase64Url()
     );
-    val jws = JWSObject.parse(recoverOperation.signedData)
-    assertDoesNotThrow {
-      Crypto.verify(recoveryKey.toPublicJWK(), jws.signingInput, jws.signature.decode(), jws.header.algorithm)
-    }
     assertEquals(
       "eyJhbGciOiJFUzI1NksifQ.eyJyZWNvdmVyeUNvbW1pdG1lbnQiOiJFaURLSWt3cU82OUlQRzNwT2xIa2RiODZuWXQwYU54U" +
         "0hadTJyLWJoRXpuamRBIiwicmVjb3ZlcnlLZXkiOnsia3R5IjoiRUMiLCJjcnYiOiJzZWNwMjU2azEiLCJ4IjoibklxbFJDeDBleUJT" +
         "WGNRbnFEcFJlU3Y0enVXaHdDUldzc29jOUxfbmo2QSIsInkiOiJpRzI5Vks2bDJVNXNLQlpVU0plUHZ5RnVzWGdTbEsyZERGbFdhQ00" +
-        "4RjdrIn0sImRlbHRhSGFzaCI6IkVpQm9HNlFtamlTSm5ON2phaldnaV9vZDhjR3dYSm9Nc2RlWGlWWTc3NXZ2SkEifQ",
-      jws.signingInput.decodeToString()
+        "4RjdrIn0sImRlbHRhSGFzaCI6IkVpQm9HNlFtamlTSm5ON2phaldnaV9vZDhjR3dYSm9Nc2RlWGlWWTc3NXZ2SkEifQ.58n6Fel9DmR" +
+        "AXxwcJMUwYaUhmj5kigKMNrGjr7eJaJcjOmjvwlKLSjiovWiYrb9yjkfMAjpgbAdU_2EDI1_lZw",
+      recoverOperation.signedData
     );
     assertEquals(1, recoverOperation.delta.patches.count())
-    assertEquals(nextUpdateKeyId, updateKeyAlias)
+    assertEquals(nextUpdateKeyId, keyAliases.updateKeyAlias)
+    assertEquals(nextRecoveryKeyId, keyAliases.recoveryKeyAlias)
+  }
+
+  @Test
+  fun `recover creates keys in key manager`() {
+    val ionManager = DidIonManager {
+      engine = mockEngine()
+    }
+    val keyManager = spy(InMemoryKeyManager())
+    val did = ionManager.create(keyManager)
+    assertNotNull(did.creationMetadata)
+    val recoveryKeyAlias = did.creationMetadata!!.keyAliases.verificationKeyAlias
+
+    assertNotNull(recoveryKeyAlias)
+    // Imagine that your update key was compromised, so you need to recover your DID.
+    val opts = RecoverDidIonOptions(
+      did = did.uri,
+      recoveryKeyAlias = recoveryKeyAlias,
+    )
+    val recoverResult = ionManager.recover(keyManager, opts)
+    assertNotNull(recoverResult.keyAliases.updateKeyAlias)
+    assertNotNull(recoverResult.keyAliases.recoveryKeyAlias)
+    assertNotNull(recoverResult.keyAliases.verificationKeyAlias)
+
+    assertDoesNotThrow {
+      keyManager.getPublicKey(recoverResult.keyAliases.updateKeyAlias!!)
+      keyManager.getPublicKey(recoverResult.keyAliases.recoveryKeyAlias!!)
+      keyManager.getPublicKey(recoverResult.keyAliases.verificationKeyAlias!!)
+    }
+    assertEquals("{}", recoverResult.operationsResponse)
+    assertNotEquals(recoveryKeyAlias, recoverResult.keyAliases.recoveryKeyAlias)
+  }
+
+  @Test
+  fun `deactivate operation is the expected one`() {
+    val keyManager = InMemoryKeyManager()
+    val recoveryKey = readKey("src/test/resources/jwkEs256k1Private.json")
+    val recoveryKeyAlias = keyManager.import(recoveryKey)
+
+    val result = DidIonManager.createDeactivateOperation(
+      keyManager,
+      DeactivateDidIonOptions(
+        did = "did:ion:EiDyOQbbZAa3aiRzeCkV7LOx3SERjjH93EXoIM3UoN4oWg",
+        recoveryKeyAlias = recoveryKeyAlias,
+      )
+    )
+
+    assertEquals("EiDyOQbbZAa3aiRzeCkV7LOx3SERjjH93EXoIM3UoN4oWg", result.didSuffix)
+    assertEquals("deactivate", result.type)
+    assertEquals("EiAJ-97Is59is6FKAProwDo870nmwCeP8n5nRRFwPpUZVQ", result.revealValue.toBase64Url())
+    assertEquals(
+      "eyJhbGciOiJFUzI1NksifQ.eyJkaWRTdWZmaXgiOiJFaUR5T1FiYlpBYTNhaVJ6ZUNrVjdMT3gzU0VSampIOTNFWG9JTTNVb040b1" +
+        "dnIiwicmVjb3ZlcnlLZXkiOnsia3R5IjoiRUMiLCJjcnYiOiJzZWNwMjU2azEiLCJ4IjoibklxbFJDeDBleUJTWGNRbnFEcFJlU3Y0enVXaH" +
+        "dDUldzc29jOUxfbmo2QSIsInkiOiJpRzI5Vks2bDJVNXNLQlpVU0plUHZ5RnVzWGdTbEsyZERGbFdhQ004RjdrIn19.uLgnDBmmFzST4VTmd" +
+        "JcmFKVicF0kQaBqEnRQLbqJydgIg_2oreihCA5sBBIUBlSXwvnA9xdK97ksJGmPQ7asPQ",
+      result.signedData
+    )
   }
 
   @Test

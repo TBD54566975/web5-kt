@@ -32,6 +32,7 @@ import web5.sdk.crypto.KeyManager
 import web5.sdk.dids.ion.model.AddPublicKeysAction
 import web5.sdk.dids.ion.model.AddServicesAction
 import web5.sdk.dids.ion.model.Commitment
+import web5.sdk.dids.ion.model.DeactivateUpdateSignedData
 import web5.sdk.dids.ion.model.Delta
 import web5.sdk.dids.ion.model.Document
 import web5.sdk.dids.ion.model.InitialState
@@ -46,6 +47,7 @@ import web5.sdk.dids.ion.model.ReplaceAction
 import web5.sdk.dids.ion.model.Reveal
 import web5.sdk.dids.ion.model.Service
 import web5.sdk.dids.ion.model.SidetreeCreateOperation
+import web5.sdk.dids.ion.model.SidetreeDeactivateOperation
 import web5.sdk.dids.ion.model.SidetreeRecoverOperation
 import web5.sdk.dids.ion.model.SidetreeUpdateOperation
 import web5.sdk.dids.ion.model.UpdateOperationSignedData
@@ -113,12 +115,35 @@ public data class UpdateDidIonOptions(
  * The options when recovering an ION did.
  */
 public class RecoverDidIonOptions(
-  public val didString: String,
+  public val did: String,
   public val recoveryKeyAlias: String,
-  public val document: Document,
-) {
-  internal fun toPatches(): List<PatchAction> = listOf(ReplaceAction(document))
+  public override val verificationPublicKey: PublicKey? = null,
+  public val updatePublicJwk: JWK? = null,
+  public val recoveryPublicJwk: JWK? = null,
+  public override val verificationMethodId: String? = null,
+  public val servicesToAdd: Iterable<Service> = emptySet(),
+) : VerificationPublicKeyOption {
+  internal fun toPatches(verificationPublicKey: PublicKey): List<PatchAction> = listOf(
+    ReplaceAction(
+      Document(
+        publicKeys = listOf(
+          verificationPublicKey
+        ),
+        services = servicesToAdd
+      )
+    )
+  )
 }
+
+/**
+ * Options when deactivating an ION did.
+ *
+ * [recoveryKeyAlias] is the alias within the keyManager to use when signing. It must match the recovery used with the
+ * last recovery operation.
+ * [did] is the DID that will be deactivated. E.g. "did:ion:123123".
+ */
+public class DeactivateDidIonOptions(public val recoveryKeyAlias: String, public val did: String)
+
 
 /**
  * Provides a specific implementation for creating and resolving "did:ion" method Decentralized Identifiers (DIDs).
@@ -319,8 +344,8 @@ public sealed class DidIonManager(
 
     val base64UrlEncodedSignature = Base64URL(Convert(signatureBytes).toBase64Url(padding = false))
     return JWSObject(
-      header.toBase64URL(),
-      payload.toBase64URL(),
+      jwsObject.header.toBase64URL(),
+      jwsObject.payload.toBase64URL(),
       base64UrlEncodedSignature,
     )
   }
@@ -334,42 +359,27 @@ public sealed class DidIonManager(
 
   private fun createOperation(keyManager: KeyManager, options: CreateDidIonOptions?)
     : Pair<SidetreeCreateOperation, KeyAliases> {
-    val updatePublicJwk: JWK = options?.updatePublicJwk ?: keyManager.getPublicKey(
-      keyManager.generatePrivateKey(JWSAlgorithm.ES256K)
-    )
+    val (updatePublicJwk, updateKeyAlias) = if (options?.updatePublicJwk == null) {
+      val alias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K)
+      Pair(keyManager.getPublicKey(alias), alias)
+    } else {
+      Pair(options.updatePublicJwk, null)
+    }
 
     val publicKeyCommitment = updatePublicJwk.commitment()
 
-    val verificationMethodId = when (options?.verificationMethodId) {
-      null -> UUID.randomUUID().toString()
-      else -> {
-        validateVerificationMethodId(options.verificationMethodId)
-        options.verificationMethodId
-      }
-    }
-    val verificationPublicKey = if (options?.verificationPublicKey == null) {
-      val alias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K)
-      val verificationJwk = keyManager.getPublicKey(alias)
-      PublicKey(
-        id = verificationMethodId,
-        type = "JsonWebKey2020",
-        publicKeyJwk = verificationJwk,
-        purposes = listOf(PublicKeyPurpose.AUTHENTICATION),
-      )
-    } else {
-      options.verificationPublicKey
-    }
+    val (verificationPublicKey, verificationKeyAlias) = getVerificationPublicKeyOrDefault(options, keyManager)
     val patches = listOf(ReplaceAction(Document(listOf(verificationPublicKey))))
     val createOperationDelta = Delta(
       patches = patches,
       updateCommitment = publicKeyCommitment
     )
 
-    val recoveryPublicJwk = if (options?.recoveryPublicJwk == null) {
+    val (recoveryPublicJwk, recoveryKeyAlias) = if (options?.recoveryPublicJwk == null) {
       val alias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K)
-      keyManager.getPublicKey(alias)
+      Pair(keyManager.getPublicKey(alias), alias)
     } else {
-      options.recoveryPublicJwk
+      Pair(options.recoveryPublicJwk, null)
     }
     val recoveryCommitment = recoveryPublicJwk.commitment()
 
@@ -383,12 +393,39 @@ public sealed class DidIonManager(
         delta = createOperationDelta,
       ),
       KeyAliases(
-        updateKeyAlias = updatePublicJwk.keyID,
-        verificationKeyAlias = verificationPublicKey.publicKeyJwk.keyID,
-        recoveryKeyAlias = recoveryPublicJwk.keyID
+        updateKeyAlias = updateKeyAlias,
+        verificationKeyAlias = verificationKeyAlias,
+        recoveryKeyAlias = recoveryKeyAlias
       )
     )
   }
+
+  private fun getVerificationMethodIdOrDefault(options: VerificationPublicKeyOption?) =
+    when (options?.verificationMethodId) {
+      null -> UUID.randomUUID().toString()
+      else -> {
+        validateVerificationMethodId(options.verificationMethodId!!)
+        options.verificationMethodId!!
+      }
+    }
+
+  private fun getVerificationPublicKeyOrDefault(options: VerificationPublicKeyOption?, keyManager: KeyManager) =
+    if (options?.verificationPublicKey == null) {
+      val verificationMethodId = getVerificationMethodIdOrDefault(options)
+      val alias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K)
+      val verificationJwk = keyManager.getPublicKey(alias)
+      Pair(
+        PublicKey(
+          id = verificationMethodId,
+          type = "JsonWebKey2020",
+          publicKeyJwk = verificationJwk,
+          purposes = listOf(PublicKeyPurpose.AUTHENTICATION),
+        ),
+        alias
+      )
+    } else {
+      Pair(options.verificationPublicKey!!, null)
+    }
 
   private fun validateVerificationMethodId(id: String) {
     require(isBase64UrlString(id)) { "verification method id \"$id\" is not base 64 url charset" }
@@ -416,7 +453,7 @@ public sealed class DidIonManager(
   }
 
   internal fun createRecoverOperation(keyManager: KeyManager, options: RecoverDidIonOptions):
-    Pair<SidetreeRecoverOperation, String> {
+    Pair<SidetreeRecoverOperation, KeyAliases> {
     val recoveryPublicKey = keyManager.getPublicKey(options.recoveryKeyAlias)
     val reveal = recoveryPublicKey.reveal()
 
@@ -428,8 +465,10 @@ public sealed class DidIonManager(
     val nextUpdatePublicKey = keyManager.getPublicKey(nextUpdateKeyAlias)
     val nextUpdateCommitment = nextUpdatePublicKey.commitment()
 
+    val (verificationPublicKey, verificationKeyAlias) = getVerificationPublicKeyOrDefault(options, keyManager)
+
     val delta = Delta(
-      patches = options.toPatches(),
+      patches = options.toPatches(verificationPublicKey),
       updateCommitment = nextUpdateCommitment
     )
     val deltaHash = deltaHash(delta)
@@ -442,7 +481,7 @@ public sealed class DidIonManager(
 
     val jwsObject = sign(dataToBeSigned, keyManager, options.recoveryKeyAlias)
 
-    val did = DID.fromString(options.didString)
+    val did = DID.fromString(options.did)
     return Pair(
       SidetreeRecoverOperation(
         type = "recover",
@@ -451,9 +490,58 @@ public sealed class DidIonManager(
         delta = delta,
         signedData = jwsObject.serialize(),
       ),
-      nextUpdateKeyAlias
+      KeyAliases(
+        updateKeyAlias = nextUpdateKeyAlias,
+        verificationKeyAlias = verificationKeyAlias,
+        recoveryKeyAlias = nextRecoveryKeyAlias,
+      )
+    )
+  }
+
+  internal fun createDeactivateOperation(
+    keyManager: KeyManager,
+    options: DeactivateDidIonOptions): SidetreeDeactivateOperation {
+    val recoveryPublicKey = keyManager.getPublicKey(options.recoveryKeyAlias)
+    val reveal = recoveryPublicKey.reveal()
+
+    val did = DID.fromString(options.did)
+
+    val dataToBeSigned = DeactivateUpdateSignedData(
+      didSuffix = did.methodSpecificId,
+      recoveryKey = recoveryPublicKey,
     )
 
+    val jwsObject = sign(dataToBeSigned, keyManager, options.recoveryKeyAlias)
+
+    return SidetreeDeactivateOperation(
+      type = "deactivate",
+      didSuffix = did.methodSpecificId,
+      revealValue = reveal,
+      signedData = jwsObject.serialize(),
+    )
+  }
+
+  /**
+   * Recovers an ION did with the given [options]. The `recoveryKeyAlias` value must be available in the [keyManager].
+   */
+  public fun recover(keyManager: KeyManager, opts: RecoverDidIonOptions): RecoverResult {
+    val (recoverOp, keyAliases) = createRecoverOperation(keyManager, opts)
+
+    val response: HttpResponse = runBlocking {
+      client.post(operationsEndpoint) {
+        contentType(ContentType.Application.Json)
+        setBody(recoverOp)
+      }
+    }
+
+    val opBody = runBlocking {
+      response.bodyAsText()
+    }
+    return RecoverResult(
+      keyAliases = keyAliases,
+      recoverOperation = recoverOp,
+      operationsResponse = opBody,
+    )
   }
 
 
@@ -461,6 +549,19 @@ public sealed class DidIonManager(
    * Default companion object for creating a [DidIonManager] with a default configuration.
    */
   public companion object Default : DidIonManager(DidIonConfiguration())
+}
+
+/**
+ * All the data associated with the [recover] call. Useful for advanced, and debugging, purposes.
+ */
+public class RecoverResult(
+  public val keyAliases: KeyAliases,
+  public val recoverOperation: SidetreeRecoverOperation,
+  public val operationsResponse: String)
+
+private interface VerificationPublicKeyOption {
+  val verificationPublicKey: PublicKey?
+  val verificationMethodId: String?
 }
 
 private fun JWK.commitment(): Commitment {
@@ -493,6 +594,7 @@ private fun JWK.reveal(): Reveal {
   val mh = Multihash.sum(Multicodec.SHA2_256, canonicalized).getOrThrow()
   return Reveal(mh.bytes())
 }
+
 /**
  * Metadata related to the update of an ion DID.
  */
@@ -519,9 +621,9 @@ public class ResolutionException(msg: String) : RuntimeException(msg)
  * Container for the key aliases for an ION did.
  */
 public data class KeyAliases(
-  public val updateKeyAlias: String,
-  public val verificationKeyAlias: String,
-  public val recoveryKeyAlias: String)
+  public val updateKeyAlias: String?,
+  public val verificationKeyAlias: String?,
+  public val recoveryKeyAlias: String?)
 
 /**
  * Options available when creating an ion did.
@@ -533,11 +635,11 @@ public data class KeyAliases(
  * must only use characters from the Base64URL character set.
  */
 public class CreateDidIonOptions(
-  public val verificationPublicKey: PublicKey? = null,
+  public override val verificationPublicKey: PublicKey? = null,
   public val updatePublicJwk: JWK? = null,
   public val recoveryPublicJwk: JWK? = null,
-  public val verificationMethodId: String? = null,
-) : CreateDidOptions
+  public override val verificationMethodId: String? = null,
+) : CreateDidOptions, VerificationPublicKeyOption
 
 /**
  * Metadata related to the creation of a DID (Decentralized Identifier) on the Sidetree protocol.

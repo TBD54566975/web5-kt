@@ -294,3 +294,23 @@ public class RecoveryUpdateSignedData(
   public val recoveryKey: JWK,
   public val deltaHash: String,
   public val anchorOrigin: String? = null)
+
+
+/**
+ * Deactivate operation signed data object as defined in https://identity.foundation/sidetree/spec/#deactivate-signed-data-object
+ */
+public class DeactivateUpdateSignedData(
+  public val didSuffix: String,
+
+  @JsonSerialize(using = JacksonJwk.Serializer::class)
+  @JsonDeserialize(using = JacksonJwk.Deserializer::class)
+  public val recoveryKey: JWK)
+
+/**
+ * Sidetree recover operation as defined in https://identity.foundation/sidetree/api/#deactivate
+ */
+public class SidetreeDeactivateOperation(
+  public val type: String,
+  public val didSuffix: String,
+  public val revealValue: Reveal,
+  public val signedData: String)
