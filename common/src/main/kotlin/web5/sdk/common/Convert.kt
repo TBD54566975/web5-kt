@@ -17,6 +17,7 @@ public val B64URL_ENCODER: Base64.Encoder = Base64.getUrlEncoder()
 public enum class EncodingFormat {
   Base64Url,
   Base58Btc
+  // TODO: add EncodingFormat for Base64Url_Pad and Base64Url_NoPad
 }
 
 /**
