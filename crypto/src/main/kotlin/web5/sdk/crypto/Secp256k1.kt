@@ -218,7 +218,21 @@ public object Secp256k1 : KeyGenerator, Signer {
     val sha256 = MessageDigest.getInstance("SHA-256")
     val payloadDigest = sha256.digest(payload)
 
-    val (rBigint, sBigint) = signer.generateSignature(payloadDigest)
+    val (rBigint, initialSBigint) = signer.generateSignature(payloadDigest)
+
+    // ensure s is always in the bottom half of n.
+    // why? - An ECDSA signature for a given message and private key is not strictly unique. Specifically, if
+    //       (r,s) is a valid signature, then (r, mod(-s, n)) is also a valid signature. This means there
+    //       are two valid signatures for every message/private key pair: one with a "low" s value and one
+    //       with a "high" s value. standardizing acceptance of only 1 of the 2 prevents signature malleability
+    //       issues. Signature malleability is a notable concern in Bitcoin which introduced the low-s
+    //       requirement for all signatures in version 0.11.1.
+    // n - a large prime number that defines the maximum number of points that can be created by
+    //     adding the base point, G, to itself repeatedly. The base point
+    // G - AKA generator point. a predefined point on an elliptic curve.
+    // TODO: consider making lowS a boolean option.
+    val halfN = domainParams.n.shiftRight(1)
+    val sBigint = if (initialSBigint >= halfN) domainParams.n.subtract(initialSBigint) else initialSBigint
 
     // Secp256k1 signatures are always 64 bytes. When using BigInteger.toByteArray() in Java/Kotlin,
     // there can sometimes be a leading zero byte added. This occurs when the most significant bit of the most
