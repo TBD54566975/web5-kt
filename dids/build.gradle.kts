@@ -3,8 +3,6 @@ plugins {
   id("java-library")
 }
 
-version = "1.0"
-
 repositories {
   maven {
     url = uri("https://jitpack.io")

@@ -3,8 +3,6 @@ plugins {
   id("java-library")
 }
 
-version = "0.1.0"
-
 repositories {
   mavenCentral()
 }
