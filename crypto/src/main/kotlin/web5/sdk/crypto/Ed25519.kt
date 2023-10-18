@@ -13,10 +13,10 @@ import com.nimbusds.jose.jwk.gen.OctetKeyPairGenerator
 import com.nimbusds.jose.util.Base64URL
 import org.bouncycastle.crypto.params.Ed25519PrivateKeyParameters
 import web5.sdk.common.Convert
+import web5.sdk.crypto.Ed25519.PRIV_MULTICODEC
+import web5.sdk.crypto.Ed25519.PUB_MULTICODEC
 import web5.sdk.crypto.Ed25519.algorithm
 import web5.sdk.crypto.Ed25519.keyType
-import web5.sdk.crypto.Ed25519.privMultiCodec
-import web5.sdk.crypto.Ed25519.pubMulticodec
 import java.security.GeneralSecurityException
 import java.security.SignatureException
 
@@ -31,16 +31,16 @@ import java.security.SignatureException
  *
  * @property algorithm Specifies the JWS algorithm type. For Ed25519, this is `EdDSA`.
  * @property keyType Specifies the key type. For Ed25519, this is `OKP`.
- * @property pubMulticodec A byte array representing the multicodec prefix for an Ed25519 public key.
- * @property privMultiCodec A byte array representing the multicodec prefix for an Ed25519 private key.
+ * @property PUB_MULTICODEC A byte array representing the multicodec prefix for an Ed25519 public key.
+ * @property PRIV_MULTICODEC A byte array representing the multicodec prefix for an Ed25519 private key.
  */
 
 public object Ed25519 : KeyGenerator, Signer {
   override val algorithm: Algorithm = JWSAlgorithm.EdDSA
   override val keyType: KeyType = KeyType.OKP
 
-  public const val pubMulticodec: Int = 0xed
-  public const val privMultiCodec: Int = 0x1300
+  public const val PUB_MULTICODEC: Int = 0xed
+  public const val PRIV_MULTICODEC: Int = 0x1300
 
   /**
    * Generates a private key utilizing the Ed25519 algorithm.
