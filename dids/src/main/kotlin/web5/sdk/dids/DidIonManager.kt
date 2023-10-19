@@ -33,6 +33,7 @@ import web5.sdk.dids.ion.model.OperationSuffixDataObject
 import web5.sdk.dids.ion.model.PublicKey
 import web5.sdk.dids.ion.model.PublicKeyPurpose
 import web5.sdk.dids.ion.model.ReplaceAction
+import web5.sdk.dids.ion.model.Service
 import web5.sdk.dids.ion.model.SidetreeCreateOperation
 import java.util.UUID
 
@@ -223,7 +224,16 @@ public sealed class DidIonManager(
     } else {
       options.verificationPublicKey
     }
-    val patches = listOf(ReplaceAction(Document(listOf(verificationPublicKey))))
+
+    val services = options?.servicesToAdd?.toList() ?: emptyList()
+    val patches = listOf(
+      ReplaceAction(
+        Document(
+          publicKeys = listOf(verificationPublicKey),
+          services = services,
+        )
+      )
+    )
     val createOperationDelta = Delta(
       patches = patches,
       updateCommitment = publicKeyCommitment
@@ -331,12 +341,14 @@ public data class KeyAliases(
  * @param recoveryPublicJwk When provided, will be used to create the recovery key commitment.
  * @param verificationMethodId When provided, will be used as the verification method id. Cannot be over 50 chars and
  * must only use characters from the Base64URL character set.
+ * @param servicesToAdd When provided, the services will be added to the DID document.
  */
 public class CreateDidIonOptions(
-  public val verificationPublicKey: PublicKey? = null,
   public val updatePublicJwk: JWK? = null,
   public val recoveryPublicJwk: JWK? = null,
+  public val verificationPublicKey: PublicKey? = null,
   public val verificationMethodId: String? = null,
+  public val servicesToAdd: Iterable<Service>? = null,
 ) : CreateDidOptions
 
 /**

@@ -15,6 +15,7 @@ import org.junit.jupiter.api.assertThrows
 import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.dids.ion.model.PublicKey
 import web5.sdk.dids.ion.model.PublicKeyPurpose
+import web5.sdk.dids.ion.model.Service
 import web5.sdk.dids.ion.model.SidetreeCreateOperation
 import java.io.File
 import kotlin.test.Ignore
@@ -75,6 +76,13 @@ class DidIonTest {
         type = "JsonWebKey2020",
         publicKeyJwk = verificationKey,
         purposes = listOf(PublicKeyPurpose.AUTHENTICATION),
+      ),
+      servicesToAdd = listOf(
+        Service(
+          id = "#dwn",
+          type = "DWN",
+          serviceEndpoint = "http://hub.my-personal-server.com",
+        )
       ),
       updatePublicJwk = updateKey,
       recoveryPublicJwk = recoveryKey
