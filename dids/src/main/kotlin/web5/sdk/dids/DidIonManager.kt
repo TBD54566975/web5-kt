@@ -269,10 +269,8 @@ public sealed class DidIonManager(
     )
   }
 
-  private fun validateServices(services: List<Service>) {
-    services.forEach {
-      validateService(it)
-    }
+  private fun validateServices(services: List<Service>) = services.forEach {
+    validateService(it)
   }
 
   private fun validateService(service: Service) {
