@@ -1,5 +1,7 @@
 package web5.sdk.credentials
 
+import com.fasterxml.jackson.annotation.JsonProperty
+
 /**
  * Presentation Exchange
  *
@@ -15,7 +17,9 @@ public class PresentationDefinitionV2(
   public val name: String? = null,
   public val purpose: String? = null,
   public val format: Format? = null,
+  @JsonProperty("submission_requirements")
   public val submissionRequirements: List<SubmissionRequirement>? = null,
+  @JsonProperty("input_descriptors")
   public val inputDescriptors: List<InputDescriptorV2>,
   public val frame: Map<String, Any>? = null
 )
@@ -40,6 +44,7 @@ public class InputDescriptorV2(
  */
 public class ConstraintsV2(
   public val fields: List<FieldV2>? = null,
+  @JsonProperty("limit_disclosure")
   public val limitDisclosure: ConformantConsumerDisclosure? = null
 )
 
@@ -75,7 +80,9 @@ public enum class ConformantConsumerDisclosure(public val str: String) {
  */
 public class Format(
   public val jwt: JwtObject? = null,
+  @JsonProperty("jwt_vc")
   public val jwtVc: JwtObject? = null,
+  @JsonProperty("jwt_vp")
   public val jwtVp: JwtObject? = null
 )
 
@@ -97,6 +104,7 @@ public class SubmissionRequirement(
   public val min: Int? = null,
   public val max: Int? = null,
   public val from: String? = null,
+  @JsonProperty("from_nested")
   public val fromNested: List<SubmissionRequirement>? = null
 )
 
