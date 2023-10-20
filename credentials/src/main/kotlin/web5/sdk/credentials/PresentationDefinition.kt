@@ -1,6 +1,19 @@
 package web5.sdk.credentials
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.core.JsonParser
+import com.fasterxml.jackson.databind.DeserializationContext
+import com.fasterxml.jackson.databind.JsonDeserializer
+import com.networknt.schema.JsonSchema
+import com.networknt.schema.JsonSchemaFactory
+import com.networknt.schema.SpecVersion
+
+public class StringToJsonSchemaDeserializer : JsonDeserializer<JsonSchema>() {
+  private val factory = JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V7)
+  override fun deserialize(p: JsonParser?, ctxt: DeserializationContext?): JsonSchema {
+    return factory.getSchema(p?.valueAsString)
+  }
+}
 
 /**
  * Presentation Exchange
@@ -57,7 +70,7 @@ public class FieldV2(
   public val id: String? = null,
   public val path: List<String>,
   public val purpose: String? = null,
-  public val filter: FilterV2? = null,
+  public val filter: JsonSchema? = null,
   public val predicate: Optionality? = null,
   public val name: String? = null,
   public val optional: Boolean? = null
@@ -138,25 +151,27 @@ public enum class Optionality {
   Preferred
 }
 
-/**
- * Represents filtering constraints.
- */
-public class FilterV2(
-  public val const: NumberOrString? = null,
-  public val enum: List<NumberOrString>? = null,
-  public val exclusiveMinimum: NumberOrString? = null,
-  public val exclusiveMaximum: NumberOrString? = null,
-  public val format: String? = null,
-  public val formatMaximum: String? = null,
-  public val formatMinimum: String? = null,
-  public val formatExclusiveMaximum: String? = null,
-  public val formatExclusiveMinimum: String? = null,
-  public val minLength: Int? = null,
-  public val maxLength: Int? = null,
-  public val minimum: NumberOrString? = null,
-  public val maximum: NumberOrString? = null,
-  public val not: Any? = null,
-  public val pattern: String? = null,
-  public val type: String
-)
+
+
+///**
+// * Represents filtering constraints.
+// */
+//public class FilterV2(
+//  public val const: NumberOrString? = null,
+//  public val enum: List<NumberOrString>? = null,
+//  public val exclusiveMinimum: NumberOrString? = null,
+//  public val exclusiveMaximum: NumberOrString? = null,
+//  public val format: String? = null,
+//  public val formatMaximum: String? = null,
+//  public val formatMinimum: String? = null,
+//  public val formatExclusiveMaximum: String? = null,
+//  public val formatExclusiveMinimum: String? = null,
+//  public val minLength: Int? = null,
+//  public val maxLength: Int? = null,
+//  public val minimum: NumberOrString? = null,
+//  public val maximum: NumberOrString? = null,
+//  public val not: Any? = null,
+//  public val pattern: String? = null,
+//  public val type: String
+//)
 
