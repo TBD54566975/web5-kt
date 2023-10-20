@@ -132,48 +132,10 @@ public enum class Rules {
 }
 
 /**
- * Represents a number or string value.
- */
-//public sealed class NumberOrString {
-//  /**
-//   * Creates a NumberOrString from a number value.
-//   */
-//  public class NumberValue(public val value: Double) : NumberOrString()
-//
-//  /**
-//   * Creates a NumberOrString from a string value.
-//   */
-//  public class StringValue(public val value: String) : NumberOrString()
-//}
-
-/**
  * Enumeration representing optionality.
  */
 public enum class Optionality {
   Required,
   Preferred
 }
-
-
-///**
-// * Represents filtering constraints.
-// */
-//public class FilterV2(
-//  public val const: NumberOrString? = null,
-//  public val enum: List<NumberOrString>? = null,
-//  public val exclusiveMinimum: NumberOrString? = null,
-//  public val exclusiveMaximum: NumberOrString? = null,
-//  public val format: String? = null,
-//  public val formatMaximum: String? = null,
-//  public val formatMinimum: String? = null,
-//  public val formatExclusiveMaximum: String? = null,
-//  public val formatExclusiveMinimum: String? = null,
-//  public val minLength: Int? = null,
-//  public val maxLength: Int? = null,
-//  public val minimum: NumberOrString? = null,
-//  public val maximum: NumberOrString? = null,
-//  public val not: Any? = null,
-//  public val pattern: String? = null,
-//  public val type: String
-//)
 
