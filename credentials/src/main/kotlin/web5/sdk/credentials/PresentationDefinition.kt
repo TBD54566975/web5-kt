@@ -1,19 +1,12 @@
 package web5.sdk.credentials
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.fasterxml.jackson.core.JsonParser
-import com.fasterxml.jackson.databind.DeserializationContext
-import com.fasterxml.jackson.databind.JsonDeserializer
+import com.fasterxml.jackson.annotation.JsonRawValue
+import com.fasterxml.jackson.databind.JsonNode
 import com.networknt.schema.JsonSchema
 import com.networknt.schema.JsonSchemaFactory
 import com.networknt.schema.SpecVersion
-
-public class StringToJsonSchemaDeserializer : JsonDeserializer<JsonSchema>() {
-  private val factory = JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V7)
-  override fun deserialize(p: JsonParser?, ctxt: DeserializationContext?): JsonSchema {
-    return factory.getSchema(p?.valueAsString)
-  }
-}
 
 /**
  * Presentation Exchange
@@ -70,11 +63,21 @@ public class FieldV2(
   public val id: String? = null,
   public val path: List<String>,
   public val purpose: String? = null,
-  public val filter: JsonSchema? = null,
+  @JsonRawValue
+  @JsonProperty("filter")
+  private val filterJson: JsonNode? = null,
   public val predicate: Optionality? = null,
   public val name: String? = null,
   public val optional: Boolean? = null
-)
+) {
+  @get:JsonIgnore
+  public val filterSchema: JsonSchema?
+    get() {
+      if (filterJson == null) return null
+      val schemaFactory = JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V7)
+      return schemaFactory.getSchema(filterJson)
+    }
+}
 
 /**
  * Enumeration representing consumer disclosure options. Represents the possible values of `limit_disclosure' property
@@ -131,17 +134,17 @@ public enum class Rules {
 /**
  * Represents a number or string value.
  */
-public sealed class NumberOrString {
-  /**
-   * Creates a NumberOrString from a number value.
-   */
-  public class NumberValue(public val value: Double) : NumberOrString()
-
-  /**
-   * Creates a NumberOrString from a string value.
-   */
-  public class StringValue(public val value: String) : NumberOrString()
-}
+//public sealed class NumberOrString {
+//  /**
+//   * Creates a NumberOrString from a number value.
+//   */
+//  public class NumberValue(public val value: Double) : NumberOrString()
+//
+//  /**
+//   * Creates a NumberOrString from a string value.
+//   */
+//  public class StringValue(public val value: String) : NumberOrString()
+//}
 
 /**
  * Enumeration representing optionality.
@@ -150,7 +153,6 @@ public enum class Optionality {
   Required,
   Preferred
 }
-
 
 
 ///**
