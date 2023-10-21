@@ -21,6 +21,7 @@ import com.nimbusds.jose.jwk.JWK
  * @property publicKeys List of public keys.
  * @property services List of services.
  */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public data class Document(
   val publicKeys: List<PublicKey> = emptyList(),
   val services: List<Service> = emptyList()

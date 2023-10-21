@@ -15,6 +15,7 @@ import org.junit.jupiter.api.assertThrows
 import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.dids.ion.model.PublicKey
 import web5.sdk.dids.ion.model.PublicKeyPurpose
+import web5.sdk.dids.ion.model.Service
 import web5.sdk.dids.ion.model.SidetreeCreateOperation
 import java.io.File
 import kotlin.test.Ignore
@@ -47,6 +48,53 @@ class DidIonTest {
   }
 
   @Test
+  fun `invalid services throw exception`() {
+    class TestCase(
+      val service: Service,
+      val expectedContains: String
+    )
+
+    val testCases = listOf(
+      TestCase(
+        Service(
+          id = "#dwn",
+          type = "DWN",
+          serviceEndpoint = "http://my.service.com",
+        ),
+        "is not base 64 url charse",
+      ),
+      TestCase(
+        Service(
+          id = "dwn",
+          type = "really really really really really really really really long type",
+          serviceEndpoint = "http://my.service.com",
+        ),
+        "service type \"really really really really really really really really long type\" exceeds" +
+          " max allowed length of 30",
+      ),
+      TestCase(
+        Service(
+          id = "dwn",
+          type = "DWN",
+          serviceEndpoint = "an invalid uri",
+        ),
+        "service endpoint is not a valid URI",
+      )
+    )
+    for (testCase in testCases) {
+      val exception = assertThrows<IllegalArgumentException> {
+        DidIonManager.create(
+          InMemoryKeyManager(),
+          CreateDidIonOptions(
+            servicesToAdd = listOf(testCase.service)
+          )
+        )
+      }
+      assertContains(exception.message!!, testCase.expectedContains)
+    }
+  }
+
+  @Test
   fun `very long verificationMethodId throws exception`() {
     val exception = assertThrows<IllegalArgumentException> {
       DidIonManager.create(
@@ -75,6 +123,13 @@ class DidIonTest {
         type = "JsonWebKey2020",
         publicKeyJwk = verificationKey,
         purposes = listOf(PublicKeyPurpose.AUTHENTICATION),
+      ),
+      servicesToAdd = listOf(
+        Service(
+          id = "dwn",
+          type = "DWN",
+          serviceEndpoint = "http://hub.my-personal-server.com",
+        )
       ),
       updatePublicJwk = updateKey,
       recoveryPublicJwk = recoveryKey
