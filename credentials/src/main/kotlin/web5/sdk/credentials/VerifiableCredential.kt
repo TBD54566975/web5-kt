@@ -72,7 +72,12 @@ public class VerifiableCredential(public val vcDataModel: VcDataModel) {
    */
   public fun sign(did: Did, assertionMethodId: String? = null): String {
     val didResolutionResult = DidResolvers.resolve(did.uri)
-    val assertionMethods = didResolutionResult.didDocument.assertionMethodVerificationMethodsDereferenced
+    val assertionMethods: List<VerificationMethod>? =
+      didResolutionResult.didDocument.assertionMethodVerificationMethodsDereferenced
+
+    require(!assertionMethods.isNullOrEmpty()) {
+      throw SignatureException("no assertion methods found in did document")
+    }
 
     val assertionMethod: VerificationMethod = when {
       assertionMethodId != null -> assertionMethods.find { it.id.toString() == assertionMethodId }
@@ -87,9 +92,14 @@ public class VerifiableCredential(public val vcDataModel: VcDataModel) {
     val algorithm = publicKeyJwk.algorithm
     val jwsAlgorithm = JWSAlgorithm.parse(algorithm.toString())
 
+    val kid = when (assertionMethod.id.isAbsolute) {
+      true -> assertionMethod.id.toString()
+      false -> "${did.uri}${assertionMethod.id}"
+    }
+
     val jwtHeader = JWSHeader.Builder(jwsAlgorithm)
       .type(JOSEObjectType.JWT)
-      .keyID(assertionMethod.id.toString())
+      .keyID(kid)
       .build()
 
     val jwtPayload = JWTClaimsSet.Builder()
