@@ -17,9 +17,10 @@ import org.bouncycastle.crypto.params.ECPublicKeyParameters
 import org.bouncycastle.crypto.signers.ECDSASigner
 import org.bouncycastle.crypto.signers.HMacDSAKCalculator
 import org.bouncycastle.jce.ECNamedCurveTable
+import org.bouncycastle.jce.spec.ECNamedCurveParameterSpec
 import org.bouncycastle.math.ec.ECPoint
-import web5.sdk.crypto.Secp256k1.privMultiCodec
-import web5.sdk.crypto.Secp256k1.pubMulticodec
+import web5.sdk.crypto.Secp256k1.PRIV_MULTICODEC
+import web5.sdk.crypto.Secp256k1.PUB_MULTICODEC
 import java.math.BigInteger
 import java.security.MessageDigest
 import java.security.Security
@@ -35,7 +36,7 @@ import java.security.SignatureException
  * ### Key Points:
  * - Utilizes the ES256K algorithm for signing JWTs.
  * - Utilizes BouncyCastle as the underlying security provider.
- * - Public and private keys can be encoded with [pubMulticodec] and [privMultiCodec] respectively.
+ * - Public and private keys can be encoded with [PUB_MULTICODEC] and [PRIV_MULTICODEC] respectively.
  *
  * ### Example Usage:
  * ```
@@ -64,19 +65,19 @@ public object Secp256k1 : KeyGenerator, Signer {
   override val keyType: KeyType = KeyType.EC
 
   /** [reference](https://github.com/multiformats/multicodec/blob/master/table.csv#L92). */
-  public const val pubMulticodec: Int = 0xe7
+  public const val PUB_MULTICODEC: Int = 0xe7
 
   /** [reference](https://github.com/multiformats/multicodec/blob/master/table.csv#L169). */
-  public const val privMultiCodec: Int = 0x1301
+  public const val PRIV_MULTICODEC: Int = 0x1301
 
   /**  uncompressed key leading byte. */
-  public const val uncompressedKeyIdentifier: Byte = 0x04
+  public const val UNCOMPRESSED_KEY_ID: Byte = 0x04
 
   /** Compressed key leading byte that indicates whether the Y coordinate is even. */
-  public const val compressedKeyEvenYIdentifier: Byte = 0x02
+  public const val COMP_KEY_EVEN_Y_ID: Byte = 0x02
 
   /** Compressed key leading byte that indicates whether the Y coordinate is odd. */
-  public const val compressedKeyOddYIdentifier: Byte = 0x03
+  public const val COMP_KEY_ODD_Y_ID: Byte = 0x03
 
   /**
    * Size of an uncompressed public key in bytes.
@@ -85,7 +86,7 @@ public object Secp256k1 : KeyGenerator, Signer {
    * followed by 32 bytes for the X coordinate and 32 bytes for the Y coordinate.
    * Thus, an uncompressed key is 65 bytes in size.
    */
-  public const val uncompressedKeySize: Int = 65
+  public const val UNCOMPRESSED_KEY_SIZE: Int = 65
 
   /**
    * The byte size of a compressed public key.
@@ -99,7 +100,7 @@ public object Secp256k1 : KeyGenerator, Signer {
    * This constant can be utilized for validating the length of a byte array supposed to
    * represent a compressed public key, ensuring it conforms to the expected format.
    */
-  public const val compressedKeySize: Int = 33
+  public const val COMPRESSED_KEY_SIZE: Int = 33
 
   /**
    * Range that defines the position of the X coordinate in an uncompressed public key byte array.
@@ -116,6 +117,16 @@ public object Secp256k1 : KeyGenerator, Signer {
    * of an uncompressed public key, following the X coordinate.
    */
   public val publicKeyYRange: IntRange = 33..64
+
+  /**
+   * contains the paramaters of the curve's equation (e.g. n, g etc.)
+   */
+  private val spec: ECNamedCurveParameterSpec = ECNamedCurveTable.getParameterSpec("secp256k1")
+
+  /**
+   * another way that parameters of a curve's equation are represented.
+   */
+  private val curveParams: ECDomainParameters = ECDomainParameters(spec.curve, spec.g, spec.n)
 
   /**
    * Generates a private key using the SECP256K1 curve and ES256K algorithm.
@@ -154,11 +165,10 @@ public object Secp256k1 : KeyGenerator, Signer {
     val xBytes = ecKey.x.decode()
     val yBytes = ecKey.y.decode()
 
-    return byteArrayOf(uncompressedKeyIdentifier) + xBytes + yBytes
+    return byteArrayOf(UNCOMPRESSED_KEY_ID) + xBytes + yBytes
   }
 
   override fun bytesToPrivateKey(privateKeyBytes: ByteArray): JWK {
-    val spec = ECNamedCurveTable.getParameterSpec("secp256k1")
     var pointQ: ECPoint = spec.g.multiply(BigInteger(1, privateKeyBytes))
 
     pointQ = pointQ.normalize()
@@ -202,11 +212,8 @@ public object Secp256k1 : KeyGenerator, Signer {
    *                                  for the signing process.
    */
   override fun sign(privateKey: JWK, payload: ByteArray, options: SignOptions?): ByteArray {
-    val spec = ECNamedCurveTable.getParameterSpec("secp256k1")
-    val domainParams = ECDomainParameters(spec.curve, spec.g, spec.n)
-
     val privateKeyBigInt = privateKey.toECKey().d.decodeToBigInteger()
-    val privateKeyParams = ECPrivateKeyParameters(privateKeyBigInt, domainParams)
+    val privateKeyParams = ECPrivateKeyParameters(privateKeyBigInt, curveParams)
 
     // generates k value deterministically using the private key and message hash, ensuring that signing the same
     // message with the same private key will always produce the same signature.
@@ -218,7 +225,21 @@ public object Secp256k1 : KeyGenerator, Signer {
     val sha256 = MessageDigest.getInstance("SHA-256")
     val payloadDigest = sha256.digest(payload)
 
-    val (rBigint, sBigint) = signer.generateSignature(payloadDigest)
+    val (rBigint, initialSBigint) = signer.generateSignature(payloadDigest)
+
+    // ensure s is always in the bottom half of n.
+    // why? - An ECDSA signature for a given message and private key is not strictly unique. Specifically, if
+    //      (r,s) is a valid signature, then (r, mod(-s, n)) is also a valid signature. This means there
+    //      are two valid signatures for every message/private key pair: one with a "low" s value and one
+    //      with a "high" s value. standardizing acceptance of only 1 of the 2 prevents signature malleability
+    //      issues. Signature malleability is a notable concern in Bitcoin which introduced the low-s
+    //      requirement for all signatures in version 0.11.1.
+    // n - a large prime number that defines the maximum number of points that can be created by
+    //    adding the base point, G, to itself repeatedly. The base point
+    // G - AKA generator point. a predefined point on an elliptic curve.
+    // TODO: consider making lowS a boolean option.
+    val halfN = curveParams.n.shiftRight(1)
+    val sBigint = if (initialSBigint >= halfN) curveParams.n.subtract(initialSBigint) else initialSBigint
 
     // Secp256k1 signatures are always 64 bytes. When using BigInteger.toByteArray() in Java/Kotlin,
     // there can sometimes be a leading zero byte added. This occurs when the most significant bit of the most
@@ -232,13 +253,10 @@ public object Secp256k1 : KeyGenerator, Signer {
   }
 
   override fun verify(publicKey: JWK, signedPayload: ByteArray, signature: ByteArray, options: VerifyOptions?) {
-    val spec = ECNamedCurveTable.getParameterSpec("secp256k1")
-    val domainParams = ECDomainParameters(spec.curve, spec.g, spec.n)
-
     val publicKeyBytes = publicKeyToBytes(publicKey)
     val publicKeyPoint = spec.curve.decodePoint(publicKeyBytes)
 
-    val publicKeyParams = ECPublicKeyParameters(publicKeyPoint, domainParams)
+    val publicKeyParams = ECPublicKeyParameters(publicKeyPoint, curveParams)
 
     // generates k value deterministically using the private key and message hash, ensuring that signing the same
     // message with the same private key will always produce the same signature.
@@ -308,14 +326,14 @@ public object Secp256k1 : KeyGenerator, Signer {
    * @throws IllegalArgumentException if the input byte array is not of expected length or doesn't start with 0x04.
    */
   public fun compressPublicKey(publicKeyBytes: ByteArray): ByteArray {
-    require(publicKeyBytes.size == uncompressedKeySize && publicKeyBytes[0] == uncompressedKeyIdentifier) {
+    require(publicKeyBytes.size == UNCOMPRESSED_KEY_SIZE && publicKeyBytes[0] == UNCOMPRESSED_KEY_ID) {
       "Public key must be 65 bytes long and start with 0x04"
     }
 
     val xBytes = publicKeyBytes.sliceArray(publicKeyXRange)
     val yBytes = publicKeyBytes.sliceArray(publicKeyYRange)
 
-    val prefix = if (yBytes.last() % 2 == 0) compressedKeyEvenYIdentifier else compressedKeyOddYIdentifier
+    val prefix = if (yBytes.last() % 2 == 0) COMP_KEY_EVEN_Y_ID else COMP_KEY_ODD_Y_ID
     return byteArrayOf(prefix) + xBytes
   }
 
@@ -323,16 +341,12 @@ public object Secp256k1 : KeyGenerator, Signer {
    * Inflates a compressed public key.
    */
   public fun inflatePublicKey(publicKeyBytes: ByteArray): ByteArray {
-    require(publicKeyBytes.size == compressedKeySize) { "Invalid key size" }
+    require(publicKeyBytes.size == COMPRESSED_KEY_SIZE) { "Invalid key size" }
 
-    val spec = ECNamedCurveTable.getParameterSpec("secp256k1")
-    val curve = spec.curve
-
-    val ecPoint = curve.decodePoint(publicKeyBytes)
+    val ecPoint = spec.curve.decodePoint(publicKeyBytes)
     val xBytes = ecPoint.rawXCoord.encoded
     val yBytes = ecPoint.rawYCoord.encoded
 
-    return byteArrayOf(uncompressedKeyIdentifier) + xBytes + yBytes
+    return byteArrayOf(UNCOMPRESSED_KEY_ID) + xBytes + yBytes
   }
-
 }
