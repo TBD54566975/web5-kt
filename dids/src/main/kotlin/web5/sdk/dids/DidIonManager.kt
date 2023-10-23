@@ -275,6 +275,10 @@ public sealed class DidIonManager(
     val reveal = updatePublicKey.reveal()
     val commitment = newUpdatePublicKey.commitment()
 
+    validateServices(options.servicesToAdd)
+
+    validateDidDocumentKeys(options.publicKeysToAdd)
+
     val updateOpDeltaObject = Delta(
       patches = options.toPatches(),
       updateCommitment = commitment
@@ -311,6 +315,29 @@ public sealed class DidIonManager(
       ),
       newUpdateKeyAlias,
     )
+  }
+
+  private fun validateDidDocumentKeys(publicKeys: Iterable<PublicKey>) {
+    val publicKeyIdSet = HashSet<String>()
+    for (publicKey in publicKeys) {
+      validateId(publicKey.id)
+      if (publicKeyIdSet.contains(publicKey.id)) {
+        throw IllegalArgumentException("DID Document key with ID \"${publicKey.id}\" already exists.")
+      }
+      publicKeyIdSet.add(publicKey.id)
+
+      validatePublicKeyPurposes(publicKey.purposes)
+    }
+  }
+
+  private fun validatePublicKeyPurposes(purposes: Iterable<PublicKeyPurpose>) {
+    val processedPurposes = HashSet<PublicKeyPurpose>()
+    for (purpose in purposes) {
+      if (processedPurposes.contains(purpose)) {
+        throw IllegalArgumentException("Public key purpose \"${purpose.code}\" already specified.")
+      }
+      processedPurposes.add(purpose)
+    }
   }
 
   private fun createOperation(keyManager: KeyManager, options: CreateDidIonOptions?)
@@ -382,7 +409,7 @@ public sealed class DidIonManager(
     )
   }
 
-  private fun validateServices(services: List<Service>) = services.forEach {
+  private fun validateServices(services: Iterable<Service>) = services.forEach {
     validateService(it)
   }
 

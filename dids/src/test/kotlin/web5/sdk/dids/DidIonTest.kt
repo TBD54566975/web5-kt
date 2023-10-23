@@ -187,6 +187,85 @@ class DidIonTest {
   }
 
   @Test
+  fun `update throws exception when given invalid input`() {
+    val keyManager = InMemoryKeyManager()
+    val keyAlias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K)
+    val publicKey = keyManager.getPublicKey(keyAlias)
+
+    val updateKeyAlias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K)
+
+    class TestCase(
+      val services: Iterable<Service> = emptyList(),
+      val publicKeys: Iterable<PublicKey> = emptyList(),
+      val expected: String
+    )
+
+    val testCases = arrayOf(
+      TestCase(
+        services = listOf(
+          Service(
+            id = "#dwn",
+            type = "DWN",
+            serviceEndpoint = "http://my.service.com",
+          )
+        ),
+        expected = "id \"#dwn\" is not base 64 url charset",
+      ),
+      TestCase(
+        publicKeys = listOf(
+          PublicKey(
+            id = "#publicKey1",
+            type = "JsonWebKey2020",
+            publicKeyJwk = publicKey,
+          )
+        ),
+        expected = "id \"#publicKey1\" is not base 64 url charset",
+      ),
+      TestCase(
+        publicKeys = listOf(
+          PublicKey(
+            id = "publicKey1",
+            type = "JsonWebKey2020",
+            publicKeyJwk = publicKey,
+          ),
+
+          PublicKey(
+            id = "publicKey1",
+            type = "JsonWebKey2020",
+            publicKeyJwk = publicKey,
+          )
+        ),
+        expected = "DID Document key with ID \"publicKey1\" already exists.",
+      ),
+      TestCase(
+        publicKeys = listOf(
+          PublicKey(
+            id = "publicKey1",
+            type = "JsonWebKey2020",
+            publicKeyJwk = publicKey,
+            purposes = listOf(PublicKeyPurpose.AUTHENTICATION, PublicKeyPurpose.AUTHENTICATION)
+          )
+        ),
+        expected = "Public key purpose \"authentication\" already specified.",
+      ),
+    )
+    for (testCase in testCases) {
+      val result = assertThrows<IllegalArgumentException> {
+        DidIonManager.update(
+          keyManager,
+          UpdateDidIonOptions(
+            didString = "did:ion:123",
+            updateKeyAlias = updateKeyAlias,
+            servicesToAdd = testCase.services,
+            publicKeysToAdd = testCase.publicKeys,
+          )
+        )
+      }
+      assertEquals(testCase.expected, result.message)
+    }
+  }
+
+  @Test
   fun `update fails when update key is absent`() {
     val result = assertThrows<IllegalArgumentException> {
       DidIonManager.update(
