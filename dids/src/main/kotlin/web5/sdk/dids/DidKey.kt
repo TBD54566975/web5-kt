@@ -66,7 +66,7 @@ public class DidKey(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
     return resolve(this.uri)
   }
 
-  public companion object : DidMethod<DidKey> {
+  public companion object : DidMethod<DidKey, CreateDidKeyOptions> {
     override val methodName: String = "key"
 
     /**
@@ -83,12 +83,8 @@ public class DidKey(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
      *
      * @throws UnsupportedOperationException if the specified curve is not supported.
      */
-    override fun create(keyManager: KeyManager, options: CreateDidOptions?): DidKey {
-      val opts = when (options) {
-        is CreateDidKeyOptions -> options
-        null -> CreateDidKeyOptions()
-        else -> throw IllegalArgumentException("Provided options must be an instance of CreateDidKeyOptions")
-      }
+    override fun create(keyManager: KeyManager, options: CreateDidKeyOptions?): DidKey {
+      val opts = options ?: CreateDidKeyOptions()
 
       val keyAlias = keyManager.generatePrivateKey(opts.algorithm, opts.curve)
       val publicKey = keyManager.getPublicKey(keyAlias)

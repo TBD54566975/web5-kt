@@ -1,9 +1,11 @@
 package web5.sdk.dids
 
 import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import foundation.identity.did.DIDDocument
+import web5.sdk.dids.ion.model.MetadataMethod
 
 /**
  * Represents the result of DID resolution as per the W3C DID Core specification.
@@ -15,10 +17,11 @@ import foundation.identity.did.DIDDocument
  * @property didDocumentMetadata Metadata about the DID document. Optional.
  */
 public class DidResolutionResult(
+  @JsonProperty("@context")
   public var context: String? = null,
   public var didDocument: DIDDocument,
-  public var didResolutionMetadata: DidResolutionMetadata = DidResolutionMetadata(),
-  public var didDocumentMetadata: DidDocumentMetadata = DidDocumentMetadata()
+  public var didResolutionMetadata: DidResolutionMetadata? = null,
+  public var didDocumentMetadata: DidDocumentMetadata? = null
 ) {
   override fun toString(): String {
     return objectMapper.writeValueAsString(this)
@@ -64,6 +67,8 @@ public class DidDocumentMetadata(
   public var versionId: String? = null,
   public var nextUpdate: String? = null,
   public var nextVersionId: String? = null,
-  public var equivalentId: String? = null,
+  public var equivalentId: List<String>? = null,
   public var canonicalId: String? = null,
+  public val method: MetadataMethod? = null,
 )
+

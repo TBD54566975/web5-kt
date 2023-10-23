@@ -7,7 +7,7 @@ import web5.sdk.crypto.Crypto.generatePrivateKey
 import web5.sdk.crypto.Crypto.publicKeyToBytes
 import web5.sdk.crypto.Crypto.sign
 
-public typealias CryptoAlgorithm = Pair<Algorithm, Curve?>
+public typealias CryptoAlgorithm = Pair<Algorithm?, Curve?>
 
 /**
  * Cryptography utility object providing key generation, signature creation, and other crypto-related functionalities.
@@ -39,22 +39,23 @@ public typealias CryptoAlgorithm = Pair<Algorithm, Curve?>
  */
 public object Crypto {
   private val keyGenerators = mapOf<CryptoAlgorithm, KeyGenerator>(
+    Pair(null, Curve.SECP256K1) to Secp256k1,
     Pair(Secp256k1.algorithm, null) to Secp256k1,
     Pair(Secp256k1.algorithm, Curve.SECP256K1) to Secp256k1,
     Pair(Ed25519.algorithm, Curve.Ed25519) to Ed25519
   )
 
   private val keyGeneratorsByMultiCodec = mapOf<Int, KeyGenerator>(
-    Ed25519.privMultiCodec to Ed25519,
-    Ed25519.pubMulticodec to Ed25519,
-    Secp256k1.privMultiCodec to Secp256k1,
-    Secp256k1.pubMulticodec to Secp256k1
+    Ed25519.PRIV_MULTICODEC to Ed25519,
+    Ed25519.PUB_MULTICODEC to Ed25519,
+    Secp256k1.PRIV_MULTICODEC to Secp256k1,
+    Secp256k1.PUB_MULTICODEC to Secp256k1
   )
 
   private val multiCodecsByAlgorithm = mapOf(
-    Pair(Secp256k1.algorithm, null) to Secp256k1.pubMulticodec,
-    Pair(Secp256k1.algorithm, Curve.SECP256K1) to Secp256k1.pubMulticodec,
-    Pair(Ed25519.algorithm, Curve.Ed25519) to Ed25519.pubMulticodec
+    Pair(Secp256k1.algorithm, null) to Secp256k1.PUB_MULTICODEC,
+    Pair(Secp256k1.algorithm, Curve.SECP256K1) to Secp256k1.PUB_MULTICODEC,
+    Pair(Ed25519.algorithm, Curve.Ed25519) to Ed25519.PUB_MULTICODEC
   )
 
   private val signers = mapOf<CryptoAlgorithm, Signer>(
@@ -181,7 +182,7 @@ public object Crypto {
    * @return The corresponding [KeyGenerator].
    * @throws IllegalArgumentException if the algorithm or curve is not supported.
    */
-  public fun getKeyGenerator(algorithm: Algorithm, curve: Curve? = null): KeyGenerator {
+  public fun getKeyGenerator(algorithm: Algorithm?, curve: Curve? = null): KeyGenerator {
     return keyGenerators.getOrElse(Pair(algorithm, curve)) {
       throw IllegalArgumentException("Algorithm $algorithm not supported")
     }

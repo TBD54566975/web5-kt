@@ -22,6 +22,7 @@ dependencies {
   implementation("com.nfeld.jsonpathkt:jsonpathkt:2.0.1")
   implementation("com.nimbusds:nimbus-jose-jwt:9.34")
   implementation("decentralized-identity:did-common-java:1.9.0")
+  implementation("com.networknt:json-schema-validator:1.0.87")
 
   implementation("io.ktor:ktor-client-core:$ktor_version")
   implementation("io.ktor:ktor-client-cio:$ktor_version")
@@ -32,4 +33,5 @@ dependencies {
   testImplementation("io.ktor:ktor-client-mock:$ktor_version")
 
   testImplementation(kotlin("test"))
+  testImplementation("com.willowtreeapps.assertk:assertk:0.27.0")
 }

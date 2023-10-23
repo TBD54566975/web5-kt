@@ -1,5 +1,13 @@
 package web5.sdk.credentials
 
+import com.fasterxml.jackson.annotation.JsonIgnore
+import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.annotation.JsonRawValue
+import com.fasterxml.jackson.databind.JsonNode
+import com.networknt.schema.JsonSchema
+import com.networknt.schema.JsonSchemaFactory
+import com.networknt.schema.SpecVersion
+
 /**
  * Presentation Exchange
  *
@@ -15,7 +23,9 @@ public class PresentationDefinitionV2(
   public val name: String? = null,
   public val purpose: String? = null,
   public val format: Format? = null,
+  @JsonProperty("submission_requirements")
   public val submissionRequirements: List<SubmissionRequirement>? = null,
+  @JsonProperty("input_descriptors")
   public val inputDescriptors: List<InputDescriptorV2>,
   public val frame: Map<String, Any>? = null
 )
@@ -40,6 +50,7 @@ public class InputDescriptorV2(
  */
 public class ConstraintsV2(
   public val fields: List<FieldV2>? = null,
+  @JsonProperty("limit_disclosure")
   public val limitDisclosure: ConformantConsumerDisclosure? = null
 )
 
@@ -52,11 +63,21 @@ public class FieldV2(
   public val id: String? = null,
   public val path: List<String>,
   public val purpose: String? = null,
-  public val filter: FilterV2? = null,
+  @JsonRawValue
+  @JsonProperty("filter")
+  private val filterJson: JsonNode? = null,
   public val predicate: Optionality? = null,
   public val name: String? = null,
   public val optional: Boolean? = null
-)
+) {
+  @get:JsonIgnore
+  public val filterSchema: JsonSchema?
+    get() {
+      if (filterJson == null) return null
+      val schemaFactory = JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V7)
+      return schemaFactory.getSchema(filterJson)
+    }
+}
 
 /**
  * Enumeration representing consumer disclosure options. Represents the possible values of `limit_disclosure' property
@@ -75,7 +96,9 @@ public enum class ConformantConsumerDisclosure(public val str: String) {
  */
 public class Format(
   public val jwt: JwtObject? = null,
+  @JsonProperty("jwt_vc")
   public val jwtVc: JwtObject? = null,
+  @JsonProperty("jwt_vp")
   public val jwtVp: JwtObject? = null
 )
 
@@ -97,6 +120,7 @@ public class SubmissionRequirement(
   public val min: Int? = null,
   public val max: Int? = null,
   public val from: String? = null,
+  @JsonProperty("from_nested")
   public val fromNested: List<SubmissionRequirement>? = null
 )
 
@@ -108,47 +132,10 @@ public enum class Rules {
 }
 
 /**
- * Represents a number or string value.
- */
-public sealed class NumberOrString {
-  /**
-   * Creates a NumberOrString from a number value.
-   */
-  public class NumberValue(public val value: Double) : NumberOrString()
-
-  /**
-   * Creates a NumberOrString from a string value.
-   */
-  public class StringValue(public val value: String) : NumberOrString()
-}
-
-/**
  * Enumeration representing optionality.
  */
 public enum class Optionality {
   Required,
   Preferred
 }
-
-/**
- * Represents filtering constraints.
- */
-public class FilterV2(
-  public val const: NumberOrString? = null,
-  public val enum: List<NumberOrString>? = null,
-  public val exclusiveMinimum: NumberOrString? = null,
-  public val exclusiveMaximum: NumberOrString? = null,
-  public val format: String? = null,
-  public val formatMaximum: String? = null,
-  public val formatMinimum: String? = null,
-  public val formatExclusiveMaximum: String? = null,
-  public val formatExclusiveMinimum: String? = null,
-  public val minLength: Int? = null,
-  public val maxLength: Int? = null,
-  public val minimum: NumberOrString? = null,
-  public val maximum: NumberOrString? = null,
-  public val not: Any? = null,
-  public val pattern: String? = null,
-  public val type: String
-)
 

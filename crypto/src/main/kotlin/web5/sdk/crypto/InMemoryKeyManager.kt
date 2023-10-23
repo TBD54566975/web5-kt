@@ -85,4 +85,19 @@ public class InMemoryKeyManager : KeyManager {
 
   private fun getPrivateKey(keyAlias: String) =
     keyStore[keyAlias] ?: throw IllegalArgumentException("key with alias $keyAlias not found")
+
+  /**
+   * Imports [jwk] and returns the alias that refers to it.
+   */
+  public fun import(jwk: JWK): String {
+    require(jwk.isPrivate) {
+      "Importing a non-private key is not permitted"
+    }
+    var kid = jwk.keyID
+    if (kid.isNullOrEmpty()) {
+      kid = jwk.computeThumbprint().toString()
+    }
+    keyStore.putIfAbsent(kid, jwk)
+    return kid
+  }
 }
