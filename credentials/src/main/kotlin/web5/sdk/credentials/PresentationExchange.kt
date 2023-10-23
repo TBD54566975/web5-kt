@@ -44,7 +44,7 @@ public object PresentationExchange {
         var satisfied = true
         for (field in requiredFields) {
           // we ignore field filters
-          if (field.filter != null) {
+          if (field.filterSchema != null) {
             throw UnsupportedOperationException("Field Filter is not implemented")
           }
 

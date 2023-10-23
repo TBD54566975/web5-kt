@@ -25,6 +25,7 @@ import web5.sdk.common.EncodingFormat
  * @property publicKeys Iterable of public keys.
  * @property services Iterable of services.
  */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public data class Document(
   val publicKeys: Iterable<PublicKey> = emptyList(),
   val services: Iterable<Service> = emptyList()

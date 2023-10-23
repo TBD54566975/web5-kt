@@ -71,6 +71,53 @@ class DidIonTest {
   }
 
   @Test
+  fun `invalid services throw exception`() {
+    class TestCase(
+      val service: Service,
+      val expectedContains: String
+    )
+
+    val testCases = listOf(
+      TestCase(
+        Service(
+          id = "#dwn",
+          type = "DWN",
+          serviceEndpoint = "http://my.service.com",
+        ),
+        "is not base 64 url charse",
+      ),
+      TestCase(
+        Service(
+          id = "dwn",
+          type = "really really really really really really really really long type",
+          serviceEndpoint = "http://my.service.com",
+        ),
+        "service type \"really really really really really really really really long type\" exceeds" +
+          " max allowed length of 30",
+      ),
+      TestCase(
+        Service(
+          id = "dwn",
+          type = "DWN",
+          serviceEndpoint = "an invalid uri",
+        ),
+        "service endpoint is not a valid URI",
+      )
+    )
+    for (testCase in testCases) {
+      val exception = assertThrows<IllegalArgumentException> {
+        DidIonManager.create(
+          InMemoryKeyManager(),
+          CreateDidIonOptions(
+            servicesToAdd = listOf(testCase.service)
+          )
+        )
+      }
+      assertContains(exception.message!!, testCase.expectedContains)
+    }
+  }
+
+  @Test
   fun `very long verificationMethodId throws exception`() {
     val exception = assertThrows<IllegalArgumentException> {
       DidIonManager.create(
@@ -99,6 +146,13 @@ class DidIonTest {
         type = "JsonWebKey2020",
         publicKeyJwk = verificationKey,
         purposes = listOf(PublicKeyPurpose.AUTHENTICATION),
+      ),
+      servicesToAdd = listOf(
+        Service(
+          id = "dwn",
+          type = "DWN",
+          serviceEndpoint = "http://hub.my-personal-server.com",
+        )
       ),
       updatePublicJwk = updateKey,
       recoveryPublicJwk = recoveryKey
@@ -145,6 +199,85 @@ class DidIonTest {
       keyManager.getPublicKey(metadata.keyAliases.recoveryKeyAlias!!)
       keyManager.getPublicKey(metadata.keyAliases.updateKeyAlias!!)
       keyManager.getPublicKey(metadata.keyAliases.verificationKeyAlias!!)
+    }
+  }
+
+  @Test
+  fun `update throws exception when given invalid input`() {
+    val keyManager = InMemoryKeyManager()
+    val keyAlias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K)
+    val publicKey = keyManager.getPublicKey(keyAlias)
+
+    val updateKeyAlias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K)
+
+    class TestCase(
+      val services: Iterable<Service> = emptyList(),
+      val publicKeys: Iterable<PublicKey> = emptyList(),
+      val expected: String
+    )
+
+    val testCases = arrayOf(
+      TestCase(
+        services = listOf(
+          Service(
+            id = "#dwn",
+            type = "DWN",
+            serviceEndpoint = "http://my.service.com",
+          )
+        ),
+        expected = "id \"#dwn\" is not base 64 url charset",
+      ),
+      TestCase(
+        publicKeys = listOf(
+          PublicKey(
+            id = "#publicKey1",
+            type = "JsonWebKey2020",
+            publicKeyJwk = publicKey,
+          )
+        ),
+        expected = "id \"#publicKey1\" is not base 64 url charset",
+      ),
+      TestCase(
+        publicKeys = listOf(
+          PublicKey(
+            id = "publicKey1",
+            type = "JsonWebKey2020",
+            publicKeyJwk = publicKey,
+          ),
+
+          PublicKey(
+            id = "publicKey1",
+            type = "JsonWebKey2020",
+            publicKeyJwk = publicKey,
+          )
+        ),
+        expected = "DID Document key with ID \"publicKey1\" already exists.",
+      ),
+      TestCase(
+        publicKeys = listOf(
+          PublicKey(
+            id = "publicKey1",
+            type = "JsonWebKey2020",
+            publicKeyJwk = publicKey,
+            purposes = listOf(PublicKeyPurpose.AUTHENTICATION, PublicKeyPurpose.AUTHENTICATION)
+          )
+        ),
+        expected = "Public key purpose \"authentication\" already specified.",
+      ),
+    )
+    for (testCase in testCases) {
+      val result = assertThrows<IllegalArgumentException> {
+        DidIonManager.update(
+          keyManager,
+          UpdateDidIonOptions(
+            didString = "did:ion:123",
+            updateKeyAlias = updateKeyAlias,
+            servicesToAdd = testCase.services,
+            publicKeysToAdd = testCase.publicKeys,
+          )
+        )
+      }
+      assertEquals(testCase.expected, result.message)
     }
   }
 

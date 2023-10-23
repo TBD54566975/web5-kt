@@ -51,6 +51,7 @@ import web5.sdk.dids.ion.model.SidetreeDeactivateOperation
 import web5.sdk.dids.ion.model.SidetreeRecoverOperation
 import web5.sdk.dids.ion.model.SidetreeUpdateOperation
 import web5.sdk.dids.ion.model.UpdateOperationSignedData
+import java.net.URI
 import java.util.UUID
 
 private const val operationsPath = "/operations"
@@ -178,7 +179,9 @@ public class DidIonHandle(
   keyManager: KeyManager,
   public val creationMetadata: IonCreationMetadata? = null) : Did(uri, keyManager)
 
-private const val maxVerificationMethodIdLength = 50
+private const val maxServiceTypeLength = 30
+
+private const val maxIdLength = 50
 
 private const val base64UrlCharsetRegexStr = "^[A-Za-z0-9_-]+$"
 
@@ -322,6 +325,10 @@ public sealed class DidIonManager(
     val reveal = updatePublicKey.reveal()
     val commitment = newUpdatePublicKey.commitment()
 
+    validateServices(options.servicesToAdd)
+
+    validateDidDocumentKeys(options.publicKeysToAdd)
+
     val updateOpDeltaObject = Delta(
       patches = options.toPatches(),
       updateCommitment = commitment
@@ -368,6 +375,29 @@ public sealed class DidIonManager(
     return Base64URL.encode(deltaHashBytes).toString()
   }
 
+  private fun validateDidDocumentKeys(publicKeys: Iterable<PublicKey>) {
+    val publicKeyIdSet = HashSet<String>()
+    for (publicKey in publicKeys) {
+      validateId(publicKey.id)
+      if (publicKeyIdSet.contains(publicKey.id)) {
+        throw IllegalArgumentException("DID Document key with ID \"${publicKey.id}\" already exists.")
+      }
+      publicKeyIdSet.add(publicKey.id)
+
+      validatePublicKeyPurposes(publicKey.purposes)
+    }
+  }
+
+  private fun validatePublicKeyPurposes(purposes: Iterable<PublicKeyPurpose>) {
+    val processedPurposes = HashSet<PublicKeyPurpose>()
+    for (purpose in purposes) {
+      if (processedPurposes.contains(purpose)) {
+        throw IllegalArgumentException("Public key purpose \"${purpose.code}\" already specified.")
+      }
+      processedPurposes.add(purpose)
+    }
+  }
+
   private fun createOperation(keyManager: KeyManager, options: CreateDidIonOptions?)
     : Pair<SidetreeCreateOperation, KeyAliases> {
     val (updatePublicJwk, updateKeyAlias) = if (options?.updatePublicJwk == null) {
@@ -380,7 +410,18 @@ public sealed class DidIonManager(
     val publicKeyCommitment = updatePublicJwk.commitment()
 
     val (verificationPublicKey, verificationKeyAlias) = getVerificationPublicKeyOrDefault(options, keyManager)
-    val patches = listOf(ReplaceAction(Document(listOf(verificationPublicKey))))
+
+    val services = options?.servicesToAdd?.toList() ?: emptyList()
+    validateServices(services)
+
+    val patches = listOf(
+      ReplaceAction(
+        Document(
+          publicKeys = listOf(verificationPublicKey),
+          services = services,
+        )
+      )
+    )
     val createOperationDelta = Delta(
       patches = patches,
       updateCommitment = publicKeyCommitment
@@ -415,7 +456,7 @@ public sealed class DidIonManager(
     when (options?.verificationMethodId) {
       null -> UUID.randomUUID().toString()
       else -> {
-        validateVerificationMethodId(options.verificationMethodId!!)
+        validateId(options.verificationMethodId!!)
         options.verificationMethodId!!
       }
     }
@@ -438,11 +479,29 @@ public sealed class DidIonManager(
       Pair(options.verificationPublicKey!!, null)
     }
 
-  private fun validateVerificationMethodId(id: String) {
-    require(isBase64UrlString(id)) { "verification method id \"$id\" is not base 64 url charset" }
+  private fun validateServices(services: Iterable<Service>) = services.forEach {
+    validateService(it)
+  }
 
-    require(id.length <= maxVerificationMethodIdLength) {
-      "verification method id \"$id\" exceeds max allowed length of $maxVerificationMethodIdLength"
+  private fun validateService(service: Service) {
+    validateId(service.id)
+
+    require(service.type.length < maxServiceTypeLength) {
+      "service type \"${service.type}\" exceeds max allowed length of $maxServiceTypeLength"
+    }
+
+    try {
+      URI.create(service.serviceEndpoint)
+    } catch (e: Exception) {
+      throw IllegalArgumentException("service endpoint is not a valid URI", e)
+    }
+  }
+
+  private fun validateId(id: String) {
+    require(isBase64UrlString(id)) { "id \"$id\" is not base 64 url charset" }
+
+    require(id.length <= maxIdLength) {
+      "id \"$id\" exceeds max allowed length of $maxIdLength"
     }
   }
 
@@ -676,12 +735,18 @@ public data class KeyAliases(
  * @param recoveryPublicJwk When provided, will be used to create the recovery key commitment.
  * @param verificationMethodId When provided, will be used as the verification method id. Cannot be over 50 chars and
  * must only use characters from the Base64URL character set.
+ * @param servicesToAdd When provided, the services will be added to the DID document. Note that for each of the
+ * services that should be added, the following must hold:
+ *   - The `id` field cannot be over 50 chars and must only use characters from the Base64URL character set.
+ *   - The `type` field cannot be over 30 characters.
+ *   - The `serviceEndpoint` must be a valid URI.
  */
 public class CreateDidIonOptions(
   public override val verificationPublicKey: PublicKey? = null,
   public val updatePublicJwk: JWK? = null,
   public val recoveryPublicJwk: JWK? = null,
   public override val verificationMethodId: String? = null,
+  public val servicesToAdd: Iterable<Service>? = null,
 ) : CreateDidOptions, VerificationPublicKeyOption
 
 /**
