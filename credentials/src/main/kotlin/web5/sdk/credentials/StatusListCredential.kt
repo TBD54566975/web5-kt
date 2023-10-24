@@ -8,6 +8,7 @@ import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.plugins.ResponseException
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.get
+import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.isSuccess
 import io.ktor.serialization.jackson.jackson
@@ -192,23 +193,25 @@ public object StatusListCredential {
     credentialToValidate: VerifiableCredential,
     httpClient: HttpClient? = null // default HTTP client but can be overridden
   ): Boolean {
-    return runBlocking {
       var isDefaultClient = false
       val clientToUse = httpClient ?: defaultHttpClient().also { isDefaultClient = true }
 
       try {
         val statusListEntryValue: StatusList2021Entry =
           StatusList2021Entry.fromJsonObject(credentialToValidate.vcDataModel.credentialStatus.jsonObject)
-        val statusListCredential =
-          clientToUse.fetchStatusListCredential(statusListEntryValue.statusListCredential.toString())
+        val statusListCredential: VerifiableCredential
 
-        return@runBlocking validateCredentialInStatusList(credentialToValidate, statusListCredential)
+        runBlocking {
+          statusListCredential =
+            clientToUse.fetchStatusListCredential(statusListEntryValue.statusListCredential.toString())
+        }
+
+        return validateCredentialInStatusList(credentialToValidate, statusListCredential)
       } finally {
         if (isDefaultClient) {
           clientToUse.close()
         }
       }
-    }
   }
 
   private fun defaultHttpClient(): HttpClient {
@@ -220,18 +223,26 @@ public object StatusListCredential {
   }
 
   private suspend fun HttpClient.fetchStatusListCredential(url: String): VerifiableCredential {
+    val response: HttpResponse
+
     try {
-      val response: io.ktor.client.statement.HttpResponse = this.get(url)
+      response = this.get(url)
+    } catch (e: Exception) {
+      throw RuntimeException("Failed to retrieve VerifiableCredentialType from $url", e)
+    }
+
+    try {
       if (response.status.isSuccess()) {
         val body = response.bodyAsText()
         return VerifiableCredential.parseJwt(body)
       } else {
-        throw ClientRequestException(response, "Failed to retrieve VerifiableCredentialType from $url")
+        throw ClientRequestException(
+          response,
+          "Failed to retrieve VerifiableCredentialType from $url with status ${response.status}"
+        )
       }
-    } catch (e: ClientRequestException) {
-      throw Exception("Failed to fetch the status list credential due to a request error: ${e.message}", e)
-    } catch (e: ResponseException) {
-      throw Exception("Failed to fetch the status list credential due to a response error: ${e.message}", e)
+    } catch (e: Exception) {
+      throw RuntimeException("Failed to fetch the status list credential", e)
     }
   }
 
