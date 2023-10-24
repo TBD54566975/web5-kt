@@ -1,6 +1,6 @@
 package web5.sdk.dids
 
-import org.junit.jupiter.api.Nested
+import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Test
 import web5.sdk.crypto.InMemoryKeyManager
 
@@ -10,5 +10,13 @@ class DidResolversTest {
   @Test
   fun `it works`() {
     DidResolvers.resolve("did:key:z6MkiTBz1ymuepAQ4HEHYSF1H8quG5GLVVQR3djdX3mDooWp", null)
+  }
+
+  @Test
+  fun `resolving a default ion did contains assertion method`() {
+    val ionDid = DidIonManager.create(InMemoryKeyManager())
+
+    val resolutionResult= DidResolvers.resolve(ionDid.uri)
+    assertNotNull(resolutionResult.didDocument.assertionMethodVerificationMethodsDereferenced)
   }
 }
