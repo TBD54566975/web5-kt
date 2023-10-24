@@ -27,9 +27,10 @@ import kotlin.test.assertTrue
 class DidIonTest {
 
   @Test
-  @Ignore("For demonstration purposes only - this makes a network call")
+//  @Ignore("For demonstration purposes only - this makes a network call")
   fun createWithDefault() {
     val did = DidIonManager.create(InMemoryKeyManager())
+    val resolution = DidResolvers.resolve(did.uri)
     assertContains(did.uri, "did:ion:")
     assertTrue(did.creationMetadata!!.longFormDid.startsWith(did.uri))
   }
@@ -137,6 +138,7 @@ class DidIonTest {
     val did = manager.create(keyManager, opts)
     assertContains(did.uri, "did:ion:")
     assertContains(did.creationMetadata!!.longFormDid, did.creationMetadata!!.shortFormDid)
+
   }
 
   private fun readKey(pathname: String): JWK {
