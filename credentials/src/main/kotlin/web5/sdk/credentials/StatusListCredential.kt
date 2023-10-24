@@ -1,13 +1,18 @@
 package web5.sdk.credentials
 
 import com.danubetech.verifiablecredentials.CredentialSubject
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.plugins.ResponseException
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.get
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.isSuccess
+import io.ktor.serialization.jackson.jackson
+import kotlinx.coroutines.runBlocking
+import web5.sdk.dids.DidResolvers
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.net.URI
@@ -68,7 +73,7 @@ public object StatusListCredential {
     statusListCredentialId: String,
     issuer: String,
     statusPurpose: StatusPurpose,
-    issuedCredentials: List<VerifiableCredential>
+    issuedCredentials: Iterable<VerifiableCredential>
   ): VerifiableCredential {
     val statusListIndexes: List<String>
     val bitString: String
@@ -78,6 +83,24 @@ public object StatusListCredential {
       bitString = bitstringGeneration(statusListIndexes)
     } catch (e: Exception) {
       throw RuntimeException("An error occurred during the creation of the status list credential: ${e.message}", e)
+    }
+
+    try {
+      URI.create(statusListCredentialId)
+    } catch (e: Exception) {
+      throw IllegalArgumentException("status list credential id is not a valid URI", e)
+    }
+
+    try {
+      URI.create(issuer)
+    } catch (e: Exception) {
+      throw IllegalArgumentException("issuer is not a valid URI", e)
+    }
+
+    try {
+      DidResolvers.resolve(issuer)
+    } catch (e: Exception) {
+      throw IllegalArgumentException("issuer: $issuer not resolvable", e)
     }
 
     val claims = mapOf(STATUS_PURPOSE to statusPurpose.toString().lowercase(), ENCODED_LIST to bitString)
@@ -123,23 +146,23 @@ public object StatusListCredential {
     val statusListCredStatusPurpose: String? =
       statusListCredential.vcDataModel.credentialSubject.jsonObject[STATUS_PURPOSE] as? String?
 
-    if (statusListEntryValue.statusPurpose == null) {
-      throw IllegalArgumentException("Status purpose in the credential to validate is null")
+    require(statusListEntryValue.statusPurpose != null) {
+      "Status purpose in the credential to validate is null"
     }
 
-    if (statusListCredStatusPurpose == null) {
-      throw IllegalArgumentException("Status purpose in the status list credential is null")
+    require(statusListCredStatusPurpose != null) {
+      "Status purpose in the status list credential is null"
     }
 
-    if (statusListEntryValue.statusPurpose != statusListCredStatusPurpose) {
-      throw IllegalArgumentException("Status purposes do not match between the credentials")
+    require(statusListEntryValue.statusPurpose == statusListCredStatusPurpose) {
+      "Status purposes do not match between the credentials"
     }
 
     val compressedBitstring: String? =
       statusListCredential.vcDataModel.credentialSubject.jsonObject[ENCODED_LIST] as? String?
 
-    if (compressedBitstring == null || compressedBitstring.isEmpty()) {
-      throw IllegalArgumentException("Compressed bitstring is null or empty")
+    require(!compressedBitstring.isNullOrEmpty()) {
+      "Compressed bitstring is null or empty"
     }
 
     val credentialIndex = statusListEntryValue.statusListIndex
@@ -165,30 +188,35 @@ public object StatusListCredential {
    * val isRevoked = validateCredentialInStatusList(credentialToCheck)
    * ```
    */
-  public suspend fun validateCredentialInStatusList(
+  public fun validateCredentialInStatusList(
     credentialToValidate: VerifiableCredential,
     httpClient: HttpClient? = null // default HTTP client but can be overridden
   ): Boolean {
+    return runBlocking {
+      var isDefaultClient = false
+      val clientToUse = httpClient ?: defaultHttpClient().also { isDefaultClient = true }
 
-    var isDefaultClient = false
-    val clientToUse = httpClient ?: defaultHttpClient().also { isDefaultClient = true }
+      try {
+        val statusListEntryValue: StatusList2021Entry =
+          StatusList2021Entry.fromJsonObject(credentialToValidate.vcDataModel.credentialStatus.jsonObject)
+        val statusListCredential =
+          clientToUse.fetchStatusListCredential(statusListEntryValue.statusListCredential.toString())
 
-    try {
-      val statusListEntryValue: StatusList2021Entry =
-        StatusList2021Entry.fromJsonObject(credentialToValidate.vcDataModel.credentialStatus.jsonObject)
-      val statusListCredential =
-        clientToUse.fetchStatusListCredential(statusListEntryValue.statusListCredential.toString())
-
-      return validateCredentialInStatusList(credentialToValidate, statusListCredential)
-    } finally {
-      if (isDefaultClient) {
-        clientToUse.close()
+        return@runBlocking validateCredentialInStatusList(credentialToValidate, statusListCredential)
+      } finally {
+        if (isDefaultClient) {
+          clientToUse.close()
+        }
       }
     }
   }
 
   private fun defaultHttpClient(): HttpClient {
-    return HttpClient(CIO)
+    return HttpClient(CIO) {
+      install(ContentNegotiation) {
+        jackson { jacksonObjectMapper() }
+      }
+    }
   }
 
   private suspend fun HttpClient.fetchStatusListCredential(url: String): VerifiableCredential {
@@ -217,7 +245,7 @@ public object StatusListCredential {
    */
   private fun prepareCredentialsForStatusList(
     statusPurpose: StatusPurpose,
-    credentials: List<VerifiableCredential>
+    credentials: Iterable<VerifiableCredential>
   ): List<String> {
     val duplicateSet = mutableSetOf<String>()
     for (vc in credentials) {
@@ -257,16 +285,16 @@ public object StatusListCredential {
     for (index in statusListIndexes) {
       val indexInt = index.toIntOrNull()
 
-      if (indexInt == null || indexInt < 0) {
-        throw IllegalArgumentException("invalid status list index: $index")
+      require(indexInt != null && indexInt >= 0) {
+        "invalid status list index: $index"
       }
 
-      if (indexInt >= bitSetSize) {
+      require(indexInt < bitSetSize) {
         throw IndexOutOfBoundsException("invalid status list index: $index, index is larger than the bitset size")
       }
 
-      if (!duplicateCheck.add(indexInt)) {
-        throw IllegalArgumentException("duplicate status list index value found: $indexInt")
+      require(duplicateCheck.add(indexInt)) {
+        "duplicate status list index value found: $indexInt"
       }
 
       bitSet.set(indexInt)
@@ -291,8 +319,8 @@ public object StatusListCredential {
     val decoded: ByteArray
     try {
       decoded = Base64.getDecoder().decode(compressedBitstring)
-    } catch (e: IllegalArgumentException) {
-      throw Exception("decoding compressed bitstring", e)
+    } catch (e: Exception) {
+      throw RuntimeException("decoding compressed bitstring", e)
     }
 
     val bitstringInputStream = ByteArrayInputStream(decoded)
@@ -301,7 +329,7 @@ public object StatusListCredential {
     try {
       GZIPInputStream(bitstringInputStream).use { it.copyTo(byteArrayOutputStream) }
     } catch (e: Exception) {
-      throw Exception("unzipping status list bitstring using GZIP", e)
+      throw RuntimeException("unzipping status list bitstring using GZIP", e)
     }
 
     val unzipped = byteArrayOutputStream.toByteArray()
