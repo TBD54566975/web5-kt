@@ -222,7 +222,7 @@ public sealed class DidIonManager(
         id = verificationMethodId,
         type = "JsonWebKey2020",
         publicKeyJwk = verificationJwk,
-        purposes = listOf(PublicKeyPurpose.AUTHENTICATION),
+        purposes = listOf(PublicKeyPurpose.AUTHENTICATION, PublicKeyPurpose.ASSERTION_METHOD),
       )
     } else {
       options.verificationPublicKey
