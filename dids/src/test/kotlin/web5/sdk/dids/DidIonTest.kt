@@ -137,7 +137,6 @@ class DidIonTest {
     val did = manager.create(keyManager, opts)
     assertContains(did.uri, "did:ion:")
     assertContains(did.creationMetadata!!.longFormDid, did.creationMetadata!!.shortFormDid)
-
   }
 
   private fun readKey(pathname: String): JWK {
