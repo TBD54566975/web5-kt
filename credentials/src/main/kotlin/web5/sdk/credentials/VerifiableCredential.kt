@@ -224,14 +224,9 @@ public class VerifiableCredential(public val vcDataModel: VcDataModel) {
       // using a set for fast string comparison. DIDs can be lonnng.
       val verificationMethodIds = setOf(parsedDidUrl.didUrlString, "#${parsedDidUrl.fragment}")
       val assertionMethods = didResolutionResult.didDocument.assertionMethodVerificationMethodsDereferenced
-      var assertionMethod: VerificationMethod? = null
-
-      for (method in assertionMethods) {
-        val id = method.id.toString()
-        if (verificationMethodIds.contains(id)) {
-          assertionMethod = method
-          break
-        }
+      val assertionMethod = assertionMethods?.firstOrNull {
+        val id = it.id.toString()
+        verificationMethodIds.contains(id)
       }
 
       if (assertionMethod == null) {
