@@ -362,18 +362,6 @@ class KeyManagerSigner(private val keyManager: KeyManager, private val keyAlias:
 
 }
 
-class MockGenerator(private val values: List<String> = emptyList(), private var i: Int = 0) : ISaltGenerator {
-  override fun generate(claim: String): String {
-    if (values.isNotEmpty()) {
-      val t = values[i % values.size]
-      i++
-      return t
-    }
-    return "_26bc4LT-ac6q2KI6cBW5es"
-  }
-
-}
-
 class MockMapGenerator(private val values: Map<String, String> = emptyMap()) : ISaltGenerator {
   override fun generate(claim: String): String {
     return values[claim] ?: "_26bc4LT-ac6q2KI6cBW5es"
