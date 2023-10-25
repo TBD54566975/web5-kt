@@ -161,7 +161,7 @@ public class StatefulDidIon(
   uri: String,
   keyManager: KeyManager,
   public val creationMetadata: IonCreationMetadata? = null,
-  private val didIonApi: DidIonApi = DidIonApi) : StatefulDid(uri, keyManager) {
+  private val didIonApi: DidIonApi) : StatefulDid(uri, keyManager) {
 
   /**
    * Calls [DidIonApi.update] for this DID.
