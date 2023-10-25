@@ -163,7 +163,7 @@ public class DeactivateDidIonOptions(public val recoveryKeyAlias: String, public
 public class DidIonHandle(
   uri: String,
   keyManager: KeyManager,
-  public val creationMetadata: IonCreationMetadata? = null) : Did(uri, keyManager)
+  public val creationMetadata: IonCreationMetadata? = null) : StatefulDid(uri, keyManager)
 
 private const val maxServiceTypeLength = 30
 

@@ -53,7 +53,7 @@ public class CreateDidKeyOptions(
  * val did = DidKey("did:key:example", keyManager)
  * ```
  */
-public class DidKey(uri: String, keyManager: KeyManager) : Did(uri, keyManager) {
+public class DidKey(uri: String, keyManager: KeyManager) : StatefulDid(uri, keyManager) {
   /**
    * Resolves the current instance's [uri] to a [DidResolutionResult], which contains the DID Document
    * and possible related metadata.

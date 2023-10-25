@@ -24,7 +24,7 @@ import web5.sdk.crypto.KeyManager
  * Implementers should adhere to the respective DID method specifications ensuring both compliance
  * and interoperability across different DID networks.
  */
-public abstract class Did(public val uri: String, public val keyManager: KeyManager) {
+public abstract class StatefulDid(public val uri: String, public val keyManager: KeyManager) {
   public companion object {
     // static helper methods here
   }
@@ -94,7 +94,7 @@ public interface ResolveDidOptions
  * Implementations of this interface should provide method-specific logic for
  * creating and resolving DIDs under a particular method.
  *
- * @param T The type of DID that this method can create and resolve, extending [Did].
+ * @param T The type of DID that this method can create and resolve, extending [StatefulDid].
  *
  * ### Example of a Custom DID Method Implementation:
  * ```
@@ -117,7 +117,7 @@ public interface ResolveDidOptions
  * - Ensure that cryptographic operations utilize secure and tested libraries, ensuring
  *   the reliability and security of DIDs managed by this method.
  */
-public interface DidMethod<T : Did, O : CreateDidOptions> {
+public interface DidMethod<T : StatefulDid, O : CreateDidOptions> {
   /**
    * A string that specifies the name of the DID method.
    *
