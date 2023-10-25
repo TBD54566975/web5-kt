@@ -1,17 +1,28 @@
 package web5.security
 
+import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.core.JsonGenerator
+import com.fasterxml.jackson.core.util.DefaultPrettyPrinter
+import com.fasterxml.jackson.databind.SerializationFeature
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import java.io.File
+import java.io.IOException
 
-val example1 =
-  """eyJhbGciOiAiRVMyNTYifQ.eyJfc2QiOiBbIkNyUWU3UzVrcUJBSHQtbk1ZWGdjNmJkdDJTSDVhVFkxc1VfTS1QZ2tqUEkiLCAiSnpZakg0c3ZsaUgwUjNQeUVNZmVadTZKdDY5dTVxZWhabzdGN0VQWWxTRSIsICJQb3JGYnBLdVZ1Nnh5bUphZ3ZrRnNGWEFiUm9jMkpHbEFVQTJCQTRvN2NJIiwgIlRHZjRvTGJnd2Q1SlFhSHlLVlFaVTlVZEdFMHc1cnREc3JaemZVYW9tTG8iLCAiWFFfM2tQS3QxWHlYN0tBTmtxVlI2eVoyVmE1TnJQSXZQWWJ5TXZSS0JNTSIsICJYekZyendzY002R242Q0pEYzZ2Vks4QmtNbmZHOHZPU0tmcFBJWmRBZmRFIiwgImdiT3NJNEVkcTJ4Mkt3LXc1d1BFemFrb2I5aFYxY1JEMEFUTjNvUUw5Sk0iLCAianN1OXlWdWx3UVFsaEZsTV8zSmx6TWFTRnpnbGhRRzBEcGZheVF3TFVLNCJdLCAiaXNzIjogImh0dHBzOi8vZXhhbXBsZS5jb20vaXNzdWVyIiwgImlhdCI6IDE2ODMwMDAwMDAsICJleHAiOiAxODgzMDAwMDAwLCAic3ViIjogInVzZXJfNDIiLCAibmF0aW9uYWxpdGllcyI6IFt7Ii4uLiI6ICJwRm5kamtaX1ZDem15VGE2VWpsWm8zZGgta284YUlLUWM5RGxHemhhVllvIn0sIHsiLi4uIjogIjdDZjZKa1B1ZHJ5M2xjYndIZ2VaOGtoQXYxVTFPU2xlclAwVmtCSnJXWjAifV0sICJfc2RfYWxnIjogInNoYS0yNTYiLCAiY25mIjogeyJqd2siOiB7Imt0eSI6ICJFQyIsICJjcnYiOiAiUC0yNTYiLCAieCI6ICJUQ0FFUjE5WnZ1M09IRjRqNFc0dmZTVm9ISVAxSUxpbERsczd2Q2VHZW1jIiwgInkiOiAiWnhqaVdXYlpNUUdIVldLVlE0aGJTSWlyc1ZmdWVjQ0U2dDRqVDlGMkhaUSJ9fX0.kmx687kUBiIDvKWgo2Dub-TpdCCRLZwtD7TOj4RoLsUbtFBI8sMrtH2BejXtm_P6fOAjKAVc_7LRNJFgm3PJhg~WyIyR0xDNDJzS1F2ZUNmR2ZyeU5STjl3IiwgImdpdmVuX25hbWUiLCAiSm9obiJd~WyJlbHVWNU9nM2dTTklJOEVZbnN4QV9BIiwgImZhbWlseV9uYW1lIiwgIkRvZSJd~WyI2SWo3dE0tYTVpVlBHYm9TNXRtdlZBIiwgImVtYWlsIiwgImpvaG5kb2VAZXhhbXBsZS5jb20iXQ~WyJlSThaV205UW5LUHBOUGVOZW5IZGhRIiwgInBob25lX251bWJlciIsICIrMS0yMDItNTU1LTAxMDEiXQ~WyJRZ19PNjR6cUF4ZTQxMmExMDhpcm9BIiwgInBob25lX251bWJlcl92ZXJpZmllZCIsIHRydWVd~WyJBSngtMDk1VlBycFR0TjRRTU9xUk9BIiwgImFkZHJlc3MiLCB7InN0cmVldF9hZGRyZXNzIjogIjEyMyBNYWluIFN0IiwgImxvY2FsaXR5IjogIkFueXRvd24iLCAicmVnaW9uIjogIkFueXN0YXRlIiwgImNvdW50cnkiOiAiVVMifV0~WyJQYzMzSk0yTGNoY1VfbEhnZ3ZfdWZRIiwgImJpcnRoZGF0ZSIsICIxOTQwLTAxLTAxIl0~WyJHMDJOU3JRZmpGWFE3SW8wOXN5YWpBIiwgInVwZGF0ZWRfYXQiLCAxNTcwMDAwMDAwXQ~WyJsa2x4RjVqTVlsR1RQVW92TU5JdkNBIiwgIlVTIl0~WyJuUHVvUW5rUkZxM0JJZUFtN0FuWEZBIiwgIkRFIl0~"""
+val example1 = File("src/test/resources/example1.sdjwt").readText()
 
 class SdJwtTest {
+  private val mapper = jacksonObjectMapper().apply {
+    enable(SerializationFeature.INDENT_OUTPUT)
+    setSerializationInclusion(JsonInclude.Include.NON_NULL)
+    setDefaultPrettyPrinter(CustomPrettyPrinter())
+  }
 
   @Test
   fun `parse and serialize are inverse functions`() {
     val sdJwt = SdJwt.parse(example1)
-    val serialized = sdJwt.serialize()
+    val serialized = sdJwt.serialize(mapper)
     assertEquals(example1, serialized)
   }
 
@@ -26,4 +37,39 @@ class SdJwtTest {
     assertEquals("""{"street_address": "123 Main St", "locality": "Anytown"}""", result)
   }
 
+}
+
+/**
+ * A custom printer used for tests.
+ */
+internal class CustomPrettyPrinter : DefaultPrettyPrinter(
+  DefaultPrettyPrinter().withSpacesInObjectEntries().withObjectIndenter(
+    NopIndenter.instance
+  )
+) {
+  init {
+    this._objectFieldValueSeparatorWithSpaces = this._objectFieldValueSeparatorWithSpaces.substring(1)
+  }
+
+  override fun createInstance(): CustomPrettyPrinter {
+    check(javaClass == CustomPrettyPrinter::class.java) { // since 2.10
+      ("Failed `createInstance()`: " + javaClass.name
+        + " does not override method; it has to")
+    }
+    return CustomPrettyPrinter()
+  }
+
+  @Throws(IOException::class)
+  override fun writeArrayValueSeparator(g: JsonGenerator) {
+    g.writeRaw(_separators.arrayValueSeparator)
+    g.writeRaw(' ')
+    _arrayIndenter.writeIndentation(g, _nesting)
+  }
+
+  @Throws(IOException::class)
+  override fun writeObjectEntrySeparator(g: JsonGenerator) {
+    g.writeRaw(_separators.objectEntrySeparator)
+    g.writeRaw(' ')
+    _objectIndenter.writeIndentation(g, _nesting)
+  }
 }

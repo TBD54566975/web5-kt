@@ -1,5 +1,8 @@
 package web5.security
 
+import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.databind.SerializationFeature
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.JWSHeader
 import com.nimbusds.jose.JWSSigner
@@ -16,6 +19,12 @@ import web5.sdk.crypto.KeyManager
 import web5.sdk.dids.DidKey
 
 class SdJwtSignerTest {
+
+  private val mapper = jacksonObjectMapper().apply {
+    enable(SerializationFeature.INDENT_OUTPUT)
+    setSerializationInclusion(JsonInclude.Include.NON_NULL)
+    setDefaultPrettyPrinter(CustomPrettyPrinter())
+  }
 
   @Test
   fun testExample1() {
@@ -73,7 +82,8 @@ class SdJwtSignerTest {
       ),
       signer = KeyManagerSigner(keyManager, keyManager.getDeterministicAlias(publicKey = getPublicKey(issuerSigner))),
       shuffle = {},
-      totalDigests = { i -> i }
+      totalDigests = { i -> i },
+      mapper = mapper,
     )
     // Define claims to blind
     // The nationalities array is always visible, but its contents are selectively disclosable.
@@ -81,15 +91,15 @@ class SdJwtSignerTest {
     // All other End-User claims are selectively disclosable.
     // For address, the Issuer is using a flat structure, i.e., all of the claims in the address claim can only be disclosed in full. Other options are discussed in Section 5.7.
     val claimsToBlind = mapOf(
-      "given_name" to FlatBlindOption(),
-      "family_name" to FlatBlindOption(),
-      "email" to FlatBlindOption(),
-      "phone_number" to FlatBlindOption(),
-      "phone_number_verified" to FlatBlindOption(),
-      "address" to FlatBlindOption(),
-      "birthdate" to FlatBlindOption(),
-      "updated_at" to FlatBlindOption(),
-      "nationalities" to ArrayBlindOption(),
+      "given_name" to FlatBlindOption,
+      "family_name" to FlatBlindOption,
+      "email" to FlatBlindOption,
+      "phone_number" to FlatBlindOption,
+      "phone_number_verified" to FlatBlindOption,
+      "address" to FlatBlindOption,
+      "birthdate" to FlatBlindOption,
+      "updated_at" to FlatBlindOption,
+      "nationalities" to ArrayBlindOption,
     )
 
     val sdJwt = signer.blindAndSign(claims, claimsToBlind, JWSAlgorithm.ES256K, getPublicKey(issuerSigner).keyID)
@@ -140,118 +150,6 @@ class SdJwtSignerTest {
   }
 
   @Test
-  fun `flat sd-jwt example`() {
-    val claims = """{
-      "iss": "https://example.com/issuer",
-      "iat": 1683000000,
-      "exp": 1883000000,
-      "sub": "user_42",
-      
-      "cnf": {
-        "jwk": {
-          "kty": "EC",
-          "crv": "P-256",
-          "x": "TCAER19Zvu3OHF4j4W4vfSVoHIP1ILilDls7vCeGemc",
-          "y": "ZxjiWWbZMQGHVWKVQ4hbSIirsVfuecCE6t4jT9F2HZQ"
-        }
-      },
-      
-      "updated_at": 1570000000,
-      "email": "johndoe@example.com",
-      "phone_number": "+1-202-555-0101",
-      "family_name": "Doe",
-      "phone_number_verified": true,
-      "address": {
-        "street_address": "123 Main St",
-        "locality": "Anytown",
-        "region": "Anystate",
-        "country": "US"
-      },
-      "birthdate": "1940-01-01",
-      "given_name": "John",
-      "nationalities": [
-        "US",
-        "DE"
-      ]
-    }""".trimIndent()
-
-    val keyManager = InMemoryKeyManager()
-    val issuerSigner = DidKey.create(keyManager)
-
-    val signer = SdJwtSigner(
-      saltGenerator = MockMapGenerator(
-        mapOf(
-          "given_name" to "2GLC42sKQveCfGfryNRN9w",
-          "family_name" to "eluV5Og3gSNII8EYnsxA_A",
-          "email" to "6Ij7tM-a5iVPGboS5tmvVA",
-          "phone_number" to "eI8ZWm9QnKPpNPeNenHdhQ",
-          "phone_number_verified" to "Qg_O64zqAxe412a108iroA",
-          "address" to "AJx-095VPrpTtN4QMOqROA",
-          "birthdate" to "Pc33JM2LchcU_lHggv_ufQ",
-          "updated_at" to "G02NSrQfjFXQ7Io09syajA",
-          "nationalities[0]" to "lklxF5jMYlGTPUovMNIvCA",
-          "nationalities[1]" to "nPuoQnkRFq3BIeAm7AnXFA",
-        )
-      ),
-      signer = KeyManagerSigner(keyManager, keyManager.getDeterministicAlias(publicKey = getPublicKey(issuerSigner))),
-      shuffle = {},
-      totalDigests = { i -> i }
-    )
-    // Define claims to blind
-    // The nationalities array is always visible, but its contents are selectively disclosable.
-    // The sub element and essential verification data (iss, iat, cnf, etc.) are always visible.
-    // All other End-User claims are selectively disclosable.
-    // For address, the Issuer is using a flat structure, i.e., all of the claims in the address claim can only be disclosed in full. Other options are discussed in Section 5.7.
-    val claimsToBlind = mapOf(
-      "given_name" to FlatBlindOption(),
-      "family_name" to FlatBlindOption(),
-      "email" to FlatBlindOption(),
-      "phone_number" to FlatBlindOption(),
-      "phone_number_verified" to FlatBlindOption(),
-      "address" to FlatBlindOption(),
-      "birthdate" to FlatBlindOption(),
-      "updated_at" to FlatBlindOption(),
-      "nationalities" to ArrayBlindOption(),
-    )
-
-    val sdJwt = signer.blindAndSign(claims, claimsToBlind, JWSAlgorithm.ES256K, getPublicKey(issuerSigner).keyID)
-
-    val expected = """{
-      "_sd": [
-        "CrQe7S5kqBAHt-nMYXgc6bdt2SH5aTY1sU_M-PgkjPI",
-        "JzYjH4svliH0R3PyEMfeZu6Jt69u5qehZo7F7EPYlSE",
-        "PorFbpKuVu6xymJagvkFsFXAbRoc2JGlAUA2BA4o7cI",
-        "TGf4oLbgwd5JQaHyKVQZU9UdGE0w5rtDsrZzfUaomLo",
-        "XQ_3kPKt1XyX7KANkqVR6yZ2Va5NrPIvPYbyMvRKBMM",
-        "XzFrzwscM6Gn6CJDc6vVK8BkMnfG8vOSKfpPIZdAfdE",
-        "gbOsI4Edq2x2Kw-w5wPEzakob9hV1cRD0ATN3oQL9JM",
-        "jsu9yVulwQQlhFlM_3JlzMaSFzglhQG0DpfayQwLUK4"
-      ],
-      "iss": "https://example.com/issuer",
-      "iat": 1683000000,
-      "exp": 1883000000,
-      "sub": "user_42",
-      "nationalities": [
-        {
-          "...": "pFndjkZ_VCzmyTa6UjlZo3dh-ko8aIKQc9DlGzhaVYo"
-        },
-        {
-          "...": "7Cf6JkPudry3lcbwHgeZ8khAv1U1OSlerP0VkBJrWZ0"
-        }
-      ],
-      "_sd_alg": "sha-256",
-      "cnf": {
-        "jwk": {
-          "kty": "EC",
-          "crv": "P-256",
-          "x": "TCAER19Zvu3OHF4j4W4vfSVoHIP1ILilDls7vCeGemc",
-          "y": "ZxjiWWbZMQGHVWKVQ4hbSIirsVfuecCE6t4jT9F2HZQ"
-        }
-      }
-    }""".trimIndent()
-  }
-
-  @Test
   fun `test option 1`() {
     val keyManager = InMemoryKeyManager()
     val issuerSigner = DidKey.create(keyManager)
@@ -263,7 +161,8 @@ class SdJwtSignerTest {
         )
       ),
       signer = KeyManagerSigner(keyManager, keyManager.getDeterministicAlias(publicKey = getPublicKey(issuerSigner))),
-      totalDigests = { i -> i }
+      totalDigests = { i -> i },
+      mapper = mapper,
     )
 
     // Define claims as a JSON string
@@ -282,7 +181,7 @@ class SdJwtSignerTest {
 
     // Define claims to blind
     val claimsToBlind = mapOf(
-      "address" to FlatBlindOption(),
+      "address" to FlatBlindOption,
     )
 
     val sdJwt = signer.blindAndSign(claims, claimsToBlind, JWSAlgorithm.ES256K, getPublicKey(issuerSigner).keyID)
@@ -320,7 +219,8 @@ class SdJwtSignerTest {
       ),
       shuffle = {},
       signer = KeyManagerSigner(keyManager, keyManager.getDeterministicAlias(publicKey = getPublicKey(issuerSigner))),
-      totalDigests = { i -> i }
+      totalDigests = { i -> i },
+      mapper = mapper,
     )
 
     // Define claims as a JSON string
@@ -341,10 +241,10 @@ class SdJwtSignerTest {
     val claimsToBlind = mapOf(
       "address" to SubClaimBlindOption(
         mapOf(
-          "street_address" to FlatBlindOption(),
-          "locality" to FlatBlindOption(),
-          "region" to FlatBlindOption(),
-          "country" to FlatBlindOption(),
+          "street_address" to FlatBlindOption,
+          "locality" to FlatBlindOption,
+          "region" to FlatBlindOption,
+          "country" to FlatBlindOption,
         )
       ),
     )
@@ -391,7 +291,8 @@ class SdJwtSignerTest {
       ),
       shuffle = {},
       signer = KeyManagerSigner(keyManager, keyManager.getDeterministicAlias(publicKey = getPublicKey(issuerSigner))),
-      totalDigests = { i -> i }
+      totalDigests = { i -> i },
+      mapper = mapper,
     )
 
     // Define claims as a JSON string
@@ -410,7 +311,7 @@ class SdJwtSignerTest {
 
     // Define claims to blind
     val claimsToBlind = mapOf(
-      "address" to RecursiveBlindOption()
+      "address" to RecursiveBlindOption
     )
 
     val sdJwt = signer.blindAndSign(claims, claimsToBlind, JWSAlgorithm.ES256K, getPublicKey(issuerSigner).keyID)
@@ -429,14 +330,15 @@ class SdJwtSignerTest {
     assertEquals(
       setOf(
         "WyIyR0xDNDJzS1F2ZUNmR2ZyeU5STjl3IiwgInN0cmVldF9hZGRyZXNzIiwgIlNjaHVsc3RyLiAxMiJd",
-        "WyJlbHVWNU9nM2dTTklJOEVZbnN4QV9BIiwgImxvY2FsaXR5IiwgIlNjaHVs" +
-          "cGZvcnRhIl0",
-        "WyI2SWo3dE0tYTVpVlBHYm9TNXRtdlZBIiwgInJlZ2lvbiIsICJTYWNoc2Vu" +
-          "LUFuaGFsdCJd",
+        "WyJlbHVWNU9nM2dTTklJOEVZbnN4QV9BIiwgImxvY2FsaXR5IiwgIlNjaHVscGZvcnRhIl0",
+        "WyI2SWo3dE0tYTVpVlBHYm9TNXRtdlZBIiwgInJlZ2lvbiIsICJTYWNoc2VuLUFuaGFsdCJd",
         "WyJlSThaV205UW5LUHBOUGVOZW5IZGhRIiwgImNvdW50cnkiLCAiREUiXQ",
-        "WyJRZ19PNjR6cUF4ZTQxMmExMDhpcm9BIiwgImFkZHJlc3MiLCB7Il9zZCI6IFsgIjlnalZ1WHRkRlJPQ2dScnROY0dVWG1GNjVyZGV6aV82RXJfajc2a21ZeU0iLCAgIjZ2aDlicS16UzRHS01fN0dwZ2dWYll6enU2b09HWHJtTlZHUEhQNzVVZDAiLCAgIktVUkRQaDRaQzE5LTN0aXotRGYzOVY4ZWlkeTFvVjNhM0gxRGEyTjBnODgiLCAgIldOOXI5ZENCSjhIVENzUzJqS0FTeFRqRXlXNW01eDY1X1pfMnJvMmpmWE0iIF19XQ"
+        "WyJRZ19PNjR6cUF4ZTQxMmExMDhpcm9BIiwgImFkZHJlc3MiLCB7Il9zZCI6IFsgIjlnalZ1WHRkRlJPQ2dScnROY0dVWG1GNjVyZ" +
+          "GV6aV82RXJfajc2a21ZeU0iLCAgIjZ2aDlicS16UzRHS01fN0dwZ2dWYll6enU2b09HWHJtTlZHUEhQNzVVZDAiLCAgIktVUkRQ" +
+          "aDRaQzE5LTN0aXotRGYzOVY4ZWlkeTFvVjNhM0gxRGEyTjBnODgiLCAgIldOOXI5ZENCSjhIVENzUzJqS0FTeFRqRXlXNW01eDY" +
+          "1X1pfMnJvMmpmWE0iIF19XQ"
       ),
-      sdJwt.disclosures.map { it.serialize() }.toSet()
+      sdJwt.disclosures.map { it.serialize(mapper) }.toSet()
     )
     assertEquals(
       JsonCanonicalizer(expected).encodedString,
