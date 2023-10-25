@@ -38,4 +38,5 @@ dependencies {
 
   testImplementation(kotlin("test"))
   testImplementation("io.ktor:ktor-client-mock:$ktor_version")
+  testImplementation("org.mockito.kotlin:mockito-kotlin:5.1.0")
 }
