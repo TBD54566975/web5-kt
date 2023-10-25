@@ -41,7 +41,7 @@ class DidIonTest {
   @Test
   @Ignore("For demonstration purposes only - this makes a network call")
   fun createWithDefault() {
-    val did = DidIonManager.create(InMemoryKeyManager())
+    val did = DidIonApi.create(InMemoryKeyManager())
     assertContains(did.uri, "did:ion:")
     assertTrue(did.creationMetadata!!.longFormDid.startsWith(did.uri))
   }
@@ -50,7 +50,7 @@ class DidIonTest {
   @Ignore("For demonstration purposes only - relies on network and AWS configuration")
   fun `create with AWS key manager`() {
     val keyManager = AwsKeyManager()
-    val ionManager = DidIonManager
+    val ionManager = DidIonApi
     val didsCreated = buildList {
       repeat(32) {
         add(ionManager.create(keyManager))
@@ -64,7 +64,7 @@ class DidIonTest {
     val verificationKey = readKey("src/test/resources/verification_jwk.json")
 
     val exception = assertThrows<IllegalArgumentException> {
-      DidIonManager.create(
+      DidIonApi.create(
         InMemoryKeyManager(),
         CreateDidIonOptions(
           verificationMethodsToAdd = listOf(
@@ -115,7 +115,7 @@ class DidIonTest {
     )
     for (testCase in testCases) {
       val exception = assertThrows<IllegalArgumentException> {
-        DidIonManager.create(
+        DidIonApi.create(
           InMemoryKeyManager(),
           CreateDidIonOptions(
             servicesToAdd = listOf(testCase.service)
@@ -131,7 +131,7 @@ class DidIonTest {
     val verificationKey = readKey("src/test/resources/verification_jwk.json")
 
     val exception = assertThrows<IllegalArgumentException> {
-      DidIonManager.create(
+      DidIonApi.create(
         InMemoryKeyManager(),
         CreateDidIonOptions(
           verificationMethodsToAdd = listOf(
@@ -203,7 +203,7 @@ class DidIonTest {
 
   @Test
   fun `method name is ion`() {
-    assertEquals("ion", DidIonManager.methodName)
+    assertEquals("ion", DidIonApi.methodName)
   }
 
   @Test
@@ -298,7 +298,7 @@ class DidIonTest {
     )
     for (testCase in testCases) {
       val result = assertThrows<IllegalArgumentException> {
-        DidIonManager.update(
+        DidIonApi.update(
           keyManager,
           UpdateDidIonOptions(
             didString = "did:ion:123",
@@ -315,7 +315,7 @@ class DidIonTest {
   @Test
   fun `update fails when update key is absent`() {
     val result = assertThrows<IllegalArgumentException> {
-      DidIonManager.update(
+      DidIonApi.update(
         InMemoryKeyManager(),
         UpdateDidIonOptions(
           didString = "did:ion:123",
@@ -343,7 +343,7 @@ class DidIonTest {
 
     doReturn(nextUpdateKeyId, recoveryKeyAlias).whenever(keyManager).generatePrivateKey(JWSAlgorithm.ES256K)
 
-    val (result, _) = DidIonManager.createOperation(
+    val (result, _) = DidIonApi.createOperation(
       keyManager,
       CreateDidIonOptions(
         verificationMethodsToAdd = listOf(verificationMethod1),
@@ -443,7 +443,7 @@ class DidIonTest {
 
     doReturn(nextRecoveryKeyId, nextUpdateKeyId).whenever(keyManager).generatePrivateKey(JWSAlgorithm.ES256K)
 
-    val (recoverOperation, keyAliases) = DidIonManager.createRecoverOperation(
+    val (recoverOperation, keyAliases) = DidIonApi.createRecoverOperation(
       keyManager,
       RecoverDidIonOptions(
         did = "did:ion:EiDyOQbbZAa3aiRzeCkV7LOx3SERjjH93EXoIM3UoN4oWg",
