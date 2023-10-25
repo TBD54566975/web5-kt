@@ -12,7 +12,6 @@ repositories {
     url = uri("https://repo.danubetech.com/repository/maven-public")
   }
   maven("https://jitpack.io")
-  maven("https://jcenter.bintray.com/")
 }
 
 val ktor_version = "2.3.4"
