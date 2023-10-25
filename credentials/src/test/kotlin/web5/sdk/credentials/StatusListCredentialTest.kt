@@ -36,7 +36,7 @@ class StatusListCredentialTest {
     )
 
     assertEquals(specExampleRevocableVc.type, "VerifiableCredential")
-    assertEquals(specExampleRevocableVc.issuer.toString(), "did:example:12345")
+    assertEquals(specExampleRevocableVc.issuer, "did:example:12345")
     assertNotNull(specExampleRevocableVc.vcDataModel.credentialStatus)
     assertEquals(specExampleRevocableVc.subject, "did:example:6789")
     assertEquals(specExampleRevocableVc.vcDataModel.credentialSubject.type.toString(), "Person")

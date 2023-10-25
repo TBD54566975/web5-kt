@@ -84,7 +84,8 @@ public class DidKeyManager(keyManager: KeyManager = InMemoryKeyManager()) : DidM
    *
    * **Note**: Defaults to ES256K if no options are provided
    *
-   * @param keyManager A [KeyManager] instance where the new key will be stored.
+   * The new key instances will be stored inside the [keyManager].
+   *
    * @param options Optional parameters ([CreateDidKeyOptions]) to specify algorithm and curve during key creation.
    * @return A [DidKey] instance representing the newly created "did:key" DID.
    *
