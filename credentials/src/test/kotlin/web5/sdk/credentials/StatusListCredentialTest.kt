@@ -1,15 +1,18 @@
 package web5.sdk.credentials
 
+import com.sun.net.httpserver.HttpExchange
+import com.sun.net.httpserver.HttpHandler
+import com.sun.net.httpserver.HttpServer
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
 import io.ktor.http.fullPath
 import io.ktor.http.headersOf
-import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.assertThrows
 import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.dids.DidKey
 import java.io.File
+import java.io.OutputStream
 import java.net.URI
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -18,7 +21,6 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 class StatusListCredentialTest {
-
   @Test
   fun `should parse valid VerifiableCredential from specification example`() {
     val specExampleRevocableVcText = File("src/test/testdata/revocableVc.json").readText()
@@ -217,7 +219,7 @@ class StatusListCredentialTest {
 
     assertTrue(
       exception
-        .message!!.contains("duplicate entry found with index: 123")
+        .message!!.contains("Duplicate entry found with index: 123")
     )
   }
 
@@ -252,7 +254,7 @@ class StatusListCredentialTest {
 
     assertTrue(
       exception
-        .message!!.contains("invalid status list index: -1")
+        .message!!.contains("Invalid status list index: -1")
     )
   }
 
@@ -287,7 +289,39 @@ class StatusListCredentialTest {
 
     assertTrue(
       exception
-        .message!!.contains("invalid status list index: ${Int.MAX_VALUE}, index is larger than the bitset size")
+        .message!!.contains("Invalid status list index: ${Int.MAX_VALUE}, index is larger than the bitset size")
+    )
+  }
+
+  @Test
+  fun `should fail when generating StatusListCredential invalid issuer uri`() {
+    val exception = assertThrows<Exception> {
+      StatusListCredential.create(
+        "revocation-id",
+       "invalid uri",
+        StatusPurpose.REVOCATION,
+        listOf())
+    }
+
+    assertTrue(
+      exception
+        .message!!.contains("Issuer is not a valid URI")
+    )
+  }
+
+  @Test
+  fun `should fail when generating StatusListCredential invalid statusListCredId uri`() {
+    val exception = assertThrows<Exception> {
+      StatusListCredential.create(
+        "invalid slc id",
+        "did:example:123",
+        StatusPurpose.REVOCATION,
+        listOf())
+    }
+
+    assertTrue(
+      exception
+        .message!!.contains("Status list credential id is not a valid URI")
     )
   }
 
@@ -361,7 +395,7 @@ class StatusListCredentialTest {
   }
 
   @Test
-  fun `should asynchronously validate if a credential is in the status list using a mock HTTP client`() = runBlocking {
+  fun `should asynchronously validate if a credential is in the status list using a mock HTTP client`() {
     val keyManager = InMemoryKeyManager()
     val issuerDid = DidKey.create(keyManager)
     val holderDid = DidKey.create(keyManager)
@@ -427,5 +461,119 @@ class StatusListCredentialTest {
 
     val revoked2 = StatusListCredential.validateCredentialInStatusList(vc2, mockedHttpClient)
     assertFalse(revoked2)
+  }
+
+  @Test
+  fun `should asynchronously validate if a credential is in the status list using default HTTP client`() {
+    // Create and start a server within the test
+    val server = HttpServer.create(java.net.InetSocketAddress(1234), 0)
+
+    val keyManager = InMemoryKeyManager()
+    val issuerDid = DidKey.create(keyManager)
+    val holderDid = DidKey.create(keyManager)
+
+    val credentialStatus1 = StatusList2021Entry.builder()
+      .id(URI.create("cred-with-status-id"))
+      .statusPurpose("revocation")
+      .statusListIndex("123")
+      .statusListCredential(URI.create("http://localhost:1234"))
+      .build()
+
+    val credWithCredStatus1 = VerifiableCredential.create(
+      type = "StreetCred",
+      issuer = issuerDid.uri,
+      subject = holderDid.uri,
+      data = StreetCredibility(localRespect = "high", legit = true),
+      credentialStatus = credentialStatus1
+    )
+
+    val statusListCredential1 = StatusListCredential.create(
+      "http://localhost:1234",
+      issuerDid.uri,
+      StatusPurpose.REVOCATION,
+      listOf(credWithCredStatus1)
+    )
+
+    val signedStatusListCredential = statusListCredential1.sign(issuerDid)
+
+    server.createContext("/", object : HttpHandler {
+      override fun handle(t: HttpExchange) {
+        val response = signedStatusListCredential.toByteArray()
+        t.sendResponseHeaders(200, response.size.toLong())
+        val os: OutputStream = t.responseBody
+        os.write(response)
+        os.close()
+      }
+    })
+
+    try {
+      server.executor = null
+      server.start()
+
+      val revoked = StatusListCredential.validateCredentialInStatusList(credWithCredStatus1)
+      assertEquals(true, revoked)
+    } finally {
+      server.stop(0)
+    }
+  }
+
+  @Test
+  fun `should 404 because wrong address for status list credential status list using default HTTP client`() {
+    // Create and start a server within the test
+    val server = HttpServer.create(java.net.InetSocketAddress(1234), 0)
+
+    val keyManager = InMemoryKeyManager()
+    val issuerDid = DidKey.create(keyManager)
+    val holderDid = DidKey.create(keyManager)
+
+    val credentialStatus1 = StatusList2021Entry.builder()
+      .id(URI.create("cred-with-status-id"))
+      .statusPurpose("revocation")
+      .statusListIndex("123")
+      .statusListCredential(URI.create("http://localhost:4321"))
+      .build()
+
+    val credWithCredStatus1 = VerifiableCredential.create(
+      type = "StreetCred",
+      issuer = issuerDid.uri,
+      subject = holderDid.uri,
+      data = StreetCredibility(localRespect = "high", legit = true),
+      credentialStatus = credentialStatus1
+    )
+
+    val statusListCredential1 = StatusListCredential.create(
+      "http://localhost:4321",
+      issuerDid.uri,
+      StatusPurpose.REVOCATION,
+      listOf(credWithCredStatus1)
+    )
+
+    val signedStatusListCredential = statusListCredential1.sign(issuerDid)
+
+    server.createContext("/", object : HttpHandler {
+      override fun handle(t: HttpExchange) {
+        val response = signedStatusListCredential.toByteArray()
+        t.sendResponseHeaders(200, response.size.toLong())
+        val os: OutputStream = t.responseBody
+        os.write(response)
+        os.close()
+      }
+    })
+
+    try {
+      server.executor = null
+      server.start()
+
+      val exception = assertThrows<Exception> {
+        StatusListCredential.validateCredentialInStatusList(credWithCredStatus1)
+      }
+
+      assertTrue(
+        exception
+          .message!!.contains("Failed to retrieve VerifiableCredentialType from http://localhost:4321")
+      )
+    } finally {
+      server.stop(0)
+    }
   }
 }

@@ -89,19 +89,19 @@ public object StatusListCredential {
     try {
       URI.create(statusListCredentialId)
     } catch (e: Exception) {
-      throw IllegalArgumentException("status list credential id is not a valid URI", e)
+      throw IllegalArgumentException("Status list credential id is not a valid URI", e)
     }
 
     try {
       URI.create(issuer)
     } catch (e: Exception) {
-      throw IllegalArgumentException("issuer is not a valid URI", e)
+      throw IllegalArgumentException("Issuer is not a valid URI", e)
     }
 
     try {
       DidResolvers.resolve(issuer)
     } catch (e: Exception) {
-      throw IllegalArgumentException("issuer: $issuer not resolvable", e)
+      throw IllegalArgumentException("Issuer: $issuer not resolvable", e)
     }
 
     val claims = mapOf(STATUS_PURPOSE to statusPurpose.toString().lowercase(), ENCODED_LIST to bitString)
@@ -231,17 +231,14 @@ public object StatusListCredential {
       throw RuntimeException("Failed to retrieve VerifiableCredentialType from $url", e)
     }
 
+    require(response.status.isSuccess()) {
+      "Failed to retrieve VerifiableCredentialType from $url with status ${response.status}"
+    }
+
     try {
-      if (response.status.isSuccess()) {
-        val body = response.bodyAsText()
-        return VerifiableCredential.parseJwt(body)
-      } else {
-        throw ClientRequestException(
-          response,
-          "Failed to retrieve VerifiableCredentialType from $url with status ${response.status}"
-        )
-      }
-    } catch (e: Exception) {
+      val body = response.bodyAsText()
+      return VerifiableCredential.parseJwt(body)
+    } catch(e: Exception) {
       throw RuntimeException("Failed to fetch the status list credential", e)
     }
   }
@@ -260,15 +257,15 @@ public object StatusListCredential {
   ): List<String> {
     val duplicateSet = mutableSetOf<String>()
     for (vc in credentials) {
-      requireNotNull(vc.vcDataModel.credentialStatus) { "no credential status found in credential" }
+      requireNotNull(vc.vcDataModel.credentialStatus) { "No credential status found in credential" }
 
       val statusListEntry: StatusList2021Entry =
         StatusList2021Entry.fromJsonObject(vc.vcDataModel.credentialStatus.jsonObject)
 
-      require(statusListEntry.statusPurpose == statusPurpose.toString().lowercase()) { "status purpose mismatch" }
+      require(statusListEntry.statusPurpose == statusPurpose.toString().lowercase()) { "Status purpose mismatch" }
 
       if (!duplicateSet.add(statusListEntry.statusListIndex)) {
-        throw IllegalArgumentException("duplicate entry found with index: ${statusListEntry.statusListIndex}")
+        throw IllegalArgumentException("Duplicate entry found with index: ${statusListEntry.statusListIndex}")
       }
     }
 
@@ -297,15 +294,15 @@ public object StatusListCredential {
       val indexInt = index.toIntOrNull()
 
       require(indexInt != null && indexInt >= 0) {
-        "invalid status list index: $index"
+        "Invalid status list index: $index"
       }
 
       require(indexInt < bitSetSize) {
-        throw IndexOutOfBoundsException("invalid status list index: $index, index is larger than the bitset size")
+        throw IndexOutOfBoundsException("Invalid status list index: $index, index is larger than the bitset size")
       }
 
       require(duplicateCheck.add(indexInt)) {
-        "duplicate status list index value found: $indexInt"
+        "Duplicate status list index value found: $indexInt"
       }
 
       bitSet.set(indexInt)
@@ -331,7 +328,7 @@ public object StatusListCredential {
     try {
       decoded = Base64.getDecoder().decode(compressedBitstring)
     } catch (e: Exception) {
-      throw RuntimeException("decoding compressed bitstring", e)
+      throw RuntimeException("Decoding compressed bitstring", e)
     }
 
     val bitstringInputStream = ByteArrayInputStream(decoded)
@@ -340,7 +337,7 @@ public object StatusListCredential {
     try {
       GZIPInputStream(bitstringInputStream).use { it.copyTo(byteArrayOutputStream) }
     } catch (e: Exception) {
-      throw RuntimeException("unzipping status list bitstring using GZIP", e)
+      throw RuntimeException("Unzipping status list bitstring using GZIP", e)
     }
 
     val unzipped = byteArrayOutputStream.toByteArray()
