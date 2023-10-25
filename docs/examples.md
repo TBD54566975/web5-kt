@@ -44,6 +44,7 @@ store them elsewhere however you see fit.
 
 ```kotlin
 val keyManager = InMemoryKeyManager()
+val verificationKey = keyManager.generatePrivateKey(JWSAlgorithm.ES256K)
 val opts = CreateDidIonOptions(
   verificationPublicKey = PublicKey(
     id = verificationKey.keyID,
@@ -51,8 +52,6 @@ val opts = CreateDidIonOptions(
     publicKeyJwk = verificationKey,
     purposes = listOf(PublicKeyPurpose.AUTHENTICATION),
   ),
-  updatePublicJwk = updateKey,
-  recoveryPublicJwk = recoveryKey
 )
 val did = DidIonManager.create(keyManager, opts)
 ```

@@ -132,10 +132,16 @@ class DidIonTest {
 
   @Test
   fun createWithCustom() {
-    val keyManager = InMemoryKeyManager()
+    val keyManager = spy(InMemoryKeyManager())
     val verificationKey = readKey("src/test/resources/verification_jwk.json")
     val updateKey = readKey("src/test/resources/update_jwk.json")
+    val updateKeyId = keyManager.import(updateKey)
+    doReturn(updateKeyId).whenever(keyManager).generatePrivateKey(JWSAlgorithm.ES256K)
+
     val recoveryKey = readKey("src/test/resources/recovery_jwk.json")
+    val recoveryKeyId = keyManager.import(recoveryKey)
+    doReturn(recoveryKeyId).whenever(keyManager).generatePrivateKey(JWSAlgorithm.ES256K)
+
     val manager = DidIonManager {
       ionHost = "madeuphost"
       engine = mockEngine()
@@ -154,8 +160,6 @@ class DidIonTest {
           serviceEndpoint = "http://hub.my-personal-server.com",
         )
       ),
-      updatePublicJwk = updateKey,
-      recoveryPublicJwk = recoveryKey
     )
     val did = manager.create(keyManager, opts)
     assertContains(did.uri, "did:ion:")
@@ -438,7 +442,7 @@ class DidIonTest {
     val recoveryKey = readKey("src/test/resources/jwkEs256k1Private.json")
     val recoveryKeyAlias = keyManager.import(recoveryKey)
 
-    val deactivateResult = DidIonManager{
+    val deactivateResult = DidIonManager {
       engine = mockEngine()
     }.deactivate(
       keyManager,

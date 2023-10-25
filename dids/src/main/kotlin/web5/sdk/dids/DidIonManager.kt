@@ -117,11 +117,7 @@ public data class UpdateDidIonOptions(
  *
  * - [did] is the did to recover. I.e. "did:ion:1234".
  * - [recoveryKeyAlias] is the alias under which the recovery private key is stored inside the [KeyManager] used.
- * - [verificationPublicKey] When provided, will be used as the verification key in the DID document.
- * - [updatePublicJwk] When provided, will be used to create the update key commitment. Otherwise, it will be generated
- *   and stored within the [KeyManager] used.
- * - [recoveryPublicJwk] When provided, will be used to create the recovery key commitment. Otherwise, it will be
- *   generated and stored within the [KeyManager] used.
+ * - [verificationPublicKey] When provided, will be used as the verification key in the new DID document.
  * - [verificationMethodId] When provided, will be used as the verification method id. Cannot be over 50 chars and
  *   must only use characters from the Base64URL character set. When absent, a [UUID] will be generated.
  * - [servicesToAdd] List of services which will be added into the DID document that results after the update
@@ -131,8 +127,6 @@ public class RecoverDidIonOptions(
   public val did: String,
   public val recoveryKeyAlias: String,
   public override val verificationPublicKey: PublicKey? = null,
-  public val updatePublicJwk: JWK? = null,
-  public val recoveryPublicJwk: JWK? = null,
   public override val verificationMethodId: String? = null,
   public val servicesToAdd: Iterable<Service> = emptySet(),
 ) : VerificationPublicKeyOption {
@@ -400,12 +394,8 @@ public sealed class DidIonManager(
 
   private fun createOperation(keyManager: KeyManager, options: CreateDidIonOptions?)
     : Pair<SidetreeCreateOperation, KeyAliases> {
-    val (updatePublicJwk, updateKeyAlias) = if (options?.updatePublicJwk == null) {
-      val alias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K)
-      Pair(keyManager.getPublicKey(alias), alias)
-    } else {
-      Pair(options.updatePublicJwk, null)
-    }
+    val updateKeyAlias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K)
+    val updatePublicJwk = keyManager.getPublicKey(updateKeyAlias)
 
     val publicKeyCommitment = updatePublicJwk.commitment()
 
@@ -427,12 +417,8 @@ public sealed class DidIonManager(
       updateCommitment = publicKeyCommitment
     )
 
-    val (recoveryPublicJwk, recoveryKeyAlias) = if (options?.recoveryPublicJwk == null) {
-      val alias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K)
-      Pair(keyManager.getPublicKey(alias), alias)
-    } else {
-      Pair(options.recoveryPublicJwk, null)
-    }
+    val recoveryKeyAlias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K)
+    val recoveryPublicJwk = keyManager.getPublicKey(recoveryKeyAlias)
     val recoveryCommitment = recoveryPublicJwk.commitment()
 
     val operation: OperationSuffixDataObject =
@@ -731,8 +717,6 @@ public data class KeyAliases(
  * Options available when creating an ion did.
  *
  * @param verificationPublicKey When provided, will be used as the verification key in the DID document.
- * @param updatePublicJwk When provided, will be used to create the update key commitment.
- * @param recoveryPublicJwk When provided, will be used to create the recovery key commitment.
  * @param verificationMethodId When provided, will be used as the verification method id. Cannot be over 50 chars and
  * must only use characters from the Base64URL character set.
  * @param servicesToAdd When provided, the services will be added to the DID document. Note that for each of the
@@ -743,8 +727,6 @@ public data class KeyAliases(
  */
 public class CreateDidIonOptions(
   public override val verificationPublicKey: PublicKey? = null,
-  public val updatePublicJwk: JWK? = null,
-  public val recoveryPublicJwk: JWK? = null,
   public override val verificationMethodId: String? = null,
   public val servicesToAdd: Iterable<Service>? = null,
 ) : CreateDidOptions, VerificationPublicKeyOption
