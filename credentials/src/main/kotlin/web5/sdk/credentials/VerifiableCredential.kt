@@ -76,7 +76,7 @@ public class VerifiableCredential(public val vcDataModel: VcDataModel) {
       didResolutionResult.didDocument.assertionMethodVerificationMethodsDereferenced
 
     require(!assertionMethods.isNullOrEmpty()) {
-      throw SignatureException("no assertion methods found in did document")
+      throw SignatureException("No assertion methods found in DID document")
     }
 
     val assertionMethod: VerificationMethod = when {
