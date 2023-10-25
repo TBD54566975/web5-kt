@@ -60,6 +60,20 @@ class DidIonTest {
   }
 
   @Test
+  fun `exceptions are thrown when attempting ops on non-anchored did`() {
+    val did = DidIonApi.create(InMemoryKeyManager())
+    assertThrows<IllegalArgumentException> {
+      did.update(UpdateDidIonOptions(did.creationMetadata?.keyAliases?.updateKeyAlias!!))
+    }
+    assertThrows<IllegalArgumentException> {
+      did.deactivate(DeactivateDidIonOptions(did.creationMetadata?.keyAliases?.recoveryKeyAlias!!))
+    }
+    assertThrows<IllegalArgumentException> {
+      did.recover(RecoverDidIonOptions(did.creationMetadata?.keyAliases?.recoveryKeyAlias!!))
+    }
+  }
+
+  @Test
   fun `invalid charset verificationMethodId throws exception`() {
     val verificationKey = readKey("src/test/resources/verification_jwk.json")
 
@@ -158,7 +172,7 @@ class DidIonTest {
     val recoveryKeyId = keyManager.import(recoveryKey)
     doReturn(recoveryKeyId).whenever(keyManager).generatePrivateKey(JWSAlgorithm.ES256K)
 
-    val manager = DidIonManager {
+    val manager = DidIonApi {
       ionHost = "madeuphost"
       engine = mockEngine()
     }
@@ -209,7 +223,7 @@ class DidIonTest {
   @Test
   fun `create changes the key manager state`() {
     val keyManager = InMemoryKeyManager()
-    val did = DidIonManager {
+    val did = DidIonApi {
       engine = mockEngine()
     }.create(
       keyManager, CreateDidIonOptions(
@@ -300,8 +314,8 @@ class DidIonTest {
       val result = assertThrows<IllegalArgumentException> {
         DidIonApi.update(
           keyManager,
+          "did:ion:123",
           UpdateDidIonOptions(
-            didString = "did:ion:123",
             updateKeyAlias = updateKeyAlias,
             servicesToAdd = testCase.services,
             verificationMethodsToAdd = testCase.publicKeys,
@@ -317,8 +331,8 @@ class DidIonTest {
     val result = assertThrows<IllegalArgumentException> {
       DidIonApi.update(
         InMemoryKeyManager(),
+        "did:ion:123",
         UpdateDidIonOptions(
-          didString = "did:ion:123",
           updateKeyAlias = "my_fake_key",
         )
       )
@@ -406,12 +420,12 @@ class DidIonTest {
         status = HttpStatusCode.OK,
       )
     }
-    val updateMetadata = DidIonManager {
+    val updateMetadata = DidIonApi {
       engine = validatinMockEngine
     }.update(
       keyManager,
+      "did:ion:EiDyOQbbZAa3aiRzeCkV7LOx3SERjjH93EXoIM3UoN4oWg",
       UpdateDidIonOptions(
-        didString = "did:ion:EiDyOQbbZAa3aiRzeCkV7LOx3SERjjH93EXoIM3UoN4oWg",
         updateKeyAlias = updateKeyId,
         servicesToAdd = listOf(service),
         idsOfServicesToRemove = setOf("someId1"),
@@ -445,8 +459,8 @@ class DidIonTest {
 
     val (recoverOperation, keyAliases) = DidIonApi.createRecoverOperation(
       keyManager,
+      "did:ion:EiDyOQbbZAa3aiRzeCkV7LOx3SERjjH93EXoIM3UoN4oWg",
       RecoverDidIonOptions(
-        did = "did:ion:EiDyOQbbZAa3aiRzeCkV7LOx3SERjjH93EXoIM3UoN4oWg",
         recoveryKeyAlias = recoveryKeyAlias,
         verificationMethodsToAdd = listOf(publicKey1),
         servicesToAdd = listOf(service),
@@ -475,7 +489,7 @@ class DidIonTest {
 
   @Test
   fun `recover creates keys in key manager`() {
-    val ionManager = DidIonManager {
+    val ionManager = DidIonApi {
       engine = mockEngine()
     }
     val keyManager = spy(InMemoryKeyManager())
@@ -486,10 +500,9 @@ class DidIonTest {
     assertNotNull(recoveryKeyAlias)
     // Imagine that your update key was compromised, so you need to recover your DID.
     val opts = RecoverDidIonOptions(
-      did = did.uri,
       recoveryKeyAlias = recoveryKeyAlias,
     )
-    val recoverResult = ionManager.recover(keyManager, opts)
+    val recoverResult = ionManager.recover(keyManager, did.uri, opts)
     assertNotNull(recoverResult.keyAliases.updateKeyAlias)
     assertNotNull(recoverResult.keyAliases.recoveryKeyAlias)
     assertNotNull(recoverResult.keyAliases.verificationKeyAlias)
@@ -509,12 +522,12 @@ class DidIonTest {
     val recoveryKey = readKey("src/test/resources/jwkEs256k1Private.json")
     val recoveryKeyAlias = keyManager.import(recoveryKey)
 
-    val deactivateResult = DidIonManager {
+    val deactivateResult = DidIonApi {
       engine = mockEngine()
     }.deactivate(
       keyManager,
+      "did:ion:EiDyOQbbZAa3aiRzeCkV7LOx3SERjjH93EXoIM3UoN4oWg",
       DeactivateDidIonOptions(
-        did = "did:ion:EiDyOQbbZAa3aiRzeCkV7LOx3SERjjH93EXoIM3UoN4oWg",
         recoveryKeyAlias = recoveryKeyAlias,
       )
     )
@@ -538,7 +551,7 @@ class DidIonTest {
   @Test
   fun `bad request throws exception`() {
     val exception = assertThrows<InvalidStatusException> {
-      DidIonManager {
+      DidIonApi {
         engine = badRequestMockEngine()
       }.resolve("did:ion:foobar")
     }

@@ -75,7 +75,7 @@ public class DidIonConfiguration internal constructor(
 /**
  * Returns a [DidIonApi] after applying the provided configuration [builderAction].
  */
-public fun DidIonManager(builderAction: DidIonConfiguration.() -> Unit): DidIonApi {
+public fun DidIonApi(builderAction: DidIonConfiguration.() -> Unit): DidIonApi {
   val conf = DidIonConfiguration().apply(builderAction)
   return DidIonApiImpl(conf)
 }
@@ -86,15 +86,13 @@ private class DidIonApiImpl(configuration: DidIonConfiguration) : DidIonApi(conf
 /**
  * The options when updating an ION did.
  *
- * @param didString The full did. e.g. `did:ion:123`
  * @param updateKeyAlias The alias within the key manager that refers to the last update key.
  * @param servicesToAdd The services to add in the did document.
  * @param idsOfServicesToRemove Ids of the services to remove from the did document.
- * @param verificationMethodsToAdd PublicKeys to add to the DID document.
+ * @param verificationMethodsToAdd List of specs that will be added to the DID ION document.
  * @param idsOfPublicKeysToRemove Keys to remove from the DID document.
  */
 public data class UpdateDidIonOptions(
-  val didString: String,
   val updateKeyAlias: String,
   override val servicesToAdd: Iterable<Service> = emptyList(),
   val idsOfServicesToRemove: Iterable<String> = emptyList(),
@@ -118,20 +116,16 @@ public data class UpdateDidIonOptions(
 /**
  * The options when recovering an ION did.
  *
- * @param did is the did to recover. I.e. "did:ion:1234".
- * @param verificationMethodsToAdd PublicKeys to add to the DID document. The [PublicKey.id] property in each element
- *   cannot be over 50 chars and must only use characters from the Base64URL character set. When absent or empty, a
- *   keypair will be generated with the keyManager.
+ * @param recoveryKeyAlias is the alias within the keyManager to use when signing. It must match the recovery used with
+ *   the last recovery operation.
+ * @param verificationMethodsToAdd List of specs that will be added to the DID ION document.
  * @param servicesToAdd When provided, the services will be added to the DID document. Note that for each of the
  * services that should be added, the following must hold:
  *   - The `id` field cannot be over 50 chars and must only use characters from the Base64URL character set.
  *   - The `type` field cannot be over 30 characters.
  *   - The `serviceEndpoint` must be a valid URI.
- * @param servicesToAdd List of services which will be added into the DID document that results after the update
- *   operation.
  */
 public class RecoverDidIonOptions(
-  public val did: String,
   public val recoveryKeyAlias: String,
   public override val verificationMethodsToAdd: Iterable<VerificationMethodSpec> = emptyList(),
   public override val servicesToAdd: Iterable<Service> = emptyList(),
@@ -142,9 +136,8 @@ public class RecoverDidIonOptions(
  *
  * [recoveryKeyAlias] is the alias within the keyManager to use when signing. It must match the recovery used with the
  * last recovery operation.
- * [did] is the DID that will be deactivated. E.g. "did:ion:123123".
  */
-public class DeactivateDidIonOptions(public val recoveryKeyAlias: String, public val did: String)
+public class DeactivateDidIonOptions(public val recoveryKeyAlias: String)
 
 
 /**
@@ -156,6 +149,7 @@ public class DeactivateDidIonOptions(public val recoveryKeyAlias: String, public
  * @property uri The URI of the "did:ion" which conforms to the DID standard.
  * @property keyManager A [KeyManager] instance utilized to manage the cryptographic keys associated with the DID.
  * @property creationMetadata Metadata related to the creation of a DID. Useful for debugging purposes.
+ * @property didIonApi A [DidIonApi] instance utilized to delegate all the calls to an ION node.
  *
  * ### Usage Example:
  * ```kotlin
@@ -166,7 +160,34 @@ public class DeactivateDidIonOptions(public val recoveryKeyAlias: String, public
 public class StatefulDidIon(
   uri: String,
   keyManager: KeyManager,
-  public val creationMetadata: IonCreationMetadata? = null) : StatefulDid(uri, keyManager)
+  public val creationMetadata: IonCreationMetadata? = null,
+  private val didIonApi: DidIonApi = DidIonApi) : StatefulDid(uri, keyManager) {
+
+  /**
+   * Calls [DidIonApi.update] for this DID.
+   */
+  public fun update(options: UpdateDidIonOptions): IonUpdateResult = didIonApi.update(keyManager, this.uri, options)
+
+  /**
+   * Calls [DidIonApi.recover] for this DID.
+   */
+  public fun recover(options: RecoverDidIonOptions): IonRecoverResult = didIonApi.recover(keyManager, this.uri, options)
+
+  /**
+   * Calls [DidIonApi.deactivate] for this DID.
+   */
+  public fun deactivate(options: DeactivateDidIonOptions): IonDeactivateResult = didIonApi.deactivate(
+    keyManager,
+    this.uri,
+    options
+  )
+
+  /**
+   * Calls [DidIonApi.resolve] for this DID.
+   */
+  public fun resolve(options: ResolveDidOptions?): DidResolutionResult = didIonApi.resolve(uri, options)
+
+}
 
 private const val maxServiceTypeLength = 30
 
@@ -250,7 +271,8 @@ public sealed class DidIonApi(
           longFormDid,
           opBody,
           keys
-        )
+        ),
+        this
       )
     }
     throw InvalidStatusException(response.status.value, "received error response: '$opBody'")
@@ -284,10 +306,10 @@ public sealed class DidIonApi(
   }
 
   /**
-   * Updates an ION did with the given [options]. The update key must be available in the [keyManager].
+   * Updates [did] with the given [options]. The update key must be available in the [keyManager].
    */
-  public fun update(keyManager: KeyManager, options: UpdateDidIonOptions): IonUpdateResult {
-    val (updateOp, keyAliases) = createUpdateOperation(keyManager, options)
+  public fun update(keyManager: KeyManager, did: String, options: UpdateDidIonOptions): IonUpdateResult {
+    val (updateOp, keyAliases) = createUpdateOperation(keyManager, did, options)
     val response: HttpResponse = runBlocking {
       client.post(operationsEndpoint) {
         contentType(ContentType.Application.Json)
@@ -304,8 +326,12 @@ public sealed class DidIonApi(
     throw InvalidStatusException(response.status.value, "received error response: '$opBody'")
   }
 
-  private fun createUpdateOperation(keyManager: KeyManager, options: UpdateDidIonOptions):
+  private fun createUpdateOperation(keyManager: KeyManager, did: String, options: UpdateDidIonOptions):
     Pair<SidetreeUpdateOperation, KeyAliases> {
+    val parsedDid = DID.fromString(did)
+    require(!parsedDid.methodSpecificId.contains(":")) {
+      "updating a DID is only allowed for short form dids, but got $did"
+    }
     val updatePublicKey = keyManager.getPublicKey(options.updateKeyAlias)
 
     val newUpdateKeyAlias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K)
@@ -333,11 +359,10 @@ public sealed class DidIonApi(
     )
     val signedJwsObject = sign(updateOpSignedData, keyManager, options.updateKeyAlias)
 
-    val did = DID.fromString(options.didString)
     return Pair(
       SidetreeUpdateOperation(
         type = "update",
-        didSuffix = did.methodSpecificId,
+        didSuffix = parsedDid.methodSpecificId,
         revealValue = reveal,
         delta = updateOpDeltaObject,
         signedData = signedJwsObject.serialize(false),
@@ -487,8 +512,13 @@ public sealed class DidIonApi(
     )
   }
 
-  internal fun createRecoverOperation(keyManager: KeyManager, options: RecoverDidIonOptions):
+  internal fun createRecoverOperation(keyManager: KeyManager, did: String, options: RecoverDidIonOptions):
     Pair<SidetreeRecoverOperation, KeyAliases> {
+    val parsedDid = DID.fromString(did)
+    require(!parsedDid.methodSpecificId.contains(":")) {
+      "recovering a DID is only allowed for short form dids, but got $did"
+    }
+
     val recoveryPublicKey = keyManager.getPublicKey(options.recoveryKeyAlias)
     val reveal = recoveryPublicKey.reveal()
 
@@ -520,11 +550,10 @@ public sealed class DidIonApi(
 
     val jwsObject = sign(dataToBeSigned, keyManager, options.recoveryKeyAlias)
 
-    val did = DID.fromString(options.did)
     return Pair(
       SidetreeRecoverOperation(
         type = "recover",
-        didSuffix = did.methodSpecificId,
+        didSuffix = parsedDid.methodSpecificId,
         revealValue = reveal,
         delta = delta,
         signedData = jwsObject.serialize(),
@@ -539,14 +568,18 @@ public sealed class DidIonApi(
 
   private fun createDeactivateOperation(
     keyManager: KeyManager,
+    did: String,
     options: DeactivateDidIonOptions): SidetreeDeactivateOperation {
+    val parsedDid = DID.fromString(did)
+    require(!parsedDid.methodSpecificId.contains(":")) {
+      "deactivating a DID is only allowed for short form dids, but got $did"
+    }
     val recoveryPublicKey = keyManager.getPublicKey(options.recoveryKeyAlias)
     val reveal = recoveryPublicKey.reveal()
 
-    val did = DID.fromString(options.did)
 
     val dataToBeSigned = DeactivateUpdateSignedData(
-      didSuffix = did.methodSpecificId,
+      didSuffix = parsedDid.methodSpecificId,
       recoveryKey = recoveryPublicKey,
     )
 
@@ -554,19 +587,19 @@ public sealed class DidIonApi(
 
     return SidetreeDeactivateOperation(
       type = "deactivate",
-      didSuffix = did.methodSpecificId,
+      didSuffix = parsedDid.methodSpecificId,
       revealValue = reveal,
       signedData = jwsObject.serialize(),
     )
   }
 
   /**
-   * Recovers an ION did with the given [options]. The `recoveryKeyAlias` value must be available in the [keyManager].
+   * Recovers [did] with the given [options]. The `recoveryKeyAlias` value must be available in the [keyManager].
    * Depending on the options provided, will create new keys using [keyManager]. See [RecoverDidIonOptions] for more
    * details.
    */
-  public fun recover(keyManager: KeyManager, options: RecoverDidIonOptions): IonRecoverResult {
-    val (recoverOp, keyAliases) = createRecoverOperation(keyManager, options)
+  public fun recover(keyManager: KeyManager, did: String, options: RecoverDidIonOptions): IonRecoverResult {
+    val (recoverOp, keyAliases) = createRecoverOperation(keyManager, did, options)
 
     val response: HttpResponse = runBlocking {
       client.post(operationsEndpoint) {
@@ -586,10 +619,10 @@ public sealed class DidIonApi(
   }
 
   /**
-   * Deactivates an ION did with the given [options]. The `recoveryKeyAlias` value must be available in the [keyManager].
+   * Deactivates [did] with the given [options]. The `recoveryKeyAlias` value must be available in the [keyManager].
    */
-  public fun deactivate(keyManager: KeyManager, options: DeactivateDidIonOptions): IonDeactivateResult {
-    val deactivateOp = createDeactivateOperation(keyManager, options)
+  public fun deactivate(keyManager: KeyManager, did: String, options: DeactivateDidIonOptions): IonDeactivateResult {
+    val deactivateOp = createDeactivateOperation(keyManager, did, options)
 
     val response: HttpResponse = runBlocking {
       client.post(operationsEndpoint) {
@@ -711,9 +744,7 @@ public data class KeyAliases(
  * Options available when creating an ion did.
  *
  *
- * @param verificationMethodsToAdd PublicKeys to add to the DID document. The [PublicKey.id] property in each element
- *   cannot be over 50 chars and must only use characters from the Base64URL character set. When absent or empty, a
- *   keypair will be generated with the keyManager.
+ * @param verificationMethodsToAdd List of specs that will be added to the DID ION document.
  * @param servicesToAdd When provided, the services will be added to the DID document. Note that for each of the
  * services that should be added, the following must hold:
  *   - The `id` field cannot be over 50 chars and must only use characters from the Base64URL character set.
@@ -751,6 +782,8 @@ public class VerificationMethodCreationParams(
 
 /**
  * A [VerificationMethodSpec] according to https://w3c-ccg.github.io/lds-jws2020/.
+ *
+ * The [id] property cannot be over 50 chars and must only use characters from the Base64URL character set.
  */
 public class JsonWebKey2020VerificationMethod(
   public val id: String,
@@ -765,6 +798,8 @@ public class JsonWebKey2020VerificationMethod(
 
 /**
  * A [VerificationMethodSpec] according to https://w3c-ccg.github.io/lds-ecdsa-secp256k1-2019/.
+ *
+ * The [id] property cannot be over 50 chars and must only use characters from the Base64URL character set.
  */
 public class EcdsaSecp256k1VerificationKey2019VerificationMethod(
   public val id: String,
