@@ -28,6 +28,7 @@ import org.erwinkok.multiformat.multihash.Multihash
 import org.erwinkok.result.get
 import org.erwinkok.result.getOrThrow
 import web5.sdk.common.Convert
+import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.crypto.KeyManager
 import web5.sdk.dids.ion.model.AddPublicKeysAction
 import web5.sdk.dids.ion.model.AddServicesAction
@@ -66,6 +67,7 @@ private const val identifiersPath = "/identifiers"
 public class DidIonConfiguration internal constructor(
   public var ionHost: String = "https://ion.tbddev.org",
   public var engine: HttpClientEngine? = null,
+  public var keyManager: KeyManager = InMemoryKeyManager(),
 )
 
 
@@ -177,8 +179,8 @@ private val base64UrlCharsetRegex = base64UrlCharsetRegexStr.toRegex()
  * Base class for managing DID Ion operations. Uses the given [configuration].
  */
 public sealed class DidIonManager(
-  private val configuration: DidIonConfiguration
-) : DidMethod<DidIonHandle, CreateDidIonOptions> {
+  private val configuration: DidIonConfiguration,
+) : DidMethod<DidIonHandle, CreateDidIonOptions>(configuration.keyManager) {
 
   private val mapper = jacksonObjectMapper()
 
@@ -204,8 +206,8 @@ public sealed class DidIonManager(
    * @throws [InvalidStatusException] When any of the network requests return an invalid HTTP status code.
    * @see [DidMethod.create] for details of each parameter.
    */
-  override fun create(keyManager: KeyManager, options: CreateDidIonOptions?): DidIonHandle {
-    val (createOp, keys) = createOperation(keyManager, options)
+  public override fun create(options: CreateDidIonOptions?): DidIonHandle {
+    val (createOp, keys) = createOperation(options)
 
     val shortFormDidSegment = Convert(
       Multihash.sum(Multicodec.SHA2_256, canonicalized(createOp.suffixData)).get()?.bytes()
@@ -283,8 +285,8 @@ public sealed class DidIonManager(
   /**
    * Updates an ION did with the given [options]. The update key must be available in the [keyManager].
    */
-  public fun update(keyManager: KeyManager, options: UpdateDidIonOptions): IonUpdateResult {
-    val (updateOp, keyAliases) = createUpdateOperation(keyManager, options)
+  public fun update(options: UpdateDidIonOptions): IonUpdateResult {
+    val (updateOp, keyAliases) = createUpdateOperation(options)
     val response: HttpResponse = runBlocking {
       client.post(operationsEndpoint) {
         contentType(ContentType.Application.Json)
@@ -301,7 +303,7 @@ public sealed class DidIonManager(
     throw InvalidStatusException(response.status.value, "received error response: '$opBody'")
   }
 
-  private fun createUpdateOperation(keyManager: KeyManager, options: UpdateDidIonOptions):
+  private fun createUpdateOperation(options: UpdateDidIonOptions):
     Pair<SidetreeUpdateOperation, KeyAliases> {
     val updatePublicKey = keyManager.getPublicKey(options.updateKeyAlias)
 
@@ -326,7 +328,7 @@ public sealed class DidIonManager(
       updateKey = updatePublicKey,
       deltaHash = deltaHash,
     )
-    val signedJwsObject = sign(updateOpSignedData, keyManager, options.updateKeyAlias)
+    val signedJwsObject = sign(updateOpSignedData, options.updateKeyAlias)
 
     val did = DID.fromString(options.didString)
     return Pair(
@@ -345,7 +347,7 @@ public sealed class DidIonManager(
     )
   }
 
-  private fun sign(serializableObject: Any, keyManager: KeyManager, signKeyAlias: String): JWSObject {
+  private fun sign(serializableObject: Any, signKeyAlias: String): JWSObject {
     val header = JWSHeader.Builder(JWSAlgorithm.ES256K).build()
     val payload = Payload(mapper.writeValueAsString(serializableObject))
     val jwsObject = JWSObject(header, payload)
@@ -388,14 +390,14 @@ public sealed class DidIonManager(
     }
   }
 
-  internal fun createOperation(keyManager: KeyManager, options: CreateDidIonOptions?)
+  internal fun createOperation(options: CreateDidIonOptions?)
     : Pair<SidetreeCreateOperation, KeyAliases> {
     val updateKeyAlias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K)
     val updatePublicJwk = keyManager.getPublicKey(updateKeyAlias)
 
     val publicKeyCommitment = updatePublicJwk.commitment()
 
-    val (publicKeysToAdd, verificationKeyAlias) = getPublicKeysToAddOrDefault(options, keyManager)
+    val (publicKeysToAdd, verificationKeyAlias) = getPublicKeysToAddOrDefault(options)
     validateDidDocumentKeys(publicKeysToAdd)
 
     validateServices(options?.servicesToAdd ?: emptyList())
@@ -426,7 +428,7 @@ public sealed class DidIonManager(
     )
   }
 
-  private fun getPublicKeysToAddOrDefault(options: CommonOptions?, keyManager: KeyManager) =
+  private fun getPublicKeysToAddOrDefault(options: CommonOptions?) =
     if (options == null || options.publicKeysToAdd.count() == 0) {
       val alias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K)
       val verificationJwk = keyManager.getPublicKey(alias)
@@ -488,7 +490,7 @@ public sealed class DidIonManager(
     )
   }
 
-  internal fun createRecoverOperation(keyManager: KeyManager, options: RecoverDidIonOptions):
+  internal fun createRecoverOperation(options: RecoverDidIonOptions):
     Pair<SidetreeRecoverOperation, KeyAliases> {
     val recoveryPublicKey = keyManager.getPublicKey(options.recoveryKeyAlias)
     val reveal = recoveryPublicKey.reveal()
@@ -501,7 +503,7 @@ public sealed class DidIonManager(
     val nextUpdatePublicKey = keyManager.getPublicKey(nextUpdateKeyAlias)
     val nextUpdateCommitment = nextUpdatePublicKey.commitment()
 
-    val (publicKeysToAdd, verificationKeyAlias) = getPublicKeysToAddOrDefault(options, keyManager)
+    val (publicKeysToAdd, verificationKeyAlias) = getPublicKeysToAddOrDefault(options)
     validateDidDocumentKeys(publicKeysToAdd)
 
     validateServices(options.servicesToAdd)
@@ -518,7 +520,7 @@ public sealed class DidIonManager(
       deltaHash = deltaHash
     )
 
-    val jwsObject = sign(dataToBeSigned, keyManager, options.recoveryKeyAlias)
+    val jwsObject = sign(dataToBeSigned, options.recoveryKeyAlias)
 
     val did = DID.fromString(options.did)
     return Pair(
@@ -537,9 +539,7 @@ public sealed class DidIonManager(
     )
   }
 
-  private fun createDeactivateOperation(
-    keyManager: KeyManager,
-    options: DeactivateDidIonOptions): SidetreeDeactivateOperation {
+  private fun createDeactivateOperation(options: DeactivateDidIonOptions): SidetreeDeactivateOperation {
     val recoveryPublicKey = keyManager.getPublicKey(options.recoveryKeyAlias)
     val reveal = recoveryPublicKey.reveal()
 
@@ -550,7 +550,7 @@ public sealed class DidIonManager(
       recoveryKey = recoveryPublicKey,
     )
 
-    val jwsObject = sign(dataToBeSigned, keyManager, options.recoveryKeyAlias)
+    val jwsObject = sign(dataToBeSigned, options.recoveryKeyAlias)
 
     return SidetreeDeactivateOperation(
       type = "deactivate",
@@ -565,8 +565,8 @@ public sealed class DidIonManager(
    * Depending on the options provided, will create new keys using [keyManager]. See [RecoverDidIonOptions] for more
    * details.
    */
-  public fun recover(keyManager: KeyManager, options: RecoverDidIonOptions): IonRecoverResult {
-    val (recoverOp, keyAliases) = createRecoverOperation(keyManager, options)
+  public fun recover(options: RecoverDidIonOptions): IonRecoverResult {
+    val (recoverOp, keyAliases) = createRecoverOperation(options)
 
     val response: HttpResponse = runBlocking {
       client.post(operationsEndpoint) {
@@ -588,8 +588,8 @@ public sealed class DidIonManager(
   /**
    * Deactivates an ION did with the given [options]. The `recoveryKeyAlias` value must be available in the [keyManager].
    */
-  public fun deactivate(keyManager: KeyManager, options: DeactivateDidIonOptions): IonDeactivateResult {
-    val deactivateOp = createDeactivateOperation(keyManager, options)
+  public fun deactivate(options: DeactivateDidIonOptions): IonDeactivateResult {
+    val deactivateOp = createDeactivateOperation(options)
 
     val response: HttpResponse = runBlocking {
       client.post(operationsEndpoint) {

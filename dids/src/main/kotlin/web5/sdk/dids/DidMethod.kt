@@ -117,13 +117,13 @@ public interface ResolveDidOptions
  * - Ensure that cryptographic operations utilize secure and tested libraries, ensuring
  *   the reliability and security of DIDs managed by this method.
  */
-public interface DidMethod<T : Did, O : CreateDidOptions> {
+public abstract class DidMethod<T : Did, O : CreateDidOptions>(public val keyManager: KeyManager) {
   /**
    * A string that specifies the name of the DID method.
    *
    * For instance, in the DID `did:example:123456`, "example" would be the method name.
    */
-  public val methodName: String
+  public abstract val methodName: String
 
   /**
    * Creates a new DID.
@@ -132,12 +132,11 @@ public interface DidMethod<T : Did, O : CreateDidOptions> {
    * method being implemented, using the provided [KeyManager] and optionally considering
    * any provided [CreateDidOptions].
    *
-   * @param keyManager An instance of [KeyManager] responsible for cryptographic operations.
    * @param options Optionally, an instance of [CreateDidOptions] providing additional options
    *                or requirements for DID creation.
    * @return A new instance of type [T], representing the created DID.
    */
-  public fun create(keyManager: KeyManager, options: O? = null): T
+  public abstract fun create(options: O? = null): T
 
   /**
    * Resolves a DID to its associated DID Document.
@@ -152,5 +151,5 @@ public interface DidMethod<T : Did, O : CreateDidOptions> {
    * @return An instance of [DidResolutionResult] containing the resolved DID Document and
    *         any associated metadata.
    */
-  public fun resolve(did: String, options: ResolveDidOptions? = null): DidResolutionResult
+  public abstract fun resolve(did: String, options: ResolveDidOptions? = null): DidResolutionResult
 }

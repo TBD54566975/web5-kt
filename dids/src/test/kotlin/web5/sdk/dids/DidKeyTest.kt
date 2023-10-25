@@ -6,7 +6,6 @@ import com.nimbusds.jose.jwk.ECKey
 import com.nimbusds.jose.jwk.JWK
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import web5.sdk.crypto.InMemoryKeyManager
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
@@ -17,8 +16,7 @@ class DidKeyTest {
   inner class CreateTest {
     @Test
     fun `it works`() {
-      val manager = InMemoryKeyManager()
-      val did = DidKey.create(manager)
+      val did = DidKeyManager().create()
 
       val didResolutionResult = DidResolvers.resolve(did.uri)
       val verificationMethod = didResolutionResult.didDocument.allVerificationMethods[0]
@@ -37,7 +35,7 @@ class DidKeyTest {
     fun `resolving a secp256k1 DID works`() {
       // test vector taken from: https://github.com/w3c-ccg/did-method-key/blob/main/test-vectors/secp256k1.json#L202C4-L257
       val did = "did:key:zQ3shjmnWpSDEbYKpaFm4kTs9kXyqG6N2QwCYHNPP4yubqgJS"
-      val result = DidKey.resolve(did)
+      val result = DidKeyManager().resolve(did)
       assertNotNull(result)
 
       val didDocument = result.didDocument

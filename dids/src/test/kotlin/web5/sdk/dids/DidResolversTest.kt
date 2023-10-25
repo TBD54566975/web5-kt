@@ -2,7 +2,6 @@ package web5.sdk.dids
 
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Test
-import web5.sdk.crypto.InMemoryKeyManager
 
 class DidResolversTest {
 
@@ -14,7 +13,7 @@ class DidResolversTest {
 
   @Test
   fun `resolving a default ion did contains assertion method`() {
-    val ionDid = DidIonManager.create(InMemoryKeyManager())
+    val ionDid = DidIonManager.create()
 
     val resolutionResult = DidResolvers.resolve(ionDid.uri)
     assertNotNull(resolutionResult.didDocument.assertionMethodVerificationMethodsDereferenced)
