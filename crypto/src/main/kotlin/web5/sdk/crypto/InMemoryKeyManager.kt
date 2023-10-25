@@ -90,9 +90,6 @@ public class InMemoryKeyManager : KeyManager {
    * Imports [jwk] and returns the alias that refers to it.
    */
   public fun import(jwk: JWK): String {
-    require(jwk.isPrivate) {
-      "Importing a non-private key is not permitted"
-    }
     var kid = jwk.keyID
     if (kid.isNullOrEmpty()) {
       kid = jwk.computeThumbprint().toString()
