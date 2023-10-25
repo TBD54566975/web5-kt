@@ -154,7 +154,7 @@ public class DeactivateDidIonOptions(public val recoveryKeyAlias: String)
  * ### Usage Example:
  * ```kotlin
  * val keyManager = InMemoryKeyManager()
- * val did = DidIonHandle("did:ion:example", keyManager)
+ * val did = StatefulDidIon("did:ion:example", keyManager)
  * ```
  */
 public class StatefulDidIon(

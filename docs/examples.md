@@ -13,25 +13,25 @@ you plenty of examples on how to use this SDK.
 This is the simplest way to create an ion did.
 
 ```kotlin
-val did = DidIonManager.create(InMemoryKeyManager())
+val did = DidIonApi.create(InMemoryKeyManager())
 ```
 
 The private keys will be stored in the `InMemoryKeyManager`. All the defaults are used for 
-the `DidIonManager`, including the endpoint for the ION node used for creation, and uses
+the `DidIonApi`, including the endpoint for the ION node used for creation, and uses
 `CIO` as the `HttpClientEngine` (see [ktor engines](https://ktor.io/docs/http-client-engines.html)).
 
 ### Create an ION did with custom ION endpoint and engine
 
 ```kotlin
 val keyManager = InMemoryKeyManager()
-val ionManager = DidIonManager {
+val ionApi = DidIonApi {
   ionHost = "my_custom_ion_host"
   engine = CIO.create {
     maxConnectionsCount = 10
     requestTimeout = 5.toDuration(DurationUnit.SECONDS).inWholeMilliseconds
   }
 }
-val did = ionManager.create(keyManager)
+val did = ionApi.create(keyManager)
 ```
 
 ### Create an ION did with custom creation options
@@ -44,23 +44,25 @@ store them elsewhere however you see fit.
 
 ```kotlin
 val keyManager = InMemoryKeyManager()
-val verificationKey = keyManager.generatePrivateKey(JWSAlgorithm.ES256K)
 val opts = CreateDidIonOptions(
-  verificationPublicKey = PublicKey(
-    id = verificationKey.keyID,
-    type = "JsonWebKey2020",
-    publicKeyJwk = verificationKey,
-    purposes = listOf(PublicKeyPurpose.AUTHENTICATION),
-  ),
-)
-val did = DidIonManager.create(keyManager, opts)
+  verificationMethodsToAdd = listOf(
+    VerificationMethodCreationParams(
+      JWSAlgorithm.ES256K,
+      relationships = listOf(PublicKeyPurpose.AUTHENTICATION, PublicKeyPurpose.ASSERTION_METHOD)
+    ),
+    VerificationMethodCreationParams(
+      JWSAlgorithm.ES256K,
+      relationships = listOf(PublicKeyPurpose.ASSERTION_METHOD)
+    ),
+  )
+val did = DidIonApi.create(keyManager, opts)
 ```
 
 ### Resolve an ION did
 
 ```kotlin
-val ionManager = DidIonManager
-val didResolutionResult = ionManager.resolve("did:ion:EiClkZMDxPKqC9c-umQfTkR8vvZ9JPhl_xLDI9Nfk38w5w")
+val ionApi = DidIonApi
+val didResolutionResult = ionApi.resolve("did:ion:EiClkZMDxPKqC9c-umQfTkR8vvZ9JPhl_xLDI9Nfk38w5w")
 ```
 
 ### Recover an ION did
@@ -70,17 +72,16 @@ This type of operation is useful when the update keys of your DID have been comp
 
 ```kotlin
 // We create the DID first. 
-val ionManager = DidIonManager
+val ionApi = DidIonApi
 val keyManager = InMemoryKeyManager()
-val did = ionManager.create(keyManager)
+val did = ionApi.create(keyManager)
 val recoveryKeyAlias = did.creationMetadata!!.keyAliases.verificationKeyAlias
 
 // Imagine that your update key was compromised, so you need to recover your DID.
 val opts = RecoverDidIonOptions(
-  did = did.uri,
-  recoveryKeyAlias = recoveryKeyAlias,  
+  recoveryKeyAlias = recoveryKeyAlias.first(),
 )
-val recoverResult = ionManager.recover(keyManager, opts)
+val recoverResult = ionApi.recover(keyManager, did.uri, opts)
 ```
 
 > [!NOTE]
@@ -90,17 +91,16 @@ val recoverResult = ionManager.recover(keyManager, opts)
 
 ```kotlin
 // We create the DID first. 
-val ionManager = DidIonManager
+val ionApi = DidIonApi
 val keyManager = InMemoryKeyManager()
-val did = ionManager.create(keyManager)
-val recoveryKeyAlias = did.creationMetadata!!.keyAliases.verificationKeyAlias
+val did = ionApi.create(keyManager)
+val recoveryKeyAlias = did.creationMetadata!!.keyAliases.verificationKeyAlias.first()
 
 // You want to permanently disable the DID, rendering it useless.
 val opts = DeactivateDidIonOptions(
-  did = did.uri,
   recoveryKeyAlias = recoveryKeyAlias,
 )
-val deactivateResult = ionManager.deactivate(keyManager, opts)
+val deactivateResult = ionApi.deactivate(keyManager, did.uri, opts)
 ```
 
 > [!NOTE]
