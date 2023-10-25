@@ -163,7 +163,7 @@ public class DeactivateDidIonOptions(public val recoveryKeyAlias: String, public
  * val did = DidIonHandle("did:ion:example", keyManager)
  * ```
  */
-public class StatefulIonDid(
+public class StatefulDidIon(
   uri: String,
   keyManager: KeyManager,
   public val creationMetadata: IonCreationMetadata? = null) : StatefulDid(uri, keyManager)
@@ -181,7 +181,7 @@ private val base64UrlCharsetRegex = base64UrlCharsetRegexStr.toRegex()
  */
 public sealed class DidIonApi(
   private val configuration: DidIonConfiguration
-) : DidMethod<StatefulIonDid, CreateDidIonOptions> {
+) : DidMethod<StatefulDidIon, CreateDidIonOptions> {
 
   private val mapper = jacksonObjectMapper()
 
@@ -199,7 +199,7 @@ public sealed class DidIonApi(
   override val methodName: String = "ion"
 
   /**
-   * Creates a [StatefulIonDid], which includes a DID and it's associated DID Document. In order to ensure the creation
+   * Creates a [StatefulDidIon], which includes a DID and it's associated DID Document. In order to ensure the creation
    * works appropriately, the DID is resolved immediately after it's created.
    *
    * Note: [options] must be of type [CreateDidIonOptions].
@@ -207,7 +207,7 @@ public sealed class DidIonApi(
    * @throws [InvalidStatusException] When any of the network requests return an invalid HTTP status code.
    * @see [DidMethod.create] for details of each parameter.
    */
-  override fun create(keyManager: KeyManager, options: CreateDidIonOptions?): StatefulIonDid {
+  override fun create(keyManager: KeyManager, options: CreateDidIonOptions?): StatefulDidIon {
     val (createOp, keys) = createOperation(keyManager, options)
 
     val shortFormDidSegment = Convert(
@@ -241,7 +241,7 @@ public sealed class DidIonApi(
         )
       }
 
-      return StatefulIonDid(
+      return StatefulDidIon(
         resolutionResult.didDocument.id.toString(),
         keyManager,
         IonCreationMetadata(

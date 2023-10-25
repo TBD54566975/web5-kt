@@ -8,7 +8,7 @@ import io.ktor.http.headersOf
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.assertThrows
 import web5.sdk.crypto.InMemoryKeyManager
-import web5.sdk.dids.DidKey
+import web5.sdk.dids.DidKeyApi
 import java.io.File
 import java.net.URI
 import kotlin.test.Test
@@ -55,8 +55,8 @@ class StatusListCredentialTest {
   @Test
   fun `should create valid VerifiableCredential with a credential status`() {
     val keyManager = InMemoryKeyManager()
-    val issuerDid = DidKey.create(keyManager)
-    val holderDid = DidKey.create(keyManager)
+    val issuerDid = DidKeyApi.create(keyManager)
+    val holderDid = DidKeyApi.create(keyManager)
 
     val credentialStatus = StatusList2021Entry.builder()
       .id(URI.create("cred-with-status-id"))
@@ -101,8 +101,8 @@ class StatusListCredentialTest {
   @Test
   fun `should generate StatusListCredential from multiple VerifiableCredentials`() {
     val keyManager = InMemoryKeyManager()
-    val issuerDid = DidKey.create(keyManager)
-    val holderDid = DidKey.create(keyManager)
+    val issuerDid = DidKeyApi.create(keyManager)
+    val holderDid = DidKeyApi.create(keyManager)
 
     val credentialStatus1 = StatusList2021Entry.builder()
       .id(URI.create("cred-with-status-id"))
@@ -174,8 +174,8 @@ class StatusListCredentialTest {
   @Test
   fun `should fail when generating StatusListCredential with duplicate indexes`() {
     val keyManager = InMemoryKeyManager()
-    val issuerDid = DidKey.create(keyManager)
-    val holderDid = DidKey.create(keyManager)
+    val issuerDid = DidKeyApi.create(keyManager)
+    val holderDid = DidKeyApi.create(keyManager)
 
     val credentialStatus1 = StatusList2021Entry.builder()
       .id(URI.create("cred-with-status-id"))
@@ -224,8 +224,8 @@ class StatusListCredentialTest {
   @Test
   fun `should fail when generating StatusListCredential with negative index`() {
     val keyManager = InMemoryKeyManager()
-    val issuerDid = DidKey.create(keyManager)
-    val holderDid = DidKey.create(keyManager)
+    val issuerDid = DidKeyApi.create(keyManager)
+    val holderDid = DidKeyApi.create(keyManager)
 
     val credentialStatus1 = StatusList2021Entry.builder()
       .id(URI.create("cred-with-status-id"))
@@ -259,8 +259,8 @@ class StatusListCredentialTest {
   @Test
   fun `should fail when generating StatusListCredential with an index larger than maximum size`() {
     val keyManager = InMemoryKeyManager()
-    val issuerDid = DidKey.create(keyManager)
-    val holderDid = DidKey.create(keyManager)
+    val issuerDid = DidKeyApi.create(keyManager)
+    val holderDid = DidKeyApi.create(keyManager)
 
     val credentialStatus1 = StatusList2021Entry.builder()
       .id(URI.create("cred-with-status-id"))
@@ -294,8 +294,8 @@ class StatusListCredentialTest {
   @Test
   fun `should validate if a credential exists in the status list`() {
     val keyManager = InMemoryKeyManager()
-    val issuerDid = DidKey.create(keyManager)
-    val holderDid = DidKey.create(keyManager)
+    val issuerDid = DidKeyApi.create(keyManager)
+    val holderDid = DidKeyApi.create(keyManager)
 
     val credentialStatus1 = StatusList2021Entry.builder()
       .id(URI.create("cred-with-status-id"))
@@ -363,8 +363,8 @@ class StatusListCredentialTest {
   @Test
   fun `should asynchronously validate if a credential is in the status list using a mock HTTP client`() = runBlocking {
     val keyManager = InMemoryKeyManager()
-    val issuerDid = DidKey.create(keyManager)
-    val holderDid = DidKey.create(keyManager)
+    val issuerDid = DidKeyApi.create(keyManager)
+    val holderDid = DidKeyApi.create(keyManager)
 
     val credentialStatus1 = StatusList2021Entry.builder()
       .id(URI.create("cred-with-status-id"))
