@@ -471,7 +471,7 @@ public sealed class DidIonManager(
           id = verificationMethodId,
           type = "JsonWebKey2020",
           publicKeyJwk = verificationJwk,
-          purposes = listOf(PublicKeyPurpose.ASSERTION_METHOD),
+          purposes = listOf(PublicKeyPurpose.AUTHENTICATION, PublicKeyPurpose.ASSERTION_METHOD),
         ),
         alias
       )
