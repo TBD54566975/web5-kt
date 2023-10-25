@@ -40,7 +40,7 @@ class DidIonTest {
   @Test
   @Ignore("For demonstration purposes only - this makes a network call")
   fun createWithDefault() {
-    val did = DidIonManager.create()
+    val did = DidIonApi.create()
     assertContains(did.uri, "did:ion:")
     assertTrue(did.creationMetadata!!.longFormDid.startsWith(did.uri))
   }
@@ -62,7 +62,7 @@ class DidIonTest {
     val verificationKey = readKey("src/test/resources/verification_jwk.json")
 
     val exception = assertThrows<IllegalArgumentException> {
-      DidIonManager.create(
+      DidIonApi.create(
         CreateDidIonOptions(
           publicKeysToAdd = listOf(
             PublicKey(
@@ -113,7 +113,7 @@ class DidIonTest {
     )
     for (testCase in testCases) {
       val exception = assertThrows<IllegalArgumentException> {
-        DidIonManager.create(
+        DidIonApi.create(
           CreateDidIonOptions(
             servicesToAdd = listOf(testCase.service)
           )
@@ -128,7 +128,7 @@ class DidIonTest {
     val verificationKey = readKey("src/test/resources/verification_jwk.json")
 
     val exception = assertThrows<IllegalArgumentException> {
-      DidIonManager.create(
+      DidIonApi.create(
         CreateDidIonOptions(
           publicKeysToAdd = listOf(
             PublicKey(
@@ -202,7 +202,7 @@ class DidIonTest {
 
   @Test
   fun `method name is ion`() {
-    assertEquals("ion", DidIonManager.methodName)
+    assertEquals("ion", DidIonApi.methodName)
   }
 
   @Test
@@ -302,7 +302,7 @@ class DidIonTest {
   @Test
   fun `update fails when update key is absent`() {
     val result = assertThrows<IllegalArgumentException> {
-      DidIonManager.update(
+      DidIonApi.update(
         UpdateDidIonOptions(
           didString = "did:ion:123",
           updateKeyAlias = "my_fake_key",

@@ -59,7 +59,7 @@ private const val operationsPath = "/operations"
 private const val identifiersPath = "/identifiers"
 
 /**
- * Configuration for the [DidIonManager].
+ * Configuration for the [DidIonApi].
  *
  * @property ionHost The ION host URL.
  * @property engine The engine to use. When absent, a new one will be created from the [CIO] factory.
@@ -72,15 +72,15 @@ public class DidIonConfiguration internal constructor(
 
 
 /**
- * Returns a [DidIonManager] after applying the provided configuration [builderAction].
+ * Returns a [DidIonApi] after applying the provided configuration [builderAction].
  */
-public fun DidIonManager(builderAction: DidIonConfiguration.() -> Unit): DidIonManager {
+public fun DidIonManager(builderAction: DidIonConfiguration.() -> Unit): DidIonApi {
   val conf = DidIonConfiguration().apply(builderAction)
-  return DidIonManagerImpl(conf)
+  return DidIonApiImpl(conf)
 }
 
-/** [DidIonManager] is sealed, so we provide an impl so the constructor can be called. */
-private class DidIonManagerImpl(configuration: DidIonConfiguration) : DidIonManager(configuration)
+/** [DidIonApi] is sealed, so we provide an impl so the constructor can be called. */
+private class DidIonApiImpl(configuration: DidIonConfiguration) : DidIonApi(configuration)
 
 /**
  * The options when updating an ION did.
@@ -178,7 +178,7 @@ private val base64UrlCharsetRegex = base64UrlCharsetRegexStr.toRegex()
 /**
  * Base class for managing DID Ion operations. Uses the given [configuration].
  */
-public sealed class DidIonManager(
+public sealed class DidIonApi(
   private val configuration: DidIonConfiguration,
 ) : DidMethod<DidIonHandle, CreateDidIonOptions>(configuration.keyManager) {
 
@@ -610,9 +610,9 @@ public sealed class DidIonManager(
 
 
   /**
-   * Default companion object for creating a [DidIonManager] with a default configuration.
+   * Default companion object for creating a [DidIonApi] with a default configuration.
    */
-  public companion object Default : DidIonManager(DidIonConfiguration())
+  public companion object Default : DidIonApi(DidIonConfiguration())
 }
 
 private fun CommonOptions?.toPatches(publicKeysToAdd: Iterable<PublicKey>): Iterable<PatchAction> {
@@ -627,7 +627,7 @@ private fun CommonOptions?.toPatches(publicKeysToAdd: Iterable<PublicKey>): Iter
 }
 
 /**
- * Data associated with the [DidIonManager.deactivate] call. Useful for debugging and testing purposes.
+ * Data associated with the [DidIonApi.deactivate] call. Useful for debugging and testing purposes.
  */
 public class IonDeactivateResult(
   public val deactivateOperation: SidetreeDeactivateOperation,
@@ -691,10 +691,10 @@ public data class IonUpdateResult(
 public class InvalidStatusException(public val statusCode: Int, msg: String) : RuntimeException(msg)
 
 /**
- * Represents an exception where the response from calling [DidIonManager.resolve] contains a non-empty value in
+ * Represents an exception where the response from calling [DidIonApi.resolve] contains a non-empty value in
  * [DidResolutionMetadata.error].
  *
- * Note: This exception is only thrown when calling [DidIonManager.create]. Callers of [DidIonManager.resolve] should
+ * Note: This exception is only thrown when calling [DidIonApi.create]. Callers of [DidIonApi.resolve] should
  * handle possible values of [DidResolutionMetadata.error] within [DidResolutionResult].
  */
 public class ResolutionException(msg: String) : RuntimeException(msg)
