@@ -16,7 +16,7 @@ class DidResolversTest {
   fun `resolving a default ion did contains assertion method`() {
     val ionDid = DidIonManager.create(InMemoryKeyManager())
 
-    val resolutionResult= DidResolvers.resolve(ionDid.uri)
+    val resolutionResult = DidResolvers.resolve(ionDid.uri)
     assertNotNull(resolutionResult.didDocument.assertionMethodVerificationMethodsDereferenced)
   }
 }

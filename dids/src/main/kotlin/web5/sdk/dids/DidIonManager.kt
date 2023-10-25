@@ -93,11 +93,11 @@ private class DidIonManagerImpl(configuration: DidIonConfiguration) : DidIonMana
 public data class UpdateDidIonOptions(
   val didString: String,
   val updateKeyAlias: String,
-  val servicesToAdd: Iterable<Service> = emptyList(),
+  override val servicesToAdd: Iterable<Service> = emptyList(),
   val idsOfServicesToRemove: Iterable<String> = emptyList(),
-  val publicKeysToAdd: Iterable<PublicKey> = emptyList(),
-  val idsOfPublicKeysToRemove: Iterable<String> = emptyList()
-) {
+  override val publicKeysToAdd: Iterable<PublicKey> = emptyList(),
+  val idsOfPublicKeysToRemove: Iterable<String> = emptyList(),
+) : CommonOptions {
   internal fun toPatches(): List<PatchAction> {
     fun <T> MutableList<PatchAction>.addIfNotEmpty(iter: Iterable<T>, action: (Iterable<T>) -> PatchAction) {
       iter.takeIf { it.count() != 0 }?.let { this.add(action(it)) }
@@ -115,32 +115,24 @@ public data class UpdateDidIonOptions(
 /**
  * The options when recovering an ION did.
  *
- * - [did] is the did to recover. I.e. "did:ion:1234".
- * - [recoveryKeyAlias] is the alias under which the recovery private key is stored inside the [KeyManager] used.
- * - [verificationPublicKey] When provided, will be used as the verification key in the new DID document.
- * - [verificationMethodId] When provided, will be used as the verification method id. Cannot be over 50 chars and
- *   must only use characters from the Base64URL character set. When absent, a [UUID] will be generated.
- * - [servicesToAdd] List of services which will be added into the DID document that results after the update
+ * @param did is the did to recover. I.e. "did:ion:1234".
+ * @param publicKeysToAdd PublicKeys to add to the DID document. The [PublicKey.id] property in each element
+ *   cannot be over 50 chars and must only use characters from the Base64URL character set. When absent or empty, a
+ *   keypair will be generated with the keyManager.
+ * @param servicesToAdd When provided, the services will be added to the DID document. Note that for each of the
+ * services that should be added, the following must hold:
+ *   - The `id` field cannot be over 50 chars and must only use characters from the Base64URL character set.
+ *   - The `type` field cannot be over 30 characters.
+ *   - The `serviceEndpoint` must be a valid URI.
+ * @param servicesToAdd List of services which will be added into the DID document that results after the update
  *   operation.
  */
 public class RecoverDidIonOptions(
   public val did: String,
   public val recoveryKeyAlias: String,
-  public override val verificationPublicKey: PublicKey? = null,
-  public override val verificationMethodId: String? = null,
-  public val servicesToAdd: Iterable<Service> = emptySet(),
-) : VerificationPublicKeyOption {
-  internal fun toPatches(verificationPublicKey: PublicKey): List<PatchAction> = listOf(
-    ReplaceAction(
-      Document(
-        publicKeys = listOf(
-          verificationPublicKey
-        ),
-        services = servicesToAdd
-      )
-    )
-  )
-}
+  public override val publicKeysToAdd: Iterable<PublicKey> = emptyList(),
+  public override val servicesToAdd: Iterable<Service> = emptyList(),
+) : CommonOptions
 
 /**
  * Options when deactivating an ION did.
@@ -292,7 +284,7 @@ public sealed class DidIonManager(
    * Updates an ION did with the given [options]. The update key must be available in the [keyManager].
    */
   public fun update(keyManager: KeyManager, options: UpdateDidIonOptions): IonUpdateResult {
-    val (updateOp, newUpdateKeyAlias) = createUpdateOperation(keyManager, options)
+    val (updateOp, keyAliases) = createUpdateOperation(keyManager, options)
     val response: HttpResponse = runBlocking {
       client.post(operationsEndpoint) {
         contentType(ContentType.Application.Json)
@@ -303,14 +295,14 @@ public sealed class DidIonManager(
     if (response.status.isSuccess()) {
       return IonUpdateResult(
         operationsResponseBody = opBody,
-        updateKeyAlias = newUpdateKeyAlias,
+        keyAliases = keyAliases,
       )
     }
     throw InvalidStatusException(response.status.value, "received error response: '$opBody'")
   }
 
   private fun createUpdateOperation(keyManager: KeyManager, options: UpdateDidIonOptions):
-    Pair<SidetreeUpdateOperation, String> {
+    Pair<SidetreeUpdateOperation, KeyAliases> {
     val updatePublicKey = keyManager.getPublicKey(options.updateKeyAlias)
 
     val newUpdateKeyAlias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K)
@@ -345,7 +337,11 @@ public sealed class DidIonManager(
         delta = updateOpDeltaObject,
         signedData = signedJwsObject.serialize(false),
       ),
-      newUpdateKeyAlias,
+      KeyAliases(
+        updateKeyAlias = newUpdateKeyAlias,
+        verificationKeyAlias = null,
+        recoveryKeyAlias = null
+      )
     )
   }
 
@@ -392,28 +388,20 @@ public sealed class DidIonManager(
     }
   }
 
-  private fun createOperation(keyManager: KeyManager, options: CreateDidIonOptions?)
+  internal fun createOperation(keyManager: KeyManager, options: CreateDidIonOptions?)
     : Pair<SidetreeCreateOperation, KeyAliases> {
     val updateKeyAlias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K)
     val updatePublicJwk = keyManager.getPublicKey(updateKeyAlias)
 
     val publicKeyCommitment = updatePublicJwk.commitment()
 
-    val (verificationPublicKey, verificationKeyAlias) = getVerificationPublicKeyOrDefault(options, keyManager)
+    val (publicKeysToAdd, verificationKeyAlias) = getPublicKeysToAddOrDefault(options, keyManager)
+    validateDidDocumentKeys(publicKeysToAdd)
 
-    val services = options?.servicesToAdd?.toList() ?: emptyList()
-    validateServices(services)
+    validateServices(options?.servicesToAdd ?: emptyList())
 
-    val patches = listOf(
-      ReplaceAction(
-        Document(
-          publicKeys = listOf(verificationPublicKey),
-          services = services,
-        )
-      )
-    )
     val createOperationDelta = Delta(
-      patches = patches,
+      patches = options.toPatches(publicKeysToAdd),
       updateCommitment = publicKeyCommitment
     )
 
@@ -438,31 +426,23 @@ public sealed class DidIonManager(
     )
   }
 
-  private fun getVerificationMethodIdOrDefault(options: VerificationPublicKeyOption?) =
-    when (options?.verificationMethodId) {
-      null -> UUID.randomUUID().toString()
-      else -> {
-        validateId(options.verificationMethodId!!)
-        options.verificationMethodId!!
-      }
-    }
-
-  private fun getVerificationPublicKeyOrDefault(options: VerificationPublicKeyOption?, keyManager: KeyManager) =
-    if (options?.verificationPublicKey == null) {
-      val verificationMethodId = getVerificationMethodIdOrDefault(options)
+  private fun getPublicKeysToAddOrDefault(options: CommonOptions?, keyManager: KeyManager) =
+    if (options == null || options.publicKeysToAdd.count() == 0) {
       val alias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K)
       val verificationJwk = keyManager.getPublicKey(alias)
       Pair(
-        PublicKey(
-          id = verificationMethodId,
-          type = "JsonWebKey2020",
-          publicKeyJwk = verificationJwk,
-          purposes = listOf(PublicKeyPurpose.AUTHENTICATION, PublicKeyPurpose.ASSERTION_METHOD),
+        listOf(
+          PublicKey(
+            id = UUID.randomUUID().toString(),
+            type = "JsonWebKey2020",
+            publicKeyJwk = verificationJwk,
+            purposes = listOf(PublicKeyPurpose.AUTHENTICATION, PublicKeyPurpose.ASSERTION_METHOD),
+          )
         ),
         alias
       )
     } else {
-      Pair(options.verificationPublicKey!!, null)
+      Pair(options.publicKeysToAdd, null)
     }
 
   private fun validateServices(services: Iterable<Service>) = services.forEach {
@@ -521,10 +501,13 @@ public sealed class DidIonManager(
     val nextUpdatePublicKey = keyManager.getPublicKey(nextUpdateKeyAlias)
     val nextUpdateCommitment = nextUpdatePublicKey.commitment()
 
-    val (verificationPublicKey, verificationKeyAlias) = getVerificationPublicKeyOrDefault(options, keyManager)
+    val (publicKeysToAdd, verificationKeyAlias) = getPublicKeysToAddOrDefault(options, keyManager)
+    validateDidDocumentKeys(publicKeysToAdd)
+
+    validateServices(options.servicesToAdd)
 
     val delta = Delta(
-      patches = options.toPatches(verificationPublicKey),
+      patches = options.toPatches(publicKeysToAdd),
       updateCommitment = nextUpdateCommitment
     )
     val deltaHash = deltaHash(delta)
@@ -632,6 +615,17 @@ public sealed class DidIonManager(
   public companion object Default : DidIonManager(DidIonConfiguration())
 }
 
+private fun CommonOptions?.toPatches(publicKeysToAdd: Iterable<PublicKey>): Iterable<PatchAction> {
+  return listOf(
+    ReplaceAction(
+      Document(
+        publicKeys = publicKeysToAdd,
+        services = this?.servicesToAdd ?: emptyList()
+      )
+    )
+  )
+}
+
 /**
  * Data associated with the [DidIonManager.deactivate] call. Useful for debugging and testing purposes.
  */
@@ -647,9 +641,9 @@ public class IonRecoverResult(
   public val recoverOperation: SidetreeRecoverOperation,
   public val operationsResponse: String)
 
-private interface VerificationPublicKeyOption {
-  val verificationPublicKey: PublicKey?
-  val verificationMethodId: String?
+private interface CommonOptions {
+  val publicKeysToAdd: Iterable<PublicKey>
+  val servicesToAdd: Iterable<Service>
 }
 
 private fun JWK.commitment(): Commitment {
@@ -688,7 +682,7 @@ private fun JWK.reveal(): Reveal {
  */
 public data class IonUpdateResult(
   public val operationsResponseBody: String,
-  public val updateKeyAlias: String
+  public val keyAliases: KeyAliases
 )
 
 /**
@@ -716,9 +710,10 @@ public data class KeyAliases(
 /**
  * Options available when creating an ion did.
  *
- * @param verificationPublicKey When provided, will be used as the verification key in the DID document.
- * @param verificationMethodId When provided, will be used as the verification method id. Cannot be over 50 chars and
- * must only use characters from the Base64URL character set.
+ *
+ * @param publicKeysToAdd PublicKeys to add to the DID document. The [PublicKey.id] property in each element
+ *   cannot be over 50 chars and must only use characters from the Base64URL character set. When absent or empty, a
+ *   keypair will be generated with the keyManager.
  * @param servicesToAdd When provided, the services will be added to the DID document. Note that for each of the
  * services that should be added, the following must hold:
  *   - The `id` field cannot be over 50 chars and must only use characters from the Base64URL character set.
@@ -726,10 +721,9 @@ public data class KeyAliases(
  *   - The `serviceEndpoint` must be a valid URI.
  */
 public class CreateDidIonOptions(
-  public override val verificationPublicKey: PublicKey? = null,
-  public override val verificationMethodId: String? = null,
-  public val servicesToAdd: Iterable<Service>? = null,
-) : CreateDidOptions, VerificationPublicKeyOption
+  override val publicKeysToAdd: Iterable<PublicKey> = emptyList(),
+  override val servicesToAdd: Iterable<Service> = emptyList(),
+) : CreateDidOptions, CommonOptions
 
 /**
  * Metadata related to the creation of a DID (Decentralized Identifier) on the Sidetree protocol.

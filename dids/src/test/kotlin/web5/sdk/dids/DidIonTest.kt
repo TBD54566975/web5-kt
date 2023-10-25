@@ -13,6 +13,7 @@ import io.ktor.http.content.OutputStreamContent
 import io.ktor.http.headersOf
 import io.ktor.utils.io.ByteReadChannel
 import org.erdtman.jcs.JsonCanonicalizer
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
 import org.mockito.kotlin.doReturn
@@ -59,11 +60,19 @@ class DidIonTest {
 
   @Test
   fun `invalid charset verificationMethodId throws exception`() {
+    val verificationKey = readKey("src/test/resources/verification_jwk.json")
+
     val exception = assertThrows<IllegalArgumentException> {
       DidIonManager.create(
         InMemoryKeyManager(),
         CreateDidIonOptions(
-          verificationMethodId = "space is not part of the base64 url chars"
+          publicKeysToAdd = listOf(
+            PublicKey(
+              id = "space is not part of the base64 url chars",
+              type = "my_type",
+              publicKeyJwk = verificationKey
+            )
+          ),
         )
       )
     }
@@ -119,11 +128,19 @@ class DidIonTest {
 
   @Test
   fun `very long verificationMethodId throws exception`() {
+    val verificationKey = readKey("src/test/resources/verification_jwk.json")
+
     val exception = assertThrows<IllegalArgumentException> {
       DidIonManager.create(
         InMemoryKeyManager(),
         CreateDidIonOptions(
-          verificationMethodId = "something_thats_really_really_really_really_really_really_long"
+          publicKeysToAdd = listOf(
+            PublicKey(
+              id = "something_thats_really_really_really_really_really_really_long",
+              type = "my_type",
+              publicKeyJwk = verificationKey
+            )
+          ),
         )
       )
     }
@@ -147,11 +164,13 @@ class DidIonTest {
       engine = mockEngine()
     }
     val opts = CreateDidIonOptions(
-      verificationPublicKey = PublicKey(
-        id = verificationKey.keyID,
-        type = "JsonWebKey2020",
-        publicKeyJwk = verificationKey,
-        purposes = listOf(PublicKeyPurpose.AUTHENTICATION),
+      publicKeysToAdd = listOf(
+        PublicKey(
+          id = verificationKey.keyID,
+          type = "JsonWebKey2020",
+          publicKeyJwk = verificationKey,
+          purposes = listOf(PublicKeyPurpose.AUTHENTICATION),
+        )
       ),
       servicesToAdd = listOf(
         Service(
@@ -300,6 +319,40 @@ class DidIonTest {
   }
 
   @Test
+  fun `create sends the expected operation`() {
+    val mapper = jacksonObjectMapper()
+
+    val publicKey1: PublicKey = mapper.readValue(
+      File("src/test/resources/publicKeyModel1.json").readText()
+    )
+    val service: Service = mapper.readValue(File("src/test/resources/service1.json").readText())
+
+    val keyManager = spy(InMemoryKeyManager())
+
+    val recoveryKey = readKey("src/test/resources/jwkEs256k1Public.json")
+    val recoveryKeyAlias = keyManager.import(recoveryKey)
+
+    val nextUpdateKey = readKey("src/test/resources/jwkEs256k2Public.json")
+    val nextUpdateKeyId = keyManager.import(nextUpdateKey)
+
+    doReturn(nextUpdateKeyId, recoveryKeyAlias).whenever(keyManager).generatePrivateKey(JWSAlgorithm.ES256K)
+
+    val (result, _) = DidIonManager.createOperation(
+      keyManager,
+      CreateDidIonOptions(
+        publicKeysToAdd = listOf(publicKey1),
+        servicesToAdd = listOf(service),
+      )
+    )
+
+    assertEquals("create", result.type)
+    assertEquals("EiDKIkwqO69IPG3pOlHkdb86nYt0aNxSHZu2r-bhEznjdA", result.delta.updateCommitment.toBase64Url())
+    assertEquals(1, result.delta.patches.count())
+    assertEquals("EiBfOZdMtU6OBw8Pk879QtZ-2J-9FbbjSZyoaA_bqD4zhA", result.suffixData.recoveryCommitment.toBase64Url())
+    assertEquals("EiCfDWRnYlcD9EGA3d_5Z1AHu-iYqMbJ9nfiqdz5S8VDbg", result.suffixData.deltaHash)
+  }
+
+  @Test
   fun `update sends the expected operation`() {
     val mapper = jacksonObjectMapper()
 
@@ -351,7 +404,7 @@ class DidIonTest {
       ),
     )
 
-    assertTrue(updateMetadata.updateKeyAlias.isNotEmpty())
+    assertFalse(updateMetadata.keyAliases.updateKeyAlias.isNullOrEmpty())
     assertEquals("""{"hello":"world"}""", updateMetadata.operationsResponseBody)
   }
 
@@ -381,7 +434,7 @@ class DidIonTest {
       RecoverDidIonOptions(
         did = "did:ion:EiDyOQbbZAa3aiRzeCkV7LOx3SERjjH93EXoIM3UoN4oWg",
         recoveryKeyAlias = recoveryKeyAlias,
-        verificationPublicKey = publicKey1,
+        publicKeysToAdd = listOf(publicKey1),
         servicesToAdd = listOf(service),
       )
     )
