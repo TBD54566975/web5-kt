@@ -14,9 +14,14 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import web5.sdk.crypto.AwsKeyManager
 import web5.sdk.crypto.InMemoryKeyManager
+import web5.sdk.dids.CreateDidIonOptions
+import web5.sdk.dids.DidIonApi
 import web5.sdk.dids.DidKeyApi
+import web5.sdk.dids.JsonWebKey2020VerificationMethod
 import web5.sdk.dids.StatefulDidIon
+import java.security.SignatureException
 import java.text.ParseException
+import java.util.UUID
 import kotlin.test.Ignore
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
@@ -141,6 +146,36 @@ class VerifiableCredentialTest {
 
     val vcJwt = vc.sign(issuerDid)
     VerifiableCredential.verify(vcJwt)
+  }
+
+  @Test
+  fun `verify handles DIDs without an assertionMethod`() {
+    val keyManager = InMemoryKeyManager()
+
+    //Create an ION DID without an assertionMethod
+    val alias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K)
+    val verificationJwk = keyManager.getPublicKey(alias)
+    val key = JsonWebKey2020VerificationMethod(
+      id = UUID.randomUUID().toString(),
+      publicKeyJwk = verificationJwk,
+      relationships = emptyList() //No assertionMethod
+    )
+    val issuerDid = DidIonApi.create(
+      InMemoryKeyManager(),
+      CreateDidIonOptions(verificationMethodsToAdd = listOf(key))
+    )
+
+    val header = JWSHeader.Builder(JWSAlgorithm.ES256K)
+      .keyID(issuerDid.uri)
+      .build()
+    //A detached payload JWT
+    val vcJwt = "${header.toBase64URL()}..fakeSig"
+
+    val exception = assertThrows(SignatureException::class.java) {
+      VerifiableCredential.verify(vcJwt)
+    }
+    assertEquals("Signature verification failed: Expected kid in JWS header to dereference a DID Document " +
+      "Verification Method with an Assertion verification relationship", exception.message)
   }
 
   @Test
