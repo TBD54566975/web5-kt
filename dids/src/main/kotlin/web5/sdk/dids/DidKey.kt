@@ -76,102 +76,100 @@ public class StatefulDidKey(uri: String, keyManager: KeyManager) : StatefulDid(u
  * val did = DidKeyApi.create()
  * ```
  */
-public open class DidKeyApi : DidMethod<StatefulDidKey, CreateDidKeyOptions> {
-  override val methodName: String = "key"
+public class DidKeyApi private constructor() {
 
-  /**
-   * Creates a new "did:key" DID, derived from a public key, and stores the associated private key in the
-   * provided [KeyManager].
-   *
-   * The method-specific identifier of a "did:key" DID is a multibase encoded public key.
-   *
-   * **Note**: Defaults to ES256K if no options are provided
-   *
-   * @param keyManager A [KeyManager] instance where the new key will be stored.
-   * @param options Optional parameters ([CreateDidKeyOptions]) to specify algorithm and curve during key creation.
-   * @return A [StatefulDidKey] instance representing the newly created "did:key" DID.
-   *
-   * @throws UnsupportedOperationException if the specified curve is not supported.
-   */
-  override fun create(keyManager: KeyManager, options: CreateDidKeyOptions?): StatefulDidKey {
-    val opts = options ?: CreateDidKeyOptions()
+  public companion object : DidMethod<StatefulDidKey, CreateDidKeyOptions> {
+    override val methodName: String = "key"
 
-    val keyAlias = keyManager.generatePrivateKey(opts.algorithm, opts.curve)
-    val publicKey = keyManager.getPublicKey(keyAlias)
-    var publicKeyBytes = Crypto.publicKeyToBytes(publicKey)
+    /**
+     * Creates a new "did:key" DID, derived from a public key, and stores the associated private key in the
+     * provided [KeyManager].
+     *
+     * The method-specific identifier of a "did:key" DID is a multibase encoded public key.
+     *
+     * **Note**: Defaults to ES256K if no options are provided
+     *
+     * @param keyManager A [KeyManager] instance where the new key will be stored.
+     * @param options Optional parameters ([CreateDidKeyOptions]) to specify algorithm and curve during key creation.
+     * @return A [StatefulDidKey] instance representing the newly created "did:key" DID.
+     *
+     * @throws UnsupportedOperationException if the specified curve is not supported.
+     */
+    override fun create(keyManager: KeyManager, options: CreateDidKeyOptions?): StatefulDidKey {
+      val opts = options ?: CreateDidKeyOptions()
 
-    if (opts.algorithm == JWSAlgorithm.ES256K) {
-      publicKeyBytes = Secp256k1.compressPublicKey(publicKeyBytes)
+      val keyAlias = keyManager.generatePrivateKey(opts.algorithm, opts.curve)
+      val publicKey = keyManager.getPublicKey(keyAlias)
+      var publicKeyBytes = Crypto.publicKeyToBytes(publicKey)
+
+      if (opts.algorithm == JWSAlgorithm.ES256K) {
+        publicKeyBytes = Secp256k1.compressPublicKey(publicKeyBytes)
+      }
+
+      val multiCodec = Crypto.getAlgorithmMultiCodec(opts.algorithm, opts.curve)
+        ?: throw UnsupportedOperationException("${opts.curve} curve not supported")
+
+      val multiCodecBytes = Varint.encode(multiCodec)
+      val idBytes = multiCodecBytes + publicKeyBytes
+      val multibaseEncodedId = Multibase.encode(Multibase.Base.Base58BTC, idBytes)
+
+      val did = "did:key:$multibaseEncodedId"
+
+      return StatefulDidKey(did, keyManager)
     }
 
-    val multiCodec = Crypto.getAlgorithmMultiCodec(opts.algorithm, opts.curve)
-      ?: throw UnsupportedOperationException("${opts.curve} curve not supported")
+    /**
+     * Resolves a "did:key" DID into a [DidResolutionResult], which contains the DID Document and possible related metadata.
+     *
+     * This implementation primarily constructs a DID Document with a single verification method derived
+     * from the DID's method-specific identifier (the public key).
+     *
+     * @param did The "did:key" DID that needs to be resolved.
+     * @return A [DidResolutionResult] instance containing the DID Document and related context.
+     *
+     * @throws IllegalArgumentException if the provided DID does not conform to the "did:key" method.
+     */
+    override fun resolve(did: String, options: ResolveDidOptions?): DidResolutionResult {
+      val parsedDid = DID.fromString(did)
 
-    val multiCodecBytes = Varint.encode(multiCodec)
-    val idBytes = multiCodecBytes + publicKeyBytes
-    val multibaseEncodedId = Multibase.encode(Multibase.Base.Base58BTC, idBytes)
+      require(parsedDid.methodName == methodName) { throw IllegalArgumentException("expected did:key") }
 
-    val did = "did:key:$multibaseEncodedId"
+      val id = parsedDid.methodSpecificId
+      val idBytes = Multibase.decode(id)
+      val (multiCodec, numBytes) = Varint.decode(idBytes)
 
-    return StatefulDidKey(did, keyManager)
-  }
+      var publicKeyBytes = idBytes.drop(numBytes).toByteArray()
+      val keyGenerator = Crypto.getKeyGenerator(multiCodec)
 
-  /**
-   * Resolves a "did:key" DID into a [DidResolutionResult], which contains the DID Document and possible related metadata.
-   *
-   * This implementation primarily constructs a DID Document with a single verification method derived
-   * from the DID's method-specific identifier (the public key).
-   *
-   * @param did The "did:key" DID that needs to be resolved.
-   * @return A [DidResolutionResult] instance containing the DID Document and related context.
-   *
-   * @throws IllegalArgumentException if the provided DID does not conform to the "did:key" method.
-   */
-  override fun resolve(did: String, options: ResolveDidOptions?): DidResolutionResult {
-    val parsedDid = DID.fromString(did)
+      if (keyGenerator.algorithm == Secp256k1.algorithm) {
+        publicKeyBytes = Secp256k1.inflatePublicKey(publicKeyBytes)
+      }
 
-    require(parsedDid.methodName == methodName) { throw IllegalArgumentException("expected did:key") }
+      val publicKeyJwk = keyGenerator.bytesToPublicKey(publicKeyBytes)
 
-    val id = parsedDid.methodSpecificId
-    val idBytes = Multibase.decode(id)
-    val (multiCodec, numBytes) = Varint.decode(idBytes)
+      val verificationMethodId = URI.create("$did#$id")
+      val verificationMethod = VerificationMethod.builder()
+        .id(verificationMethodId)
+        .publicKeyJwk(publicKeyJwk.toJSONObject())
+        .controller(URI(did))
+        .type("JsonWebKey2020")
+        .build()
 
-    var publicKeyBytes = idBytes.drop(numBytes).toByteArray()
-    val keyGenerator = Crypto.getKeyGenerator(multiCodec)
+      val verificationMethodRef = VerificationMethod.builder()
+        .id(verificationMethodId)
+        .build()
 
-    if (keyGenerator.algorithm == Secp256k1.algorithm) {
-      publicKeyBytes = Secp256k1.inflatePublicKey(publicKeyBytes)
+      val didDocument = DIDDocument.builder()
+        .id(URI(did))
+        .verificationMethod(verificationMethod)
+        .assertionMethodVerificationMethod(verificationMethodRef)
+        .authenticationVerificationMethod(verificationMethodRef)
+        .capabilityDelegationVerificationMethods(listOf(verificationMethodRef))
+        .capabilityInvocationVerificationMethod(verificationMethodRef)
+        .keyAgreementVerificationMethod(verificationMethodRef)
+        .build()
+
+      return DidResolutionResult(didDocument = didDocument, context = "https://w3id.org/did-resolution/v1")
     }
-
-    val publicKeyJwk = keyGenerator.bytesToPublicKey(publicKeyBytes)
-
-    val verificationMethodId = URI.create("$did#$id")
-    val verificationMethod = VerificationMethod.builder()
-      .id(verificationMethodId)
-      .publicKeyJwk(publicKeyJwk.toJSONObject())
-      .controller(URI(did))
-      .type("JsonWebKey2020")
-      .build()
-
-    val verificationMethodRef = VerificationMethod.builder()
-      .id(verificationMethodId)
-      .build()
-
-    val didDocument = DIDDocument.builder()
-      .id(URI(did))
-      .verificationMethod(verificationMethod)
-      .assertionMethodVerificationMethod(verificationMethodRef)
-      .authenticationVerificationMethod(verificationMethodRef)
-      .capabilityDelegationVerificationMethods(listOf(verificationMethodRef))
-      .capabilityInvocationVerificationMethod(verificationMethodRef)
-      .keyAgreementVerificationMethod(verificationMethodRef)
-      .build()
-
-    return DidResolutionResult(didDocument = didDocument, context = "https://w3id.org/did-resolution/v1")
   }
-
-  /**
-   * Default companion object for creating a [DidKeyApi] with a default configuration.
-   */
-  public companion object Default : DidKeyApi()
 }
