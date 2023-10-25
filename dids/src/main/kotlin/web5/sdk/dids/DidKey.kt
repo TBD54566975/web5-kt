@@ -64,14 +64,14 @@ public class DidKey(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
    * @throws IllegalArgumentException if the provided DID does not conform to the "did:key" method.
    */
   public fun resolve(): DidResolutionResult {
-    return DidKeyManager(this.keyManager).resolve(this.uri)
+    return DidKeyApi(this.keyManager).resolve(this.uri)
   }
 }
 
 /**
  * Base class for managing DID key operations. Uses the given [keyManager].
  */
-public class DidKeyManager(keyManager: KeyManager = InMemoryKeyManager()) : DidMethod<DidKey, CreateDidKeyOptions>(
+public class DidKeyApi(keyManager: KeyManager = InMemoryKeyManager()) : DidMethod<DidKey, CreateDidKeyOptions>(
   keyManager
 ) {
   override val methodName: String = "key"
