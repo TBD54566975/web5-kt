@@ -63,24 +63,15 @@ class Secp256k1Test {
     val privateKey = Secp256k1.generatePrivateKey()
     val publicKey = Secp256k1.computePublicKey(privateKey)
 
-    fun generateRandomString(length: Int): String {
-      val allowedChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
-      val random = Random()
-      return (1..length)
-        .map { allowedChars[random.nextInt(allowedChars.length)] }
-        .joinToString("")
-    }
-
-
-
     repeat(10_000) {
-      val payload = generateRandomString(Random().nextInt(100))
+      val payload = Random.nextBytes(Random.nextInt(100))
 
       try {
-        val sig1 = Secp256k1.sign(privateKey, payload.toByteArray())
-        Secp256k1.verify(publicKey, payload.toByteArray(), sig1)
+        val sig1 = Secp256k1.sign(privateKey, payload)
+        Secp256k1.verify(publicKey, payload, sig1)
       } catch (e: SignatureException) {
-        println("($it) $e. Payload: $payload")
+        val payloadString = Convert(payload).toBase64Url(false)
+        println("($it) $e. Payload (base64url encoded): $payloadString")
         throw e
       }
     }
