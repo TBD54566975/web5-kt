@@ -73,10 +73,10 @@ public class DidIonConfiguration internal constructor(
 
 
 /**
- * Returns a [DidIonApi] after applying the provided configuration [builderAction].
+ * Returns a [DidIonApi] after applying [configurationBlock] on the default [DidIonConfiguration].
  */
-public fun DidIonApi(builderAction: DidIonConfiguration.() -> Unit): DidIonApi {
-  val conf = DidIonConfiguration().apply(builderAction)
+public fun DidIonApi(configurationBlock: DidIonConfiguration.() -> Unit): DidIonApi {
+  val conf = DidIonConfiguration().apply(configurationBlock)
   return DidIonApiImpl(conf)
 }
 
