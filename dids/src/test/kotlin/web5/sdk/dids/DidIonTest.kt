@@ -243,11 +243,11 @@ class DidIonTest {
 
     assertContains(did.uri, "did:ion:")
     assertContains(metadata.longFormDid, metadata.shortFormDid)
-    assertEquals(2, metadata.keyAliases.verificationKeyAlias.size)
+    assertEquals(2, metadata.keyAliases.verificationKeyAliases.size)
     assertDoesNotThrow {
       keyManager.getPublicKey(metadata.keyAliases.recoveryKeyAlias!!)
       keyManager.getPublicKey(metadata.keyAliases.updateKeyAlias!!)
-      metadata.keyAliases.verificationKeyAlias.forEach(keyManager::getPublicKey)
+      metadata.keyAliases.verificationKeyAliases.forEach(keyManager::getPublicKey)
     }
   }
 
@@ -505,12 +505,12 @@ class DidIonTest {
     val recoverResult = ionManager.recover(keyManager, did.uri, opts)
     assertNotNull(recoverResult.keyAliases.updateKeyAlias)
     assertNotNull(recoverResult.keyAliases.recoveryKeyAlias)
-    assertNotNull(recoverResult.keyAliases.verificationKeyAlias)
+    assertNotNull(recoverResult.keyAliases.verificationKeyAliases)
 
     assertDoesNotThrow {
       keyManager.getPublicKey(recoverResult.keyAliases.updateKeyAlias!!)
       keyManager.getPublicKey(recoverResult.keyAliases.recoveryKeyAlias!!)
-      recoverResult.keyAliases.verificationKeyAlias.forEach(keyManager::getPublicKey)
+      recoverResult.keyAliases.verificationKeyAliases.forEach(keyManager::getPublicKey)
     }
     assertEquals("{}", recoverResult.operationsResponse)
     assertNotEquals(recoveryKeyAlias, recoverResult.keyAliases.recoveryKeyAlias)

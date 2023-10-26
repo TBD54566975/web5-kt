@@ -369,7 +369,7 @@ public sealed class DidIonApi(
       ),
       KeyAliases(
         updateKeyAlias = newUpdateKeyAlias,
-        verificationKeyAlias = publicKeysWithAliases.mapNotNull { it.first },
+        verificationKeyAliases = publicKeysWithAliases.mapNotNull { it.first },
         recoveryKeyAlias = null
       )
     )
@@ -425,7 +425,7 @@ public sealed class DidIonApi(
 
     val publicKeyCommitment = updatePublicJwk.commitment()
 
-    val publicKeysWithAlias = maybeGeneratePublicKeysToAdd(options, keyManager)
+    val publicKeysWithAlias = publicKeysWithAliasesToAdd(options, keyManager)
     val publicKeysToAdd = publicKeysWithAlias.map { it.second }
     validateDidDocumentKeys(publicKeysToAdd)
 
@@ -451,13 +451,13 @@ public sealed class DidIonApi(
       ),
       KeyAliases(
         updateKeyAlias = updateKeyAlias,
-        verificationKeyAlias = publicKeysWithAlias.mapNotNull { it.first },
+        verificationKeyAliases = publicKeysWithAlias.mapNotNull { it.first },
         recoveryKeyAlias = recoveryKeyAlias
       )
     )
   }
 
-  private fun maybeGeneratePublicKeysToAdd(options: CommonOptions?, keyManager: KeyManager) =
+  private fun publicKeysWithAliasesToAdd(options: CommonOptions?, keyManager: KeyManager) =
     if (options == null || options.verificationMethodsToAdd.count() == 0) {
       listOf<VerificationMethodSpec>(
         VerificationMethodCreationParams(
@@ -530,7 +530,7 @@ public sealed class DidIonApi(
     val nextUpdatePublicKey = keyManager.getPublicKey(nextUpdateKeyAlias)
     val nextUpdateCommitment = nextUpdatePublicKey.commitment()
 
-    val publicKeyWithAliases = maybeGeneratePublicKeysToAdd(options, keyManager)
+    val publicKeyWithAliases = publicKeysWithAliasesToAdd(options, keyManager)
     val publicKeysToAdd = publicKeyWithAliases.map { it.second }
     validateDidDocumentKeys(publicKeysToAdd)
 
@@ -560,7 +560,7 @@ public sealed class DidIonApi(
       ),
       KeyAliases(
         updateKeyAlias = nextUpdateKeyAlias,
-        verificationKeyAlias = publicKeyWithAliases.mapNotNull { it.first },
+        verificationKeyAliases = publicKeyWithAliases.mapNotNull { it.first },
         recoveryKeyAlias = nextRecoveryKeyAlias,
       )
     )
@@ -737,7 +737,7 @@ public class ResolutionException(msg: String) : RuntimeException(msg)
  */
 public data class KeyAliases(
   public val updateKeyAlias: String?,
-  public val verificationKeyAlias: List<String>,
+  public val verificationKeyAliases: List<String>,
   public val recoveryKeyAlias: String?)
 
 /**
