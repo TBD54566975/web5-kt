@@ -64,7 +64,9 @@ class Secp256k1Test {
     val publicKey = Secp256k1.computePublicKey(privateKey)
 
     repeat(10_000) {
-      val payload = Random.nextBytes(Random.nextInt(100))
+      // generate a payload of up to 100 random bytes
+      val payloadSize = Random().nextInt(100)
+      val payload = ByteArray(payloadSize) { Random().nextInt().toByte() }
 
       try {
         val sig1 = Secp256k1.sign(privateKey, payload)
