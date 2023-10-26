@@ -59,6 +59,7 @@ class Secp256k1Test {
 
   @Test
   fun fuzz() {
+    // TODO: consider using the same private key
     val privateKey = Secp256k1.generatePrivateKey()
     val publicKey = Secp256k1.computePublicKey(privateKey)
 
