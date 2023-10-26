@@ -2,13 +2,8 @@ package web5.security
 
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.nimbusds.jose.JOSEObjectType
-import com.nimbusds.jose.JWSAlgorithm
-import com.nimbusds.jose.JWSHeader
-import com.nimbusds.jose.JWSSigner
 import com.nimbusds.jose.util.Base64URL
 import com.nimbusds.jwt.JWTClaimsSet
-import com.nimbusds.jwt.SignedJWT
 import java.security.MessageDigest
 import java.security.SecureRandom
 import java.util.Collections
@@ -24,6 +19,10 @@ public const val sha256Alg: String = "sha-256"
 
 /** The sha-512 hash algorithm as registered in https://www.iana.org/assignments/named-information/named-information.xhtml */
 public fun sha512(input: ByteArray): ByteArray = hashString("SHA-512", input)
+
+/** The hash name string of `shah-512` from the IANA registry https://www.iana.org/assignments/named-information/named-information.xhtml */
+public const val sha512Alg: String = "sha-512"
+
 private fun hashString(type: String, input: ByteArray): ByteArray {
   return MessageDigest.getInstance(type)
     .digest(input)
@@ -67,7 +66,6 @@ private class ClaimSetBlinder(
   private val disclosureFactory: DisclosureFactory,
   private val totalDigests: (Int) -> Int,
   private val shuffle: (List<Any>) -> Unit,
-  private val mapper: ObjectMapper,
 ) {
   fun blindElementsRecursively(elems: List<Any>): Pair<List<Any>, List<Disclosure>> {
     val blinded = mutableListOf<Any>()
@@ -123,7 +121,7 @@ private class ClaimSetBlinder(
         is FlatBlindOption -> {
           val disclosure = disclosureFactory.fromClaimAndValue(claimName, claimValue)
           allDisclosures.add(disclosure)
-          hashedDisclosures.add(disclosure.digest(sdAlg, mapper))
+          hashedDisclosures.add(disclosure.digest(sdAlg))
         }
 
         is SubClaimBlindOption -> {
@@ -146,7 +144,7 @@ private class ClaimSetBlinder(
         is RecursiveBlindOption -> {
           val disclosure = processRecursiveDisclosure(claimValue, allDisclosures, claimName)
           allDisclosures.add(disclosure)
-          hashedDisclosures.add(disclosure.digest(sdAlg, mapper))
+          hashedDisclosures.add(disclosure.digest(sdAlg))
         }
 
         is ArrayBlindOption -> {
@@ -158,7 +156,7 @@ private class ClaimSetBlinder(
               allDisclosures.addAll(disclosures)
               val arrayDisclosures = disclosures.map {
                 mapOf(
-                  "..." to it.digest(sdAlg, mapper)
+                  "..." to it.digest(sdAlg)
                 )
               }.toMutableList()
 
@@ -234,35 +232,30 @@ private class ClaimSetBlinder(
     }
     return disclosure
   }
-
-  companion object {
-    const val sdClaimName = "_sd"
-  }
 }
+
+public const val sdClaimName: String = "_sd"
 
 /** The _sd_alg claim name. */
 public const val sdAlgClaimName: String = "_sd_alg"
 
 /** A signer that is capable of producing [SdJwt] given some parameters. */
-public class SdJwtSigner(
-  public val signer: JWSSigner,
-  public val saltGenerator: ISaltGenerator,
+public class SdJwtBlinder(
+  saltGenerator: ISaltGenerator,
   private val sdAlg: HashFunc = ::sha256,
   private val shuffle: (List<Any>) -> Unit = Collections::shuffle,
   private val totalDigests: (Int) -> Int = ::getNextPowerOfTwo,
-  private val mapper: ObjectMapper = defaultMapper,
+  mapper: ObjectMapper = defaultMapper,
 ) {
-  private val disclosureFactory: DisclosureFactory = DisclosureFactory(saltGenerator)
+  private val disclosureFactory: DisclosureFactory = DisclosureFactory(saltGenerator, mapper)
 
   /**
-   * Returns an [SdJwt] with the [SdJwt.issuerJwt] component signed, and the claims blinded according [claimsToBlind]
-   * parameter.
+   * Returns an [SdJwt.Builder] with the [SdJwt.Builder.jwtClaimsSet] blinded and [SdJwt.Builder.disclosures] fields
+   * set. The [SdJwt.Builder.jwtClaimsSet] field is also known as the SD-JWT Payload in https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-05.html#name-sd-jwt-payload
    */
-  public fun blindAndSign(
+  public fun blind(
     claimsData: String,
-    claimsToBlind: Map<String, BlindOption>,
-    alg: JWSAlgorithm,
-    kid: String): SdJwt {
+    claimsToBlind: Map<String, BlindOption>): SdJwt.Builder {
     val typeRef = object : TypeReference<LinkedHashMap<String, Any>>() {}
     val claimsMap = defaultMapper.readValue(claimsData, typeRef)
 
@@ -271,7 +264,6 @@ public class SdJwtSigner(
       disclosureFactory = disclosureFactory,
       totalDigests = totalDigests,
       shuffle = shuffle,
-      mapper = mapper,
     )
 
     val (blindedClaims, disclosures) = csb.toBlindedClaimsAndDisclosures(claimsMap, claimsToBlind)
@@ -281,15 +273,7 @@ public class SdJwtSigner(
 
     val payload = JWTClaimsSet.parse(blindedClaimsMap)
 
-    val header = JWSHeader.Builder(alg)
-      .type(JOSEObjectType.JWT)
-      .keyID(kid)
-      .build()
-
-    val jwt = SignedJWT(header, payload)
-    jwt.sign(signer)
-
-    return SdJwt(jwt, disclosures)
+    return SdJwt.Builder(jwtClaimsSet = payload, disclosures = disclosures)
   }
 
 }
@@ -302,14 +286,16 @@ private fun getNextPowerOfTwo(n: Int): Int {
   return 2.0.pow(ceil(log2((n + 1).toDouble())).toInt()).toInt()
 }
 
-private class DisclosureFactory(private val saltGen: ISaltGenerator) {
+private class DisclosureFactory(
+  private val saltGen: ISaltGenerator,
+  private val mapper: ObjectMapper) {
   fun fromClaimAndValue(claim: String, claimValue: Any): Disclosure {
     val saltValue = saltGen.generate(claim)
-    return ObjectDisclosure(saltValue, claim, claimValue)
+    return ObjectDisclosure(saltValue, claim, claimValue, mapper = mapper)
   }
 
   fun fromArrayValue(index: Int, claim: String, value: Any): Disclosure {
     val saltValue = saltGen.generate("$claim[$index]")
-    return ArrayDisclosure(saltValue, value)
+    return ArrayDisclosure(saltValue, value, mapper = mapper)
   }
 }

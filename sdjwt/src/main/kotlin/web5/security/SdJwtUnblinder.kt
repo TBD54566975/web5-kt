@@ -1,0 +1,197 @@
+package web5.security
+
+import com.nimbusds.jwt.JWTClaimsSet
+import java.util.Stack
+
+/**
+ * Options for verification of an [SdJwt].
+ *
+ * [holderBindingOption] is used to tell whether holder binding should be checked. When [HolderBindingOption.VerifyHolderBinding]
+ * is selected, then [desiredNonce] and [desiredAudience] are required.
+ */
+public class VerificationOptions(
+  public val holderBindingOption: HolderBindingOption,
+
+  // The nonce and audience to check for when doing holder binding verification.
+  // Needed only when holderBindingOption == VerifyHolderBinding.
+  public val desiredNonce: String? = null,
+  public val desiredAudience: String? = null,
+)
+
+/** Options for holder binding processing. */
+public enum class HolderBindingOption(public val value: Boolean) {
+  VerifyHolderBinding(true),
+  SkipVerifyHolderBinding(false)
+}
+
+private fun JWTClaimsSet.getHashAlg(): HashFunc {
+  var hashName: String = sha256Alg
+  val hashNameValue = this.getClaim(sdAlgClaimName)
+  if (hashName != null && hashNameValue is String) {
+    hashName = hashNameValue
+  } else {
+    throw IllegalArgumentException("Converting _sd_alg claim value to string")
+  }
+
+  return when (hashName) {
+    sha256Alg -> ::sha256
+    sha512Alg -> ::sha512
+    else -> throw IllegalArgumentException("Unsupported hash name $hashName")
+  }
+}
+
+/** Responsible for taking an SD-JWT in serialization format and unblinding it. */
+public class SdJwtUnblinder {
+  /**
+   * Unblinds [serializedSdJwt]. Follows the algorithm specified in https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-05.html#section-6.1
+   *
+   * An unblinded [JWTClaimsSet], with hidden values in the `issuerJwt` replaced with
+   * values from the `disclosures` presented.
+   */
+  @Throws(Exception::class)
+  public fun unblind(
+    serializedSdJwt: String
+  ): JWTClaimsSet {
+    // 2. Separate the Presentation into the SD-JWT, the Disclosures (if any), and the Holder Binding JWT (if provided).
+    val sdJwt = SdJwt.parse(serializedSdJwt)
+
+    // Check that the _sd_alg claim value is understood and the hash algorithm is deemed secure.
+    val hashAlg = sdJwt.issuerJwt.jwtClaimsSet.getHashAlg()
+
+    // For each Disclosure provided, calculate the digest over the base64url-encoded string as described in Section 5.1.1.2.
+    val disclosuresByDigest = sdJwt.disclosures.associateBy { it.digest(hashAlg) }
+
+    // Process the Disclosures and _sd keys in the SD-JWT as follows:
+    //
+    // Create a copy of the SD-JWT payload, if required for further processing.
+    val tokenClaims = sdJwt.issuerJwt.jwtClaimsSet.toJSONObject().toMutableMap()
+    processPayload(tokenClaims, disclosuresByDigest, HashSet())
+
+    return JWTClaimsSet.parse(tokenClaims)
+  }
+
+
+  /**
+   * ProcessPayload will recursively remove all _sd fields from the claims object, and replace it with the information found
+   * inside disclosuresByDigest.
+   */
+  @Throws(Exception::class)
+  private fun processPayload(
+    claims: MutableMap<String, Any>,
+    disclosuresByDigest: Map<String, Disclosure>,
+    digestsFound: MutableSet<String>
+  ) {
+    val workLeft = createWorkFrom(claims, null)
+    unblind(workLeft, disclosuresByDigest, digestsFound, claims)
+
+    claims.remove(sdAlgClaimName)
+  }
+
+  private class Work(
+    val insertionPoint: Any,
+    val disclosureDigest: String,
+  )
+
+  private fun createWorkFrom(claims: Any, parent: Any?): Stack<Work> {
+    val result: Stack<Work> = Stack()
+    when (claims) {
+      is Map<*, *> -> {
+        val sdClaimValue = claims[sdClaimName]
+        if (sdClaimValue != null) {
+          // If the key does not refer to an array, the Verifier MUST reject the Presentation.
+          require(sdClaimValue is List<*>) {
+            "\"_sd\" key MUST refer to an array"
+          }
+          for (digest in sdClaimValue) {
+            require(digest is String) {
+              "all values in \"sd\" MUST be strings"
+            }
+            result.add(Work(claims, digest))
+          }
+          (claims as MutableMap<String, Any>).remove(sdClaimName)
+        }
+
+        val arrayElementDigest = claims["..."]
+        if (arrayElementDigest != null) {
+          require(arrayElementDigest is String) {
+            "Value of \"...\" MUST be a string"
+          }
+          require(parent != null && parent is List<*>) {
+            "Parent must be an array"
+
+          }
+          result.add(Work(parent, arrayElementDigest))
+        }
+        for (value in claims.values) {
+          result.addAll(createWorkFrom(value as Any, claims))
+        }
+      }
+
+      is List<*> -> {
+        for (claim in claims.reversed()) {
+          result.addAll(createWorkFrom(claim!!, claims))
+        }
+        (claims as MutableList<Any>).removeAll { true }
+      }
+    }
+
+    return result
+  }
+
+  private fun unblind(
+    workLeft: Stack<Work>,
+    disclosuresByDigest: Map<String, Disclosure>,
+    digestsFound: MutableSet<String>,
+    claims: MutableMap<String, Any>) {
+    while (workLeft.isNotEmpty()) {
+      val work = workLeft.pop()
+      val digestValue = work.disclosureDigest
+      val insertionPoint = work.insertionPoint
+
+      // Compare the value with the digests calculated previously and find the matching Disclosure. If no such Disclosure can be
+      // found, the digest MUST be ignored.
+      val disclosure = disclosuresByDigest[digestValue] ?: continue
+
+      // If any digests were found more than once, the Verifier MUST reject the Presentation.
+      if (digestsFound.contains(digestValue)) {
+        throw Exception("Digest \"$digestValue\" found more than once")
+      }
+      digestsFound.add(digestValue)
+
+      when (disclosure) {
+        is ObjectDisclosure -> {
+          require(insertionPoint is MutableMap<*, *>) {
+            "Insertion point for object disclosure must be a map"
+          }
+
+          if (insertionPoint.containsKey(disclosure.claimName) || claims.containsKey(disclosure.claimName)) {
+            throw Exception("Claim name \"${disclosure.claimName}\" already exists")
+          }
+          fun insert(m: MutableMap<String, Any>) {
+            m.put(disclosure.claimName, disclosure.claimValue)
+          }
+          insert(insertionPoint as MutableMap<String, Any>)
+
+          // If the decoded value contains an _sd key in an object, recursively process the key using the steps described in (*).
+          if (disclosure.claimValue is Map<*, *>) {
+            workLeft.addAll(createWorkFrom(disclosure.claimValue, insertionPoint))
+          }
+        }
+
+        is ArrayDisclosure -> {
+          require(insertionPoint is MutableList<*>) {
+            "Insertion point for array disclosure must be an array"
+          }
+
+          // find and then replace insertion point
+          (insertionPoint as MutableList<Any>).add(disclosure.claimValue)
+
+          // If the decoded value contains an _sd key in an object, recursively process the key using the steps described in (*).
+          if (disclosure.claimValue is Map<*, *>) {
+            workLeft.addAll(createWorkFrom(disclosure.claimValue, insertionPoint))
+          }
+        }
+      }
+    }
+  }
+}

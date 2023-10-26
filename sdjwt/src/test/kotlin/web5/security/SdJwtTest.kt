@@ -36,7 +36,6 @@ class SdJwtTest {
     )
     assertEquals("""{"street_address": "123 Main St", "locality": "Anytown"}""", result)
   }
-
 }
 
 /**

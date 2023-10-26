@@ -3,22 +3,13 @@ package web5.security
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.nimbusds.jose.JWSAlgorithm
-import com.nimbusds.jose.JWSHeader
-import com.nimbusds.jose.JWSSigner
-import com.nimbusds.jose.crypto.impl.ECDSA
-import com.nimbusds.jose.crypto.impl.ECDSAProvider
-import com.nimbusds.jose.jwk.Curve
-import com.nimbusds.jose.jwk.JWK
-import com.nimbusds.jose.util.Base64URL
 import org.erdtman.jcs.JsonCanonicalizer
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import web5.sdk.crypto.InMemoryKeyManager
-import web5.sdk.crypto.KeyManager
 import web5.sdk.dids.DidKey
 
-class SdJwtSignerTest {
+class SdJwtBlinderTest {
 
   private val mapper = jacksonObjectMapper().apply {
     enable(SerializationFeature.INDENT_OUTPUT)
@@ -63,9 +54,9 @@ class SdJwtSignerTest {
     }""".trimIndent()
 
     val keyManager = InMemoryKeyManager()
-    val issuerSigner = DidKey.create(keyManager)
+    DidKey.create(keyManager)
 
-    val signer = SdJwtSigner(
+    val signer = SdJwtBlinder(
       saltGenerator = MockMapGenerator(
         mapOf(
           "given_name" to "2GLC42sKQveCfGfryNRN9w",
@@ -80,7 +71,6 @@ class SdJwtSignerTest {
           "nationalities[1]" to "nPuoQnkRFq3BIeAm7AnXFA",
         )
       ),
-      signer = KeyManagerSigner(keyManager, keyManager.getDeterministicAlias(publicKey = getPublicKey(issuerSigner))),
       shuffle = {},
       totalDigests = { i -> i },
       mapper = mapper,
@@ -102,7 +92,7 @@ class SdJwtSignerTest {
       "nationalities" to ArrayBlindOption,
     )
 
-    val sdJwt = signer.blindAndSign(claims, claimsToBlind, JWSAlgorithm.ES256K, getPublicKey(issuerSigner).keyID)
+    val sdJwt = signer.blind(claims, claimsToBlind)
 
     val expected = """{
       "_sd": [
@@ -138,29 +128,25 @@ class SdJwtSignerTest {
       }
     }""".trimIndent()
 
-    val givenNameActualDisclosure = sdJwt.disclosures.find { disclosure ->
+    val givenNameActualDisclosure = sdJwt.disclosures?.find { disclosure ->
       (disclosure as? ObjectDisclosure)?.let { it.claimName == "given_name" } ?: false
     } as ObjectDisclosure
     assertEquals("2GLC42sKQveCfGfryNRN9w", givenNameActualDisclosure.salt)
     assertEquals("John", givenNameActualDisclosure.claimValue)
     assertEquals(
       JsonCanonicalizer(expected).encodedString,
-      JsonCanonicalizer(mapper.writeValueAsString(sdJwt.issuerJwt.jwtClaimsSet.toJSONObject())).encodedString
+      JsonCanonicalizer(mapper.writeValueAsString(sdJwt.jwtClaimsSet?.toJSONObject())).encodedString
     )
   }
 
   @Test
   fun `test option 1`() {
-    val keyManager = InMemoryKeyManager()
-    val issuerSigner = DidKey.create(keyManager)
-
-    val signer = SdJwtSigner(
+    val signer = SdJwtBlinder(
       saltGenerator = MockMapGenerator(
         mapOf(
           "address" to "2GLC42sKQveCfGfryNRN9w"
         )
       ),
-      signer = KeyManagerSigner(keyManager, keyManager.getDeterministicAlias(publicKey = getPublicKey(issuerSigner))),
       totalDigests = { i -> i },
       mapper = mapper,
     )
@@ -184,7 +170,7 @@ class SdJwtSignerTest {
       "address" to FlatBlindOption,
     )
 
-    val sdJwt = signer.blindAndSign(claims, claimsToBlind, JWSAlgorithm.ES256K, getPublicKey(issuerSigner).keyID)
+    val sdJwt = signer.blind(claims, claimsToBlind)
 
     val expected = """{
       "_sd": [
@@ -199,16 +185,13 @@ class SdJwtSignerTest {
 
     assertEquals(
       JsonCanonicalizer(expected).encodedString,
-      JsonCanonicalizer(mapper.writeValueAsString(sdJwt.issuerJwt.jwtClaimsSet.toJSONObject())).encodedString
+      JsonCanonicalizer(mapper.writeValueAsString(sdJwt.jwtClaimsSet?.toJSONObject())).encodedString
     )
   }
 
   @Test
   fun `test option 2`() {
-    val keyManager = InMemoryKeyManager()
-    val issuerSigner = DidKey.create(keyManager)
-
-    val signer = SdJwtSigner(
+    val signer = SdJwtBlinder(
       saltGenerator = MockMapGenerator(
         mapOf(
           "street_address" to "2GLC42sKQveCfGfryNRN9w",
@@ -218,7 +201,6 @@ class SdJwtSignerTest {
         )
       ),
       shuffle = {},
-      signer = KeyManagerSigner(keyManager, keyManager.getDeterministicAlias(publicKey = getPublicKey(issuerSigner))),
       totalDigests = { i -> i },
       mapper = mapper,
     )
@@ -249,7 +231,7 @@ class SdJwtSignerTest {
       ),
     )
 
-    val sdJwt = signer.blindAndSign(claims, claimsToBlind, JWSAlgorithm.ES256K, getPublicKey(issuerSigner).keyID)
+    val sdJwt = signer.blind(claims, claimsToBlind)
 
     val expected = """{
       "iss": "https://example.com/issuer",
@@ -269,17 +251,14 @@ class SdJwtSignerTest {
 
     assertEquals(
       JsonCanonicalizer(expected).encodedString,
-      JsonCanonicalizer(mapper.writeValueAsString(sdJwt.issuerJwt.jwtClaimsSet.toJSONObject())).encodedString
+      JsonCanonicalizer(mapper.writeValueAsString(sdJwt.jwtClaimsSet?.toJSONObject())).encodedString
     )
   }
 
   @Test
   // https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-05.html#name-option-3-sd-jwt-with-recurs
   fun `test option 3`() {
-    val keyManager = InMemoryKeyManager()
-    val issuerSigner = DidKey.create(keyManager)
-
-    val signer = SdJwtSigner(
+    val signer = SdJwtBlinder(
       saltGenerator = MockMapGenerator(
         mapOf(
           "street_address" to "2GLC42sKQveCfGfryNRN9w",
@@ -290,7 +269,6 @@ class SdJwtSignerTest {
         )
       ),
       shuffle = {},
-      signer = KeyManagerSigner(keyManager, keyManager.getDeterministicAlias(publicKey = getPublicKey(issuerSigner))),
       totalDigests = { i -> i },
       mapper = mapper,
     )
@@ -314,7 +292,7 @@ class SdJwtSignerTest {
       "address" to RecursiveBlindOption
     )
 
-    val sdJwt = signer.blindAndSign(claims, claimsToBlind, JWSAlgorithm.ES256K, getPublicKey(issuerSigner).keyID)
+    val sdJwt = signer.blind(claims, claimsToBlind)
 
     val expected = """{
       "_sd": [
@@ -338,28 +316,13 @@ class SdJwtSignerTest {
           "aDRaQzE5LTN0aXotRGYzOVY4ZWlkeTFvVjNhM0gxRGEyTjBnODgiLCAgIldOOXI5ZENCSjhIVENzUzJqS0FTeFRqRXlXNW01eDY" +
           "1X1pfMnJvMmpmWE0iIF19XQ"
       ),
-      sdJwt.disclosures.map { it.serialize(mapper) }.toSet()
+      sdJwt.disclosures?.map { it.serialize(mapper) }?.toSet()
     )
     assertEquals(
       JsonCanonicalizer(expected).encodedString,
-      JsonCanonicalizer(mapper.writeValueAsString(sdJwt.issuerJwt.jwtClaimsSet.toJSONObject())).encodedString
+      JsonCanonicalizer(mapper.writeValueAsString(sdJwt.jwtClaimsSet?.toJSONObject())).encodedString
     )
   }
-
-  private fun getPublicKey(did: DidKey): JWK {
-    val resolutionResult = DidKey.resolve(did.uri)
-    return JWK.parse(resolutionResult.didDocument.assertionMethodVerificationMethodsDereferenced.first().publicKeyJwk)
-  }
-}
-
-class KeyManagerSigner(private val keyManager: KeyManager, private val keyAlias: String) : ECDSAProvider(
-  ECDSA.resolveAlgorithm(Curve.SECP256K1)
-), JWSSigner {
-
-  override fun sign(header: JWSHeader, signingInput: ByteArray): Base64URL {
-    return Base64URL.encode(keyManager.sign(keyAlias, signingInput))
-  }
-
 }
 
 class MockMapGenerator(private val values: Map<String, String> = emptyMap()) : ISaltGenerator {

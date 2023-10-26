@@ -2,40 +2,148 @@ package web5.security
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.nimbusds.jose.JWSHeader
 import com.nimbusds.jose.JWSObject.State
+import com.nimbusds.jose.JWSSigner
+import com.nimbusds.jose.crypto.factories.DefaultJWSVerifierFactory
 import com.nimbusds.jose.util.Base64URL
+import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jwt.SignedJWT
+import java.security.Key
+import java.security.SignatureException
 
 private const val separator = "~"
 
 /**
  * Represents a Selective Disclosure JWT as defined in https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-05.html#name-terms-and-definitions.
  * A more detailed overview is available in https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-05.html#name-sd-jwt-structure.
+ *
+ * Note: While [issuerJwt] and [keyBindingJwt] are of type [SignedJWT], they may or may not be signed.
  */
 public class SdJwt(
   public val issuerJwt: SignedJWT,
   public val disclosures: Iterable<Disclosure>,
   public val keyBindingJwt: SignedJWT? = null) {
-  init {
-    require(issuerJwt.state == State.SIGNED) {
-      "given issuerJwt \"${issuerJwt.serialize()}\" MUST be signed"
-    }
-    if (keyBindingJwt != null) {
-      require(keyBindingJwt.state == State.SIGNED) {
-        "given keyBindingJwt \"${keyBindingJwt.serialize()}\" MUST be signed"
-      }
+
+  /** Builder class for constructing a [SdJwt]. */
+  public class Builder(public var issuerHeader: JWSHeader? = null,
+                       public var jwtClaimsSet: JWTClaimsSet? = null,
+                       public var disclosures: Iterable<Disclosure>? = null,
+                       public var keyBindingJwt: SignedJWT? = null) {
+
+    /** Returns an [SdJwt], throwing errors when there are missing values which are required. */
+    public fun build(): SdJwt {
+
+      return SdJwt(
+        SignedJWT(issuerHeader, jwtClaimsSet),
+        disclosures!!,
+        keyBindingJwt,
+      )
     }
   }
 
   /**
    * Serializes this sd-jwt to the serialization format described in https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-05.html#name-sd-jwt-structure
+   *
+   * [issuerJwt] must have been previously signed.
+   * [keyBindingJwt], if present, must have been previously signed.
    */
   public fun serialize(mapper: ObjectMapper): String {
+    require(issuerJwt.state == State.SIGNED) {
+      "issuerJwt is not signed"
+    }
+    if (keyBindingJwt != null) {
+      require(keyBindingJwt.state == State.SIGNED) {
+        "keyBindingJwt is not signed"
+      }
+    }
     return buildList {
       add(issuerJwt.serialize())
       addAll(disclosures.map { it.serialize(mapper) })
       add(keyBindingJwt?.serialize() ?: "")
     }.joinToString(separator)
+  }
+
+  /** Signs the [issuerJwt] with [signer]. */
+  @Synchronized
+  public fun signAsIssuer(signer: JWSSigner) {
+    issuerJwt.sign(signer)
+  }
+
+  /**
+   * Signs the [keyBindingJwt] with [signer].
+   */
+  @Synchronized
+  public fun signKeyBinding(signer: JWSSigner) {
+    keyBindingJwt?.sign(signer)
+  }
+
+  /**
+   * TODO: only accept a subset of algos for verification.
+   * Verifies [serializedSdJwt] according to [verificationOptions].
+   */
+  @Throws(Exception::class)
+  public fun verify(
+    verificationOptions: VerificationOptions
+  ) {
+
+    // Validate the SD-JWT:
+    //
+    // Ensure that a signing algorithm was used that was deemed secure for the application. Refer to [RFC8725], Sections 3.1
+    // and 3.2 for details. The none algorithm MUST NOT be accepted.
+    // Validate the signature over the SD-JWT.
+    // Validate the Issuer of the SD-JWT and that the signing key belongs to this Issuer.
+    // Check that the SD-JWT is valid using nbf, iat, and exp claims, if provided in the SD-JWT, and not selectively disclosed.
+    val verifier =
+      DefaultJWSVerifierFactory().createJWSVerifier(issuerJwt.header, keyFromHeader(issuerJwt.header))
+    require(issuerJwt.verify(verifier)) {
+      throw SignatureException("Verifying the issuerJwt failed: ${issuerJwt.serialize()}")
+    }
+
+    if (verificationOptions.holderBindingOption == HolderBindingOption.VerifyHolderBinding) {
+      // If Holder Binding JWT is not provided, the Verifier MUST reject the Presentation.
+      require(keyBindingJwt != null) {
+        "Holder binding required, but holder binding JWT not found"
+      }
+
+      // Ensure that a signing algorithm was used that was deemed secure for the application. Refer to [RFC8725], Sections 3.1
+      // and 3.2 for details. The none algorithm MUST NOT be accepted.
+
+      // Validate the signature over the Holder Binding JWT.
+      // Check that the Holder Binding JWT is valid using nbf, iat, and exp claims, if provided in the Holder Binding JWT.
+      // Determine that the Holder Binding JWT is bound to the current transaction and was created for this Verifier (replay
+      // protection). This is usually achieved by a nonce and aud field within the Holder Binding JWT.
+      val holderVerifier = DefaultJWSVerifierFactory().createJWSVerifier(
+        keyBindingJwt.header,
+        keyFromHeader(keyBindingJwt.header)
+      )
+      require(keyBindingJwt.verify(holderVerifier)) {
+        throw SignatureException("Verifying the issuerJwt failed: ${keyBindingJwt.serialize()}")
+      }
+
+      val nonce = keyBindingJwt.jwtClaimsSet.getClaim("nonce") as? String?
+        ?: throw SignatureException("Nonce must be present in holder binding jwt")
+
+      require(nonce == verificationOptions.desiredNonce) {
+        throw SignatureException("Nonce found does not match desiredNonce")
+      }
+
+      var audienceFound = false
+      for (audience in keyBindingJwt.jwtClaimsSet.audience) {
+        if (audience == verificationOptions.desiredAudience) {
+          audienceFound = true
+          break
+        }
+      }
+      require(!audienceFound) {
+        throw SignatureException("Desired audience not found")
+      }
+    }
+  }
+
+  private fun keyFromHeader(header: JWSHeader): Key {
+    // TODO: replace this with something better, like did resolution. Perhaps make it injectable.
+    return header.jwk.toECKey().toECPublicKey()
   }
 
   public companion object {
@@ -73,7 +181,11 @@ internal val defaultMapper = jacksonObjectMapper()
 public class ObjectDisclosure(
   public val salt: String,
   public val claimName: String,
-  public val claimValue: Any) : Disclosure {
+  public val claimValue: Any,
+  raw: String? = null,
+  mapper: ObjectMapper? = null) : Disclosure() {
+
+  override val raw: String = raw ?: serialize(mapper!!)
 
 
   override fun serialize(mapper: ObjectMapper): String {
@@ -87,20 +199,20 @@ public class ObjectDisclosure(
 /**
  * Generalization of Disclosures.
  */
-public interface Disclosure {
+public sealed class Disclosure {
+  public abstract val raw: String
 
   /**
    * Returns the base64url encoding of the bytes in the JSON encoded array that represents this disclosure. [mapper] is
    * used to do the JSON encoding.
    */
-  public fun serialize(mapper: ObjectMapper = defaultMapper): String
+  public abstract fun serialize(mapper: ObjectMapper): String
 
   /**
    * Returns the result of hashing this disclosure as described in https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-05.html#name-hashing-disclosures.
    */
-  public fun digest(hashAlg: HashFunc, mapper: ObjectMapper = defaultMapper): String {
-    val e = serialize(mapper)
-    return Base64URL.encode(hashAlg(e.toByteArray())).toString()
+  public fun digest(hashAlg: HashFunc): String {
+    return Base64URL.encode(hashAlg(raw.toByteArray())).toString()
   }
 
   public companion object {
@@ -127,7 +239,8 @@ public interface Disclosure {
           return ObjectDisclosure(
             salt = disclosureElems[0] as String,
             claimName = disclosureClaimName,
-            claimValue = disclosureElems[2] as Any
+            claimValue = disclosureElems[2] as Any,
+            raw = encodedDisclosure
           )
         }
 
@@ -135,7 +248,8 @@ public interface Disclosure {
           // Create a Disclosure instance
           return ArrayDisclosure(
             salt = disclosureElems[0] as String,
-            claimValue = disclosureElems[1] as Any
+            claimValue = disclosureElems[1] as Any,
+            raw = encodedDisclosure
           )
         }
 
@@ -150,7 +264,11 @@ public interface Disclosure {
  */
 public class ArrayDisclosure(
   public val salt: String,
-  public val claimValue: Any) : Disclosure {
+  public val claimValue: Any,
+  raw: String? = null,
+  mapper: ObjectMapper? = null
+) : Disclosure() {
+  override val raw: String = raw ?: serialize(mapper!!)
 
   override fun serialize(mapper: ObjectMapper): String {
     val value = mapper.writeValueAsString(claimValue)
