@@ -45,7 +45,7 @@ public object PresentationExchange {
         for (field in requiredFields) {
           // we ignore field filters
           if (field.filterSchema != null) {
-            throw UnsupportedOperationException("Field Filter is not implemented")
+            throw UnsupportedOperationException("Field filter schema is not implemented")
           }
 
           if (field.path.any { path -> credential.getFieldByJsonPath(path) == null }) {
