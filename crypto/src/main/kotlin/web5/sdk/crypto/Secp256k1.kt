@@ -102,7 +102,7 @@ public object Secp256k1 : KeyGenerator, Signer {
    */
   public const val COMPRESSED_KEY_SIZE: Int = 33
 
-  public const val SIG_LEN: Int = 64
+  public const val SIG_SIZE: Int = 64
 
   /**
    * Range that defines the position of the X coordinate in an uncompressed public key byte array.
@@ -244,7 +244,7 @@ public object Secp256k1 : KeyGenerator, Signer {
     val sBigint = if (initialSBigint >= halfN) curveParams.n.subtract(initialSBigint) else initialSBigint
 
     // Secp256k1 signatures are always 64 bytes.
-    return rBigint.toFixedByteArray(SIG_LEN / 2) + sBigint.toFixedByteArray(SIG_LEN / 2)
+    return rBigint.toFixedByteArray(SIG_SIZE / 2) + sBigint.toFixedByteArray(SIG_SIZE / 2)
   }
 
   override fun verify(publicKey: JWK, signedPayload: ByteArray, signature: ByteArray, options: VerifyOptions?) {
