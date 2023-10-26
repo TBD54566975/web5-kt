@@ -102,6 +102,8 @@ public object Secp256k1 : KeyGenerator, Signer {
    */
   public const val COMPRESSED_KEY_SIZE: Int = 33
 
+  public const val SIG_LEN: Int = 64
+
   /**
    * Range that defines the position of the X coordinate in an uncompressed public key byte array.
    *
@@ -241,15 +243,8 @@ public object Secp256k1 : KeyGenerator, Signer {
     val halfN = curveParams.n.shiftRight(1)
     val sBigint = if (initialSBigint >= halfN) curveParams.n.subtract(initialSBigint) else initialSBigint
 
-    // Secp256k1 signatures are always 64 bytes. When using BigInteger.toByteArray() in Java/Kotlin,
-    // there can sometimes be a leading zero byte added. This occurs when the most significant bit of the most
-    // significant byte is 1. This leading zero byte is added to ensure that the number is interpreted as positive
-    // when the byte array is treated as a two's complement signed integer.
-    // as a precautionary measure always take the last 32 which will ignore the leading 0 if present
-    val rBytes = rBigint.toByteArray().takeLast(32).toByteArray()
-    val sBytes = sBigint.toByteArray().takeLast(32).toByteArray()
-
-    return rBytes + sBytes
+    // Secp256k1 signatures are always 64 bytes.
+    return rBigint.toFixedByteArray(SIG_LEN / 2) + sBigint.toFixedByteArray(SIG_LEN / 2)
   }
 
   override fun verify(publicKey: JWK, signedPayload: ByteArray, signature: ByteArray, options: VerifyOptions?) {
@@ -348,5 +343,35 @@ public object Secp256k1 : KeyGenerator, Signer {
     val yBytes = ecPoint.rawYCoord.encoded
 
     return byteArrayOf(UNCOMPRESSED_KEY_ID) + xBytes + yBytes
+  }
+}
+
+/**
+ * Converts a [BigInteger] to a [ByteArray] of fixed length.
+ *
+ * This function adjusts the size of the byte array representation of the [BigInteger] to ensure that it is exactly of
+ * the expected fixed length. If the original byte array is longer than the expected length, it may be due to a
+ * leading 0 byte added by Java to indicate a positive number. This occurs when the most significant bit of the most
+ * significant byte is 1. This leading zero byte is added to ensure that the number is interpreted as positive.
+ * In this case, the leading 0 byte will be removed.
+ *
+ *
+ * If the original byte array is shorter than the expected length, the function will pad the array with leading 0 bytes
+ * to reach the required size.
+ *
+ * This adjustment is particularly useful when dealing with cryptographic operations where a fixed size byte array
+ * is expected, ensuring consistency and correctness of the data format.
+ *
+ * @param size The expected fixed length of the resulting byte array.
+ * @return A [ByteArray] of size [size], representing the [BigInteger] value.
+ */
+private fun BigInteger.toFixedByteArray(size: Int): ByteArray {
+  val variableLengthArray = this.toByteArray()
+  val currentSize = variableLengthArray.size
+
+  return when {
+    currentSize < size -> ByteArray(size - currentSize) + variableLengthArray
+    currentSize > size -> variableLengthArray.takeLast(size).toByteArray()
+    else -> variableLengthArray
   }
 }

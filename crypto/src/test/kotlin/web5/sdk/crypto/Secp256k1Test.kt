@@ -5,6 +5,8 @@ import com.nimbusds.jose.jwk.KeyType
 import com.nimbusds.jose.jwk.KeyUse
 import org.junit.jupiter.api.Test
 import web5.sdk.common.Convert
+import java.security.SignatureException
+import java.util.Random
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
@@ -53,6 +55,33 @@ class Secp256k1Test {
     val base64UrlEncodedSig2 = Convert(sig2).toBase64Url(padding = false)
 
     assertEquals(base64UrlEncodedSig1, base64UrlEncodedSig2)
+  }
 
+  @Test
+  fun fuzz() {
+    val privateKey = Secp256k1.generatePrivateKey()
+    val publicKey = Secp256k1.computePublicKey(privateKey)
+
+    fun generateRandomString(length: Int): String {
+      val allowedChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+      val random = Random()
+      return (1..length)
+        .map { allowedChars[random.nextInt(allowedChars.length)] }
+        .joinToString("")
+    }
+
+
+
+    repeat(10_000) {
+      val payload = generateRandomString(Random().nextInt(100))
+
+      try {
+        val sig1 = Secp256k1.sign(privateKey, payload.toByteArray())
+        Secp256k1.verify(publicKey, payload.toByteArray(), sig1)
+      } catch (e: SignatureException) {
+        println("($it) $e. Payload: $payload")
+        throw e
+      }
+    }
   }
 }
