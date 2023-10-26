@@ -73,7 +73,7 @@ public class StatefulDidKey(uri: String, keyManager: KeyManager) : StatefulDid(u
  * ### Usage Example:
  * ```kotlin
  * val keyManager = InMemoryKeyManager()
- * val did = DidKeyApi.create()
+ * val did = DidKeyApi.create(keyManager)
  * ```
  */
 public class DidKeyApi private constructor() {
