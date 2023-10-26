@@ -5,7 +5,6 @@ import com.nimbusds.jose.crypto.bc.BouncyCastleProviderSingleton
 import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.gen.ECKeyGenerator
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
 import kotlin.test.assertEquals
 
 class InMemoryKeyManagerTest {
@@ -31,14 +30,13 @@ class InMemoryKeyManagerTest {
   }
 
   @Test
-  fun `public keys cannot be imported`() {
+  fun `public keys can be imported`() {
     val jwk = Crypto.generatePrivateKey(JWSAlgorithm.ES256K)
-
     val keyManager = InMemoryKeyManager()
 
-    assertThrows<IllegalArgumentException> {
-      keyManager.import(jwk.toPublicJWK())
-    }
+    val alias = keyManager.import(jwk.toPublicJWK())
+
+    assertEquals(jwk.toPublicJWK(), keyManager.getPublicKey(alias))
   }
 
   @Test

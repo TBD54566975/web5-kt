@@ -60,6 +60,49 @@ val did = DidIonManager.create(keyManager, opts)
 ### Resolve an ION did
 
 ```kotlin
-val ionManager = DidIonManager{}
+val ionManager = DidIonManager
 val didResolutionResult = ionManager.resolve("did:ion:EiClkZMDxPKqC9c-umQfTkR8vvZ9JPhl_xLDI9Nfk38w5w")
 ```
+
+### Recover an ION did
+
+Any sidetree based DID, including ION, supports a [recover operation](https://identity.foundation/sidetree/spec/#recover).
+This type of operation is useful when the update keys of your DID have been compromised. 
+
+```kotlin
+// We create the DID first. 
+val ionManager = DidIonManager
+val keyManager = InMemoryKeyManager()
+val did = ionManager.create(keyManager)
+val recoveryKeyAlias = did.creationMetadata!!.keyAliases.verificationKeyAlias
+
+// Imagine that your update key was compromised, so you need to recover your DID.
+val opts = RecoverDidIonOptions(
+  did = did.uri,
+  recoveryKeyAlias = recoveryKeyAlias,  
+)
+val recoverResult = ionManager.recover(keyManager, opts)
+```
+
+> [!NOTE]
+> The `keyManager` MUST contain the recovery private key.
+
+### Deactivate an ION did
+
+```kotlin
+// We create the DID first. 
+val ionManager = DidIonManager
+val keyManager = InMemoryKeyManager()
+val did = ionManager.create(keyManager)
+val recoveryKeyAlias = did.creationMetadata!!.keyAliases.verificationKeyAlias
+
+// You want to permanently disable the DID, rendering it useless.
+val opts = DeactivateDidIonOptions(
+  did = did.uri,
+  recoveryKeyAlias = recoveryKeyAlias,
+)
+val deactivateResult = ionManager.deactivate(keyManager, opts)
+```
+
+> [!NOTE]
+> The `keyManager` MUST contain the recovery private key.
