@@ -21,7 +21,7 @@ class StatusListCredentialTest {
 
   @Test
   fun `should parse valid VerifiableCredential from specification example`() {
-    val specExampleRevocableVcText = File("src/test/testdata/revocableVc.json").readText()
+    val specExampleRevocableVcText = File("src/test/resources/revocable_vc.json").readText()
 
     val specExampleRevocableVc = VerifiableCredential.fromJson(
       specExampleRevocableVcText
