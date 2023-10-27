@@ -7,7 +7,7 @@ verification from the holder or from the verifier's perspective.
 ## Table of Contents
 - [Installation](#installation)
 - [Quick Start](#quick-start)
-- [Usage](#usage)
+- [API REFERENCE](#api-reference)
 
 ## Installation
 
