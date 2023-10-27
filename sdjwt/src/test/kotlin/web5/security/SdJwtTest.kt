@@ -122,6 +122,7 @@ class SdJwtTest {
     receivedSdJwt.verify(
       VerificationOptions(
         issuerPublicJwk = issuerPublicJwk,
+        supportedAlgorithms = setOf(JWSAlgorithm.ES256K),
         holderBindingOption = HolderBindingOption.SkipVerifyHolderBinding,
       )
     )

@@ -1,5 +1,6 @@
 package web5.security
 
+import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.jwk.JWK
 import com.nimbusds.jwt.JWTClaimsSet
 import java.util.Stack
@@ -9,9 +10,14 @@ import java.util.Stack
  *
  * [holderBindingOption] is used to tell whether holder binding should be checked. When [HolderBindingOption.VerifyHolderBinding]
  * is selected, then [desiredNonce], [desiredAudience], and [holderVerifierPublicJwk] are required.
+ *
+ * Callers MUST set the [supportedAlgorithms] to declare which set of algorithms they explicitly support. This follows
+ * the guidance from https://www.rfc-editor.org/rfc/rfc8725.html#name-use-appropriate-algorithms
  */
 public class VerificationOptions(
   public val issuerPublicJwk: JWK,
+
+  public val supportedAlgorithms: Set<JWSAlgorithm>,
 
   public val holderBindingOption: HolderBindingOption,
 

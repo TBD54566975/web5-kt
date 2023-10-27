@@ -2,6 +2,7 @@ package web5.security
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.JWSHeader
 import com.nimbusds.jose.JWSObject.State
 import com.nimbusds.jose.JWSSigner
@@ -102,9 +103,15 @@ public class SdJwt(
     verificationOptions: VerificationOptions
   ) {
     // Validate the SD-JWT:
-    //
-    // Ensure that a signing algorithm was used that was deemed secure for the application. Refer to [RFC8725], Sections 3.1
-    // and 3.2 for details. The none algorithm MUST NOT be accepted.
+
+    require(verificationOptions.supportedAlgorithms.contains(issuerJwt.header.algorithm)) {
+      "the algorithm of issuerJwt (${issuerJwt.header.algorithm}) is not part of the declared list of supported " +
+        "algorithms (${verificationOptions.supportedAlgorithms})"
+    }
+    // The none algorithm MUST NOT be accepted.
+    require(issuerJwt.header.algorithm != JWSAlgorithm.NONE) {
+      "algorithm in issuerJwt must not be `none`"
+    }
     // Validate the signature over the SD-JWT.
     // Validate the Issuer of the SD-JWT and that the signing key belongs to this Issuer.
     val verifier = issuerVerifier(verificationOptions)
@@ -123,7 +130,15 @@ public class SdJwt(
       }
 
       // Ensure that a signing algorithm was used that was deemed secure for the application. Refer to [RFC8725], Sections 3.1
-      // and 3.2 for details. The none algorithm MUST NOT be accepted.
+      // and 3.2 for details.
+      require(verificationOptions.supportedAlgorithms.contains(keyBindingJwt.header.algorithm)) {
+        "the algorithm of keyBindingJwt (${keyBindingJwt.header.algorithm}) is not part of the declared list of " +
+          "supported algorithms (${verificationOptions.supportedAlgorithms})"
+      }
+      // The none algorithm MUST NOT be accepted.
+      require(keyBindingJwt.header.algorithm != JWSAlgorithm.NONE) {
+        "algorithm in keyBindingJwt must not be `none`"
+      }
 
       // Validate the signature over the Holder Binding JWT.
       // Check that the Holder Binding JWT is valid using nbf, iat, and exp claims, if provided in the Holder Binding JWT.
