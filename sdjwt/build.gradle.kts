@@ -8,7 +8,7 @@ repositories {
 
 dependencies {
   implementation("com.nimbusds:nimbus-jose-jwt:9.34")
-  implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.4")
+  implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.15.3")
   implementation("org.bouncycastle:bcprov-jdk15on:1.70")
 
   testImplementation(project(":dids"))
