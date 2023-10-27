@@ -58,20 +58,6 @@ class SdJwtUnblinderTest {
       JsonCanonicalizer(mapper.writeValueAsString(jwtClaimSet.toJSONObject())).encodedString
     )
   }
-
-//  private fun getPublicKey(did: DidKey): JWK {
-//    val resolutionResult = DidKey.resolve(did.uri)
-//    return JWK.parse(resolutionResult.didDocument.assertionMethodVerificationMethodsDereferenced.first().publicKeyJwk)
-//  }
 }
 
 
-//class KeyManagerSigner(private val keyManager: KeyManager, private val keyAlias: String) : ECDSAProvider(
-//  ECDSA.resolveAlgorithm(Curve.SECP256K1)
-//), JWSSigner {
-//
-//  override fun sign(header: JWSHeader, signingInput: ByteArray): Base64URL {
-//    return Base64URL.encode(keyManager.sign(keyAlias, signingInput))
-//  }
-//
-//}

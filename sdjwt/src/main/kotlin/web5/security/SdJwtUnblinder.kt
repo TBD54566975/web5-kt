@@ -1,5 +1,6 @@
 package web5.security
 
+import com.nimbusds.jose.jwk.JWK
 import com.nimbusds.jwt.JWTClaimsSet
 import java.util.Stack
 
@@ -10,12 +11,15 @@ import java.util.Stack
  * is selected, then [desiredNonce] and [desiredAudience] are required.
  */
 public class VerificationOptions(
+  public val issuerPublicJwk: JWK,
+
   public val holderBindingOption: HolderBindingOption,
 
   // The nonce and audience to check for when doing holder binding verification.
   // Needed only when holderBindingOption == VerifyHolderBinding.
   public val desiredNonce: String? = null,
   public val desiredAudience: String? = null,
+  public val holderPublicJwk: JWK? = null,
 )
 
 /** Options for holder binding processing. */
@@ -24,18 +28,24 @@ public enum class HolderBindingOption(public val value: Boolean) {
   SkipVerifyHolderBinding(false)
 }
 
-private fun JWTClaimsSet.getHashAlg(): HashFunc {
-  var hashName: String = sha256Alg
-  val hashNameValue = this.getClaim(sdAlgClaimName)
-  if (hashName != null && hashNameValue is String) {
-    hashName = hashNameValue
-  } else {
-    throw IllegalArgumentException("Converting _sd_alg claim value to string")
+internal fun JWTClaimsSet.getHashAlg(): HashFunc {
+  val hashName = when (val hashNameValue = this.getClaim(sdAlgClaimName)) {
+    null -> {
+      Hash.SHA_256.ianaName
+    }
+
+    is String -> {
+      hashNameValue
+    }
+
+    else -> {
+      throw IllegalArgumentException("Converting _sd_alg claim value to string")
+    }
   }
 
   return when (hashName) {
-    sha256Alg -> ::sha256
-    sha512Alg -> ::sha512
+    Hash.SHA_256.ianaName -> Hash.SHA_256.hashFunc
+    Hash.SHA_512.ianaName -> Hash.SHA_512.hashFunc
     else -> throw IllegalArgumentException("Unsupported hash name $hashName")
   }
 }
@@ -45,8 +55,8 @@ public class SdJwtUnblinder {
   /**
    * Unblinds [serializedSdJwt]. Follows the algorithm specified in https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-05.html#section-6.1
    *
-   * An unblinded [JWTClaimsSet], with hidden values in the `issuerJwt` replaced with
-   * values from the `disclosures` presented.
+   * An unblinded [JWTClaimsSet], where the hidden values in the `issuerJwt` are replaced with values from the
+   * `disclosures` presented.
    */
   @Throws(Exception::class)
   public fun unblind(
@@ -65,7 +75,7 @@ public class SdJwtUnblinder {
     //
     // Create a copy of the SD-JWT payload, if required for further processing.
     val tokenClaims = sdJwt.issuerJwt.jwtClaimsSet.toJSONObject().toMutableMap()
-    processPayload(tokenClaims, disclosuresByDigest, HashSet())
+    processPayload(tokenClaims, disclosuresByDigest)
 
     return JWTClaimsSet.parse(tokenClaims)
   }
@@ -78,11 +88,10 @@ public class SdJwtUnblinder {
   @Throws(Exception::class)
   private fun processPayload(
     claims: MutableMap<String, Any>,
-    disclosuresByDigest: Map<String, Disclosure>,
-    digestsFound: MutableSet<String>
+    disclosuresByDigest: Map<String, Disclosure>
   ) {
     val workLeft = createWorkFrom(claims, null)
-    unblind(workLeft, disclosuresByDigest, digestsFound, claims)
+    unblind(workLeft, disclosuresByDigest, claims)
 
     claims.remove(sdAlgClaimName)
   }
@@ -104,10 +113,11 @@ public class SdJwtUnblinder {
           }
           for (digest in sdClaimValue) {
             require(digest is String) {
-              "all values in \"sd\" MUST be strings"
+              "all values in \"_sd\" MUST be strings"
             }
             result.add(Work(claims, digest))
           }
+          @Suppress("UNCHECKED_CAST")
           (claims as MutableMap<String, Any>).remove(sdClaimName)
         }
 
@@ -131,6 +141,7 @@ public class SdJwtUnblinder {
         for (claim in claims.reversed()) {
           result.addAll(createWorkFrom(claim!!, claims))
         }
+        @Suppress("UNCHECKED_CAST")
         (claims as MutableList<Any>).removeAll { true }
       }
     }
@@ -141,8 +152,8 @@ public class SdJwtUnblinder {
   private fun unblind(
     workLeft: Stack<Work>,
     disclosuresByDigest: Map<String, Disclosure>,
-    digestsFound: MutableSet<String>,
     claims: MutableMap<String, Any>) {
+    val digestsFound = HashSet<String>()
     while (workLeft.isNotEmpty()) {
       val work = workLeft.pop()
       val digestValue = work.disclosureDigest
@@ -153,8 +164,8 @@ public class SdJwtUnblinder {
       val disclosure = disclosuresByDigest[digestValue] ?: continue
 
       // If any digests were found more than once, the Verifier MUST reject the Presentation.
-      if (digestsFound.contains(digestValue)) {
-        throw Exception("Digest \"$digestValue\" found more than once")
+      require(!digestsFound.contains(digestValue)) {
+        "Digest \"$digestValue\" found more than once"
       }
       digestsFound.add(digestValue)
 
@@ -170,6 +181,7 @@ public class SdJwtUnblinder {
           fun insert(m: MutableMap<String, Any>) {
             m.put(disclosure.claimName, disclosure.claimValue)
           }
+          @Suppress("UNCHECKED_CAST")
           insert(insertionPoint as MutableMap<String, Any>)
 
           // If the decoded value contains an _sd key in an object, recursively process the key using the steps described in (*).
@@ -184,6 +196,7 @@ public class SdJwtUnblinder {
           }
 
           // find and then replace insertion point
+          @Suppress("UNCHECKED_CAST")
           (insertionPoint as MutableList<Any>).add(disclosure.claimValue)
 
           // If the decoded value contains an _sd key in an object, recursively process the key using the steps described in (*).

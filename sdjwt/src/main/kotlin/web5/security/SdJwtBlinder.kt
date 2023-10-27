@@ -11,17 +11,19 @@ import kotlin.math.ceil
 import kotlin.math.log2
 import kotlin.math.pow
 
-/** The sha-256 hash algorithm as registered in https://www.iana.org/assignments/named-information/named-information.xhtml */
-public fun sha256(input: ByteArray): ByteArray = hashString("SHA-256", input)
+/**
+ * Hash implementations supported by this library.
+ */
+public enum class Hash(
+  public val hashFunc: HashFunc,
+  public val ianaName: String,
+) {
+  /** The sha-256 hash algorithm as registered in https://www.iana.org/assignments/named-information/named-information.xhtml */
+  SHA_256({ hashString("SHA-256", it) }, "sha-256"),
 
-/** The hash name string of `shah-256` from the IANA registry https://www.iana.org/assignments/named-information/named-information.xhtml */
-public const val sha256Alg: String = "sha-256"
-
-/** The sha-512 hash algorithm as registered in https://www.iana.org/assignments/named-information/named-information.xhtml */
-public fun sha512(input: ByteArray): ByteArray = hashString("SHA-512", input)
-
-/** The hash name string of `shah-512` from the IANA registry https://www.iana.org/assignments/named-information/named-information.xhtml */
-public const val sha512Alg: String = "sha-512"
+  /** The sha-512 hash algorithm as registered in https://www.iana.org/assignments/named-information/named-information.xhtml */
+  SHA_512({ hashString("SHA-512", it) }, "sha-512")
+}
 
 private fun hashString(type: String, input: ByteArray): ByteArray {
   return MessageDigest.getInstance(type)
@@ -239,10 +241,11 @@ public const val sdClaimName: String = "_sd"
 /** The _sd_alg claim name. */
 public const val sdAlgClaimName: String = "_sd_alg"
 
-/** A signer that is capable of producing [SdJwt] given some parameters. */
+/**
+ * A signer that is capable of producing [SdJwt] given some parameters. */
 public class SdJwtBlinder(
-  saltGenerator: ISaltGenerator,
-  private val sdAlg: HashFunc = ::sha256,
+  saltGenerator: ISaltGenerator = SaltGenerator(),
+  private val hash: Hash = Hash.SHA_256,
   private val shuffle: (List<Any>) -> Unit = Collections::shuffle,
   private val totalDigests: (Int) -> Int = ::getNextPowerOfTwo,
   mapper: ObjectMapper = defaultMapper,
@@ -252,6 +255,8 @@ public class SdJwtBlinder(
   /**
    * Returns an [SdJwt.Builder] with the [SdJwt.Builder.jwtClaimsSet] blinded and [SdJwt.Builder.disclosures] fields
    * set. The [SdJwt.Builder.jwtClaimsSet] field is also known as the SD-JWT Payload in https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-05.html#name-sd-jwt-payload
+   *
+   * Note: You must set the [SdJwt.Builder.issuerHeader] before calling [SdJwt.Builder.build].
    */
   public fun blind(
     claimsData: String,
@@ -260,7 +265,7 @@ public class SdJwtBlinder(
     val claimsMap = defaultMapper.readValue(claimsData, typeRef)
 
     val csb = ClaimSetBlinder(
-      sdAlg = sdAlg,
+      sdAlg = hash.hashFunc,
       disclosureFactory = disclosureFactory,
       totalDigests = totalDigests,
       shuffle = shuffle,
@@ -269,7 +274,7 @@ public class SdJwtBlinder(
     val (blindedClaims, disclosures) = csb.toBlindedClaimsAndDisclosures(claimsMap, claimsToBlind)
 
     val blindedClaimsMap = blindedClaims.toMutableMap()
-    blindedClaimsMap[sdAlgClaimName] = sha256Alg
+    blindedClaimsMap[sdAlgClaimName] = hash.ianaName
 
     val payload = JWTClaimsSet.parse(blindedClaimsMap)
 

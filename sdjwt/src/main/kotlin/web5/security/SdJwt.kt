@@ -5,11 +5,15 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.nimbusds.jose.JWSHeader
 import com.nimbusds.jose.JWSObject.State
 import com.nimbusds.jose.JWSSigner
+import com.nimbusds.jose.crypto.bc.BouncyCastleProviderSingleton
 import com.nimbusds.jose.crypto.factories.DefaultJWSVerifierFactory
+import com.nimbusds.jose.proc.SecurityContext
 import com.nimbusds.jose.util.Base64URL
 import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jwt.SignedJWT
+import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier
 import java.security.Key
+import java.security.Provider
 import java.security.SignatureException
 
 private const val separator = "~"
@@ -23,8 +27,8 @@ private const val separator = "~"
 public class SdJwt(
   public val issuerJwt: SignedJWT,
   public val disclosures: Iterable<Disclosure>,
-  public val keyBindingJwt: SignedJWT? = null) {
-
+  public val keyBindingJwt: SignedJWT? = null,
+  private val serializedSdJwt: String? = null) {
   /** Builder class for constructing a [SdJwt]. */
   public class Builder(public var issuerHeader: JWSHeader? = null,
                        public var jwtClaimsSet: JWTClaimsSet? = null,
@@ -48,7 +52,10 @@ public class SdJwt(
    * [issuerJwt] must have been previously signed.
    * [keyBindingJwt], if present, must have been previously signed.
    */
-  public fun serialize(mapper: ObjectMapper): String {
+  public fun serialize(mapper: ObjectMapper = defaultMapper): String {
+    if (serializedSdJwt != null) {
+      return serializedSdJwt
+    }
     require(issuerJwt.state == State.SIGNED) {
       "issuerJwt is not signed"
     }
@@ -80,25 +87,31 @@ public class SdJwt(
 
   /**
    * TODO: only accept a subset of algos for verification.
-   * Verifies [serializedSdJwt] according to [verificationOptions].
+   * Verifies this SD-JWT according to [verificationOptions].
    */
   @Throws(Exception::class)
   public fun verify(
     verificationOptions: VerificationOptions
   ) {
-
     // Validate the SD-JWT:
     //
     // Ensure that a signing algorithm was used that was deemed secure for the application. Refer to [RFC8725], Sections 3.1
     // and 3.2 for details. The none algorithm MUST NOT be accepted.
     // Validate the signature over the SD-JWT.
     // Validate the Issuer of the SD-JWT and that the signing key belongs to this Issuer.
-    // Check that the SD-JWT is valid using nbf, iat, and exp claims, if provided in the SD-JWT, and not selectively disclosed.
     val verifier =
-      DefaultJWSVerifierFactory().createJWSVerifier(issuerJwt.header, keyFromHeader(issuerJwt.header))
-    require(issuerJwt.verify(verifier)) {
+      DefaultJWSVerifierFactory().createJWSVerifier(
+        issuerJwt.header,
+        verificationOptions.issuerPublicJwk.toECKey().toPublicKey()
+      )
+    verifier.jcaContext.provider = BouncyCastleProviderSingleton.getInstance() as Provider
+    if (!issuerJwt.verify(verifier)) {
       throw SignatureException("Verifying the issuerJwt failed: ${issuerJwt.serialize()}")
     }
+
+    // Check that the SD-JWT is valid using nbf, iat, and exp claims, if provided in the SD-JWT, and not selectively disclosed.
+    val claimsVerifier = DefaultJWTClaimsVerifier<SecurityContext>(null, null)
+    claimsVerifier.verify(issuerJwt.jwtClaimsSet, null)
 
     if (verificationOptions.holderBindingOption == HolderBindingOption.VerifyHolderBinding) {
       // If Holder Binding JWT is not provided, the Verifier MUST reject the Presentation.
@@ -146,6 +159,48 @@ public class SdJwt(
     return header.jwk.toECKey().toECPublicKey()
   }
 
+  /**
+   * Returns a set of indices for disclosures contained within this SD-JWT. The
+   * indices are selected such that the disclosure's digest is contained inside the [digests] map.
+   */
+  public fun selectDisclosures(digests: Set<String>): Set<Int> {
+    val hashAlg = issuerJwt.jwtClaimsSet.getHashAlg()
+    return buildSet {
+      for (disclosureAndIndex in disclosures.withIndex()) {
+        val disclosure = disclosureAndIndex.value
+        if (digests.contains(disclosure.digest(hashAlg))) {
+          add(disclosureAndIndex.index)
+        }
+      }
+    }
+  }
+
+  /**
+   * Returns the digest for the disclosure that matches [name].
+   */
+  public fun digestsOf(name: String, disclosedValue: Any? = null): String? {
+    val hashAlg = issuerJwt.jwtClaimsSet.getHashAlg()
+    val objectDisclosure = disclosures.map { it as? ObjectDisclosure }.firstOrNull { it?.claimName == name }
+    if (objectDisclosure != null) {
+      return objectDisclosure.digest(hashAlg)
+    }
+    val claim = issuerJwt.jwtClaimsSet.getClaim(name)
+    val disclosuresByDigest = disclosures.associateBy { it.digest(hashAlg) }
+    if (claim != null && claim is List<*>) {
+      for (value in claim) {
+        require(value is Map<*, *>)
+        val digest = value["..."]
+        if (digest is String && (disclosuresByDigest[digest] as ArrayDisclosure?)?.claimValue == disclosedValue) {
+          return digest
+        }
+      }
+    }
+    return null
+  }
+
+  /** Same as [SdJwtUnblinder.unblind]. */
+  public fun unblind(): JWTClaimsSet = SdJwtUnblinder().unblind(this.serialize())
+
   public companion object {
     /**
      * The reverse of the [serialize] operation. Given the serialized format of an SD-JWT, returns a [SdJwt].
@@ -163,6 +218,7 @@ public class SdJwt(
         SignedJWT.parse(parts[0]),
         parts.subList(1, parts.size - 1).map { Disclosure.parse(it) },
         keyBindingJwt,
+        input,
       )
     }
   }
