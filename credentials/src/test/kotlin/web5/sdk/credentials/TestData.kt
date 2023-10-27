@@ -1,6 +1,6 @@
 package web5.sdk.credentials
 
-const val PRESENTATION_DEFINITION = """
+const val TBDEX_PD = """
 {
   "id": "ec11a434-fe24-479b-aae0-511428b37e4f",
   "format": {
@@ -32,12 +32,58 @@ const val PRESENTATION_DEFINITION = """
               "${'$'}.type[*]"
             ],
             "filter": {
-              "type": "string",
-              "pattern": "^SanctionCredential${'$'}"
+              "type": "array",
+              "contains": {
+                "type": "string",
+                "pattern": "^SanctionsCredential${'$'}"
+              }
             }
           }
         ]
       }
     }
   ]
-}"""
+}
+"""
+
+const val PD_WITH_SUBMISSION_REQUIREMENTS = """
+  {
+  "id": "ec11a434-fe24-479b-aae0-511428b37e4f",
+  "format": {
+    "jwt_vc": {
+      "alg": [
+        "ES256K",
+        "EdDSA"
+      ]
+    }
+  },
+  "submission_requirements": [
+    {
+      "name": "Banking Information",
+      "purpose": "We need you to prove you currently hold a bank account older than 12months.",
+      "rule": "pick",
+      "count": 1,
+      "from": "A"
+    }
+  ],
+  "input_descriptors": [
+    {
+      "id": "7b928839-f0b1-4237-893d-b27124b57952",
+      "constraints": {
+        "fields": [
+          {
+            "path": [
+              "${'$'}.iss",
+              "${'$'}.vc.issuer"
+            ],
+            "filter": {
+              "type": "string",
+              "pattern": "^did:[^:]+:.+"
+            }
+          },
+        ]
+      }
+    }
+  ]
+}
+"""

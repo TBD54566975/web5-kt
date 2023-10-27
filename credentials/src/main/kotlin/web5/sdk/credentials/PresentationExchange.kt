@@ -66,19 +66,17 @@ public object PresentationExchange {
     val requiredFields = inputDescriptorWithFields.constraints.fields!!.filter { it.optional != true }
 
     requiredFields.forEach { field ->
-      val matchedPath = field.path.find { path -> vcPayload.toJSONObject()[path] != null }
-        ?: throw PresentationExchangeError("Could not find matching field for required field: ${field.id}")
+      val vcPayloadJson = JsonPath.parse(vcPayload.toString())
+        ?: throw PresentationExchangeError("Failed to parse VC $vcPayload as JsonNode")
+
+      val matchedFields = field.path.mapNotNull { path -> vcPayloadJson.read<JsonNode>(path) }
+      if (matchedFields.isEmpty()) {
+        throw PresentationExchangeError("Could not find matching field for path: ${field.path.joinToString()}")
+      }
 
       when {
-        field.filterSchema != null -> {
-          val fieldValue = JsonPath.parse(vcPayload.toString())?.read<JsonNode>(matchedPath)
-            ?: throw PresentationExchangeError("Failed to read VC field $matchedPath as JsonNode")
-          vcSatisfiesFieldFilterSchema(fieldValue, field.filterSchema!!)
-        }
-
-        else -> {
-          return
-        }
+        field.filterSchema != null -> matchedFields.any {vcSatisfiesFieldFilterSchema(it, field.filterSchema!!)}
+        else -> return
       }
     }
   }
@@ -89,10 +87,11 @@ public object PresentationExchange {
    * @param fieldValue The field value of the VC as a JsonNode.
    * @param schema The JSON schema to validate against.
    */
-  private fun vcSatisfiesFieldFilterSchema(fieldValue: JsonNode, schema: JsonSchema) {
+  private fun vcSatisfiesFieldFilterSchema(fieldValue: JsonNode, schema: JsonSchema): Boolean {
     val validationMessages = schema.validate(fieldValue)
-    require(validationMessages.isEmpty()) {
-      PresentationExchangeError(validationMessages.toString())
+    when {
+      validationMessages.isEmpty() -> return true
+      else -> throw PresentationExchangeError("validating $fieldValue failed: ${validationMessages.joinToString()}")
     }
   }
 }

@@ -54,19 +54,19 @@ class PresentationDefinitionTest {
 
   @Test
   fun `serialization is idempotent`(){
-    val pdString = PRESENTATION_DEFINITION.trimIndent()
+    val pdString = TBDEX_PD.trimIndent()
     val parsedPd = jsonMapper.readValue(pdString, PresentationDefinitionV2::class.java)
     val parsedString = jsonMapper.writeValueAsString(parsedPd)
 
     assertEquals(
-      JsonCanonicalizer(PRESENTATION_DEFINITION).encodedString,
+      JsonCanonicalizer(TBDEX_PD).encodedString,
       JsonCanonicalizer(parsedString).encodedString,
     )
   }
 
   @Test
   fun `can deserialize`() {
-    val pdString = PRESENTATION_DEFINITION.trimIndent()
+    val pdString = TBDEX_PD.trimIndent()
 
     assertDoesNotThrow { jsonMapper.readValue(pdString, PresentationDefinitionV2::class.java) }
   }
