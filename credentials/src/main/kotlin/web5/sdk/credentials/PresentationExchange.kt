@@ -9,29 +9,34 @@ import com.nimbusds.jwt.JWTParser
 import com.nimbusds.jwt.SignedJWT
 
 /**
- * A utility object for performing operations related to presentation exchanges.
+ * The `PresentationExchange` object provides functions for working with Verifiable Credentials
+ * and Presentation Definitions during a presentation exchange process.
  */
 public object PresentationExchange {
   /**
-   * Selects credentials from the given list that satisfy the provided presentation definition.
+   * Selects credentials that satisfy a given presentation definition.
    *
-   * @param credentials A list of verifiable credentials.
-   * @param presentationDefinition The Presentation Definition to be satisfied.
-   * @return A list of verifiable credentials that meet the presentation definition criteria.
+   * @param credentials The list of Verifiable Credentials to select from.
+   * @param presentationDefinition The Presentation Definition to match against.
+   * @return A list of Verifiable Credentials that satisfy the Presentation Definition.
+   * @throws UnsupportedOperationException If the method is untested and not recommended for use.
    */
   public fun selectCredentials(
     credentials: List<VerifiableCredential>,
     presentationDefinition: PresentationDefinitionV2
   ): List<VerifiableCredential> {
     throw UnsupportedOperationException("pex is untested")
-//    return credentials.filter { satisfiesPresentationDefinition(it, presentationDefinition) }
+    // Uncomment the following line to filter credentials based on the Presentation Definition
+    // return credentials.filter { satisfiesPresentationDefinition(it, presentationDefinition) }
   }
 
   /**
-   * Validates whether a verifiable credential (VC) satisfies a given Presentation Definition.
+   * Validates if a Verifiable Credential JWT satisfies a Presentation Definition.
    *
-   * @param vcJwt The VC in JWT format.
-   * @param presentationDefinition The Presentation Definition to be satisfied.
+   * @param vcJwt The Verifiable Credential JWT as a string.
+   * @param presentationDefinition The Presentation Definition to validate against.
+   * @throws UnsupportedOperationException If the Presentation Definition's Submission Requirements
+   * feature is not implemented.
    */
   public fun satisfiesPresentationDefinition(
     vcJwt: String,
@@ -53,11 +58,10 @@ public object PresentationExchange {
   }
 
   /**
-   * Validates whether the input descriptors with fields in a Presentation Definition are satisfied by
-   * the payload of a verifiable credential (VC).
+   * Validates the input descriptors with associated fields in a Verifiable Credential.
    *
-   * @param inputDescriptorWithFields The input descriptor with fields to be validated.
-   * @param vcPayload The payload of the VC.
+   * @param inputDescriptorWithFields The Input Descriptor with associated fields.
+   * @param vcPayload The payload of the Verifiable Credential.
    */
   private fun validateInputDescriptorsWithFields(
     inputDescriptorWithFields: InputDescriptorV2,
@@ -75,23 +79,42 @@ public object PresentationExchange {
       }
 
       when {
-        field.filterSchema != null -> matchedFields.any {vcSatisfiesFieldFilterSchema(it, field.filterSchema!!)}
+        field.filterSchema != null -> {
+          matchedFields.any { fieldValue ->
+            when {
+              // When the field is an array, JSON schema is applied to each array item.
+              fieldValue.isArray -> {
+                if (fieldValue.none { valueSatisfiesFieldFilterSchema(it, field.filterSchema!!) })
+                  throw PresentationExchangeError("Validating $fieldValue against ${field.filterSchema} failed")
+                true
+              }
+
+              // Otherwise, JSON schema is applied to the entire value.
+              else -> {
+                valueSatisfiesFieldFilterSchema(fieldValue, field.filterSchema!!)
+              }
+            }
+          }
+        }
+
         else -> return
       }
     }
   }
 
   /**
-   * Validates whether a verifiable credential (VC) field value satisfies a JSON schema.
+   * Checks if a field's value satisfies the given JSON schema.
    *
-   * @param fieldValue The field value of the VC as a JsonNode.
+   * @param fieldValue The JSON field value to validate.
    * @param schema The JSON schema to validate against.
+   * @return `true` if the value satisfies the schema, `false` otherwise.
    */
-  private fun vcSatisfiesFieldFilterSchema(fieldValue: JsonNode, schema: JsonSchema): Boolean {
+  private fun valueSatisfiesFieldFilterSchema(fieldValue: JsonNode, schema: JsonSchema): Boolean {
     val validationMessages = schema.validate(fieldValue)
-    when {
-      validationMessages.isEmpty() -> return true
-      else -> throw PresentationExchangeError("validating $fieldValue failed: ${validationMessages.joinToString()}")
+    return when {
+      validationMessages.isEmpty() -> true
+      // TODO try and surface the validation messages in error
+      else -> false
     }
   }
 }
