@@ -16,7 +16,6 @@ import java.io.File
 class PresentationDefinitionTest {
   val jsonMapper: ObjectMapper = ObjectMapper()
     .registerKotlinModule()
-    .findAndRegisterModules()
     .setSerializationInclusion(JsonInclude.Include.NON_NULL)
 
   @Test
