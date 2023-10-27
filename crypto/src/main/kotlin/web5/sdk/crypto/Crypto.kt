@@ -59,6 +59,7 @@ public object Crypto {
   )
 
   private val signers = mapOf<CryptoAlgorithm, Signer>(
+    Pair(null, Curve.SECP256K1) to Secp256k1,
     Pair(Secp256k1.algorithm, null) to Secp256k1,
     Pair(Secp256k1.algorithm, Curve.SECP256K1) to Secp256k1,
     Pair(Ed25519.algorithm, Curve.Ed25519) to Ed25519
@@ -215,7 +216,7 @@ public object Crypto {
    * @return The corresponding [Signer].
    * @throws IllegalArgumentException if the algorithm or curve is not supported.
    */
-  public fun getSigner(algorithm: Algorithm, curve: Curve? = null): Signer {
+  public fun getSigner(algorithm: Algorithm?, curve: Curve? = null): Signer {
     return signers.getOrElse(Pair(algorithm, curve)) {
       throw IllegalArgumentException("Algorithm $algorithm not supported")
     }

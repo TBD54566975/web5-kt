@@ -1,6 +1,7 @@
 package web5.sdk.credentials
 
 import com.danubetech.verifiablecredentials.CredentialSubject
+import com.danubetech.verifiablecredentials.credentialstatus.CredentialStatus
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -43,7 +44,7 @@ public typealias VcDataModel = com.danubetech.verifiablecredentials.VerifiableCr
  *
  * @property vcDataModel The [VcDataModel] instance representing the core data model of a verifiable credential.
  */
-public class VerifiableCredential(public val vcDataModel: VcDataModel) {
+public class VerifiableCredential internal constructor(public val vcDataModel: VcDataModel) {
 
   public val type: String
     get() = vcDataModel.types.last()
@@ -72,7 +73,12 @@ public class VerifiableCredential(public val vcDataModel: VcDataModel) {
    */
   public fun sign(did: Did, assertionMethodId: String? = null): String {
     val didResolutionResult = DidResolvers.resolve(did.uri)
-    val assertionMethods = didResolutionResult.didDocument.assertionMethodVerificationMethodsDereferenced
+    val assertionMethods: List<VerificationMethod>? =
+      didResolutionResult.didDocument.assertionMethodVerificationMethodsDereferenced
+
+    require(!assertionMethods.isNullOrEmpty()) {
+      throw SignatureException("No assertion methods found in DID document")
+    }
 
     val assertionMethod: VerificationMethod = when {
       assertionMethodId != null -> assertionMethods.find { it.id.toString() == assertionMethodId }
@@ -87,9 +93,14 @@ public class VerifiableCredential(public val vcDataModel: VcDataModel) {
     val algorithm = publicKeyJwk.algorithm
     val jwsAlgorithm = JWSAlgorithm.parse(algorithm.toString())
 
+    val kid = when (assertionMethod.id.isAbsolute) {
+      true -> assertionMethod.id.toString()
+      false -> "${did.uri}${assertionMethod.id}"
+    }
+
     val jwtHeader = JWSHeader.Builder(jwsAlgorithm)
       .type(JOSEObjectType.JWT)
-      .keyID(assertionMethod.id.toString())
+      .keyID(kid)
       .build()
 
     val jwtPayload = JWTClaimsSet.Builder()
@@ -150,7 +161,14 @@ public class VerifiableCredential(public val vcDataModel: VcDataModel) {
      * val vc = VerifiableCredential.create("ExampleCredential", "http://example.com/issuers/1", "http://example.com/subjects/1", myData)
      * ```
      */
-    public fun <T> create(type: String, issuer: String, subject: String, data: T): VerifiableCredential {
+    public fun <T> create(
+      type: String,
+      issuer: String,
+      subject: String,
+      data: T,
+      credentialStatus: CredentialStatus? = null
+    ): VerifiableCredential {
+
       val jsonData: JsonNode = objectMapper.valueToTree(data)
       val mapData: Map<String, Any> = when (jsonData.isObject) {
         true -> objectMapper.convertValue<Map<String, Any>>(jsonData)
@@ -168,6 +186,12 @@ public class VerifiableCredential(public val vcDataModel: VcDataModel) {
         .issuer(URI.create(issuer))
         .issuanceDate(Date())
         .credentialSubject(credentialSubject)
+        .apply {
+          credentialStatus?.let {
+            credentialStatus(it)
+            context(URI.create("https://w3id.org/vc/status-list/2021/v1"))
+          }
+        }
         .build()
 
       return VerifiableCredential(vcDataModel)
@@ -224,14 +248,9 @@ public class VerifiableCredential(public val vcDataModel: VcDataModel) {
       // using a set for fast string comparison. DIDs can be lonnng.
       val verificationMethodIds = setOf(parsedDidUrl.didUrlString, "#${parsedDidUrl.fragment}")
       val assertionMethods = didResolutionResult.didDocument.assertionMethodVerificationMethodsDereferenced
-      var assertionMethod: VerificationMethod? = null
-
-      for (method in assertionMethods) {
-        val id = method.id.toString()
-        if (verificationMethodIds.contains(id)) {
-          assertionMethod = method
-          break
-        }
+      val assertionMethod = assertionMethods?.firstOrNull {
+        val id = it.id.toString()
+        verificationMethodIds.contains(id)
       }
 
       if (assertionMethod == null) {
@@ -282,6 +301,21 @@ public class VerifiableCredential(public val vcDataModel: VcDataModel) {
       val vcDataModel = VcDataModel.fromMap(vcDataModelMap)
 
       return VerifiableCredential(vcDataModel)
+    }
+
+    /**
+     * Parses a JSON string into a [VerifiableCredential] instance.
+     *
+     * @param vcJson The verifiable credential JSON as a [String].
+     * @return A [VerifiableCredential] instance derived from the JSON.
+     *
+     * Example:
+     * ```
+     * val vc = VerifiableCredential.fromJson(vcJsonString)
+     * ```
+     */
+    public fun fromJson(vcJson: String): VerifiableCredential {
+      return VerifiableCredential(VcDataModel.fromJson(vcJson))
     }
   }
 }
