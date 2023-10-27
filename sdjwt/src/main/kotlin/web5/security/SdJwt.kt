@@ -144,7 +144,7 @@ public class SdJwt(
       // Check that the Holder Binding JWT is valid using nbf, iat, and exp claims, if provided in the Holder Binding JWT.
       // Determine that the Holder Binding JWT is bound to the current transaction and was created for this Verifier (replay
       // protection). This is usually achieved by a nonce and aud field within the Holder Binding JWT.
-      val holderVerifier = holderVerifier(verificationOptions)
+      val holderVerifier = keyBindingVerifier(verificationOptions)
       require(keyBindingJwt.verify(holderVerifier)) {
         throw SignatureException("Verifying the issuerJwt failed: ${keyBindingJwt.serialize()}")
       }
@@ -169,10 +169,10 @@ public class SdJwt(
     return verifier
   }
 
-  private fun holderVerifier(verificationOptions: VerificationOptions): JWSVerifier {
+  private fun keyBindingVerifier(verificationOptions: VerificationOptions): JWSVerifier {
     val verifier = DefaultJWSVerifierFactory().createJWSVerifier(
-      issuerJwt.header,
-      jwkToKey(verificationOptions.holderVerifierPublicJwk!!)
+      keyBindingJwt!!.header,
+      jwkToKey(verificationOptions.keyBindingPublicJwk!!)
     )
     verifier.jcaContext.provider = BouncyCastleProviderSingleton.getInstance() as Provider
     return verifier
