@@ -158,7 +158,7 @@ private class ClaimSetBlinder(
               allDisclosures.addAll(disclosures)
               val arrayDisclosures = disclosures.map {
                 mapOf(
-                  "..." to it.digest(sdAlg)
+                  blindedArrayKey to it.digest(sdAlg)
                 )
               }.toMutableList()
 
@@ -166,7 +166,7 @@ private class ClaimSetBlinder(
                 val randBytes = ByteArray(32)
                 SecureRandom().nextBytes(randBytes)
 
-                arrayDisclosures.add(mapOf("..." to Base64URL.encode(sdAlg(randBytes)).toString()))
+                arrayDisclosures.add(mapOf(blindedArrayKey to Base64URL.encode(sdAlg(randBytes)).toString()))
               }
 
               blindedClaims[claimName] = arrayDisclosures

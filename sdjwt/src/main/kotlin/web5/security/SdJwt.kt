@@ -5,8 +5,13 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.nimbusds.jose.JWSHeader
 import com.nimbusds.jose.JWSObject.State
 import com.nimbusds.jose.JWSSigner
+import com.nimbusds.jose.JWSVerifier
 import com.nimbusds.jose.crypto.bc.BouncyCastleProviderSingleton
 import com.nimbusds.jose.crypto.factories.DefaultJWSVerifierFactory
+import com.nimbusds.jose.jwk.ECKey
+import com.nimbusds.jose.jwk.JWK
+import com.nimbusds.jose.jwk.OctetKeyPair
+import com.nimbusds.jose.jwk.OctetSequenceKey
 import com.nimbusds.jose.proc.SecurityContext
 import com.nimbusds.jose.util.Base64URL
 import com.nimbusds.jwt.JWTClaimsSet
@@ -17,6 +22,8 @@ import java.security.Provider
 import java.security.SignatureException
 
 private const val separator = "~"
+
+internal const val blindedArrayKey = "..."
 
 /**
  * Represents a Selective Disclosure JWT as defined in https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-05.html#name-terms-and-definitions.
@@ -29,6 +36,7 @@ public class SdJwt(
   public val disclosures: Iterable<Disclosure>,
   public val keyBindingJwt: SignedJWT? = null,
   private val serializedSdJwt: String? = null) {
+
   /** Builder class for constructing a [SdJwt]. */
   public class Builder(public var issuerHeader: JWSHeader? = null,
                        public var jwtClaimsSet: JWTClaimsSet? = null,
@@ -99,12 +107,7 @@ public class SdJwt(
     // and 3.2 for details. The none algorithm MUST NOT be accepted.
     // Validate the signature over the SD-JWT.
     // Validate the Issuer of the SD-JWT and that the signing key belongs to this Issuer.
-    val verifier =
-      DefaultJWSVerifierFactory().createJWSVerifier(
-        issuerJwt.header,
-        verificationOptions.issuerPublicJwk.toECKey().toPublicKey()
-      )
-    verifier.jcaContext.provider = BouncyCastleProviderSingleton.getInstance() as Provider
+    val verifier = issuerVerifier(verificationOptions)
     if (!issuerJwt.verify(verifier)) {
       throw SignatureException("Verifying the issuerJwt failed: ${issuerJwt.serialize()}")
     }
@@ -126,37 +129,47 @@ public class SdJwt(
       // Check that the Holder Binding JWT is valid using nbf, iat, and exp claims, if provided in the Holder Binding JWT.
       // Determine that the Holder Binding JWT is bound to the current transaction and was created for this Verifier (replay
       // protection). This is usually achieved by a nonce and aud field within the Holder Binding JWT.
-      val holderVerifier = DefaultJWSVerifierFactory().createJWSVerifier(
-        keyBindingJwt.header,
-        keyFromHeader(keyBindingJwt.header)
-      )
+      val holderVerifier = holderVerifier(verificationOptions)
       require(keyBindingJwt.verify(holderVerifier)) {
         throw SignatureException("Verifying the issuerJwt failed: ${keyBindingJwt.serialize()}")
       }
 
-      val nonce = keyBindingJwt.jwtClaimsSet.getClaim("nonce") as? String?
-        ?: throw SignatureException("Nonce must be present in holder binding jwt")
-
-      require(nonce == verificationOptions.desiredNonce) {
-        throw SignatureException("Nonce found does not match desiredNonce")
-      }
-
-      var audienceFound = false
-      for (audience in keyBindingJwt.jwtClaimsSet.audience) {
-        if (audience == verificationOptions.desiredAudience) {
-          audienceFound = true
-          break
-        }
-      }
-      require(!audienceFound) {
-        throw SignatureException("Desired audience not found")
-      }
+      val holderClaimsVerifier = DefaultJWTClaimsVerifier<SecurityContext>(
+        JWTClaimsSet.Builder()
+          .audience(verificationOptions.desiredAudience)
+          .claim("nonce", verificationOptions.desiredNonce)
+          .build(),
+        null
+      )
+      holderClaimsVerifier.verify(keyBindingJwt.jwtClaimsSet, null)
     }
   }
 
-  private fun keyFromHeader(header: JWSHeader): Key {
-    // TODO: replace this with something better, like did resolution. Perhaps make it injectable.
-    return header.jwk.toECKey().toECPublicKey()
+  private fun issuerVerifier(verificationOptions: VerificationOptions): JWSVerifier {
+    val verifier = DefaultJWSVerifierFactory().createJWSVerifier(
+      issuerJwt.header,
+      jwkToKey(verificationOptions.issuerPublicJwk)
+    )
+    verifier.jcaContext.provider = BouncyCastleProviderSingleton.getInstance() as Provider
+    return verifier
+  }
+
+  private fun holderVerifier(verificationOptions: VerificationOptions): JWSVerifier {
+    val verifier = DefaultJWSVerifierFactory().createJWSVerifier(
+      issuerJwt.header,
+      jwkToKey(verificationOptions.holderVerifierPublicJwk!!)
+    )
+    verifier.jcaContext.provider = BouncyCastleProviderSingleton.getInstance() as Provider
+    return verifier
+  }
+
+  private fun jwkToKey(jwk: JWK): Key {
+    return when (jwk) {
+      is ECKey -> jwk.toPublicKey()
+      is OctetKeyPair -> jwk.toPublicKey()
+      is OctetSequenceKey -> jwk.toSecretKey()
+      else -> throw IllegalArgumentException("jwk not supported for value: $jwk")
+    }
   }
 
   /**
@@ -189,7 +202,7 @@ public class SdJwt(
     if (claim != null && claim is List<*>) {
       for (value in claim) {
         require(value is Map<*, *>)
-        val digest = value["..."]
+        val digest = value[blindedArrayKey]
         if (digest is String && (disclosuresByDigest[digest] as ArrayDisclosure?)?.claimValue == disclosedValue) {
           return digest
         }

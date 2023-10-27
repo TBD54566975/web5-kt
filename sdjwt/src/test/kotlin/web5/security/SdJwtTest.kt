@@ -122,7 +122,7 @@ class SdJwtTest {
     receivedSdJwt.verify(
       VerificationOptions(
         issuerPublicJwk = issuerPublicJwk,
-        holderBindingOption = HolderBindingOption.SkipVerifyHolderBinding
+        holderBindingOption = HolderBindingOption.SkipVerifyHolderBinding,
       )
     )
 

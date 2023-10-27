@@ -8,7 +8,7 @@ import java.util.Stack
  * Options for verification of an [SdJwt].
  *
  * [holderBindingOption] is used to tell whether holder binding should be checked. When [HolderBindingOption.VerifyHolderBinding]
- * is selected, then [desiredNonce] and [desiredAudience] are required.
+ * is selected, then [desiredNonce], [desiredAudience], and [holderVerifierPublicJwk] are required.
  */
 public class VerificationOptions(
   public val issuerPublicJwk: JWK,
@@ -19,7 +19,7 @@ public class VerificationOptions(
   // Needed only when holderBindingOption == VerifyHolderBinding.
   public val desiredNonce: String? = null,
   public val desiredAudience: String? = null,
-  public val holderPublicJwk: JWK? = null,
+  public val holderVerifierPublicJwk: JWK? = null,
 )
 
 /** Options for holder binding processing. */
@@ -121,7 +121,7 @@ public class SdJwtUnblinder {
           (claims as MutableMap<String, Any>).remove(sdClaimName)
         }
 
-        val arrayElementDigest = claims["..."]
+        val arrayElementDigest = claims[blindedArrayKey]
         if (arrayElementDigest != null) {
           require(arrayElementDigest is String) {
             "Value of \"...\" MUST be a string"
