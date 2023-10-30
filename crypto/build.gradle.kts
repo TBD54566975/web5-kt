@@ -16,5 +16,6 @@ dependencies {
 
   api("com.amazonaws:aws-java-sdk-kms:1.12.538")
 
+  testImplementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.0")
   testImplementation(kotlin("test"))
 }

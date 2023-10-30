@@ -1,5 +1,8 @@
 package web5.sdk.crypto
 
+import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.crypto.bc.BouncyCastleProviderSingleton
 import com.nimbusds.jose.jwk.Curve
@@ -7,6 +10,8 @@ import com.nimbusds.jose.jwk.JWK
 import com.nimbusds.jose.jwk.gen.ECKeyGenerator
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
+import org.junit.jupiter.api.assertThrows
+import java.text.ParseException
 import kotlin.test.assertEquals
 
 class InMemoryKeyManagerTest {
@@ -62,6 +67,33 @@ class InMemoryKeyManagerTest {
 
     assertDoesNotThrow {
       JWK.parse(keySet[0])
+    }
+  }
+
+  @Test
+  fun `import throws an exception if key isnt a JWK`() {
+    val keyManager = InMemoryKeyManager()
+    val kakaKeySet = listOf(mapOf("hehe" to "troll"))
+
+    assertThrows<ParseException> {
+      keyManager.import(kakaKeySet)
+    }
+  }
+
+  @Test
+  fun `import loads all keys provided`() {
+    val serializedKeySet =
+      "[{\"kty\":\"OKP\",\"d\":\"DTwtf9i7M4Vj8vSg0iJAQ_n2gSNEUTNLIq30CJ4d9BE\",\"use\":\"sig\",\"crv\":\"Ed25519\",\"kid\":\"hKTpA-TQPNAX9zXtuxPIyTNpoyd4j1Pq1Y_txo2Hm3I\",\"x\":\"_CrbbGuhpHFs3KVGg2bbNgd2SikmT4L5rIE_zQQjKq0\",\"alg\":\"EdDSA\"}]"
+
+    val jsonMapper: ObjectMapper = ObjectMapper()
+      .findAndRegisterModules()
+      .setSerializationInclusion(JsonInclude.Include.NON_NULL)
+
+    val jsonKeySet: List<Map<String, Any>> = jsonMapper.readValue(serializedKeySet)
+    val keyManager = InMemoryKeyManager()
+
+    assertDoesNotThrow {
+      keyManager.import(jsonKeySet)
     }
   }
 }
