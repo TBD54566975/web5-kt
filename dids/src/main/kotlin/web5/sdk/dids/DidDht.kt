@@ -6,15 +6,11 @@ import com.nimbusds.jose.jwk.JWK
 import foundation.identity.did.DIDDocument
 import foundation.identity.did.Service
 import foundation.identity.did.VerificationMethod
-import foundation.identity.did.VerificationRelationships
 import io.ktor.client.engine.HttpClientEngine
 import org.erwinkok.multiformat.multibase.bases.Base32
 import web5.sdk.crypto.Crypto
 import web5.sdk.crypto.KeyManager
 import java.net.URI
-import java.util.Base64
-import kotlin.collections.ArrayList
-import kotlin.collections.HashMap
 
 /**
  * Configuration for [DidDht].
@@ -34,12 +30,42 @@ public class CreateDidDhtOptions(
   public val publish: Boolean? = false,
 ) : CreateDidOptions
 
+/**
+ * Provides a specific implementation for creating and resolving "did:dht" method Decentralized Identifiers (DIDs).
+ *
+ * A "did:dht" DID is a special type of DID that is based on an identity key, but can be extended to contain other
+ * keys, services, and other DID Document properties. It relies upon Distributed Hash Table (DHT) provided by the
+ * BitTorrent network, and an intermediary layer called Pkarr (Public Key Addressable Records) to store and retrieve
+ * the DID Document.
+ *
+ * @property uri The URI of the "did:dht" which conforms to the DID standard.
+ * @property keyManager A [KeyManager] instance utilized to manage the cryptographic keys associated with the DID.
+ * @property didDocument The [DIDDocument] associated with the DID, created by the class.
+ */
 public class DidDht(
   uri: String,
   keyManager: KeyManager,
   public val didDocument: DIDDocument? = null) : Did(uri, keyManager) {
+
+  /**
+   * Resolves the current instance's [uri] to a [DidResolutionResult], which contains the DID Document
+   * and possible related metadata.
+   *
+   * @return A [DidResolutionResult] instance containing the DID Document and related context.
+   *
+   * @throws IllegalArgumentException if the provided DID does not conform to the "did:dht" method.
+   */
   public fun resolve(): DidResolutionResult {
     return resolve(this.uri)
+  }
+
+  /**
+   * Publishes the current instance's [didDocument] to the DHT.
+   *
+   * @throws [InvalidStatusException] When any of the network requests return an invalid HTTP status code.
+   */
+  public fun publish() {
+    return publish(this.didDocument!!)
   }
 
   public companion object : DidMethod<DidDht, CreateDidDhtOptions> {
@@ -130,6 +156,18 @@ public class DidDht(
       return DidDht(id, keyManager, didDocument)
     }
 
+    /**
+     * Resolves a "did:dht" DID into a [DidResolutionResult], which contains the DID Document and possible related metadata.
+     *
+     * This implementation talks to a DID DHT gateway to retrieve the DID Document, which in turn takes the z-base-32
+     * encoded identifier public key and uses it to retrieve the DID Document from the DHT. Next, the Pkarr response is
+     * parsed, and used to reconstruct the DID Document.
+     *
+     * @param did The "did:dht" DID that needs to be resolved.
+     * @return A [DidResolutionResult] instance containing the DID Document and related context.
+     *
+     * @throws IllegalArgumentException if the provided DID does not conform to the "did:dht" method.
+     */
     override fun resolve(did: String, options: ResolveDidOptions?): DidResolutionResult {
       TODO("Not yet implemented")
     }
@@ -145,63 +183,23 @@ public class DidDht(
       val zBase32Encoded = Base32.encodeZ(publicKeyBytes)
       return "did:dht:$zBase32Encoded"
     }
-  }
-  /**
-   * Base class for managing DID DHT operations.
-   */
-//public sealed class DidDhtManager(private val configuration: DidDhtConfiguration) : DidMethod<DidDht, CreateDidDhtOptions> {
-//  public fun toDNSPacket(doc: DIDDocument, types: Array<TypeIndex>): Pair<DNSMsg?, Exception?> {
-//    val records = ArrayList<DNSRR>()
-//    val rootRecord = ArrayList<String>()
-//    val keyLookup = HashMap<String, String>()
-//
-//    // build all key records
-//    val vmIDs = ArrayList<String>()
-//    for ((i, vm) in doc.verificationMethods.withIndex()) {
-//      val recordIdentifier = "k$i"
-//      var vmID = vm.id.toString()
-//      if (vmID.contains("#")) {
-//        vmID = vmID.substring(vmID.lastIndexOf('#') + 1)
-//      }
-//      keyLookup[vm.id.toString()] = recordIdentifier
-//
-//      val publicKeyJwk = vm.publicKeyJwk
-//      val algorithm = JWK.parse(publicKeyJwk).algorithm.toString()
-//      val keyType = when (algorithm) {
-//        "EdDSA" -> 0
-//        "ES256K" -> 1
-//        else -> return Pair(null, Exception("unsupported key type: $algorithm"))
-//      }
-//
-//      // convert the public key to a base64url encoded string
-//      val pubKey = vm.publicKeyJWK.toPublicKey() ?: return Pair(null, Exception("conversion error"))
-//      val pubKeyBytes = crypto.pubKeyToBytes(pubKey) ?: return Pair(null, Exception("conversion error"))
-//      val keyBase64Url = Base64.getUrlEncoder().encodeToString(pubKeyBytes)
-//
-//      val keyRecord = DNSTXT(
-//        hdr = DNSRRHeader(
-//          name = "_$recordIdentifier._did.",
-//          rrtype = DNSType.TXT,
-//          clazz = DNSClass.INET,
-//          ttl = 7200
-//        ),
-//        txt = listOf("id=$vmID,t=$keyType,k=$keyBase64Url")
-//      )
-//
-//      records.add(keyRecord)
-//      vmIDs.add(recordIdentifier)
-//    }
-//    // add verification methods to the root record
-//    rootRecord.add("vm=${vmIDs.joinToString(",")}")
-//
-//    // ... rest of your code, adapted in a similar fashion
-//  }
-}
 
-public class DNSMsg(public val answer: List<DNSRR>)
-public open class DNSRR
-public class DNSTXT(public val hdr: DNSRRHeader, public val txt: List<String>) : DNSRR()
-public class DNSRRHeader(public val name: String, public val rrtype: DNSType, public val clazz: DNSClass, public val ttl: Int)
-public enum class DNSType { TXT }
-public enum class DNSClass { INET }
-public class TypeIndex
+    /**
+     * Publishes a [DIDDocument] to the DHT.
+     *
+     * @param didDocument The [DIDDocument] to publish.
+     */
+    public fun publish(didDocument: DIDDocument) {
+      TODO("Not yet implemented")
+    }
+
+    private fun toDnsPacket(didDocument: DIDDocument): Object {
+      TODO("Not yet implemented")
+    }
+
+    private fun fromDnsPacket(packet: Object): DIDDocument {
+      TODO("Not yet implemented")
+    }
+  }
+
+}

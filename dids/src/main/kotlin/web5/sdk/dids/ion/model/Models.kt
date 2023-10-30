@@ -22,6 +22,11 @@ import web5.sdk.dids.JacksonJwk
 import web5.sdk.dids.PublicKeyPurpose
 
 /**
+ * Represents an HTTP response where the status code is outside the range considered success.
+ */
+public class InvalidStatusException(public val statusCode: Int, msg: String) : RuntimeException(msg)
+
+/**
  * Represents an ION document containing public keys and services. See bullet 2 in https://identity.foundation/sidetree/spec/#replace.
  *
  * @property publicKeys Iterable of public keys.

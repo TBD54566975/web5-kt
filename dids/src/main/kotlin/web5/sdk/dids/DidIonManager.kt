@@ -36,6 +36,7 @@ import web5.sdk.dids.ion.model.DeactivateUpdateSignedData
 import web5.sdk.dids.ion.model.Delta
 import web5.sdk.dids.ion.model.Document
 import web5.sdk.dids.ion.model.InitialState
+import web5.sdk.dids.ion.model.InvalidStatusException
 import web5.sdk.dids.ion.model.OperationSuffixDataObject
 import web5.sdk.dids.ion.model.PatchAction
 import web5.sdk.dids.ion.model.PublicKey
@@ -703,11 +704,6 @@ public data class IonUpdateResult(
   public val operationsResponseBody: String,
   public val updateKeyAlias: String
 )
-
-/**
- * Represents an HTTP response where the status code is outside the range considered success.
- */
-public class InvalidStatusException(public val statusCode: Int, msg: String) : RuntimeException(msg)
 
 /**
  * Represents an exception where the response from calling [DidIonManager.resolve] contains a non-empty value in
