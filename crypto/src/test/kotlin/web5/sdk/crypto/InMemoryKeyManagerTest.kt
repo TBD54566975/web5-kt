@@ -82,8 +82,9 @@ class InMemoryKeyManagerTest {
 
   @Test
   fun `import loads all keys provided`() {
+    @Suppress("MaxLineLength")
     val serializedKeySet =
-      "[{\"kty\":\"OKP\",\"d\":\"DTwtf9i7M4Vj8vSg0iJAQ_n2gSNEUTNLIq30CJ4d9BE\",\"use\":\"sig\",\"crv\":\"Ed25519\",\"kid\":\"hKTpA-TQPNAX9zXtuxPIyTNpoyd4j1Pq1Y_txo2Hm3I\",\"x\":\"_CrbbGuhpHFs3KVGg2bbNgd2SikmT4L5rIE_zQQjKq0\",\"alg\":\"EdDSA\"}]"
+      """[{"kty":"OKP","d":"DTwtf9i7M4Vj8vSg0iJAQ_n2gSNEUTNLIq30CJ4d9BE","use":"sig","crv":"Ed25519","kid":"hKTpA-TQPNAX9zXtuxPIyTNpoyd4j1Pq1Y_txo2Hm3I","x":"_CrbbGuhpHFs3KVGg2bbNgd2SikmT4L5rIE_zQQjKq0","alg":"EdDSA"}]"""
 
     val jsonMapper: ObjectMapper = ObjectMapper()
       .findAndRegisterModules()
