@@ -21,7 +21,6 @@ import org.mockito.kotlin.whenever
 import web5.sdk.crypto.AwsKeyManager
 import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.dids.ion.model.PublicKey
-import web5.sdk.dids.ion.model.PublicKeyPurpose
 import web5.sdk.dids.ion.model.Service
 import web5.sdk.dids.ion.model.SidetreeCreateOperation
 import web5.sdk.dids.ion.model.SidetreeUpdateOperation

@@ -39,7 +39,6 @@ import web5.sdk.dids.ion.model.InitialState
 import web5.sdk.dids.ion.model.OperationSuffixDataObject
 import web5.sdk.dids.ion.model.PatchAction
 import web5.sdk.dids.ion.model.PublicKey
-import web5.sdk.dids.ion.model.PublicKeyPurpose
 import web5.sdk.dids.ion.model.RecoveryUpdateSignedData
 import web5.sdk.dids.ion.model.RemovePublicKeysAction
 import web5.sdk.dids.ion.model.RemoveServicesAction
@@ -77,7 +76,7 @@ public fun DidIonManager(builderAction: DidIonConfiguration.() -> Unit): DidIonM
   return DidIonManagerImpl(conf)
 }
 
-/** [DidIonManager] is sealed, so we provide an impl so the constructor can be called. */
+/** [DidIonManager]is sealed, so we provide an impl so the constructor can be called. */
 private class DidIonManagerImpl(configuration: DidIonConfiguration) : DidIonManager(configuration)
 
 /**
