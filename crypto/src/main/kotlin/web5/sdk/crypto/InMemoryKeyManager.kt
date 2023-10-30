@@ -86,6 +86,19 @@ public class InMemoryKeyManager : KeyManager {
   private fun getPrivateKey(keyAlias: String) =
     keyStore[keyAlias] ?: throw IllegalArgumentException("key with alias $keyAlias not found")
 
+  public fun import(keySet: List<Map<String, Any>>): List<String> {
+    val keyAliases = mutableListOf<String>()
+
+    for (jsonJwk in keySet) {
+      val jwk = JWK.parse(jsonJwk)
+      val keyAlias = import(jwk)
+
+      keyAliases.add(keyAlias)
+    }
+
+    return keyAliases
+  }
+
   /**
    * Imports [jwk] and returns the alias that refers to it.
    */
@@ -96,5 +109,15 @@ public class InMemoryKeyManager : KeyManager {
     }
     keyStore.putIfAbsent(kid, jwk)
     return kid
+  }
+
+  public fun export(): List<Map<String, Any>> {
+    val keySet = mutableListOf<Map<String, Any>>()
+    for (jwk in keyStore.values) {
+      val jsonJwk = jwk.toJSONObject()
+      keySet.add(jsonJwk)
+    }
+
+    return keySet
   }
 }
