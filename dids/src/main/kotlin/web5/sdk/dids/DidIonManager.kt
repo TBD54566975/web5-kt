@@ -28,6 +28,7 @@ import org.erwinkok.multiformat.multihash.Multihash
 import org.erwinkok.result.get
 import org.erwinkok.result.getOrThrow
 import web5.sdk.common.Convert
+import web5.sdk.common.InvalidStatusException
 import web5.sdk.crypto.KeyManager
 import web5.sdk.dids.ion.model.AddPublicKeysAction
 import web5.sdk.dids.ion.model.AddServicesAction
@@ -36,7 +37,6 @@ import web5.sdk.dids.ion.model.DeactivateUpdateSignedData
 import web5.sdk.dids.ion.model.Delta
 import web5.sdk.dids.ion.model.Document
 import web5.sdk.dids.ion.model.InitialState
-import web5.sdk.dids.ion.model.InvalidStatusException
 import web5.sdk.dids.ion.model.OperationSuffixDataObject
 import web5.sdk.dids.ion.model.PatchAction
 import web5.sdk.dids.ion.model.PublicKey

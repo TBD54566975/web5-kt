@@ -70,4 +70,47 @@ class DidDhtTest {
       assertContains(did.didDocument!!.services[0].id.toString(), "test-service")
     }
   }
+
+  @Nested
+  inner class PacketTest {
+
+    @Test
+    fun `to and from DNS packet - simple DID`() {
+      val manager = InMemoryKeyManager()
+      val did = DidDht.create(manager)
+
+      require(did.didDocument != null)
+
+      val packet = DidDht.toDnsPacket(did.didDocument!!)
+      println(packet.toString())
+    }
+
+    @Test
+    fun `to and from DNS packet - complex DID`() {
+      val manager = InMemoryKeyManager()
+
+      val otherKey = manager.generatePrivateKey(JWSAlgorithm.ES256K, Curve.SECP256K1)
+      val publicKeyJwk = manager.getPublicKey(otherKey).toPublicJWK()
+      val verificationMethodsToAdd: Iterable<Pair<JWK, Array<PublicKeyPurpose>>> = listOf(
+        Pair(publicKeyJwk, arrayOf(PublicKeyPurpose.AUTHENTICATION, PublicKeyPurpose.ASSERTION_METHOD))
+      )
+
+      val serviceToAdd = Service.builder()
+        .id(URI("test-service"))
+        .type("HubService")
+        .serviceEndpoint("https://example.com/service)")
+        .build()
+
+      val opts: CreateDidDhtOptions = CreateDidDhtOptions(
+        verificationMethodsToAdd = verificationMethodsToAdd,
+        servicesToAdd = listOf(serviceToAdd)
+      )
+      val did = DidDht.create(manager, opts)
+
+      require(did.didDocument != null)
+
+      val packet = DidDht.toDnsPacket(did.didDocument!!)
+      println(packet.toString())
+    }
+  }
 }

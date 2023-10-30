@@ -3,14 +3,24 @@ package web5.sdk.dids
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.JWK
+import com.nimbusds.jose.util.Base64URL
 import foundation.identity.did.DIDDocument
 import foundation.identity.did.Service
 import foundation.identity.did.VerificationMethod
 import io.ktor.client.engine.HttpClientEngine
 import org.erwinkok.multiformat.multibase.bases.Base32
+import org.xbill.DNS.DClass
+import org.xbill.DNS.Flags
+import org.xbill.DNS.Header
+import org.xbill.DNS.Message
+import org.xbill.DNS.Name
+import org.xbill.DNS.Section
+import org.xbill.DNS.TXTRecord
+import web5.sdk.common.Convert
 import web5.sdk.crypto.Crypto
 import web5.sdk.crypto.KeyManager
 import java.net.URI
+import java.util.Base64
 
 /**
  * Configuration for [DidDht].
@@ -24,6 +34,13 @@ public class DidDhtConfiguration internal constructor(
   public var engine: HttpClientEngine? = null,
 )
 
+/**
+ * Specifies options for creating a new "did:dht" Decentralized Identifier (DID).
+ * @property verificationMethodsToAdd A list of [JWK]s to add to the DID Document mapped to their purposes
+ * as verification methods.
+ * @property servicesToAdd A list of [Service]s to add to the DID Document.
+ * @property publish Whether to publish the DID Document to the DHT after creation.
+ */
 public class CreateDidDhtOptions(
   public val verificationMethodsToAdd: Iterable<Pair<JWK, Array<PublicKeyPurpose>>>? = null,
   public val servicesToAdd: Iterable<Service>? = null,
@@ -70,6 +87,8 @@ public class DidDht(
 
   public companion object : DidMethod<DidDht, CreateDidDhtOptions> {
     override val methodName: String = "dht"
+
+    public const val TTL: Long = 7200
 
     /**
      * Creates a new "did:dht" DID, derived from an initial identity key, and stores the associated private key in the
@@ -173,7 +192,7 @@ public class DidDht(
     }
 
     /**
-     * Generates the identifier for a did:dht DID given its identity key
+     * Generates the identifier for a did:dht DID given its identity key.
      *
      * @param identityKey the key used to generate the DID's identifier
      */
@@ -193,11 +212,128 @@ public class DidDht(
       TODO("Not yet implemented")
     }
 
-    private fun toDnsPacket(didDocument: DIDDocument): Object {
-      TODO("Not yet implemented")
+    public fun toDnsPacket(didDocument: DIDDocument): Message {
+      val message = Message(0)
+      message.header.setFlag(5) // Set authoritative answer flag
+
+      // map key ids to their verification method ids
+      val verificationMethodsById = mutableMapOf<String, String>()
+
+      // track all verification methods and services by their ids
+      val verificationMethodIds = mutableListOf<String>()
+      val serviceIds = mutableListOf<String>()
+
+      // Add Resource Records for each Verification Method
+      if (didDocument.verificationMethods != null) {
+        for ((i, verificationMethod) in didDocument.verificationMethods?.withIndex()!!) {
+          val publicKeyJwk = JWK.parse(verificationMethod.publicKeyJwk)
+          val publicKeyBytes = Crypto.publicKeyToBytes(publicKeyJwk)
+          val base64UrlEncodedKey = Base64URL(Convert(publicKeyBytes).toBase64Url(padding = false))
+
+          // record the mapping from key id to verification method id
+          val vmId = "k${i}"
+          verificationMethodsById[verificationMethod.id.toString()] = vmId
+
+          val keyType: Int = when (publicKeyJwk.algorithm) {
+            JWSAlgorithm.EdDSA -> {
+              0
+            }
+
+            JWSAlgorithm.ES256K -> {
+              1
+            }
+
+            else -> {
+              throw IllegalArgumentException("unsupported algorithm: ${publicKeyJwk.algorithm}")
+            }
+          }
+
+          val keyRecord = TXTRecord(
+            Name("_${vmId}._did."),
+            DClass.IN,
+            TTL,
+            "id=${verificationMethod.id.rawFragment};t=${keyType};k=${base64UrlEncodedKey}"
+          )
+
+          // add to the list of verification method ids
+          verificationMethodIds.add(vmId)
+
+          // add to the packet
+          message.addRecord(keyRecord, Section.ANSWER)
+        }
+      }
+
+      // Add Resource Records for each Service
+      if (didDocument.services != null) {
+        for ((i, service) in didDocument.services?.withIndex()!!) {
+          val sId = "s${i}"
+          val serviceRecord = TXTRecord(
+            Name("_${sId}._did."),
+            DClass.IN,
+            TTL,
+            "id=${service.id.rawFragment};t=${service.type};uri=${service.serviceEndpoint}"
+          )
+
+          // add to the list of service ids
+          serviceIds.add(sId)
+
+          // add to the packet
+          message.addRecord(serviceRecord, Section.ANSWER)
+        }
+      }
+
+      // Construct top-level Resource Record
+      val rootRecordText = mutableListOf<String>()
+      if (verificationMethodIds.size > 0 ) {
+        rootRecordText.add("vm=${verificationMethodIds.joinToString(",")}")
+      }
+      if (serviceIds.size > 0) {
+        rootRecordText.add("svc=${serviceIds.joinToString(",")}")
+      }
+
+      // Add top-level Resource Record for Verification Relationships
+      val authIds =
+        didDocument.authenticationVerificationMethodsDereferenced?.map { verificationMethodsById[it.id.toString()] }?.joinToString(",")
+      if (authIds != null) {
+        rootRecordText.add("auth=${authIds}")
+      }
+
+      val assertionIds =
+        didDocument.assertionMethodVerificationMethodsDereferenced?.map { verificationMethodsById[it.id.toString()] }?.joinToString(",")
+      if (assertionIds != null) {
+        rootRecordText.add("asm=${assertionIds}")
+      }
+
+      val keyAgreementIds =
+        didDocument.keyAgreementVerificationMethodsDereferenced?.map { verificationMethodsById[it.id.toString()] }?.joinToString(",")
+      if (keyAgreementIds != null) {
+        rootRecordText.add("agm=${keyAgreementIds}")
+      }
+
+      val capabilityInvocationIds =
+        didDocument.capabilityInvocationVerificationMethodsDereferenced?.map { verificationMethodsById[it.id.toString()] }?.joinToString(",")
+      if (capabilityInvocationIds != null) {
+        rootRecordText.add("inv=${capabilityInvocationIds}")
+      }
+
+      val capabilityDelegationIds =
+        didDocument.capabilityDelegationVerificationMethodsDereferenced?.map { verificationMethodsById[it.id.toString()] }?.joinToString(",")
+      if (capabilityDelegationIds != null) {
+        rootRecordText.add("del=${capabilityDelegationIds}")
+      }
+
+      val rootRecord = TXTRecord(
+        Name("_did."),
+        DClass.IN,
+        TTL,
+        rootRecordText.joinToString(";")
+      )
+      message.addRecord(rootRecord, Section.ANSWER)
+
+      return message
     }
 
-    private fun fromDnsPacket(packet: Object): DIDDocument {
+    private fun fromDnsPacket(message: Message): DIDDocument {
       TODO("Not yet implemented")
     }
   }
