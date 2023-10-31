@@ -154,7 +154,7 @@ public class DeactivateDidIonOptions(public val recoveryKeyAlias: String)
  * ### Usage Example:
  * ```kotlin
  * val keyManager = InMemoryKeyManager()
- * val did = StatefulDidIon("did:ion:example", keyManager)
+ * val did = DidIon("did:ion:example", keyManager)
  * ```
  */
 public class DidIon(
@@ -187,6 +187,10 @@ public class DidIon(
    */
   public fun resolve(options: ResolveDidOptions?): DidResolutionResult = didIonApi.resolve(uri, options)
 
+  /**
+   * Default companion object for creating a [DidIonApi] with a default configuration.
+   */
+  public companion object Default : DidIonApi(DidIonConfiguration())
 }
 
 private const val maxServiceTypeLength = 30
@@ -640,12 +644,6 @@ public sealed class DidIonApi(
       operationsResponse = opBody,
     )
   }
-
-
-  /**
-   * Default companion object for creating a [DidIonApi] with a default configuration.
-   */
-  public companion object Default : DidIonApi(DidIonConfiguration())
 }
 
 private fun CommonOptions?.toPatches(publicKeysToAdd: Iterable<PublicKey>): Iterable<PatchAction> {
