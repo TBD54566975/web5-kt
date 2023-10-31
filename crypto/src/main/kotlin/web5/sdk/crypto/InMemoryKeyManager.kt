@@ -125,13 +125,5 @@ public class InMemoryKeyManager : KeyManager {
    *
    * @return A list of key representations in map format.
    */
-  public fun export(): List<Map<String, Any>> {
-    val keySet = mutableListOf<Map<String, Any>>()
-    for (jwk in keyStore.values) {
-      val jsonJwk = jwk.toJSONObject()
-      keySet.add(jsonJwk)
-    }
-
-    return keySet
-  }
+    public fun export(): List<Map<String, Any>> = keyStore.map { it.value.toJSONObject() }
 }
