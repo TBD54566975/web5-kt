@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import kotlin.test.assertEquals
 
-class DidWebApiTest {
+class DidWebTest {
 
   @Test
   fun `badly formed dids throw exceptions`() {
