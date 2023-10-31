@@ -89,8 +89,10 @@ subprojects {
         )
       )
 
+      includes.from("${projectDir}/module.md")
+
       sourceLink {
-        val exampleDir = "https://github.com/TBD54566975/web5-sdk-kotlin/tree/main"
+        val exampleDir = "https://github.com/TBD54566975/web5-kt/tree/main"
 
         localDirectory.set(rootProject.projectDir)
         remoteUrl.set(URL(exampleDir))
