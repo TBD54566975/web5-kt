@@ -337,7 +337,7 @@ public sealed class Disclosure {
           )
         }
 
-        else -> throw IllegalArgumentException("Disclosure \"$encodedDisclosure\" must have exactly 3 elements")
+        else -> throw IllegalArgumentException("Disclosure \"$encodedDisclosure\" must have exactly 2 or 3 elements")
       }
     }
   }
