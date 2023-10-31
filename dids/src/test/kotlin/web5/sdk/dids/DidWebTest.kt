@@ -40,10 +40,18 @@ class DidWebTest {
 
   @Test
   fun resolve() {
-    val result = DidWebApi {
+    val didsToTest = listOf(
+      "did:web:example.com",
+      "did:web:w3c-ccg.github.io:user:alice",
+      "did:web:example.com%3A3000:user:alice",
+    )
+    val api = DidWebApi {
       engine = mockEngine()
-    }.resolve("did:web:example.com")
-    assertEquals("did:web:example.com", result.didDocument.id.toString())
+    }
+    for (did in didsToTest) {
+      val result = api.resolve(did)
+      assertEquals(did, result.didDocument.id.toString())
+    }
   }
 
   private fun mockEngine() = MockEngine { request ->
@@ -51,6 +59,22 @@ class DidWebTest {
       "https://example.com/.well-known/did.json" -> {
         respond(
           content = ByteReadChannel("""{"id": "did:web:example.com"}"""),
+          status = HttpStatusCode.OK,
+          headers = headersOf(HttpHeaders.ContentType, "application/json")
+        )
+      }
+
+      "https://w3c-ccg.github.io/user/alice/did.json" -> {
+        respond(
+          content = ByteReadChannel("""{"id": "did:web:w3c-ccg.github.io:user:alice"}"""),
+          status = HttpStatusCode.OK,
+          headers = headersOf(HttpHeaders.ContentType, "application/json")
+        )
+      }
+
+      "https://example.com:3000/user/alice/did.json" -> {
+        respond(
+          content = ByteReadChannel("""{"id": "did:web:example.com%3A3000:user:alice"}"""),
           status = HttpStatusCode.OK,
           headers = headersOf(HttpHeaders.ContentType, "application/json")
         )

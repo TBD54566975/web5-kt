@@ -15,8 +15,9 @@ import io.ktor.http.isSuccess
 import io.ktor.serialization.jackson.jackson
 import kotlinx.coroutines.runBlocking
 import web5.sdk.crypto.KeyManager
+import java.net.URL
 import java.net.URLDecoder
-import java.nio.charset.StandardCharsets
+import kotlin.text.Charsets.UTF_8
 
 /**
  * Provides a specific implementation for creating and resolving "did:web" method Decentralized Identifiers (DIDs).
@@ -57,8 +58,8 @@ public fun DidWebApi(blockConfiguration: DidWebApiConfiguration.() -> Unit): Did
 
 private class DidWebApiImpl(configuration: DidWebApiConfiguration) : DidWebApi(configuration)
 
-private const val wellKnownURLPath = ".well-known/"
-private const val didDocFilename = "did.json"
+private const val wellKnownURLPath = "/.well-known"
+private const val didDocFilename = "/did.json"
 
 /**
  * Implements [resolve] and [create] according to https://w3c-ccg.github.io/did-method-web/
@@ -104,22 +105,17 @@ public sealed class DidWebApi(
       "$didWebStr is missing prefix \"did:$methodName\""
     }
 
-    val subStrs = parsedDid.methodSpecificId.split(":")
+    val domainNameWithPath = parsedDid.methodSpecificId.replace(":", "/")
+    val decodedDomain = URLDecoder.decode(domainNameWithPath, UTF_8)
 
-    val decodedDomain = URLDecoder.decode(subStrs[0], StandardCharsets.UTF_8)
+    val targetUrl = StringBuilder("https://$decodedDomain")
 
-    return if (subStrs.size == 1) {
-      "https://$decodedDomain/$wellKnownURLPath$didDocFilename"
-    } else {
-      val urlBuilder = StringBuilder()
-      urlBuilder.append("https://$decodedDomain/")
-      for (i in 1 until subStrs.size) {
-        val str = URLDecoder.decode(subStrs[i], StandardCharsets.UTF_8)
-        urlBuilder.append("$str/")
-      }
-      urlBuilder.append(didDocFilename)
-      urlBuilder.toString()
+    val url = URL(targetUrl.toString())
+    if (url.path.isEmpty()) {
+      targetUrl.append(wellKnownURLPath)
     }
+    targetUrl.append(didDocFilename)
+    return targetUrl.toString()
   }
 
   public override fun create(keyManager: KeyManager, options: CreateDidOptions?): DidWeb {
