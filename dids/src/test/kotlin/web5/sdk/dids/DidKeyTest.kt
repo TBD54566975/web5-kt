@@ -81,7 +81,7 @@ class DidKeyTest {
   @Nested
   inner class ImportExportTest {
     @Test
-    fun `importing and exporting using InMemoryKeyManager works`() {
+    fun `InMemoryKeyManager export then re-import doesn't throw exception`() {
       val jsonMapper = ObjectMapper()
         .registerKotlinModule()
         .setSerializationInclusion(JsonInclude.Include.NON_NULL)
@@ -93,10 +93,6 @@ class DidKeyTest {
         val keySet = km.export()
         val serializedKeySet = jsonMapper.writeValueAsString(keySet)
         val didUri = did.uri
-
-        println(serializedKeySet)
-        println(didUri)
-
 
         val jsonKeySet: List<Map<String, Any>> = jsonMapper.readValue(serializedKeySet)
         val km2 = InMemoryKeyManager()

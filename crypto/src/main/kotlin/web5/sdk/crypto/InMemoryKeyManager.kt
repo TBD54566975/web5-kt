@@ -92,13 +92,9 @@ public class InMemoryKeyManager : KeyManager {
    * @param keySet A list of key representations in map format.
    * @return A list of key aliases belonging to the imported keys.
    */
-  public fun import(keySet: List<Map<String, Any>>): List<String> {
-    val keyAliases = keySet.map { jsonJwk ->
-      val jwk = JWK.parse(jsonJwk)
-      import(jwk)
-    }
-
-    return keyAliases
+  public fun import(keySet: Iterable<Map<String, Any>>): List<String> = keySet.map {
+    val jwk = JWK.parse(it)
+    import(jwk)
   }
 
   /**
@@ -121,13 +117,5 @@ public class InMemoryKeyManager : KeyManager {
    *
    * @return A list of key representations in map format.
    */
-  public fun export(): List<Map<String, Any>> {
-    val keySet = mutableListOf<Map<String, Any>>()
-    for (jwk in keyStore.values) {
-      val jsonJwk = jwk.toJSONObject()
-      keySet.add(jsonJwk)
-    }
-
-    return keySet
-  }
+    public fun export(): List<Map<String, Any>> = keyStore.map { it.value.toJSONObject() }
 }
