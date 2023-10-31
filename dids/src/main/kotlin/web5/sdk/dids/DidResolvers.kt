@@ -19,7 +19,7 @@ public object DidResolvers {
 
   // A mutable map to store method-specific DID resolvers.
   private val methodResolvers = mutableMapOf<String, DidResolver>(
-    DidKeyApi.methodName to DidKeyApi::resolve,
+    DidKey.methodName to DidKey.Companion::resolve,
     DidIon.methodName to DidIon.Default::resolve
   )
 

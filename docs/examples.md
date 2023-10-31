@@ -13,7 +13,7 @@ you plenty of examples on how to use this SDK.
 This is the simplest way to create an ion did.
 
 ```kotlin
-val did = DidIonApi.create(InMemoryKeyManager())
+val did = DidIon.create(InMemoryKeyManager())
 ```
 
 The private keys will be stored in the `InMemoryKeyManager`. All the defaults are used for 
@@ -55,14 +55,13 @@ val opts = CreateDidIonOptions(
       relationships = listOf(PublicKeyPurpose.ASSERTION_METHOD)
     ),
   )
-val did = DidIonApi.create(keyManager, opts)
+val did = DidIon.create(keyManager, opts)
 ```
 
 ### Resolve an ION did
 
 ```kotlin
-val ionApi = DidIonApi
-val didResolutionResult = ionApi.resolve("did:ion:EiClkZMDxPKqC9c-umQfTkR8vvZ9JPhl_xLDI9Nfk38w5w")
+val didResolutionResult = DidIon.resolve("did:ion:EiClkZMDxPKqC9c-umQfTkR8vvZ9JPhl_xLDI9Nfk38w5w")
 ```
 
 ### Recover an ION did
@@ -72,16 +71,15 @@ This type of operation is useful when the update keys of your DID have been comp
 
 ```kotlin
 // We create the DID first. 
-val ionApi = DidIonApi
 val keyManager = InMemoryKeyManager()
-val did = ionApi.create(keyManager)
+val did = DidIon.create(keyManager)
 val recoveryKeyAlias = did.creationMetadata!!.keyAliases.verificationKeyAlias
 
 // Imagine that your update key was compromised, so you need to recover your DID.
 val opts = RecoverDidIonOptions(
   recoveryKeyAlias = recoveryKeyAlias.first(),
 )
-val recoverResult = ionApi.recover(keyManager, did.uri, opts)
+val recoverResult = DidIon.recover(keyManager, did.uri, opts)
 ```
 
 > [!NOTE]
@@ -91,7 +89,7 @@ val recoverResult = ionApi.recover(keyManager, did.uri, opts)
 
 ```kotlin
 // We create the DID first. 
-val ionApi = DidIonApi
+val ionApi = DidIon
 val keyManager = InMemoryKeyManager()
 val did = ionApi.create(keyManager)
 val recoveryKeyAlias = did.creationMetadata!!.keyAliases.verificationKeyAlias.first()

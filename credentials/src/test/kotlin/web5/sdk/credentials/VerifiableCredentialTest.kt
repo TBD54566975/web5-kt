@@ -17,7 +17,7 @@ import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.dids.CreateDidIonOptions
 import web5.sdk.dids.DidIon
 import web5.sdk.dids.DidIonApi
-import web5.sdk.dids.DidKeyApi
+import web5.sdk.dids.DidKey
 import web5.sdk.dids.JsonWebKey2020VerificationMethod
 import java.security.SignatureException
 import java.text.ParseException
@@ -44,7 +44,7 @@ class VerifiableCredentialTest {
         "sInN1ZmZpeERhdGEiOnsiZGVsdGFIYXNoIjoiRWlEU2FMNHZVNElzNmxDalp4YVp6Zl9lWFFMU3V5T3E5T0pNbVJHa2FFTzRCQSIsInJlY29" +
         "2ZXJ5Q29tbWl0bWVudCI6IkVpQzI0TFljVEdRN1JzaDdIRUl2TXQ0MGNGbmNhZGZReTdibDNoa3k0RkxUQ2cifX0"
     val issuerDid = DidIon(didUri, keyManager, didIonApi = DidIonApi {})
-    val holderDid = DidKeyApi.create(keyManager)
+    val holderDid = DidKey.create(keyManager)
 
     val vc = VerifiableCredential.create(
       type = "StreetCred",
@@ -63,8 +63,8 @@ class VerifiableCredentialTest {
   @Test
   fun `create works`() {
     val keyManager = InMemoryKeyManager()
-    val issuerDid = DidKeyApi.create(keyManager)
-    val holderDid = DidKeyApi.create(keyManager)
+    val issuerDid = DidKey.create(keyManager)
+    val holderDid = DidKey.create(keyManager)
 
     val vc = VerifiableCredential.create(
       type = "StreetCred",
@@ -78,8 +78,8 @@ class VerifiableCredentialTest {
   @Test
   fun `create throws if data cannot be parsed into a json object`() {
     val keyManager = InMemoryKeyManager()
-    val issuerDid = DidKeyApi.create(keyManager)
-    val holderDid = DidKeyApi.create(keyManager)
+    val issuerDid = DidKey.create(keyManager)
+    val holderDid = DidKey.create(keyManager)
 
     val exception = assertThrows(IllegalArgumentException::class.java) {
       VerifiableCredential.create(
@@ -97,8 +97,8 @@ class VerifiableCredentialTest {
   @Test
   fun `signing works`() {
     val keyManager = InMemoryKeyManager()
-    val issuerDid = DidKeyApi.create(keyManager)
-    val holderDid = DidKeyApi.create(keyManager)
+    val issuerDid = DidKey.create(keyManager)
+    val holderDid = DidKey.create(keyManager)
 
     val vc = VerifiableCredential.create(
       type = "StreetCred",
@@ -134,8 +134,8 @@ class VerifiableCredentialTest {
   @Test
   fun `verify does not throw an exception if vc is legit`() {
     val keyManager = InMemoryKeyManager()
-    val issuerDid = DidKeyApi.create(keyManager)
-    val holderDid = DidKeyApi.create(keyManager)
+    val issuerDid = DidKey.create(keyManager)
+    val holderDid = DidKey.create(keyManager)
 
     val vc = VerifiableCredential.create(
       type = "StreetCred",
@@ -238,8 +238,8 @@ class VerifiableCredentialTest {
   @Test
   fun `parseJwt returns an instance of VerifiableCredential on success`() {
     val keyManager = InMemoryKeyManager()
-    val issuerDid = DidKeyApi.create(keyManager)
-    val holderDid = DidKeyApi.create(keyManager)
+    val issuerDid = DidKey.create(keyManager)
+    val holderDid = DidKey.create(keyManager)
 
     val vc = VerifiableCredential.create(
       type = "StreetCred",
