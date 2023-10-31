@@ -10,15 +10,15 @@ import foundation.identity.did.VerificationMethod
 import io.ktor.client.engine.HttpClientEngine
 import org.erwinkok.multiformat.multibase.bases.Base32
 import org.xbill.DNS.DClass
-import org.xbill.DNS.Flags
-import org.xbill.DNS.Header
 import org.xbill.DNS.Message
 import org.xbill.DNS.Name
 import org.xbill.DNS.Section
 import org.xbill.DNS.TXTRecord
 import web5.sdk.common.Convert
 import web5.sdk.crypto.Crypto
+import web5.sdk.crypto.Ed25519
 import web5.sdk.crypto.KeyManager
+import web5.sdk.crypto.Secp256k1
 import java.net.URI
 import java.util.Base64
 
@@ -212,9 +212,16 @@ public class DidDht(
       TODO("Not yet implemented")
     }
 
-    public fun toDnsPacket(didDocument: DIDDocument): Message {
-      val message = Message(0)
-      message.header.setFlag(5) // Set authoritative answer flag
+    /**
+     * Converts a [DIDDocument] to a DNS packet according to the did:dht spec
+     * https://tbd54566975.github.io/did-dht-method/#dids-as-a-dns-packet
+     *
+     * @param didDocument The [DIDDocument] to convert.
+     * @param types A list of types to include in the packet.
+     * @return A [Message] instance containing the DNS packet.
+     */
+    public fun toDnsPacket(didDocument: DIDDocument, types: List<Int>? = null): Message {
+      val message = Message(0).apply { header.setFlag(5) } // Set authoritative answer flag
 
       // map key ids to their verification method ids
       val verificationMethodsById = mutableMapOf<String, String>()
@@ -224,117 +231,205 @@ public class DidDht(
       val serviceIds = mutableListOf<String>()
 
       // Add Resource Records for each Verification Method
-      if (didDocument.verificationMethods != null) {
-        for ((i, verificationMethod) in didDocument.verificationMethods?.withIndex()!!) {
-          val publicKeyJwk = JWK.parse(verificationMethod.publicKeyJwk)
-          val publicKeyBytes = Crypto.publicKeyToBytes(publicKeyJwk)
-          val base64UrlEncodedKey = Base64URL(Convert(publicKeyBytes).toBase64Url(padding = false))
+      didDocument.verificationMethods?.forEachIndexed { i, verificationMethod ->
+        val publicKeyJwk = JWK.parse(verificationMethod.publicKeyJwk)
+        val publicKeyBytes = Crypto.publicKeyToBytes(publicKeyJwk)
+        val base64UrlEncodedKey = Base64URL(Convert(publicKeyBytes).toBase64Url(padding = false))
+        val vmId = "k$i"
 
-          // record the mapping from key id to verification method id
-          val vmId = "k${i}"
-          verificationMethodsById[verificationMethod.id.toString()] = vmId
+        verificationMethodsById[verificationMethod.id.toString()] = vmId
 
-          val keyType: Int = when (publicKeyJwk.algorithm) {
-            JWSAlgorithm.EdDSA -> {
-              0
-            }
+        val keyType = when (publicKeyJwk.algorithm) {
+          JWSAlgorithm.EdDSA -> 0
+          JWSAlgorithm.ES256K -> 1
+          else -> throw IllegalArgumentException("unsupported algorithm: ${publicKeyJwk.algorithm}")
+        }
 
-            JWSAlgorithm.ES256K -> {
-              1
-            }
-
-            else -> {
-              throw IllegalArgumentException("unsupported algorithm: ${publicKeyJwk.algorithm}")
-            }
-          }
-
-          val keyRecord = TXTRecord(
-            Name("_${vmId}._did."),
+        message.addRecord(
+          TXTRecord(
+            Name("_$vmId._did."),
             DClass.IN,
             TTL,
-            "id=${verificationMethod.id.rawFragment};t=${keyType};k=${base64UrlEncodedKey}"
-          )
+            "id=${verificationMethod.id.rawFragment};t=$keyType;k=$base64UrlEncodedKey"
+          ),
+          Section.ANSWER
+        )
 
-          // add to the list of verification method ids
-          verificationMethodIds.add(vmId)
-
-          // add to the packet
-          message.addRecord(keyRecord, Section.ANSWER)
-        }
+        verificationMethodIds += vmId
       }
 
       // Add Resource Records for each Service
-      if (didDocument.services != null) {
-        for ((i, service) in didDocument.services?.withIndex()!!) {
-          val sId = "s${i}"
-          val serviceRecord = TXTRecord(
-            Name("_${sId}._did."),
+      didDocument.services?.forEachIndexed { i, service ->
+        val sId = "s$i"
+        message.addRecord(
+          TXTRecord(
+            Name("_$sId._did."),
             DClass.IN,
             TTL,
             "id=${service.id.rawFragment};t=${service.type};uri=${service.serviceEndpoint}"
-          )
-
-          // add to the list of service ids
-          serviceIds.add(sId)
-
-          // add to the packet
-          message.addRecord(serviceRecord, Section.ANSWER)
-        }
+          ),
+          Section.ANSWER
+        )
+        serviceIds += sId
       }
 
       // Construct top-level Resource Record
-      val rootRecordText = mutableListOf<String>()
-      if (verificationMethodIds.size > 0 ) {
-        rootRecordText.add("vm=${verificationMethodIds.joinToString(",")}")
-      }
-      if (serviceIds.size > 0) {
-        rootRecordText.add("svc=${serviceIds.joinToString(",")}")
-      }
-
-      // Add top-level Resource Record for Verification Relationships
-      val authIds =
-        didDocument.authenticationVerificationMethodsDereferenced?.map { verificationMethodsById[it.id.toString()] }?.joinToString(",")
-      if (authIds != null) {
-        rootRecordText.add("auth=${authIds}")
-      }
-
-      val assertionIds =
-        didDocument.assertionMethodVerificationMethodsDereferenced?.map { verificationMethodsById[it.id.toString()] }?.joinToString(",")
-      if (assertionIds != null) {
-        rootRecordText.add("asm=${assertionIds}")
-      }
-
-      val keyAgreementIds =
-        didDocument.keyAgreementVerificationMethodsDereferenced?.map { verificationMethodsById[it.id.toString()] }?.joinToString(",")
-      if (keyAgreementIds != null) {
-        rootRecordText.add("agm=${keyAgreementIds}")
+      val rootRecordText = mutableListOf<String>().apply {
+        if (verificationMethodIds.isNotEmpty()) add("vm=${verificationMethodIds.joinToString(",")}")
+        if (serviceIds.isNotEmpty()) add("svc=${serviceIds.joinToString(",")}")
+        didDocument.authenticationVerificationMethodsDereferenced?.map { verificationMethodsById[it.id.toString()] }?.joinToString(
+          ","
+        )?.let { add("auth=$it") }
+        didDocument.assertionMethodVerificationMethodsDereferenced?.map { verificationMethodsById[it.id.toString()] }?.joinToString(
+          ","
+        )?.let { add("asm=$it") }
+        didDocument.keyAgreementVerificationMethodsDereferenced?.map { verificationMethodsById[it.id.toString()] }?.joinToString(
+          ","
+        )?.let { add("agm=$it") }
+        didDocument.capabilityInvocationVerificationMethodsDereferenced?.map { verificationMethodsById[it.id.toString()] }?.joinToString(
+          ","
+        )?.let { add("inv=$it") }
+        didDocument.capabilityDelegationVerificationMethodsDereferenced?.map { verificationMethodsById[it.id.toString()] }?.joinToString(
+          ","
+        )?.let { add("del=$it") }
       }
 
-      val capabilityInvocationIds =
-        didDocument.capabilityInvocationVerificationMethodsDereferenced?.map { verificationMethodsById[it.id.toString()] }?.joinToString(",")
-      if (capabilityInvocationIds != null) {
-        rootRecordText.add("inv=${capabilityInvocationIds}")
-      }
-
-      val capabilityDelegationIds =
-        didDocument.capabilityDelegationVerificationMethodsDereferenced?.map { verificationMethodsById[it.id.toString()] }?.joinToString(",")
-      if (capabilityDelegationIds != null) {
-        rootRecordText.add("del=${capabilityDelegationIds}")
-      }
-
-      val rootRecord = TXTRecord(
-        Name("_did."),
-        DClass.IN,
-        TTL,
-        rootRecordText.joinToString(";")
+      message.addRecord(
+        TXTRecord(
+          Name("_did."),
+          DClass.IN,
+          TTL,
+          rootRecordText.joinToString(";")
+        ),
+        Section.ANSWER
       )
-      message.addRecord(rootRecord, Section.ANSWER)
+
+      // if there are types, add a Resource Record for them
+      if (types != null) {
+        message.addRecord(
+          TXTRecord(
+            Name("_typ._did."),
+            DClass.IN,
+            TTL,
+            "id=${types.joinToString(",")}"
+          ),
+          Section.ANSWER
+        )
+      }
 
       return message
     }
 
-    private fun fromDnsPacket(message: Message): DIDDocument {
-      TODO("Not yet implemented")
+    /**
+     * Converts a DNS packet to a [DIDDocument] according to the did:dht spec
+     * https://tbd54566975.github.io/did-dht-method/#dids-as-a-dns-packet
+     *
+     * @param did The DID that the packet is for.
+     * @param msg The [Message] instance containing the DNS packet.
+     * @return A [Pair] containing the [DIDDocument] and a list of types.
+     * @throws IllegalArgumentException if the provided DID does not conform to the "did:dht" method.
+     */
+    public fun fromDNSPacket(did: String, msg: Message): Pair<DIDDocument, List<Int>> {
+      val doc = DIDDocument.builder().id(URI.create(did))
+
+      val verificationMethods = mutableListOf<VerificationMethod>()
+      val services = mutableListOf<Service>()
+      val types = mutableListOf<Int>()
+      val keyLookup = mutableMapOf<String, String>()
+
+      msg.getSection(Section.ANSWER).forEach { rr ->
+        when (rr) {
+          is TXTRecord -> {
+            val name = rr.name.toString()
+            when {
+              // handle verification methods
+              name.startsWith("_k") -> {
+                val data = parseTxtData(rr.strings.joinToString(""))
+                val vmID = data["id"]!!
+                val keyBytes = Base64URL(data["k"]!!).decode()
+
+                // TODO(gabe): support other key types
+                val publicKeyJwk = when (data["t"]!!) {
+                  "0" -> Ed25519.bytesToPublicKey(keyBytes)
+                  "1" -> Secp256k1.bytesToPublicKey(keyBytes)
+                  else -> throw IllegalArgumentException("Unknown key type: ${data["t"]}")
+                }
+
+                verificationMethods += VerificationMethod.builder()
+                  .id(URI.create("$did#$vmID"))
+                  .type("JsonWebKey2020")
+                  .controller(URI.create(did))
+                  .publicKeyJwk(publicKeyJwk.toPublicJWK().toJSONObject())
+                  .build()
+
+                keyLookup[name.split(".")[0].drop(1)] = "$did#$vmID"
+              }
+              // handle services
+              name.startsWith("_s") -> {
+                val data = parseTxtData(rr.strings.joinToString(","))
+                services += Service.builder()
+                  .id(URI.create("$did#${data["id"]!!}"))
+                  .type(data["t"]!!)
+                  .serviceEndpoint(data["uri"]!!)
+                  .build()
+              }
+              // handle type indexing
+              name == "_typ._did." -> {
+                if (rr.strings[0].isNotEmpty() && rr.strings.size == 1) {
+                  types += rr.strings[0].removePrefix("id=").split(",").map { it.toInt() }
+                } else {
+                  throw IllegalArgumentException("invalid types record")
+                }
+              }
+              // handle root record
+              name == "_did." -> {
+                val rootData = rr.strings.joinToString(";").split(";")
+
+                val lists = mapOf(
+                  "auth" to mutableListOf<VerificationMethod>(),
+                  "asm" to mutableListOf(),
+                  "agm" to mutableListOf(),
+                  "inv" to mutableListOf(),
+                  "del" to mutableListOf()
+                )
+
+                rootData.forEach { item ->
+                  val (key, values) = item.split("=")
+                  val valueItems = values.split(",")
+
+                  valueItems.forEach {
+                    lists[key]?.add(VerificationMethod.builder().id(URI(keyLookup[it]!!)).build())
+                  }
+                }
+
+                // add verification relationships
+                doc.authenticationVerificationMethods(lists["auth"])
+                doc.assertionMethodVerificationMethods(lists["asm"])
+                doc.keyAgreementVerificationMethods(lists["agm"])
+                doc.capabilityInvocationVerificationMethods(lists["inv"])
+                doc.capabilityDelegationVerificationMethods(lists["del"])
+              }
+            }
+          }
+        }
+      }
+
+      // add verification methods and services
+      doc.verificationMethods(verificationMethods)
+      doc.services(services)
+
+      return doc.build() to types
+    }
+
+    /**
+     * Parses a string of key-value pairs separated by semicolons into a map.
+     * @param data The string to parse.
+     */
+    private fun parseTxtData(data: String): Map<String, String> {
+      return data.split(";").associate {
+        val (key, value) = it.split("=")
+        key to value
+      }
     }
   }
 

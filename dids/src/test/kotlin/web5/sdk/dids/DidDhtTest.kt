@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test
 import web5.sdk.crypto.InMemoryKeyManager
 import java.net.URI
 import kotlin.test.assertContains
+import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
@@ -82,7 +83,33 @@ class DidDhtTest {
       require(did.didDocument != null)
 
       val packet = DidDht.toDnsPacket(did.didDocument!!)
-      println(packet.toString())
+      assertNotNull(packet)
+
+      val didFromPacket = DidDht.fromDNSPacket(did.didDocument!!.id.toString(), packet)
+      assertNotNull(didFromPacket)
+      assertNotNull(didFromPacket.first)
+
+      assertEquals(did.didDocument.toString(), didFromPacket.first.toString())
+    }
+
+    @Test
+    fun `to and from DNS packet - DID with types`() {
+      val manager = InMemoryKeyManager()
+      val did = DidDht.create(manager)
+
+      require(did.didDocument != null)
+
+      val types = listOf(1, 2)
+      val packet = DidDht.toDnsPacket(did.didDocument!!, types)
+      assertNotNull(packet)
+
+      val didFromPacket = DidDht.fromDNSPacket(did.didDocument!!.id.toString(), packet)
+      assertNotNull(didFromPacket)
+      assertNotNull(didFromPacket.first)
+      assertNotNull(didFromPacket.second)
+
+      assertEquals(did.didDocument.toString(), didFromPacket.first.toString())
+      assertEquals(types, didFromPacket.second)
     }
 
     @Test
@@ -110,7 +137,13 @@ class DidDhtTest {
       require(did.didDocument != null)
 
       val packet = DidDht.toDnsPacket(did.didDocument!!)
-      println(packet.toString())
+      assertNotNull(packet)
+
+      val didFromPacket = DidDht.fromDNSPacket(did.didDocument!!.id.toString(), packet)
+      assertNotNull(didFromPacket)
+      assertNotNull(didFromPacket.first)
+
+      assertEquals(did.didDocument.toString(), didFromPacket.first.toString())
     }
   }
 }
