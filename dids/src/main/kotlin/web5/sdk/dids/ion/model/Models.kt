@@ -18,7 +18,6 @@ import com.fasterxml.jackson.databind.ser.std.StdSerializer
 import com.nimbusds.jose.jwk.JWK
 import web5.sdk.common.Convert
 import web5.sdk.common.EncodingFormat
-import web5.sdk.dids.JacksonJwk
 import web5.sdk.dids.PublicKeyPurpose
 
 /**
@@ -61,7 +60,33 @@ public data class PublicKey(
   public val purposes: Iterable<PublicKeyPurpose> = emptyList()
 )
 
+/**
+ * JacksonJWK is a utility class that facilitates serialization for [JWK] types, so that it's easy to integrate with any
+ * class that is meant to be serialized to/from JSON.
+ */
+private class JacksonJwk {
+  /**
+   * [Serializer] implements [JsonSerializer] for use with the [JsonSerialize] annotation from Jackson.
+   */
+  object Serializer : JsonSerializer<JWK>() {
+    override fun serialize(value: JWK, gen: JsonGenerator, serializers: SerializerProvider) {
+      with(gen) {
+        writeObject(value.toJSONObject())
+      }
+    }
+  }
 
+  /**
+   * [Deserializer] implements [JsonDeserializer] for use with the [JsonDeserialize] annotation from Jackson.
+   */
+  object Deserializer : JsonDeserializer<JWK>() {
+    override fun deserialize(p: JsonParser, ctxt: DeserializationContext?): JWK {
+      val typeRef = object : TypeReference<HashMap<String, Any>>() {}
+      val node = p.readValueAs(typeRef) as HashMap<String, Any>
+      return JWK.parse(node)
+    }
+  }
+}
 
 /**
  * Sealed class representing a patch action in the ION document. See https://identity.foundation/sidetree/spec/#did-state-patches

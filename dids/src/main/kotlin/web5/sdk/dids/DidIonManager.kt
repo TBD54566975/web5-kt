@@ -28,7 +28,6 @@ import org.erwinkok.multiformat.multihash.Multihash
 import org.erwinkok.result.get
 import org.erwinkok.result.getOrThrow
 import web5.sdk.common.Convert
-import web5.sdk.common.InvalidStatusException
 import web5.sdk.crypto.KeyManager
 import web5.sdk.dids.ion.model.AddPublicKeysAction
 import web5.sdk.dids.ion.model.AddServicesAction
@@ -77,7 +76,7 @@ public fun DidIonManager(builderAction: DidIonConfiguration.() -> Unit): DidIonM
   return DidIonManagerImpl(conf)
 }
 
-/** [DidIonManager]is sealed, so we provide an impl so the constructor can be called. */
+/** [DidIonManager] is sealed, so we provide an impl so the constructor can be called. */
 private class DidIonManagerImpl(configuration: DidIonConfiguration) : DidIonManager(configuration)
 
 /**
@@ -704,6 +703,11 @@ public data class IonUpdateResult(
   public val operationsResponseBody: String,
   public val updateKeyAlias: String
 )
+
+/**
+ * Represents an HTTP response where the status code is outside the range considered success.
+ */
+public class InvalidStatusException(public val statusCode: Int, msg: String) : RuntimeException(msg)
 
 /**
  * Represents an exception where the response from calling [DidIonManager.resolve] contains a non-empty value in
