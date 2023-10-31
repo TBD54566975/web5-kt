@@ -65,7 +65,7 @@ class Secp256k1Test {
 
     repeat(10_000) {
       // generate a payload of up to 100 random bytes
-      val payloadSize = Random().nextInt(1, 100)
+      val payloadSize = Random().nextInt(100) + 1
       val payload = ByteArray(payloadSize)
       Random().nextBytes(payload)
 
