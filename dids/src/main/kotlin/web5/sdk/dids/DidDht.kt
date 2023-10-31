@@ -20,7 +20,6 @@ import web5.sdk.crypto.Ed25519
 import web5.sdk.crypto.KeyManager
 import web5.sdk.crypto.Secp256k1
 import java.net.URI
-import java.util.Base64
 
 /**
  * Configuration for [DidDht].
