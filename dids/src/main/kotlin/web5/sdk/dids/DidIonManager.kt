@@ -670,34 +670,23 @@ private interface VerificationPublicKeyOption {
 
 private fun JWK.commitment(): Commitment {
   require(!this.isPrivate) { throw IllegalArgumentException("provided JWK must not be a private key") }
-  // 1. Encode the public key into the form of a valid JWK.
+
   val pkJson = this.toJSONString()
-
-  // 2. Canonicalize the JWK encoded public key using the implementation’s JSON_CANONICALIZATION_SCHEME.
   val canonicalized = JsonCanonicalizer(pkJson).encodedUTF8
-
-  // 3. Use the implementation’s HASH_PROTOCOL to Multihash the canonicalized public key to generate the REVEAL_VALUE,
-  //  val mh = Multihash.sum(Multicodec.SHA2_256, canonicalized).getOrThrow()
-  //  val intermediate = mh.digest
 
   val sha256 = MessageDigest.getInstance("SHA-256")
   val pkDigest = sha256.digest(canonicalized)
 
-  // then Multihash the resulting Multihash value again using the implementation’s HASH_PROTOCOL to produce
-  // the public key commitment.
   val pkDigestMultihash = multihash(pkDigest)
   return Commitment(pkDigestMultihash)
 }
 
 private fun JWK.reveal(): Reveal {
   require(!this.isPrivate) { throw IllegalArgumentException("provided JWK must not be a private key") }
-  // 1. Encode the public key into the form of a valid JWK.
-  val pkJson = this.toJSONString()
 
-  // 2. Canonicalize the JWK encoded public key using the implementation’s JSON_CANONICALIZATION_SCHEME.
+  val pkJson = this.toJSONString()
   val canonicalized = JsonCanonicalizer(pkJson).encodedUTF8
 
-  // 3. Use the implementation’s HASH_PROTOCOL to Multihash the canonicalized public key to generate the REVEAL_VALUE,
   val mh = multihash(canonicalized)
   return Reveal(mh)
 }
