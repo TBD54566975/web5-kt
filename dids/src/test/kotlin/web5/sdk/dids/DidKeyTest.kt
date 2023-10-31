@@ -81,7 +81,7 @@ class DidKeyTest {
   @Nested
   inner class ImportExportTest {
     @Test
-    fun `importing and exporting using InMemoryKeyManager works`() {
+    fun `InMemoryKeyManager export then re-import doesn't throw exception`() {
       val jsonMapper = ObjectMapper()
         .registerKotlinModule()
         .setSerializationInclusion(JsonInclude.Include.NON_NULL)
