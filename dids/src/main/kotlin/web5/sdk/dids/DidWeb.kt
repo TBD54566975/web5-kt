@@ -33,7 +33,7 @@ import java.nio.charset.StandardCharsets
  * val did = StatefulWebDid("did:web:tbd.website", keyManager)
  * ```
  */
-public class StatefulWebDid(
+public class DidWeb(
   uri: String,
   keyManager: KeyManager
 ) : Did(uri, keyManager)
@@ -65,7 +65,7 @@ private const val didDocFilename = "did.json"
  */
 public sealed class DidWebApi(
   configuration: DidWebApiConfiguration
-) : DidMethod<StatefulWebDid, CreateDidOptions> {
+) : DidMethod<DidWeb, CreateDidOptions> {
 
   private val mapper = jacksonObjectMapper()
 
@@ -122,7 +122,7 @@ public sealed class DidWebApi(
     }
   }
 
-  public override fun create(keyManager: KeyManager, options: CreateDidOptions?): StatefulWebDid {
+  public override fun create(keyManager: KeyManager, options: CreateDidOptions?): DidWeb {
     throw RuntimeException("create operation not supported for did:web")
   }
 
