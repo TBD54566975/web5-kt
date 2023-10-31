@@ -59,10 +59,10 @@ public class CreateDidDhtOptions(
  * @property keyManager A [KeyManager] instance utilized to manage the cryptographic keys associated with the DID.
  * @property didDocument The [DIDDocument] associated with the DID, created by the class.
  */
-public class DidDht(
-  uri: String,
-  keyManager: KeyManager,
-  public val didDocument: DIDDocument? = null) : Did(uri, keyManager) {
+public class DidDht(uri: String, keyManager: KeyManager, public val didDocument: DIDDocument? = null) : Did(
+  uri,
+  keyManager
+) {
 
   /**
    * Resolves the current instance's [uri] to a [DidResolutionResult], which contains the DID Document
@@ -74,15 +74,6 @@ public class DidDht(
    */
   public fun resolve(): DidResolutionResult {
     return resolve(this.uri)
-  }
-
-  /**
-   * Publishes the current instance's [didDocument] to the DHT.
-   *
-   * @throws [InvalidStatusException] When any of the network requests return an invalid HTTP status code.
-   */
-  public fun publish() {
-    return publish(this.didDocument!!)
   }
 
   public companion object : DidMethod<DidDht, CreateDidDhtOptions> {
@@ -115,12 +106,10 @@ public class DidDht(
       val id = getDidIdentifier(publicKey)
 
       // add identity key to relationships map
-      val identityVerificationMethod = VerificationMethod.builder()
-        .id(URI.create("$id#0"))
-        .type("JsonWebKey2020")
-        .controller(URI.create(id))
-        .publicKeyJwk(publicKey.toPublicJWK().toJSONObject())
-        .build()
+      val identityVerificationMethod =
+        VerificationMethod.builder().id(URI.create("$id#0")).type("JsonWebKey2020").controller(URI.create(id)).publicKeyJwk(
+          publicKey.toPublicJWK().toJSONObject()
+        ).build()
 
       // add all other keys to the verificationMethod and relationships arrays
       val relationshipsMap = mutableMapOf<PublicKeyPurpose, MutableList<VerificationMethod>>().apply {
@@ -137,40 +126,31 @@ public class DidDht(
 
       // map to the DID object model's verification methods
       val verificationMethods = (opts.verificationMethodsToAdd?.map { (key, purposes) ->
-        VerificationMethod.builder()
-          .id(URI.create("$id#${key.keyID}"))
-          .type("JsonWebKey2020")
-          .controller(URI.create(id))
-          .publicKeyJwk(key.toPublicJWK().toJSONObject())
-          .build().also { verificationMethod ->
-            purposes.forEach { relationship ->
-              relationshipsMap.getOrPut(relationship) { mutableListOf() }.add(
-                VerificationMethod.builder().id(verificationMethod.id).build()
-              )
-            }
+        VerificationMethod.builder().id(URI.create("$id#${key.keyID}")).type("JsonWebKey2020").controller(URI.create(id)).publicKeyJwk(
+          key.toPublicJWK().toJSONObject()
+        ).build().also { verificationMethod ->
+          purposes.forEach { relationship ->
+            relationshipsMap.getOrPut(relationship) { mutableListOf() }.add(
+              VerificationMethod.builder().id(verificationMethod.id).build()
+            )
           }
+        }
       } ?: emptyList()) + identityVerificationMethod
 
       // map to the DID object model's services
       val services = opts.servicesToAdd?.map { service ->
-        Service.builder()
-          .id(URI.create("$id#${service.id}"))
-          .type(service.type)
-          .serviceEndpoint(service.serviceEndpoint)
-          .build()
+        Service.builder().id(URI.create("$id#${service.id}")).type(service.type).serviceEndpoint(service.serviceEndpoint).build()
       }
 
       // build DID Document
-      val didDocument = DIDDocument.builder()
-        .id(URI(id))
-        .verificationMethods(verificationMethods)
-        .services(services)
-        .assertionMethodVerificationMethods(relationshipsMap[PublicKeyPurpose.ASSERTION_METHOD])
-        .authenticationVerificationMethods(relationshipsMap[PublicKeyPurpose.AUTHENTICATION])
-        .keyAgreementVerificationMethods(relationshipsMap[PublicKeyPurpose.KEY_AGREEMENT])
-        .capabilityDelegationVerificationMethods(relationshipsMap[PublicKeyPurpose.CAPABILITY_DELEGATION])
-        .capabilityInvocationVerificationMethods(relationshipsMap[PublicKeyPurpose.CAPABILITY_INVOCATION])
-        .build()
+      val didDocument =
+        DIDDocument.builder().id(URI(id)).verificationMethods(verificationMethods).services(services).assertionMethodVerificationMethods(
+          relationshipsMap[PublicKeyPurpose.ASSERTION_METHOD]
+        ).authenticationVerificationMethods(relationshipsMap[PublicKeyPurpose.AUTHENTICATION]).keyAgreementVerificationMethods(
+          relationshipsMap[PublicKeyPurpose.KEY_AGREEMENT]
+        ).capabilityDelegationVerificationMethods(relationshipsMap[PublicKeyPurpose.CAPABILITY_DELEGATION]).capabilityInvocationVerificationMethods(
+          relationshipsMap[PublicKeyPurpose.CAPABILITY_INVOCATION]
+        ).build()
 
       return DidDht(id, keyManager, didDocument)
     }
@@ -201,15 +181,6 @@ public class DidDht(
       val publicKeyBytes = Crypto.publicKeyToBytes(publicKeyJwk)
       val zBase32Encoded = Base32.encodeZ(publicKeyBytes)
       return "did:dht:$zBase32Encoded"
-    }
-
-    /**
-     * Publishes a [DIDDocument] to the DHT.
-     *
-     * @param didDocument The [DIDDocument] to publish.
-     */
-    public fun publish(didDocument: DIDDocument) {
-      TODO("Not yet implemented")
     }
 
     /**
@@ -251,8 +222,7 @@ public class DidDht(
             DClass.IN,
             TTL,
             "id=${verificationMethod.id.rawFragment};t=$keyType;k=$base64UrlEncodedKey"
-          ),
-          Section.ANSWER
+          ), Section.ANSWER
         )
 
         verificationMethodIds += vmId
@@ -267,8 +237,7 @@ public class DidDht(
             DClass.IN,
             TTL,
             "id=${service.id.rawFragment};t=${service.type};uri=${service.serviceEndpoint}"
-          ),
-          Section.ANSWER
+          ), Section.ANSWER
         )
         serviceIds += sId
       }
@@ -296,24 +265,16 @@ public class DidDht(
 
       message.addRecord(
         TXTRecord(
-          Name("_did."),
-          DClass.IN,
-          TTL,
-          rootRecordText.joinToString(";")
-        ),
-        Section.ANSWER
+          Name("_did."), DClass.IN, TTL, rootRecordText.joinToString(";")
+        ), Section.ANSWER
       )
 
       // if there are types, add a Resource Record for them
       if (types != null) {
         message.addRecord(
           TXTRecord(
-            Name("_typ._did."),
-            DClass.IN,
-            TTL,
-            "id=${types.joinToString(",")}"
-          ),
-          Section.ANSWER
+            Name("_typ._did."), DClass.IN, TTL, "id=${types.joinToString(",")}"
+          ), Section.ANSWER
         )
       }
 
@@ -355,23 +316,18 @@ public class DidDht(
                   else -> throw IllegalArgumentException("Unknown key type: ${data["t"]}")
                 }
 
-                verificationMethods += VerificationMethod.builder()
-                  .id(URI.create("$did#$vmID"))
-                  .type("JsonWebKey2020")
-                  .controller(URI.create(did))
-                  .publicKeyJwk(publicKeyJwk.toPublicJWK().toJSONObject())
-                  .build()
+                verificationMethods += VerificationMethod.builder().id(URI.create("$did#$vmID")).type("JsonWebKey2020").controller(
+                  URI.create(did)
+                ).publicKeyJwk(publicKeyJwk.toPublicJWK().toJSONObject()).build()
 
                 keyLookup[name.split(".")[0].drop(1)] = "$did#$vmID"
               }
               // handle services
               name.startsWith("_s") -> {
                 val data = parseTxtData(rr.strings.joinToString(","))
-                services += Service.builder()
-                  .id(URI.create("$did#${data["id"]!!}"))
-                  .type(data["t"]!!)
-                  .serviceEndpoint(data["uri"]!!)
-                  .build()
+                services += Service.builder().id(URI.create("$did#${data["id"]!!}")).type(data["t"]!!).serviceEndpoint(
+                  data["uri"]!!
+                ).build()
               }
               // handle type indexing
               name == "_typ._did." -> {
