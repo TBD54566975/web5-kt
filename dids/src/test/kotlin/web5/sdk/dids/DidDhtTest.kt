@@ -17,6 +17,22 @@ import kotlin.test.assertNull
 class DidDhtTest {
 
   @Nested
+  inner class UtilsTest {
+    @Test
+    fun `did dht identifier`() {
+      val manager = InMemoryKeyManager()
+      val keyAlias = manager.generatePrivateKey(JWSAlgorithm.EdDSA, Curve.Ed25519)
+      val publicKey = manager.getPublicKey(keyAlias)
+
+      val identifier = DidDht.getDidIdentifier(publicKey)
+      assertNotNull(identifier)
+
+      val isValid = DidDht.isValid(identifier)
+      assertEquals(true, isValid)
+    }
+  }
+
+  @Nested
   inner class CreateTest {
 
     @Test

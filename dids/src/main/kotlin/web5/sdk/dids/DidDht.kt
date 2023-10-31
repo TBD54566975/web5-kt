@@ -7,8 +7,8 @@ import com.nimbusds.jose.util.Base64URL
 import foundation.identity.did.DIDDocument
 import foundation.identity.did.Service
 import foundation.identity.did.VerificationMethod
+import io.github.mmm.binary.codec.Base32
 import io.ktor.client.engine.HttpClientEngine
-import org.erwinkok.multiformat.multibase.bases.Base32
 import org.xbill.DNS.DClass
 import org.xbill.DNS.Message
 import org.xbill.DNS.Name
@@ -191,8 +191,24 @@ public class DidDht(uri: String, keyManager: KeyManager, public val didDocument:
     public fun getDidIdentifier(identityKey: JWK): String {
       val publicKeyJwk = identityKey.toPublicJWK()
       val publicKeyBytes = Crypto.publicKeyToBytes(publicKeyJwk)
-      val zBase32Encoded = Base32.encodeZ(publicKeyBytes)
+      val zBase32Encoded = Base32.ZB32.encode(publicKeyBytes)
       return "did:dht:$zBase32Encoded"
+    }
+
+    /**
+     * Checks whether a given DID identifier conforms to the "did:dht" method. This checks that the DID starts with
+     * "did:dht" and that the suffix is a valid z-base-32 encoded public key.
+     *
+     * @param did The DID to check.
+     * @return `true` if the DID conforms to the "did:dht" method, `false` otherwise.
+     */
+    public fun isValid(did: String): Boolean {
+      if (!did.startsWith("did:dht:")) {
+        return false
+      }
+      val suffix = did.removePrefix("did:dht:")
+      val decoded = Base32.ZB32.decode(suffix)
+      return decoded.size == 32
     }
 
     /**
