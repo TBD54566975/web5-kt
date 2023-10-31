@@ -93,13 +93,9 @@ public class InMemoryKeyManager : KeyManager {
    * @return A list of key aliases belonging to the imported keys.
    */
   public fun import(keySet: List<Map<String, Any>>): List<String> {
-    val keyAliases = mutableListOf<String>()
-
-    for (jsonJwk in keySet) {
+    val keyAliases = keySet.map { jsonJwk ->
       val jwk = JWK.parse(jsonJwk)
-      val keyAlias = import(jwk)
-
-      keyAliases.add(keyAlias)
+      import(jwk)
     }
 
     return keyAliases
