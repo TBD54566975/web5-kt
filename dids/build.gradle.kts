@@ -25,8 +25,6 @@ dependencies {
   implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.0")
   implementation("com.nimbusds:nimbus-jose-jwt:9.34")
   implementation("com.github.multiformats:java-multibase:1.1.0")
-  implementation("org.erwinkok.multiformat:multiformat:1.1.0")
-  implementation("org.erwinkok.result:result-monad:1.4.0")
 
   implementation("io.ktor:ktor-client-core:$ktor_version")
   implementation("io.ktor:ktor-client-cio:$ktor_version")
@@ -38,4 +36,6 @@ dependencies {
   testImplementation(kotlin("test"))
   testImplementation("io.ktor:ktor-client-mock:$ktor_version")
   testImplementation("org.mockito.kotlin:mockito-kotlin:5.1.0")
+  testImplementation("commons-codec:commons-codec:1.16.0")
+
 }
