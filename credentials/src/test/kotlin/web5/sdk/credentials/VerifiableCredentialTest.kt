@@ -15,10 +15,10 @@ import org.junit.jupiter.api.assertDoesNotThrow
 import web5.sdk.crypto.AwsKeyManager
 import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.dids.CreateDidIonOptions
+import web5.sdk.dids.DidIon
 import web5.sdk.dids.DidIonApi
 import web5.sdk.dids.DidKeyApi
 import web5.sdk.dids.JsonWebKey2020VerificationMethod
-import web5.sdk.dids.StatefulDidIon
 import java.security.SignatureException
 import java.text.ParseException
 import java.util.UUID
@@ -43,7 +43,7 @@ class VerifiableCredentialTest {
         "2aWNlcyI6W119fV0sInVwZGF0ZUNvbW1pdG1lbnQiOiJFaUNsaVVIbHBQQjE0VVpkVzk4S250aG8zV2YxRjQxOU83cFhSMGhPeFAzRkNnIn0" +
         "sInN1ZmZpeERhdGEiOnsiZGVsdGFIYXNoIjoiRWlEU2FMNHZVNElzNmxDalp4YVp6Zl9lWFFMU3V5T3E5T0pNbVJHa2FFTzRCQSIsInJlY29" +
         "2ZXJ5Q29tbWl0bWVudCI6IkVpQzI0TFljVEdRN1JzaDdIRUl2TXQ0MGNGbmNhZGZReTdibDNoa3k0RkxUQ2cifX0"
-    val issuerDid = StatefulDidIon(didUri, keyManager, didIonApi = DidIonApi)
+    val issuerDid = DidIon(didUri, keyManager, didIonApi = DidIonApi)
     val holderDid = DidKeyApi.create(keyManager)
 
     val vc = VerifiableCredential.create(
@@ -174,8 +174,10 @@ class VerifiableCredentialTest {
     val exception = assertThrows(SignatureException::class.java) {
       VerifiableCredential.verify(vcJwt)
     }
-    assertEquals("Signature verification failed: Expected kid in JWS header to dereference a DID Document " +
-      "Verification Method with an Assertion verification relationship", exception.message)
+    assertEquals(
+      "Signature verification failed: Expected kid in JWS header to dereference a DID Document " +
+        "Verification Method with an Assertion verification relationship", exception.message
+    )
   }
 
   @Test

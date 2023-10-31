@@ -45,7 +45,7 @@ public class CreateDidKeyOptions(
  * @property uri The URI of the "did:key" which conforms to the DID standard.
  * @property keyManager A [KeyManager] instance utilized to manage the cryptographic keys associated with the DID.
  *
- * @constructor Initializes a new instance of [StatefulDidKey] with the provided [uri] and [keyManager].
+ * @constructor Initializes a new instance of [DidKey] with the provided [uri] and [keyManager].
  *
  * ### Usage Example:
  * ```kotlin
@@ -53,7 +53,7 @@ public class CreateDidKeyOptions(
  * val did = DidKey("did:key:example", keyManager)
  * ```
  */
-public class StatefulDidKey(uri: String, keyManager: KeyManager) : StatefulDid(uri, keyManager) {
+public class DidKey(uri: String, keyManager: KeyManager) : Did(uri, keyManager) {
   /**
    * Resolves the current instance's [uri] to a [DidResolutionResult], which contains the DID Document
    * and possible related metadata.
@@ -78,7 +78,7 @@ public class StatefulDidKey(uri: String, keyManager: KeyManager) : StatefulDid(u
  */
 public class DidKeyApi private constructor() {
 
-  public companion object : DidMethod<StatefulDidKey, CreateDidKeyOptions> {
+  public companion object : DidMethod<DidKey, CreateDidKeyOptions> {
     override val methodName: String = "key"
 
     /**
@@ -91,11 +91,11 @@ public class DidKeyApi private constructor() {
      *
      * @param keyManager A [KeyManager] instance where the new key will be stored.
      * @param options Optional parameters ([CreateDidKeyOptions]) to specify algorithm and curve during key creation.
-     * @return A [StatefulDidKey] instance representing the newly created "did:key" DID.
+     * @return A [DidKey] instance representing the newly created "did:key" DID.
      *
      * @throws UnsupportedOperationException if the specified curve is not supported.
      */
-    override fun create(keyManager: KeyManager, options: CreateDidKeyOptions?): StatefulDidKey {
+    override fun create(keyManager: KeyManager, options: CreateDidKeyOptions?): DidKey {
       val opts = options ?: CreateDidKeyOptions()
 
       val keyAlias = keyManager.generatePrivateKey(opts.algorithm, opts.curve)
@@ -115,7 +115,7 @@ public class DidKeyApi private constructor() {
 
       val did = "did:key:$multibaseEncodedId"
 
-      return StatefulDidKey(did, keyManager)
+      return DidKey(did, keyManager)
     }
 
     /**

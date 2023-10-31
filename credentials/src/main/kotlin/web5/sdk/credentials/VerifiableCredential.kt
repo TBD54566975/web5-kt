@@ -21,8 +21,8 @@ import foundation.identity.did.DIDURL
 import foundation.identity.did.VerificationMethod
 import web5.sdk.common.Convert
 import web5.sdk.crypto.Crypto
+import web5.sdk.dids.Did
 import web5.sdk.dids.DidResolvers
-import web5.sdk.dids.StatefulDid
 import java.net.URI
 import java.security.SignatureException
 import java.util.Date
@@ -61,7 +61,7 @@ public class VerifiableCredential internal constructor(public val vcDataModel: V
    * If the [assertionMethodId] is null, the function will attempt to use the first available verification method from
    * the [did]. The result is a String in a JWT format.
    *
-   * @param did The [StatefulDid] used to sign the credential.
+   * @param did The [Did] used to sign the credential.
    * @param assertionMethodId An optional identifier for the assertion method that will be used for verification of the
    *        produces signature.
    * @return The JWT representing the signed verifiable credential.
@@ -71,7 +71,7 @@ public class VerifiableCredential internal constructor(public val vcDataModel: V
    * val signedVc = verifiableCredential.sign(myDid)
    * ```
    */
-  public fun sign(did: StatefulDid, assertionMethodId: String? = null): String {
+  public fun sign(did: Did, assertionMethodId: String? = null): String {
     val didResolutionResult = DidResolvers.resolve(did.uri)
     val assertionMethods: List<VerificationMethod>? =
       didResolutionResult.didDocument.assertionMethodVerificationMethodsDereferenced
