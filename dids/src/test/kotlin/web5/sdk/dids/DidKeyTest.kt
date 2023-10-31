@@ -94,10 +94,6 @@ class DidKeyTest {
         val serializedKeySet = jsonMapper.writeValueAsString(keySet)
         val didUri = did.uri
 
-        println(serializedKeySet)
-        println(didUri)
-
-
         val jsonKeySet: List<Map<String, Any>> = jsonMapper.readValue(serializedKeySet)
         val km2 = InMemoryKeyManager()
         km2.import(jsonKeySet)
