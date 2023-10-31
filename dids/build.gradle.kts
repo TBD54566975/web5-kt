@@ -28,8 +28,6 @@ dependencies {
   implementation("org.erwinkok.multiformat:multiformat:1.1.0")
   implementation("org.erwinkok.result:result-monad:1.4.0")
 
-  implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.8.+")
-
   implementation("io.ktor:ktor-client-core:$ktor_version")
   implementation("io.ktor:ktor-client-cio:$ktor_version")
   implementation("io.ktor:ktor-client-content-negotiation:$ktor_version")

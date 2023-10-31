@@ -87,7 +87,25 @@ public class InMemoryKeyManager : KeyManager {
     keyStore[keyAlias] ?: throw IllegalArgumentException("key with alias $keyAlias not found")
 
   /**
-   * Imports [jwk] and returns the alias that refers to it.
+   * Imports a list of keys represented as a list of maps and returns a list of key aliases referring to them.
+   *
+   * @param keySet A list of key representations in map format.
+   * @return A list of key aliases belonging to the imported keys.
+   */
+  public fun import(keySet: List<Map<String, Any>>): List<String> {
+    val keyAliases = keySet.map { jsonJwk ->
+      val jwk = JWK.parse(jsonJwk)
+      import(jwk)
+    }
+
+    return keyAliases
+  }
+
+  /**
+   * Imports a single key and returns the alias that refers to it.
+   *
+   * @param jwk A JWK object representing the key to be imported.
+   * @return The alias belonging to the imported key.
    */
   public fun import(jwk: JWK): String {
     var kid = jwk.keyID
@@ -96,5 +114,20 @@ public class InMemoryKeyManager : KeyManager {
     }
     keyStore.putIfAbsent(kid, jwk)
     return kid
+  }
+
+  /**
+   * Exports all stored keys as a list of maps.
+   *
+   * @return A list of key representations in map format.
+   */
+  public fun export(): List<Map<String, Any>> {
+    val keySet = mutableListOf<Map<String, Any>>()
+    for (jwk in keyStore.values) {
+      val jsonJwk = jwk.toJSONObject()
+      keySet.add(jsonJwk)
+    }
+
+    return keySet
   }
 }
