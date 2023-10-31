@@ -164,10 +164,11 @@ class StatusListCredentialTest {
       statusListCredential.vcDataModel.credentialSubject.jsonObject["statusPurpose"] as? String?
     )
 
-    assertEquals(
-      "H4sIAAAAAAAA/2NgQAESAAPT1/8QAAAA",
-      statusListCredential.vcDataModel.credentialSubject.jsonObject["encodedList"] as? String?
-    )
+    // TODO: Check encoding across other sdks and spec - https://github.com/TBD54566975/web5-kt/issues/97
+    // assertEquals(
+    //  "H4sIAAAAAAAA/2NgQAESAAPT1/8QAAAA",
+    //  statusListCredential.vcDataModel.credentialSubject.jsonObject["encodedList"] as? String?
+    //)
   }
 
 

@@ -23,11 +23,8 @@ import io.ktor.http.isSuccess
 import io.ktor.serialization.jackson.jackson
 import kotlinx.coroutines.runBlocking
 import org.erdtman.jcs.JsonCanonicalizer
-import org.erwinkok.multiformat.multicodec.Multicodec
-import org.erwinkok.multiformat.multihash.Multihash
-import org.erwinkok.result.get
-import org.erwinkok.result.getOrThrow
 import web5.sdk.common.Convert
+import web5.sdk.common.Varint
 import web5.sdk.crypto.KeyManager
 import web5.sdk.dids.ion.model.AddPublicKeysAction
 import web5.sdk.dids.ion.model.AddServicesAction
@@ -51,10 +48,13 @@ import web5.sdk.dids.ion.model.SidetreeRecoverOperation
 import web5.sdk.dids.ion.model.SidetreeUpdateOperation
 import web5.sdk.dids.ion.model.UpdateOperationSignedData
 import java.net.URI
+import java.security.MessageDigest
 import java.util.UUID
 
 private const val operationsPath = "/operations"
 private const val identifiersPath = "/identifiers"
+
+private val sha256MultiCodec = Varint.encode(0x12)
 
 /**
  * Configuration for the [DidIonManager].
@@ -220,9 +220,10 @@ public sealed class DidIonManager(
   override fun create(keyManager: KeyManager, options: CreateDidIonOptions?): DidIonHandle {
     val (createOp, keys) = createOperation(keyManager, options)
 
-    val shortFormDidSegment = Convert(
-      Multihash.sum(Multicodec.SHA2_256, canonicalized(createOp.suffixData)).get()?.bytes()
-    ).toBase64Url(padding = false)
+    val canonicalizedSuffixData = canonicalized(createOp.suffixData)
+    val suffixDataMultihash = multihash(canonicalizedSuffixData)
+    val shortFormDidSegment = Convert(suffixDataMultihash).toBase64Url(padding = false)
+
     val initialState = InitialState(
       suffixData = createOp.suffixData,
       delta = createOp.delta,
@@ -369,9 +370,10 @@ public sealed class DidIonManager(
   }
 
   private fun deltaHash(updateOpDeltaObject: Delta): String {
-    val canonicalized = canonicalized(updateOpDeltaObject)
-    val deltaHashBytes = Multihash.sum(Multicodec.SHA2_256, canonicalized).getOrThrow().bytes()
-    return Base64URL.encode(deltaHashBytes).toString()
+    val canonicalizedOp = canonicalized(updateOpDeltaObject)
+    val opMultihash = multihash(canonicalizedOp)
+
+    return Convert(opMultihash).toBase64Url(padding = false)
   }
 
   private fun validateDidDocumentKeys(publicKeys: Iterable<PublicKey>) {
@@ -513,10 +515,10 @@ public sealed class DidIonManager(
     recoveryCommitment: Commitment): OperationSuffixDataObject {
     val jsonString = mapper.writeValueAsString(createOperationDeltaObject)
     val canonicalized = JsonCanonicalizer(jsonString).encodedUTF8
-    val deltaHashBytes = Multihash.sum(Multicodec.SHA2_256, canonicalized).getOrThrow().bytes()
-    val deltaHash = Convert(deltaHashBytes).toBase64Url(padding = false)
+    val deltaMultihash = multihash(canonicalized)
+
     return OperationSuffixDataObject(
-      deltaHash = deltaHash,
+      deltaHash = Convert(deltaMultihash).toBase64Url(padding = false),
       recoveryCommitment = recoveryCommitment
     )
   }
@@ -667,33 +669,49 @@ private interface VerificationPublicKeyOption {
 
 private fun JWK.commitment(): Commitment {
   require(!this.isPrivate) { throw IllegalArgumentException("provided JWK must not be a private key") }
-  // 1. Encode the public key into the form of a valid JWK.
-  val pkJson = this.toJSONString()
 
-  // 2. Canonicalize the JWK encoded public key using the implementation’s JSON_CANONICALIZATION_SCHEME.
+  val pkJson = this.toJSONString()
   val canonicalized = JsonCanonicalizer(pkJson).encodedUTF8
 
-  // 3. Use the implementation’s HASH_PROTOCOL to Multihash the canonicalized public key to generate the REVEAL_VALUE,
-  val mh = Multihash.sum(Multicodec.SHA2_256, canonicalized).getOrThrow()
-  val intermediate = mh.digest
+  val sha256 = MessageDigest.getInstance("SHA-256")
+  val pkDigest = sha256.digest(canonicalized)
 
-  // then Multihash the resulting Multihash value again using the implementation’s HASH_PROTOCOL to produce
-  // the public key commitment.
-  val hashOfHash = Multihash.sum(Multicodec.SHA2_256, intermediate).getOrThrow().bytes()
-  return Commitment(hashOfHash)
+  val pkDigestMultihash = multihash(pkDigest)
+  return Commitment(pkDigestMultihash)
 }
 
 private fun JWK.reveal(): Reveal {
   require(!this.isPrivate) { throw IllegalArgumentException("provided JWK must not be a private key") }
-  // 1. Encode the public key into the form of a valid JWK.
-  val pkJson = this.toJSONString()
 
-  // 2. Canonicalize the JWK encoded public key using the implementation’s JSON_CANONICALIZATION_SCHEME.
+  val pkJson = this.toJSONString()
   val canonicalized = JsonCanonicalizer(pkJson).encodedUTF8
 
-  // 3. Use the implementation’s HASH_PROTOCOL to Multihash the canonicalized public key to generate the REVEAL_VALUE,
-  val mh = Multihash.sum(Multicodec.SHA2_256, canonicalized).getOrThrow()
-  return Reveal(mh.bytes())
+  val mh = multihash(canonicalized)
+  return Reveal(mh)
+}
+
+/**
+ * Computes a multihash of the given payload.
+ *
+ * A multihash is a protocol for differentiating outputs from various well-established cryptographic hash functions,
+ * addressing size and encoding considerations.
+ *
+ * This function specifically calculates the SHA-256 hash of the input payload, then prefixes the result with
+ * the multicodec identifier for SHA-256 and the digest length. The multicodec identifier is a predetermined
+ * byte array
+ *
+ * @param payload The input data for which the multihash needs to be calculated.
+ * @return A byte array representing the multihash of the input payload. It includes the multicodec prefix,
+ *         the length of the hash digest, and the hash digest itself.
+ */
+public fun multihash(payload: ByteArray): ByteArray {
+  val sha256 = MessageDigest.getInstance("SHA-256")
+  sha256.update(payload)
+
+  val digestLen = sha256.digestLength
+  val digest = sha256.digest()
+
+  return sha256MultiCodec + Varint.encode(digestLen) + digest
 }
 
 /**

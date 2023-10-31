@@ -12,6 +12,7 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.OutputStreamContent
 import io.ktor.http.headersOf
 import io.ktor.utils.io.ByteReadChannel
+import org.apache.commons.codec.binary.Hex
 import org.erdtman.jcs.JsonCanonicalizer
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
@@ -437,7 +438,7 @@ class DidIonTest {
     val recoveryKey = readKey("src/test/resources/jwkEs256k1Private.json")
     val recoveryKeyAlias = keyManager.import(recoveryKey)
 
-    val deactivateResult = DidIonManager{
+    val deactivateResult = DidIonManager {
       engine = mockEngine()
     }.deactivate(
       keyManager,
@@ -472,6 +473,16 @@ class DidIonTest {
     }
 
     assertEquals(HttpStatusCode.BadRequest.value, exception.statusCode)
+  }
+
+  @Test
+  fun `multihash test vector`() {
+    // test vector taken from: https://multiformats.io/multihash/#sha2-256---256-bits-aka-sha256
+    val input = "Merkle–Damgård".toByteArray()
+
+    val mhBytes = multihash(input)
+    val mhHex = Hex.encodeHexString(mhBytes)
+    assertEquals("122041dd7b6443542e75701aa98a0c235951a28a0d851b11564d20022ab11d2589a8", mhHex)
   }
 
   private fun badRequestMockEngine() = MockEngine {
