@@ -89,7 +89,7 @@ class DidDhtTest {
   }
 
   @Nested
-  inner class PacketTest {
+  inner class DnsPacketTest {
 
     @Test
     fun `to and from DNS packet - simple DID`() {
