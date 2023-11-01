@@ -1,6 +1,7 @@
 package web5.sdk.dids
 
 import foundation.identity.did.DID
+import web5.sdk.dids.methods.ion.DidIon
 import web5.sdk.dids.methods.key.DidKey
 
 /**

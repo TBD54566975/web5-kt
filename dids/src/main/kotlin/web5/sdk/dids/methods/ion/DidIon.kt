@@ -1,4 +1,4 @@
-package web5.sdk.dids
+package web5.sdk.dids.methods.ion
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.nimbusds.jose.Algorithm
@@ -29,6 +29,13 @@ import web5.sdk.common.Convert
 import web5.sdk.common.Varint
 import web5.sdk.crypto.KeyGenOptions
 import web5.sdk.crypto.KeyManager
+import web5.sdk.dids.CreateDidOptions
+import web5.sdk.dids.CreationMetadata
+import web5.sdk.dids.Did
+import web5.sdk.dids.DidMethod
+import web5.sdk.dids.DidResolutionMetadata
+import web5.sdk.dids.DidResolutionResult
+import web5.sdk.dids.ResolveDidOptions
 import web5.sdk.dids.ion.model.AddPublicKeysAction
 import web5.sdk.dids.ion.model.AddServicesAction
 import web5.sdk.dids.ion.model.Commitment

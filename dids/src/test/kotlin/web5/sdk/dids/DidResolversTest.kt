@@ -3,6 +3,7 @@ package web5.sdk.dids
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Test
 import web5.sdk.crypto.InMemoryKeyManager
+import web5.sdk.dids.methods.ion.DidIon
 
 class DidResolversTest {
 

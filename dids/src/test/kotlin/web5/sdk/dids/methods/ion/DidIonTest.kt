@@ -1,4 +1,4 @@
-package web5.sdk.dids
+package web5.sdk.dids.methods.ion
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
