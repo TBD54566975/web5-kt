@@ -9,7 +9,6 @@ import org.junit.jupiter.api.Test
 import web5.sdk.crypto.InMemoryKeyManager
 import java.net.URI
 import kotlin.test.assertContains
-import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull

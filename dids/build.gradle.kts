@@ -39,4 +39,5 @@ dependencies {
   testImplementation("commons-codec:commons-codec:1.16.0")
 
   implementation("dnsjava:dnsjava:3.5.2")
+  implementation("org.lightningj:lightningj:0.17.0-Beta")
 }

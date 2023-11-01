@@ -8,13 +8,13 @@ import foundation.identity.did.DIDDocument
 import foundation.identity.did.Service
 import foundation.identity.did.VerificationMethod
 import io.ktor.client.engine.HttpClientEngine
+import org.lightningj.util.ZBase32
 import org.xbill.DNS.DClass
 import org.xbill.DNS.Message
 import org.xbill.DNS.Name
 import org.xbill.DNS.Section
 import org.xbill.DNS.TXTRecord
 import web5.sdk.common.Convert
-import web5.sdk.common.ZBase32
 import web5.sdk.crypto.Crypto
 import web5.sdk.crypto.Ed25519
 import web5.sdk.crypto.KeyManager
