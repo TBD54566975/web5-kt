@@ -7,7 +7,6 @@ import com.nimbusds.jose.util.Base64URL
 import foundation.identity.did.DIDDocument
 import foundation.identity.did.Service
 import foundation.identity.did.VerificationMethod
-import io.github.mmm.binary.codec.Base32
 import io.ktor.client.engine.HttpClientEngine
 import org.xbill.DNS.DClass
 import org.xbill.DNS.Message
@@ -15,6 +14,7 @@ import org.xbill.DNS.Name
 import org.xbill.DNS.Section
 import org.xbill.DNS.TXTRecord
 import web5.sdk.common.Convert
+import web5.sdk.common.ZBase32
 import web5.sdk.crypto.Crypto
 import web5.sdk.crypto.Ed25519
 import web5.sdk.crypto.KeyManager
@@ -191,7 +191,7 @@ public class DidDht(uri: String, keyManager: KeyManager, public val didDocument:
     public fun getDidIdentifier(identityKey: JWK): String {
       val publicKeyJwk = identityKey.toPublicJWK()
       val publicKeyBytes = Crypto.publicKeyToBytes(publicKeyJwk)
-      val zBase32Encoded = Base32.ZB32.encode(publicKeyBytes)
+      val zBase32Encoded = ZBase32.encode(publicKeyBytes)
       return "did:dht:$zBase32Encoded"
     }
 
@@ -207,7 +207,7 @@ public class DidDht(uri: String, keyManager: KeyManager, public val didDocument:
         return false
       }
       val suffix = did.removePrefix("did:dht:")
-      val decoded = Base32.ZB32.decode(suffix)
+      val decoded = ZBase32.decode(suffix)
       return decoded.size == 32
     }
 

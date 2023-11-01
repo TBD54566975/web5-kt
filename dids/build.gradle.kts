@@ -39,5 +39,4 @@ dependencies {
   testImplementation("commons-codec:commons-codec:1.16.0")
 
   implementation("dnsjava:dnsjava:3.5.2")
-  implementation("io.github.m-m-m:mmm-binary:0.9.3")
 }
