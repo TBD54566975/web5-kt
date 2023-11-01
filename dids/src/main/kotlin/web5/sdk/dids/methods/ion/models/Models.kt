@@ -1,4 +1,4 @@
-package web5.sdk.dids.ion.model
+package web5.sdk.dids.methods.ion.models
 
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonSubTypes

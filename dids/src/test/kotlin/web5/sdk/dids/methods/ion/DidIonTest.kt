@@ -23,11 +23,11 @@ import org.mockito.kotlin.spy
 import org.mockito.kotlin.whenever
 import web5.sdk.crypto.AwsKeyManager
 import web5.sdk.crypto.InMemoryKeyManager
-import web5.sdk.dids.ion.model.PublicKey
-import web5.sdk.dids.ion.model.PublicKeyPurpose
-import web5.sdk.dids.ion.model.Service
-import web5.sdk.dids.ion.model.SidetreeCreateOperation
-import web5.sdk.dids.ion.model.SidetreeUpdateOperation
+import web5.sdk.dids.methods.ion.models.PublicKey
+import web5.sdk.dids.methods.ion.models.PublicKeyPurpose
+import web5.sdk.dids.methods.ion.models.Service
+import web5.sdk.dids.methods.ion.models.SidetreeCreateOperation
+import web5.sdk.dids.methods.ion.models.SidetreeUpdateOperation
 import java.io.File
 import kotlin.test.Ignore
 import kotlin.test.Test
