@@ -1,22 +1,22 @@
 # Module dids
 
+# Package web5.sdk.dids.methods.key
+
 # Examples
 
-## `did:key`
-
-### Creation
+## Creation
 
 ```kt
 package example
 
 import web5.sdk.crypto.InMemoryKeyManager
-import web5.sdk.dids.DidKey
+import web5.sdk.dids.methods.key.DidKey
 
 val keyManager = InMemoryKeyManager()
 val did = DidKey.create(keyManager)
 ```
 
-### Export / Import
+## Export / Import
 
 If you're using `InMemoryKeyManager` you can export you can export a DID you've created and its associated private key
 material
@@ -29,7 +29,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import web5.sdk.crypto.InMemoryKeyManager
-import web5.sdk.dids.DidKey
+import web5.sdk.dids.methods.key.DidKey
 
 fun main() {
   val keyManager = InMemoryKeyManager()
@@ -57,7 +57,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import web5.sdk.crypto.InMemoryKeyManager
-import web5.sdk.dids.DidKey
+import web5.sdk.dids.methods.key.DidKey
 
 fun main() {
   val jsonMapper = ObjectMapper()

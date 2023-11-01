@@ -14,11 +14,11 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import web5.sdk.crypto.AwsKeyManager
 import web5.sdk.crypto.InMemoryKeyManager
-import web5.sdk.dids.CreateDidIonOptions
-import web5.sdk.dids.DidIon
-import web5.sdk.dids.DidIonApi
-import web5.sdk.dids.DidKey
-import web5.sdk.dids.JsonWebKey2020VerificationMethod
+import web5.sdk.dids.methods.ion.CreateDidIonOptions
+import web5.sdk.dids.methods.ion.DidIon
+import web5.sdk.dids.methods.ion.DidIonApi
+import web5.sdk.dids.methods.ion.JsonWebKey2020VerificationMethod
+import web5.sdk.dids.methods.key.DidKey
 import java.security.SignatureException
 import java.text.ParseException
 import java.util.UUID
