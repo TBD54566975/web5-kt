@@ -140,7 +140,11 @@ public class DidDht(uri: String, keyManager: KeyManager, public val didDocument:
           }
         }
       } ?: emptyList()) + identityVerificationMethod
-
+      opts.servicesToAdd?.forEach { service ->
+        requireNotNull(service.id) { "Service id cannot be null" }
+        requireNotNull(service.type) { "Service type cannot be null" }
+        requireNotNull(service.serviceEndpoint) { "Service serviceEndpoint cannot be null" }
+      }
       // map to the DID object model's services
       val services = opts.servicesToAdd?.map { service ->
         Service.builder()
