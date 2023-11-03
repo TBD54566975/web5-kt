@@ -40,18 +40,13 @@ public object ZBase32 {
     var bufferLength = 0
     val result = StringBuilder()
     for (b in data) {
-      println("byte in: ${b.toUByte()}")
       buffer = (buffer shl BITS_PER_BYTE) + (b.toInt() and MASK_BYTE) // push unsigned byte into buffer
       bufferLength += BITS_PER_BYTE
-      println("buffer: $buffer. buffer len: $bufferLength")
       while (bufferLength >= BITS_PER_BASE32_CHAR) {
         val charIndex = (buffer shr bufferLength - BITS_PER_BASE32_CHAR) and MASK_BASE32 // extract 5 bits
-        println("pulled ${bufferLength - BITS_PER_BASE32_CHAR}: $charIndex")
         result.append(ALPHABET[charIndex]) // lookup zbase32 character for extracted 5 bits
         bufferLength -= BITS_PER_BASE32_CHAR // decrement 5 bits from current buffer length
       }
-
-      println("remains: $buffer")
     }
     if (bufferLength > 0) {
       val charIndex = (buffer shl BITS_PER_BASE32_CHAR - bufferLength) and MASK_BASE32
