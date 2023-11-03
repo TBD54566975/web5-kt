@@ -16,7 +16,8 @@ public val B64URL_ENCODER: Base64.Encoder = Base64.getUrlEncoder()
  */
 public enum class EncodingFormat {
   Base64Url,
-  Base58Btc
+  Base58Btc,
+  ZBase32
   // TODO: add EncodingFormat for Base64Url_Pad and Base64Url_NoPad
 }
 
@@ -103,7 +104,24 @@ public class Convert<T>(private val value: T, private val kind: EncodingFormat? 
         return when (this.kind) {
           EncodingFormat.Base58Btc -> this.value
           EncodingFormat.Base64Url -> Base58Btc.encode(B64URL_DECODER.decode(this.value))
+          EncodingFormat.ZBase32 -> Base58Btc.encode(ZBase32.decode(this.value))
           null -> Base58Btc.encode(this.toByteArray())
+        }
+      }
+
+      else -> handleNotSupported()
+    }
+  }
+
+  public fun toZBase32(): String {
+    return when (this.value) {
+      is ByteArray -> ZBase32.encode(this.value)
+      is String -> {
+        return when (this.kind) {
+          EncodingFormat.Base58Btc -> ZBase32.encode(Base58Btc.decode(this.value))
+          EncodingFormat.Base64Url -> ZBase32.encode(B64URL_DECODER.decode(this.value))
+          EncodingFormat.ZBase32 -> return this.value
+          null -> ZBase32.encode(this.toByteArray())
         }
       }
 
@@ -124,6 +142,7 @@ public class Convert<T>(private val value: T, private val kind: EncodingFormat? 
       is String -> {
         return when (this.kind) {
           EncodingFormat.Base64Url -> String(B64URL_DECODER.decode(this.value))
+          EncodingFormat.ZBase32 -> String(ZBase32.decode(this.value))
           null -> this.value
           else -> handleNotSupported()
         }
@@ -147,6 +166,7 @@ public class Convert<T>(private val value: T, private val kind: EncodingFormat? 
         return when (this.kind) {
           EncodingFormat.Base58Btc -> Base58Btc.decode(this.value)
           EncodingFormat.Base64Url -> B64URL_DECODER.decode(this.value)
+          EncodingFormat.ZBase32 -> ZBase32.decode(this.value)
           null -> this.value.toByteArray()
         }
       }
