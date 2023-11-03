@@ -7,15 +7,15 @@ import java.io.ByteArrayOutputStream
  * https://philzimmermann.com/docs/human-oriented-base-32-encoding.txt
  */
 public object ZBase32 {
-  private val enc = "ybndrfg8ejkmcpqxot1uwisza345h769"
-  private val dec = IntArray(128)
+  private const val alphabet = "ybndrfg8ejkmcpqxot1uwisza345h769"
+  private val decoder = IntArray(128)
 
   init {
-    for (i in dec.indices) {
-      dec[i] = -1
+    for (i in decoder.indices) {
+      decoder[i] = -1
     }
-    for (i in enc.indices) {
-      dec[enc[i].code] = i
+    for (i in alphabet.indices) {
+      decoder[alphabet[i].code] = i
     }
   }
 
@@ -36,14 +36,14 @@ public object ZBase32 {
       bufferLength += 8
       while (bufferLength >= 5) {
         val charIndex = buffer shr bufferLength - 5 and 0x1F
-        result.append(enc[charIndex])
+        result.append(alphabet[charIndex])
         bufferLength -= 5
       }
     }
     if (bufferLength > 0) {
       buffer = buffer shl 5 - bufferLength
       val charIndex = buffer and 0x1F
-      result.append(enc[charIndex])
+      result.append(alphabet[charIndex])
     }
     return result.toString()
   }
@@ -61,7 +61,7 @@ public object ZBase32 {
     var bufferLength = 0
     val result = ByteArrayOutputStream()
     for (c in data.toCharArray()) {
-      val index = dec[c.code]
+      val index = decoder[c.code]
       require(index != -1) { "Invalid zbase32 character: $c" }
       buffer = (buffer shl 5) + index
       bufferLength += 5
