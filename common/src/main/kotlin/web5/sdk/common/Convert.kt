@@ -113,6 +113,10 @@ public class Convert<T>(private val value: T, private val kind: EncodingFormat? 
     }
   }
 
+  /**
+   * Converts the [value] to a ZBase32-encoded string.
+   * @return The ZBase32-encoded string.
+   */
   public fun toZBase32(): String {
     return when (this.value) {
       is ByteArray -> ZBase32.encode(this.value)
