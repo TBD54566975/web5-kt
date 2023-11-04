@@ -124,7 +124,7 @@ public class Convert<T>(private val value: T, private val kind: EncodingFormat? 
         return when (this.kind) {
           EncodingFormat.Base58Btc -> ZBase32.encode(Base58Btc.decode(this.value))
           EncodingFormat.Base64Url -> ZBase32.encode(B64URL_DECODER.decode(this.value))
-          EncodingFormat.ZBase32 -> return this.value
+          EncodingFormat.ZBase32 -> this.value
           null -> ZBase32.encode(this.toByteArray())
         }
       }
