@@ -135,12 +135,12 @@ public class DidDht(uri: String, keyManager: KeyManager, public val didDocument:
           .controller(URI.create(id))
           .publicKeyJwk(key.toPublicJWK().toJSONObject())
           .build().also { verificationMethod ->
-          purposes.forEach { relationship ->
-            relationshipsMap.getOrPut(relationship) { mutableListOf() }.add(
-              VerificationMethod.builder().id(verificationMethod.id).build()
-            )
+            purposes.forEach { relationship ->
+              relationshipsMap.getOrPut(relationship) { mutableListOf() }.add(
+                VerificationMethod.builder().id(verificationMethod.id).build()
+              )
+            }
           }
-        }
       } ?: emptyList()) + identityVerificationMethod
       opts.servicesToAdd?.forEach { service ->
         requireNotNull(service.id) { "Service id cannot be null" }
@@ -280,16 +280,36 @@ public class DidDht(uri: String, keyManager: KeyManager, public val didDocument:
       val rootRecordText = mutableListOf<String>().apply {
         if (verificationMethodIds.isNotEmpty()) add("vm=${verificationMethodIds.joinToString(",")}")
         if (serviceIds.isNotEmpty()) add("svc=${serviceIds.joinToString(",")}")
-        didDocument.authenticationVerificationMethodsDereferenced?.
-        map { verificationMethodsById[it.id.toString()] }?.joinToString(",")?.let { add("auth=$it") }
-        didDocument.assertionMethodVerificationMethodsDereferenced?.
-        map { verificationMethodsById[it.id.toString()] }?.joinToString(",")?.let { add("asm=$it") }
-        didDocument.keyAgreementVerificationMethodsDereferenced?.
-        map { verificationMethodsById[it.id.toString()] }?.joinToString(",")?.let { add("agm=$it") }
-        didDocument.capabilityInvocationVerificationMethodsDereferenced?.
-        map { verificationMethodsById[it.id.toString()] }?.joinToString(",")?.let { add("inv=$it") }
-        didDocument.capabilityDelegationVerificationMethodsDereferenced?.
-        map { verificationMethodsById[it.id.toString()] }?.joinToString(",")?.let { add("del=$it") }
+
+        didDocument.authenticationVerificationMethodsDereferenced?.map {
+          verificationMethodsById[it.id.toString()]
+        }?.joinToString(
+          ","
+        )?.let { add("auth=$it") }
+
+        didDocument.assertionMethodVerificationMethodsDereferenced?.map {
+          verificationMethodsById[it.id.toString()]
+        }?.joinToString(
+          ","
+        )?.let { add("asm=$it") }
+
+        didDocument.keyAgreementVerificationMethodsDereferenced?.map {
+          verificationMethodsById[it.id.toString()]
+        }?.joinToString(
+          ","
+        )?.let { add("agm=$it") }
+
+        didDocument.capabilityInvocationVerificationMethodsDereferenced?.map {
+          verificationMethodsById[it.id.toString()]
+        }?.joinToString(
+          ","
+        )?.let { add("inv=$it") }
+
+        didDocument.capabilityDelegationVerificationMethodsDereferenced?.map {
+          verificationMethodsById[it.id.toString()]
+        }?.joinToString(
+          ","
+        )?.let { add("del=$it") }
       }
 
       message.addRecord(
