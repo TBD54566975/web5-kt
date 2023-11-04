@@ -26,5 +26,4 @@ class ConvertTest {
       assertEquals("a", output2)
     }
   }
-
 }
