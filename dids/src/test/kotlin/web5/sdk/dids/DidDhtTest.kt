@@ -4,8 +4,12 @@ import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.JWK
 import foundation.identity.did.Service
+import foundation.identity.did.parser.ParserException
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertDoesNotThrow
+import org.junit.jupiter.api.assertThrows
+import web5.sdk.common.ZBase32
 import web5.sdk.crypto.InMemoryKeyManager
 import java.net.URI
 import kotlin.test.assertContains
@@ -14,7 +18,6 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 
 class DidDhtTest {
-
   @Nested
   inner class UtilsTest {
     @Test
@@ -26,8 +29,9 @@ class DidDhtTest {
       val identifier = DidDht.getDidIdentifier(publicKey)
       assertNotNull(identifier)
 
-      val isValid = DidDht.isValid(identifier)
-      assertEquals(true, isValid)
+      assertDoesNotThrow {
+        DidDht.validate(identifier)
+      }
     }
   }
 
@@ -89,7 +93,6 @@ class DidDhtTest {
 
   @Nested
   inner class DnsPacketTest {
-
     @Test
     fun `to and from DNS packet - simple DID`() {
       val manager = InMemoryKeyManager()
@@ -159,6 +162,36 @@ class DidDhtTest {
       assertNotNull(didFromPacket.first)
 
       assertEquals(did.didDocument.toString(), didFromPacket.first.toString())
+    }
+  }
+
+  @Nested
+  inner class ValidateTest {
+    @Test
+    fun `throws exception if parsing Did fails`() {
+      assertThrows<ParserException> { DidDht.validate("abcd") }
+    }
+
+    @Test
+    fun `throws exception if did method isnt dht`() {
+      assertThrows<IllegalArgumentException> { DidDht.validate("did:key:abcd123") }
+    }
+
+    @Test
+    fun `throws exception if identifier cannot be zbase32 decoded`() {
+      assertThrows<java.lang.IllegalArgumentException> { DidDht.validate("did:dht:abcd123") }
+    }
+
+    @Test
+    fun `throws exception if decoded identifier is larger than 32 bytes`() {
+      val kakaId = ZBase32.encode("Hakuna matata Hakuna Matata Hakuna Matata".toByteArray())
+      assertThrows<java.lang.IllegalArgumentException> { DidDht.validate("did:dht:$kakaId") }
+    }
+
+    @Test
+    fun `throws exception if decoded identifier is smaller than 32 bytes`() {
+      val kakaId = ZBase32.encode("a".toByteArray())
+      assertThrows<java.lang.IllegalArgumentException> { DidDht.validate("did:dht:$kakaId") }
     }
   }
 }
