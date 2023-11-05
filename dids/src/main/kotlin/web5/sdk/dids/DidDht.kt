@@ -283,33 +283,23 @@ public class DidDht(uri: String, keyManager: KeyManager, public val didDocument:
 
         didDocument.authenticationVerificationMethodsDereferenced?.map {
           verificationMethodsById[it.id.toString()]
-        }?.joinToString(
-          ","
-        )?.let { add("auth=$it") }
+        }?.joinToString(",")?.let { add("auth=$it") }
 
         didDocument.assertionMethodVerificationMethodsDereferenced?.map {
           verificationMethodsById[it.id.toString()]
-        }?.joinToString(
-          ","
-        )?.let { add("asm=$it") }
+        }?.joinToString(",")?.let { add("asm=$it") }
 
         didDocument.keyAgreementVerificationMethodsDereferenced?.map {
           verificationMethodsById[it.id.toString()]
-        }?.joinToString(
-          ","
-        )?.let { add("agm=$it") }
+        }?.joinToString(",")?.let { add("agm=$it") }
 
         didDocument.capabilityInvocationVerificationMethodsDereferenced?.map {
           verificationMethodsById[it.id.toString()]
-        }?.joinToString(
-          ","
-        )?.let { add("inv=$it") }
+        }?.joinToString(",")?.let { add("inv=$it") }
 
         didDocument.capabilityDelegationVerificationMethodsDereferenced?.map {
           verificationMethodsById[it.id.toString()]
-        }?.joinToString(
-          ","
-        )?.let { add("del=$it") }
+        }?.joinToString(",")?.let { add("del=$it") }
       }
 
       message.addRecord(
