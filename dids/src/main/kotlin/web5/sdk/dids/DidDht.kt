@@ -4,9 +4,11 @@ import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.JWK
 import com.nimbusds.jose.util.Base64URL
+import foundation.identity.did.DID
 import foundation.identity.did.DIDDocument
 import foundation.identity.did.Service
 import foundation.identity.did.VerificationMethod
+import foundation.identity.did.parser.ParserException
 import io.ktor.client.engine.HttpClientEngine
 import org.xbill.DNS.DClass
 import org.xbill.DNS.Message
@@ -133,12 +135,12 @@ public class DidDht(uri: String, keyManager: KeyManager, public val didDocument:
           .controller(URI.create(id))
           .publicKeyJwk(key.toPublicJWK().toJSONObject())
           .build().also { verificationMethod ->
-          purposes.forEach { relationship ->
-            relationshipsMap.getOrPut(relationship) { mutableListOf() }.add(
-              VerificationMethod.builder().id(verificationMethod.id).build()
-            )
+            purposes.forEach { relationship ->
+              relationshipsMap.getOrPut(relationship) { mutableListOf() }.add(
+                VerificationMethod.builder().id(verificationMethod.id).build()
+              )
+            }
           }
-        }
       } ?: emptyList()) + identityVerificationMethod
       opts.servicesToAdd?.forEach { service ->
         requireNotNull(service.id) { "Service id cannot be null" }
@@ -204,15 +206,15 @@ public class DidDht(uri: String, keyManager: KeyManager, public val didDocument:
      * "did:dht" and that the suffix is a valid z-base-32 encoded public key.
      *
      * @param did The DID to check.
-     * @return `true` if the DID conforms to the "did:dht" method, `false` otherwise.
+     * @throws IllegalArgumentException
+     * @throws ParserException
      */
-    public fun isValid(did: String): Boolean {
-      if (!did.startsWith("did:dht:")) {
-        return false
-      }
-      val suffix = did.removePrefix("did:dht:")
-      val decoded = ZBase32.decode(suffix)
-      return decoded.size == 32
+    public fun validate(did: String) {
+      val parsedDid = DID.fromString(did)
+      require(parsedDid.methodName == "dht") { "expected method to be dht" }
+
+      val decodedId = ZBase32.decode(parsedDid.methodSpecificId)
+      require(decodedId.size == 32) { "expected size of decoded identifier to be 32" }
     }
 
     /**
@@ -278,16 +280,26 @@ public class DidDht(uri: String, keyManager: KeyManager, public val didDocument:
       val rootRecordText = mutableListOf<String>().apply {
         if (verificationMethodIds.isNotEmpty()) add("vm=${verificationMethodIds.joinToString(",")}")
         if (serviceIds.isNotEmpty()) add("svc=${serviceIds.joinToString(",")}")
-        didDocument.authenticationVerificationMethodsDereferenced?.
-        map { verificationMethodsById[it.id.toString()] }?.joinToString(",")?.let { add("auth=$it") }
-        didDocument.assertionMethodVerificationMethodsDereferenced?.
-        map { verificationMethodsById[it.id.toString()] }?.joinToString(",")?.let { add("asm=$it") }
-        didDocument.keyAgreementVerificationMethodsDereferenced?.
-        map { verificationMethodsById[it.id.toString()] }?.joinToString(",")?.let { add("agm=$it") }
-        didDocument.capabilityInvocationVerificationMethodsDereferenced?.
-        map { verificationMethodsById[it.id.toString()] }?.joinToString(",")?.let { add("inv=$it") }
-        didDocument.capabilityDelegationVerificationMethodsDereferenced?.
-        map { verificationMethodsById[it.id.toString()] }?.joinToString(",")?.let { add("del=$it") }
+
+        didDocument.authenticationVerificationMethodsDereferenced?.map {
+          verificationMethodsById[it.id.toString()]
+        }?.joinToString(",")?.let { add("auth=$it") }
+
+        didDocument.assertionMethodVerificationMethodsDereferenced?.map {
+          verificationMethodsById[it.id.toString()]
+        }?.joinToString(",")?.let { add("asm=$it") }
+
+        didDocument.keyAgreementVerificationMethodsDereferenced?.map {
+          verificationMethodsById[it.id.toString()]
+        }?.joinToString(",")?.let { add("agm=$it") }
+
+        didDocument.capabilityInvocationVerificationMethodsDereferenced?.map {
+          verificationMethodsById[it.id.toString()]
+        }?.joinToString(",")?.let { add("inv=$it") }
+
+        didDocument.capabilityDelegationVerificationMethodsDereferenced?.map {
+          verificationMethodsById[it.id.toString()]
+        }?.joinToString(",")?.let { add("del=$it") }
       }
 
       message.addRecord(
