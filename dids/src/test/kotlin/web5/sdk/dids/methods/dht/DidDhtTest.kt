@@ -1,4 +1,4 @@
-package web5.sdk.dids
+package web5.sdk.dids.methods.dht
 
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.jwk.Curve
@@ -11,6 +11,7 @@ import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
 import web5.sdk.common.ZBase32
 import web5.sdk.crypto.InMemoryKeyManager
+import web5.sdk.dids.PublicKeyPurpose
 import java.net.URI
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
@@ -30,7 +31,7 @@ class DidDhtTest {
       assertNotNull(identifier)
 
       assertDoesNotThrow {
-        DidDht.validate(identifier)
+          DidDht.validate(identifier)
       }
     }
   }

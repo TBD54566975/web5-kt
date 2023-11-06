@@ -1,4 +1,4 @@
-package web5.sdk.dids
+package web5.sdk.dids.methods.dht
 
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.jwk.Curve
@@ -21,6 +21,7 @@ import web5.sdk.crypto.Crypto
 import web5.sdk.crypto.Ed25519
 import web5.sdk.crypto.KeyManager
 import web5.sdk.crypto.Secp256k1
+import web5.sdk.dids.*
 import java.net.URI
 
 /**
@@ -43,9 +44,9 @@ public class DidDhtConfiguration internal constructor(
  * @property publish Whether to publish the DID Document to the DHT after creation.
  */
 public class CreateDidDhtOptions(
-  public val verificationMethodsToAdd: Iterable<Pair<JWK, Array<PublicKeyPurpose>>>? = null,
-  public val servicesToAdd: Iterable<Service>? = null,
-  public val publish: Boolean? = false,
+    public val verificationMethodsToAdd: Iterable<Pair<JWK, Array<PublicKeyPurpose>>>? = null,
+    public val servicesToAdd: Iterable<Service>? = null,
+    public val publish: Boolean? = false,
 ) : CreateDidOptions
 
 /**
@@ -119,10 +120,10 @@ public class DidDht(uri: String, keyManager: KeyManager, public val didDocument:
       val relationshipsMap = mutableMapOf<PublicKeyPurpose, MutableList<VerificationMethod>>().apply {
         val identityVerificationMethodRef = VerificationMethod.builder().id(identityVerificationMethod.id).build()
         listOf(
-          PublicKeyPurpose.AUTHENTICATION,
-          PublicKeyPurpose.ASSERTION_METHOD,
-          PublicKeyPurpose.CAPABILITY_DELEGATION,
-          PublicKeyPurpose.CAPABILITY_INVOCATION
+            PublicKeyPurpose.AUTHENTICATION,
+            PublicKeyPurpose.ASSERTION_METHOD,
+            PublicKeyPurpose.CAPABILITY_DELEGATION,
+            PublicKeyPurpose.CAPABILITY_INVOCATION
         ).forEach { purpose ->
           getOrPut(purpose) { mutableListOf() }.add(identityVerificationMethodRef)
         }

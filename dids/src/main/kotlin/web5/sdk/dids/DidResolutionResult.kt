@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import foundation.identity.did.DIDDocument
-import web5.sdk.dids.ion.model.MetadataMethod
+import web5.sdk.dids.methods.ion.models.MetadataMethod
 
 /**
  * Represents the result of DID resolution as per the W3C DID Core specification.
