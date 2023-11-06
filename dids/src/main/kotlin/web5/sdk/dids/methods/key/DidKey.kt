@@ -1,4 +1,4 @@
-package web5.sdk.dids
+package web5.sdk.dids.methods.key
 
 import com.nimbusds.jose.Algorithm
 import com.nimbusds.jose.JWSAlgorithm
@@ -11,6 +11,11 @@ import web5.sdk.common.Varint
 import web5.sdk.crypto.Crypto
 import web5.sdk.crypto.KeyManager
 import web5.sdk.crypto.Secp256k1
+import web5.sdk.dids.CreateDidOptions
+import web5.sdk.dids.Did
+import web5.sdk.dids.DidMethod
+import web5.sdk.dids.DidResolutionResult
+import web5.sdk.dids.ResolveDidOptions
 import java.net.URI
 
 /**

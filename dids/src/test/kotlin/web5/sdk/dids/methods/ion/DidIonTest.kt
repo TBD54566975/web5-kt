@@ -1,5 +1,6 @@
-package web5.sdk.dids
+package web5.sdk.dids.methods.ion
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.nimbusds.jose.JWSAlgorithm
@@ -14,6 +15,7 @@ import io.ktor.http.headersOf
 import io.ktor.utils.io.ByteReadChannel
 import org.apache.commons.codec.binary.Hex
 import org.erdtman.jcs.JsonCanonicalizer
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
 import org.mockito.kotlin.doReturn
@@ -21,11 +23,11 @@ import org.mockito.kotlin.spy
 import org.mockito.kotlin.whenever
 import web5.sdk.crypto.AwsKeyManager
 import web5.sdk.crypto.InMemoryKeyManager
-import web5.sdk.dids.ion.model.PublicKey
-import web5.sdk.dids.ion.model.PublicKeyPurpose
-import web5.sdk.dids.ion.model.Service
-import web5.sdk.dids.ion.model.SidetreeCreateOperation
-import web5.sdk.dids.ion.model.SidetreeUpdateOperation
+import web5.sdk.dids.methods.ion.models.PublicKey
+import web5.sdk.dids.methods.ion.models.PublicKeyPurpose
+import web5.sdk.dids.methods.ion.models.Service
+import web5.sdk.dids.methods.ion.models.SidetreeCreateOperation
+import web5.sdk.dids.methods.ion.models.SidetreeUpdateOperation
 import java.io.File
 import kotlin.test.Ignore
 import kotlin.test.Test
@@ -40,7 +42,7 @@ class DidIonTest {
   @Test
   @Ignore("For demonstration purposes only - this makes a network call")
   fun createWithDefault() {
-    val did = DidIonManager.create(InMemoryKeyManager())
+    val did = DidIon.create(InMemoryKeyManager())
     assertContains(did.uri, "did:ion:")
     assertTrue(did.creationMetadata!!.longFormDid.startsWith(did.uri))
   }
@@ -49,7 +51,7 @@ class DidIonTest {
   @Ignore("For demonstration purposes only - relies on network and AWS configuration")
   fun `create with AWS key manager`() {
     val keyManager = AwsKeyManager()
-    val ionManager = DidIonManager
+    val ionManager = DidIon
     val didsCreated = buildList {
       repeat(32) {
         add(ionManager.create(keyManager))
@@ -59,12 +61,33 @@ class DidIonTest {
   }
 
   @Test
+  fun `exceptions are thrown when attempting ops on non-anchored did`() {
+    val did = DidIon.create(InMemoryKeyManager())
+    assertThrows<IllegalArgumentException> {
+      did.update(UpdateDidIonOptions(did.creationMetadata?.keyAliases?.updateKeyAlias!!))
+    }
+    assertThrows<IllegalArgumentException> {
+      did.deactivate(DeactivateDidIonOptions(did.creationMetadata?.keyAliases?.recoveryKeyAlias!!))
+    }
+    assertThrows<IllegalArgumentException> {
+      did.recover(RecoverDidIonOptions(did.creationMetadata?.keyAliases?.recoveryKeyAlias!!))
+    }
+  }
+
+  @Test
   fun `invalid charset verificationMethodId throws exception`() {
+    val verificationKey = readKey("src/test/resources/verification_jwk.json")
+
     val exception = assertThrows<IllegalArgumentException> {
-      DidIonManager.create(
+      DidIon.create(
         InMemoryKeyManager(),
         CreateDidIonOptions(
-          verificationMethodId = "space is not part of the base64 url chars"
+          verificationMethodsToAdd = listOf(
+            JsonWebKey2020VerificationMethod(
+              id = "space is not part of the base64 url chars",
+              publicKeyJwk = verificationKey
+            )
+          ),
         )
       )
     }
@@ -107,7 +130,7 @@ class DidIonTest {
     )
     for (testCase in testCases) {
       val exception = assertThrows<IllegalArgumentException> {
-        DidIonManager.create(
+        DidIon.create(
           InMemoryKeyManager(),
           CreateDidIonOptions(
             servicesToAdd = listOf(testCase.service)
@@ -120,11 +143,18 @@ class DidIonTest {
 
   @Test
   fun `very long verificationMethodId throws exception`() {
+    val verificationKey = readKey("src/test/resources/verification_jwk.json")
+
     val exception = assertThrows<IllegalArgumentException> {
-      DidIonManager.create(
+      DidIon.create(
         InMemoryKeyManager(),
         CreateDidIonOptions(
-          verificationMethodId = "something_thats_really_really_really_really_really_really_long"
+          verificationMethodsToAdd = listOf(
+            JsonWebKey2020VerificationMethod(
+              id = "something_thats_really_really_really_really_really_really_long",
+              publicKeyJwk = verificationKey
+            )
+          ),
         )
       )
     }
@@ -133,20 +163,27 @@ class DidIonTest {
 
   @Test
   fun createWithCustom() {
-    val keyManager = InMemoryKeyManager()
+    val keyManager = spy(InMemoryKeyManager())
     val verificationKey = readKey("src/test/resources/verification_jwk.json")
     val updateKey = readKey("src/test/resources/update_jwk.json")
+    val updateKeyId = keyManager.import(updateKey)
+    doReturn(updateKeyId).whenever(keyManager).generatePrivateKey(JWSAlgorithm.ES256K)
+
     val recoveryKey = readKey("src/test/resources/recovery_jwk.json")
-    val manager = DidIonManager {
+    val recoveryKeyId = keyManager.import(recoveryKey)
+    doReturn(recoveryKeyId).whenever(keyManager).generatePrivateKey(JWSAlgorithm.ES256K)
+
+    val manager = DidIonApi {
       ionHost = "madeuphost"
       engine = mockEngine()
     }
     val opts = CreateDidIonOptions(
-      verificationPublicKey = PublicKey(
-        id = verificationKey.keyID,
-        type = "JsonWebKey2020",
-        publicKeyJwk = verificationKey,
-        purposes = listOf(PublicKeyPurpose.AUTHENTICATION),
+      verificationMethodsToAdd = listOf(
+        JsonWebKey2020VerificationMethod(
+          id = verificationKey.keyID,
+          publicKeyJwk = verificationKey,
+          relationships = listOf(PublicKeyPurpose.AUTHENTICATION),
+        )
       ),
       servicesToAdd = listOf(
         Service(
@@ -155,8 +192,6 @@ class DidIonTest {
           serviceEndpoint = "http://hub.my-personal-server.com",
         )
       ),
-      updatePublicJwk = updateKey,
-      recoveryPublicJwk = recoveryKey
     )
     val did = manager.create(keyManager, opts)
     assertContains(did.uri, "did:ion:")
@@ -183,23 +218,37 @@ class DidIonTest {
 
   @Test
   fun `method name is ion`() {
-    assertEquals("ion", DidIonManager.methodName)
+    assertEquals("ion", DidIon.methodName)
   }
 
   @Test
   fun `create changes the key manager state`() {
     val keyManager = InMemoryKeyManager()
-    val did = DidIonManager {
+    val did = DidIonApi {
       engine = mockEngine()
-    }.create(keyManager)
+    }.create(
+      keyManager, CreateDidIonOptions(
+      verificationMethodsToAdd = listOf(
+        VerificationMethodCreationParams(
+          JWSAlgorithm.ES256K,
+          relationships = listOf(PublicKeyPurpose.AUTHENTICATION, PublicKeyPurpose.ASSERTION_METHOD)
+        ),
+        VerificationMethodCreationParams(
+          JWSAlgorithm.ES256K,
+          relationships = listOf(PublicKeyPurpose.ASSERTION_METHOD)
+        ),
+      )
+    )
+    )
     val metadata = did.creationMetadata!!
 
     assertContains(did.uri, "did:ion:")
     assertContains(metadata.longFormDid, metadata.shortFormDid)
+    assertEquals(2, metadata.keyAliases.verificationKeyAliases.size)
     assertDoesNotThrow {
       keyManager.getPublicKey(metadata.keyAliases.recoveryKeyAlias!!)
       keyManager.getPublicKey(metadata.keyAliases.updateKeyAlias!!)
-      keyManager.getPublicKey(metadata.keyAliases.verificationKeyAlias!!)
+      metadata.keyAliases.verificationKeyAliases.forEach(keyManager::getPublicKey)
     }
   }
 
@@ -213,7 +262,7 @@ class DidIonTest {
 
     class TestCase(
       val services: Iterable<Service> = emptyList(),
-      val publicKeys: Iterable<PublicKey> = emptyList(),
+      val publicKeys: Iterable<VerificationMethodSpec> = emptyList(),
       val expected: String
     )
 
@@ -230,9 +279,8 @@ class DidIonTest {
       ),
       TestCase(
         publicKeys = listOf(
-          PublicKey(
+          JsonWebKey2020VerificationMethod(
             id = "#publicKey1",
-            type = "JsonWebKey2020",
             publicKeyJwk = publicKey,
           )
         ),
@@ -240,15 +288,13 @@ class DidIonTest {
       ),
       TestCase(
         publicKeys = listOf(
-          PublicKey(
+          JsonWebKey2020VerificationMethod(
             id = "publicKey1",
-            type = "JsonWebKey2020",
             publicKeyJwk = publicKey,
           ),
 
-          PublicKey(
+          JsonWebKey2020VerificationMethod(
             id = "publicKey1",
-            type = "JsonWebKey2020",
             publicKeyJwk = publicKey,
           )
         ),
@@ -256,11 +302,10 @@ class DidIonTest {
       ),
       TestCase(
         publicKeys = listOf(
-          PublicKey(
+          JsonWebKey2020VerificationMethod(
             id = "publicKey1",
-            type = "JsonWebKey2020",
             publicKeyJwk = publicKey,
-            purposes = listOf(PublicKeyPurpose.AUTHENTICATION, PublicKeyPurpose.AUTHENTICATION)
+            relationships = listOf(PublicKeyPurpose.AUTHENTICATION, PublicKeyPurpose.AUTHENTICATION)
           )
         ),
         expected = "Public key purpose \"authentication\" already specified.",
@@ -268,13 +313,13 @@ class DidIonTest {
     )
     for (testCase in testCases) {
       val result = assertThrows<IllegalArgumentException> {
-        DidIonManager.update(
+        DidIon.update(
           keyManager,
+          "did:ion:123",
           UpdateDidIonOptions(
-            didString = "did:ion:123",
             updateKeyAlias = updateKeyAlias,
             servicesToAdd = testCase.services,
-            publicKeysToAdd = testCase.publicKeys,
+            verificationMethodsToAdd = testCase.publicKeys,
           )
         )
       }
@@ -285,15 +330,59 @@ class DidIonTest {
   @Test
   fun `update fails when update key is absent`() {
     val result = assertThrows<IllegalArgumentException> {
-      DidIonManager.update(
+      DidIon.update(
         InMemoryKeyManager(),
+        "did:ion:123",
         UpdateDidIonOptions(
-          didString = "did:ion:123",
           updateKeyAlias = "my_fake_key",
         )
       )
     }
     assertEquals("key with alias my_fake_key not found", result.message)
+  }
+
+  @Test
+  fun `create sends the expected operation`() {
+    val mapper = jacksonObjectMapper()
+
+    val verificationMethod1 = publicKey1VerificationMethod(mapper)
+    val service: Service = mapper.readValue(File("src/test/resources/service1.json").readText())
+
+    val keyManager = spy(InMemoryKeyManager())
+
+    val recoveryKey = readKey("src/test/resources/jwkEs256k1Public.json")
+    val recoveryKeyAlias = keyManager.import(recoveryKey)
+
+    val nextUpdateKey = readKey("src/test/resources/jwkEs256k2Public.json")
+    val nextUpdateKeyId = keyManager.import(nextUpdateKey)
+
+    doReturn(nextUpdateKeyId, recoveryKeyAlias).whenever(keyManager).generatePrivateKey(JWSAlgorithm.ES256K)
+
+    val (result, _) = DidIon.createOperation(
+      keyManager,
+      CreateDidIonOptions(
+        verificationMethodsToAdd = listOf(verificationMethod1),
+        servicesToAdd = listOf(service),
+      )
+    )
+
+    assertEquals("create", result.type)
+    assertEquals("EiDKIkwqO69IPG3pOlHkdb86nYt0aNxSHZu2r-bhEznjdA", result.delta.updateCommitment.toBase64Url())
+    assertEquals(1, result.delta.patches.count())
+    assertEquals("EiBfOZdMtU6OBw8Pk879QtZ-2J-9FbbjSZyoaA_bqD4zhA", result.suffixData.recoveryCommitment.toBase64Url())
+    assertEquals("EiCfDWRnYlcD9EGA3d_5Z1AHu-iYqMbJ9nfiqdz5S8VDbg", result.suffixData.deltaHash)
+  }
+
+  private fun publicKey1VerificationMethod(mapper: ObjectMapper): EcdsaSecp256k1VerificationKey2019VerificationMethod {
+    val publicKey1: PublicKey = mapper.readValue(
+      File("src/test/resources/publicKeyModel1.json").readText()
+    )
+    return EcdsaSecp256k1VerificationKey2019VerificationMethod(
+      id = publicKey1.id,
+      controller = publicKey1.controller,
+      publicKeyJwk = publicKey1.publicKeyJwk,
+      relationships = publicKey1.purposes,
+    )
   }
 
   @Test
@@ -310,9 +399,7 @@ class DidIonTest {
     doReturn(nextUpdateKeyId).whenever(keyManager).generatePrivateKey(JWSAlgorithm.ES256K)
 
     val service: Service = mapper.readValue(File("src/test/resources/service1.json").readText())
-    val publicKey1: PublicKey = mapper.readValue(
-      File("src/test/resources/publicKeyModel1.json").readText()
-    )
+    val publicKey1 = publicKey1VerificationMethod(mapper)
 
     val validatinMockEngine = MockEngine { request ->
       val updateOp: SidetreeUpdateOperation = mapper.readValue((request.body as OutputStreamContent).toByteArray())
@@ -334,21 +421,21 @@ class DidIonTest {
         status = HttpStatusCode.OK,
       )
     }
-    val updateMetadata = DidIonManager {
+    val updateMetadata = DidIonApi {
       engine = validatinMockEngine
     }.update(
       keyManager,
+      "did:ion:EiDyOQbbZAa3aiRzeCkV7LOx3SERjjH93EXoIM3UoN4oWg",
       UpdateDidIonOptions(
-        didString = "did:ion:EiDyOQbbZAa3aiRzeCkV7LOx3SERjjH93EXoIM3UoN4oWg",
         updateKeyAlias = updateKeyId,
         servicesToAdd = listOf(service),
         idsOfServicesToRemove = setOf("someId1"),
-        publicKeysToAdd = listOf(publicKey1),
+        verificationMethodsToAdd = listOf(publicKey1),
         idsOfPublicKeysToRemove = setOf("someId2"),
       ),
     )
 
-    assertTrue(updateMetadata.updateKeyAlias.isNotEmpty())
+    assertFalse(updateMetadata.keyAliases.updateKeyAlias.isNullOrEmpty())
     assertEquals("""{"hello":"world"}""", updateMetadata.operationsResponseBody)
   }
 
@@ -356,9 +443,7 @@ class DidIonTest {
   fun `recover operation is the expected one`() {
     val mapper = jacksonObjectMapper()
 
-    val publicKey1: PublicKey = mapper.readValue(
-      File("src/test/resources/publicKeyModel1.json").readText()
-    )
+    val publicKey1 = publicKey1VerificationMethod(mapper)
     val service: Service = mapper.readValue(File("src/test/resources/service1.json").readText())
 
     val keyManager = spy(InMemoryKeyManager())
@@ -373,12 +458,12 @@ class DidIonTest {
 
     doReturn(nextRecoveryKeyId, nextUpdateKeyId).whenever(keyManager).generatePrivateKey(JWSAlgorithm.ES256K)
 
-    val (recoverOperation, keyAliases) = DidIonManager.createRecoverOperation(
+    val (recoverOperation, keyAliases) = DidIon.createRecoverOperation(
       keyManager,
+      "did:ion:EiDyOQbbZAa3aiRzeCkV7LOx3SERjjH93EXoIM3UoN4oWg",
       RecoverDidIonOptions(
-        did = "did:ion:EiDyOQbbZAa3aiRzeCkV7LOx3SERjjH93EXoIM3UoN4oWg",
         recoveryKeyAlias = recoveryKeyAlias,
-        verificationPublicKey = publicKey1,
+        verificationMethodsToAdd = listOf(publicKey1),
         servicesToAdd = listOf(service),
       )
     )
@@ -405,29 +490,28 @@ class DidIonTest {
 
   @Test
   fun `recover creates keys in key manager`() {
-    val ionManager = DidIonManager {
+    val ionManager = DidIonApi {
       engine = mockEngine()
     }
     val keyManager = spy(InMemoryKeyManager())
     val did = ionManager.create(keyManager)
     assertNotNull(did.creationMetadata)
-    val recoveryKeyAlias = did.creationMetadata!!.keyAliases.verificationKeyAlias
+    val recoveryKeyAlias = did.creationMetadata!!.keyAliases.recoveryKeyAlias
 
     assertNotNull(recoveryKeyAlias)
     // Imagine that your update key was compromised, so you need to recover your DID.
     val opts = RecoverDidIonOptions(
-      did = did.uri,
       recoveryKeyAlias = recoveryKeyAlias,
     )
-    val recoverResult = ionManager.recover(keyManager, opts)
+    val recoverResult = ionManager.recover(keyManager, did.uri, opts)
     assertNotNull(recoverResult.keyAliases.updateKeyAlias)
     assertNotNull(recoverResult.keyAliases.recoveryKeyAlias)
-    assertNotNull(recoverResult.keyAliases.verificationKeyAlias)
+    assertNotNull(recoverResult.keyAliases.verificationKeyAliases)
 
     assertDoesNotThrow {
       keyManager.getPublicKey(recoverResult.keyAliases.updateKeyAlias!!)
       keyManager.getPublicKey(recoverResult.keyAliases.recoveryKeyAlias!!)
-      keyManager.getPublicKey(recoverResult.keyAliases.verificationKeyAlias!!)
+      recoverResult.keyAliases.verificationKeyAliases.forEach(keyManager::getPublicKey)
     }
     assertEquals("{}", recoverResult.operationsResponse)
     assertNotEquals(recoveryKeyAlias, recoverResult.keyAliases.recoveryKeyAlias)
@@ -439,12 +523,12 @@ class DidIonTest {
     val recoveryKey = readKey("src/test/resources/jwkEs256k1Private.json")
     val recoveryKeyAlias = keyManager.import(recoveryKey)
 
-    val deactivateResult = DidIonManager {
+    val deactivateResult = DidIonApi {
       engine = mockEngine()
     }.deactivate(
       keyManager,
+      "did:ion:EiDyOQbbZAa3aiRzeCkV7LOx3SERjjH93EXoIM3UoN4oWg",
       DeactivateDidIonOptions(
-        did = "did:ion:EiDyOQbbZAa3aiRzeCkV7LOx3SERjjH93EXoIM3UoN4oWg",
         recoveryKeyAlias = recoveryKeyAlias,
       )
     )
@@ -468,7 +552,7 @@ class DidIonTest {
   @Test
   fun `bad request throws exception`() {
     val exception = assertThrows<InvalidStatusException> {
-      DidIonManager {
+      DidIonApi {
         engine = badRequestMockEngine()
       }.resolve("did:ion:foobar")
     }

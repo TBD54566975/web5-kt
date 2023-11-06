@@ -8,7 +8,7 @@ import io.ktor.http.headersOf
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.assertThrows
 import web5.sdk.crypto.InMemoryKeyManager
-import web5.sdk.dids.DidKey
+import web5.sdk.dids.methods.key.DidKey
 import java.io.File
 import java.net.URI
 import kotlin.test.Test
@@ -138,7 +138,8 @@ class StatusListCredentialTest {
       "revocation-id",
       issuerDid.uri,
       StatusPurpose.REVOCATION,
-      listOf(vc1, vc2))
+      listOf(vc1, vc2)
+    )
 
     assertNotNull(statusListCredential)
     assertTrue(
@@ -157,7 +158,7 @@ class StatusListCredentialTest {
         )
       )
     )
-    assertEquals(statusListCredential.subject,"revocation-id")
+    assertEquals(statusListCredential.subject, "revocation-id")
     assertEquals(statusListCredential.vcDataModel.credentialSubject.type, "StatusList2021")
     assertEquals(
       "revocation",
@@ -213,7 +214,8 @@ class StatusListCredentialTest {
         "revocation-id",
         issuerDid.uri,
         StatusPurpose.REVOCATION,
-        listOf(vc1, vc2))
+        listOf(vc1, vc2)
+      )
     }
 
     assertTrue(
@@ -248,7 +250,8 @@ class StatusListCredentialTest {
         "revocation-id",
         issuerDid.uri,
         StatusPurpose.REVOCATION,
-        listOf(vc1))
+        listOf(vc1)
+      )
     }
 
     assertTrue(
@@ -283,7 +286,8 @@ class StatusListCredentialTest {
         "revocation-id",
         issuerDid.uri,
         StatusPurpose.REVOCATION,
-        listOf(vc1))
+        listOf(vc1)
+      )
     }
 
     assertTrue(
