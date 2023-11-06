@@ -73,8 +73,8 @@ class DidDhtTest {
         .build()
 
       val opts: CreateDidDhtOptions = CreateDidDhtOptions(
-        verificationMethodsToAdd = verificationMethodsToAdd,
-        servicesToAdd = listOf(serviceToAdd)
+        verificationMethods = verificationMethodsToAdd,
+        services = listOf(serviceToAdd)
       )
       val did = DidDht.create(manager, opts)
 
@@ -148,8 +148,8 @@ class DidDhtTest {
         .build()
 
       val opts: CreateDidDhtOptions = CreateDidDhtOptions(
-        verificationMethodsToAdd = verificationMethodsToAdd,
-        servicesToAdd = listOf(serviceToAdd)
+        verificationMethods = verificationMethodsToAdd,
+        services = listOf(serviceToAdd)
       )
       val did = DidDht.create(manager, opts)
 

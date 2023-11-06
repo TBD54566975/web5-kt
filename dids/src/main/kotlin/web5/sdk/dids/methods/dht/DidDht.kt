@@ -31,22 +31,22 @@ import java.net.URI
  * @property engine The HTTP client engine to use for requests.
  */
 public class DidDhtConfiguration internal constructor(
-  // TODO(gabe) update this with our own node when it's ready
-  public var didDhtGateway: String = "https://router.nuh.dev:6881",
-  public var engine: HttpClientEngine? = null,
+  private var didDhtGateway: String = "https://diddht.tbddev.org",
+  private var engine: HttpClientEngine? = null,
 )
 
 /**
  * Specifies options for creating a new "did:dht" Decentralized Identifier (DID).
- * @property verificationMethodsToAdd A list of [JWK]s to add to the DID Document mapped to their purposes
+ * @property verificationMethods A list of [JWK]s to add to the DID Document mapped to their purposes
  * as verification methods.
- * @property servicesToAdd A list of [Service]s to add to the DID Document.
+ * @property services A list of [Service]s to add to the DID Document.
  * @property publish Whether to publish the DID Document to the DHT after creation.
  */
 public class CreateDidDhtOptions(
-    public val verificationMethodsToAdd: Iterable<Pair<JWK, Array<PublicKeyPurpose>>>? = null,
-    public val servicesToAdd: Iterable<Service>? = null,
-    public val publish: Boolean? = false,
+  public val verificationMethods: Iterable<Pair<JWK, Array<PublicKeyPurpose>>>? = null,
+  public val services: Iterable<Service>? = null,
+  // TODO(gabe): flip this to true when publishing is implemented
+  public val publish: Boolean? = false,
 ) : CreateDidOptions
 
 /**
@@ -130,7 +130,7 @@ public class DidDht(uri: String, keyManager: KeyManager, public val didDocument:
       }
 
       // map to the DID object model's verification methods
-      val verificationMethods = (opts.verificationMethodsToAdd?.map { (key, purposes) ->
+      val verificationMethods = (opts.verificationMethods?.map { (key, purposes) ->
         VerificationMethod.builder()
           .id(URI.create("$id#${key.keyID}")).type("JsonWebKey2020")
           .controller(URI.create(id))
@@ -143,13 +143,13 @@ public class DidDht(uri: String, keyManager: KeyManager, public val didDocument:
             }
           }
       } ?: emptyList()) + identityVerificationMethod
-      opts.servicesToAdd?.forEach { service ->
+      opts.services?.forEach { service ->
         requireNotNull(service.id) { "Service id cannot be null" }
         requireNotNull(service.type) { "Service type cannot be null" }
         requireNotNull(service.serviceEndpoint) { "Service serviceEndpoint cannot be null" }
       }
       // map to the DID object model's services
-      val services = opts.servicesToAdd?.map { service ->
+      val services = opts.services?.map { service ->
         Service.builder()
           .id(URI.create("$id#${service.id}"))
           .type(service.type)
