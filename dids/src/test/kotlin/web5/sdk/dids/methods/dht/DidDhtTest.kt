@@ -104,7 +104,7 @@ class DidDhtTest {
       val packet = DidDht.toDnsPacket(did.didDocument!!)
       assertNotNull(packet)
 
-      val didFromPacket = DidDht.fromDNSPacket(did.didDocument!!.id.toString(), packet)
+      val didFromPacket = DidDht.fromDnsPacket(did.didDocument!!.id.toString(), packet)
       assertNotNull(didFromPacket)
       assertNotNull(didFromPacket.first)
 
@@ -122,7 +122,7 @@ class DidDhtTest {
       val packet = DidDht.toDnsPacket(did.didDocument!!, types)
       assertNotNull(packet)
 
-      val didFromPacket = DidDht.fromDNSPacket(did.didDocument!!.id.toString(), packet)
+      val didFromPacket = DidDht.fromDnsPacket(did.didDocument!!.id.toString(), packet)
       assertNotNull(didFromPacket)
       assertNotNull(didFromPacket.first)
       assertNotNull(didFromPacket.second)
@@ -158,7 +158,7 @@ class DidDhtTest {
       val packet = DidDht.toDnsPacket(did.didDocument!!)
       assertNotNull(packet)
 
-      val didFromPacket = DidDht.fromDNSPacket(did.didDocument!!.id.toString(), packet)
+      val didFromPacket = DidDht.fromDnsPacket(did.didDocument!!.id.toString(), packet)
       assertNotNull(didFromPacket)
       assertNotNull(didFromPacket.first)
 

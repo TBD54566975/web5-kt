@@ -330,7 +330,7 @@ public class DidDht(uri: String, keyManager: KeyManager, public val didDocument:
      * @return A [Pair] containing the [DIDDocument] and a list of types.
      * @throws IllegalArgumentException if the provided DID does not conform to the "did:dht" method.
      */
-    public fun fromDNSPacket(did: String, msg: Message): Pair<DIDDocument, List<Int>> {
+    public fun fromDnsPacket(did: String, msg: Message): Pair<DIDDocument, List<Int>> {
       val doc = DIDDocument.builder().id(URI.create(did))
 
       val verificationMethods = mutableListOf<VerificationMethod>()
