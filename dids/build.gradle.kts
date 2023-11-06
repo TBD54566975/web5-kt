@@ -38,4 +38,5 @@ dependencies {
   testImplementation("org.mockito.kotlin:mockito-kotlin:5.1.0")
   testImplementation("commons-codec:commons-codec:1.16.0")
 
+  implementation("dnsjava:dnsjava:3.5.2")
 }

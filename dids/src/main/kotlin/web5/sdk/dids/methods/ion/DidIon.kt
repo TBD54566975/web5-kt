@@ -33,8 +33,8 @@ import web5.sdk.dids.CreateDidOptions
 import web5.sdk.dids.CreationMetadata
 import web5.sdk.dids.Did
 import web5.sdk.dids.DidMethod
-import web5.sdk.dids.DidResolutionMetadata
 import web5.sdk.dids.DidResolutionResult
+import web5.sdk.dids.PublicKeyPurpose
 import web5.sdk.dids.ResolveDidOptions
 import web5.sdk.dids.methods.ion.models.AddPublicKeysAction
 import web5.sdk.dids.methods.ion.models.AddServicesAction
@@ -46,7 +46,6 @@ import web5.sdk.dids.methods.ion.models.InitialState
 import web5.sdk.dids.methods.ion.models.OperationSuffixDataObject
 import web5.sdk.dids.methods.ion.models.PatchAction
 import web5.sdk.dids.methods.ion.models.PublicKey
-import web5.sdk.dids.methods.ion.models.PublicKeyPurpose
 import web5.sdk.dids.methods.ion.models.RecoveryUpdateSignedData
 import web5.sdk.dids.methods.ion.models.RemovePublicKeysAction
 import web5.sdk.dids.methods.ion.models.RemoveServicesAction
