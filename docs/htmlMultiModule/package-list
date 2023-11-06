@@ -9,4 +9,6 @@ module:crypto
 web5.sdk.crypto
 module:dids
 web5.sdk.dids
-web5.sdk.dids.ion.model
+web5.sdk.dids.methods.ion
+web5.sdk.dids.methods.ion.models
+web5.sdk.dids.methods.key
