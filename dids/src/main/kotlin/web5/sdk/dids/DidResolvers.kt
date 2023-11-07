@@ -3,6 +3,7 @@ package web5.sdk.dids
 import foundation.identity.did.DID
 import web5.sdk.dids.methods.ion.DidIon
 import web5.sdk.dids.methods.key.DidKey
+import web5.sdk.dids.methods.dht.DidDht
 
 /**
  * Type alias for a DID resolver function.
@@ -22,7 +23,8 @@ public object DidResolvers {
   // A mutable map to store method-specific DID resolvers.
   private val methodResolvers = mutableMapOf<String, DidResolver>(
     DidKey.methodName to DidKey.Companion::resolve,
-    DidIon.methodName to DidIon.Default::resolve
+    DidIon.methodName to DidIon.Default::resolve,
+    DidDht.methodName to DidDht.Default::resolve
   )
 
   /**

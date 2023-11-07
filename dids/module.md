@@ -4,7 +4,11 @@
 
 # Examples
 
-## Creation
+## Create & Resolve
+
+### DID Key
+
+**Create**
 
 ```kt
 package example
@@ -14,6 +18,58 @@ import web5.sdk.dids.methods.key.DidKey
 
 val keyManager = InMemoryKeyManager()
 val did = DidKey.create(keyManager)
+```
+
+**Resolve**
+
+```kt
+package example
+
+import web5.sdk.dids.DidResolvers
+
+// did is the same as the value from the example above
+val didResolutionResult = DidResolvers.resolve(did.uri)
+```
+
+### DID DHT
+
+**Create**
+
+```kt
+package example
+
+import web5.sdk.crypto.InMemoryKeyManager
+import web5.sdk.dids.methods.dht.DidDht
+import web5.sdk.dids.methods.dht.CreateDidDhtOptions
+import foundation.identity.did.Service
+
+val keyManager = InMemoryKeyManager()
+
+// Add a service to the DID Document
+val service = Service.builder()
+  .id(URI("test-service"))
+  .type("HubService")
+  .serviceEndpoint("https://example.com/service)")
+  .build()
+
+val opts = CreateDidDhtOptions(
+  services = listOf(service),
+  // Automatically publishes to the DHT
+  publish = true
+)
+
+val did = DidDht.create(keyManager, opts)
+```
+
+**Resolve**
+
+```kt
+package example
+
+import web5.sdk.dids.DidResolvers
+
+// did is the same as the value from the example above
+val didResolutionResult = DidResolvers.resolve(did.uri)
 ```
 
 ## Export / Import
