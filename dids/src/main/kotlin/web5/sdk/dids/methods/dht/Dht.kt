@@ -90,7 +90,7 @@ public class Dht(
 
     val response = runBlocking { client.get("${gateway}/${id}") }
     if (!response.status.isSuccess()) {
-      throw Exception("Error getting message from DHT")
+      throw RuntimeException("Error getting message from DHT")
     }
 
     val responseBytes = runBlocking { response.readBytes() }
@@ -196,7 +196,7 @@ public class Dht(
       val vEncoded = out.toByteArray()
 
       require(vEncoded.size <= 1000) {
-        "Value must be <= 1000 bytes commpressed"
+        "Value must be <= 1000 bytes compressed, current bytes {${vEncoded.size}}"
       }
 
       // encode according to BEP44
