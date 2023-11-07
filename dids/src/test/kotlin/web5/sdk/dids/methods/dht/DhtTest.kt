@@ -84,7 +84,7 @@ class DhtTest {
       val bep44Message = Dht.createBep44PutRequest(manager, kid, message)
       assertNotNull(bep44Message)
 
-      val parsedMessage = Dht.parsePkarrGetResponse(bep44Message)
+      val parsedMessage = Dht.parseBep44GetResponse(bep44Message)
       assertNotNull(parsedMessage)
 
       assertEquals(message.toString(), parsedMessage.toString())

@@ -9,7 +9,6 @@ import foundation.identity.did.DIDDocument
 import foundation.identity.did.Service
 import foundation.identity.did.VerificationMethod
 import foundation.identity.did.parser.ParserException
-import io.ktor.client.HttpClient
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.cio.CIO
 import org.xbill.DNS.DClass
@@ -24,8 +23,7 @@ import web5.sdk.crypto.Ed25519
 import web5.sdk.crypto.KeyManager
 import web5.sdk.crypto.Secp256k1
 import web5.sdk.dids.*
-import web5.sdk.dids.methods.ion.DidIonApi
-import web5.sdk.dids.methods.ion.DidIonConfiguration
+import web5.sdk.dids.methods.ion.models.Document
 import java.net.URI
 
 /**
@@ -35,7 +33,7 @@ import java.net.URI
  * @property engine The engine to use. When absent, a new one will be created from the [CIO] factory.
  */
 public class DidDhtConfiguration internal constructor(
-  public val gateway: String = "https://ion.tbddev.org",
+  public val gateway: String = "https://diddht.tbddev.org",
   public val engine: HttpClientEngine = CIO.create {},
 )
 
@@ -63,6 +61,9 @@ public class CreateDidDhtOptions(
   public val publish: Boolean = true,
 ) : CreateDidOptions
 
+/**
+ * Base class for managing DID DHT operations. Uses the given [configuration].
+ */
 public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<DidDht, CreateDidDhtOptions> {
 
   private val engine: HttpClientEngine = configuration.engine
@@ -158,6 +159,11 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
         .capabilityInvocationVerificationMethods(relationshipsMap[PublicKeyPurpose.CAPABILITY_INVOCATION])
         .build()
 
+    // publish to DHT if requested
+    if (opts.publish) {
+      publish(keyManager, didDocument)
+    }
+
     return DidDht(id, keyManager, didDocument, this)
   }
 
@@ -170,12 +176,35 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
    * parsed, and used to reconstruct the DID Document.
    *
    * @param did The "did:dht" DID that needs to be resolved.
-   * @return A [DidResolutionResult] instance containing the DID Document and related context.
-   *
+   * @return A [DidResolutionResult] instance containing the DID Document and related context, including types
+   * as part of the [DidDocumentMetadata], if available.
    * @throws IllegalArgumentException if the provided DID does not conform to the "did:dht" method.
    */
   override fun resolve(did: String, options: ResolveDidOptions?): DidResolutionResult {
-    TODO("Not yet implemented")
+    validate(did)
+    val getId = DidDht.suffix(did)
+    val bep44Message = dht.pkarrGet(getId)
+    val dnsPacket = Dht.parseBep44GetResponse(bep44Message)
+    fromDnsPacket(did, dnsPacket).let { (didDocument, types) ->
+      return DidResolutionResult(didDocument = didDocument, didDocumentMetadata = DidDocumentMetadata(types = types))
+    }
+  }
+
+  /**
+   * Publishes a [DIDDocument] to the DHT.
+   *
+   * @param manager The [KeyManager] instance to use for signing the message.
+   * @param didDocument The [DIDDocument] to publish.
+   * @param types A list of types to include in the packet.
+   * @throws IllegalArgumentException if the provided DID does not conform to the "did:dht" method.
+   * @throws Exception if the message is not successfully put to the DHT.
+   */
+  public fun publish(manager: KeyManager, didDocument: DIDDocument, types: List<Int>? = null) {
+    validate(didDocument.id.toString())
+    val publishId = DidDht.suffix(didDocument.id.toString())
+    val dnsPacket = toDnsPacket(didDocument, types)
+    val bep44Message = Dht.createBep44PutRequest(manager, getIdentityKid(didDocument), dnsPacket)
+    dht.pkarrPut(publishId, bep44Message)
   }
 
   /**
@@ -186,6 +215,20 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
    */
   public fun suffix(id: String): String {
     return id.split(":").last()
+  }
+
+  /**
+   * Returns the kid of the identity key for a did:dht DID Document.
+   *
+   * @param didDocument The DID Document to get the kid of.
+   * @return The kid of the identity key.
+   * @throws IllegalArgumentException if the provided DID does not conform to the "did:dht" method.
+   */
+  public fun getIdentityKid(didDocument: DIDDocument): String {
+    validate(didDocument.id.toString())
+
+    val publicKeyJwk = JWK.parse(didDocument.verificationMethods?.first()?.publicKeyJwk)
+    return publicKeyJwk.keyID
   }
 
   /**
@@ -465,6 +508,13 @@ public class DidDht(
   }
 
   /**
+   * Calls [DidDhtApi.publish] with the provided [keyManager] and [didDocument].
+   */
+  public fun publish() {
+    didDhtApi.publish(keyManager, didDocument!!)
+  }
+
+  /**
    * Calls [DidDht.suffix] with the provided [id] and returns the result.
    */
   public fun suffix(id: String = this.uri): String {
@@ -495,6 +545,5 @@ public class DidDht(
   /**
    * Default companion object for creating a [DidDhtApi] with a default configuration.
    */
-
   public companion object Default : DidDhtApi(DidDhtConfiguration())
 }

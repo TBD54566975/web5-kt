@@ -31,18 +31,18 @@ class DidDhtTest {
       assertNotNull(identifier)
 
       assertDoesNotThrow {
-          DidDht.validate(identifier)
+        DidDht.validate(identifier)
       }
     }
   }
 
   @Nested
-  inner class CreateTest {
+  inner class DidDhtTest {
 
     @Test
     fun `create with no options`() {
       val manager = InMemoryKeyManager()
-      val did = DidDht.create(manager)
+      val did = DidDht.create(manager, CreateDidDhtOptions(publish = false))
 
       assertNotNull(did)
       assertNotNull(did.didDocument)
@@ -72,9 +72,10 @@ class DidDhtTest {
         .serviceEndpoint("https://example.com/service)")
         .build()
 
-      val opts: CreateDidDhtOptions = CreateDidDhtOptions(
+      val opts = CreateDidDhtOptions(
         verificationMethods = verificationMethodsToAdd,
-        services = listOf(serviceToAdd)
+        services = listOf(serviceToAdd),
+        publish = false
       )
       val did = DidDht.create(manager, opts)
 
@@ -90,6 +91,30 @@ class DidDhtTest {
       assertEquals(1, did.didDocument!!.services.size)
       assertContains(did.didDocument!!.services[0].id.toString(), "test-service")
     }
+
+    @Test
+    fun `create with publishing and resolution`() {
+      val manager = InMemoryKeyManager()
+      val did = DidDht.create(manager, CreateDidDhtOptions(publish = true))
+
+      assertNotNull(did)
+      assertNotNull(did.didDocument)
+      assertEquals(1, did.didDocument!!.verificationMethods.size)
+      assertContains(did.didDocument!!.verificationMethods[0].id.toString(), "#0")
+      assertEquals(1, did.didDocument!!.assertionMethodVerificationMethods.size)
+      assertEquals(1, did.didDocument!!.authenticationVerificationMethods.size)
+      assertEquals(1, did.didDocument!!.capabilityDelegationVerificationMethods.size)
+      assertEquals(1, did.didDocument!!.capabilityInvocationVerificationMethods.size)
+      assertNull(did.didDocument!!.keyAgreementVerificationMethods)
+      assertNull(did.didDocument!!.services)
+
+      // wait for propagation
+      Thread.sleep(10000)
+
+      val resolved = DidDht.resolve(did.didDocument!!.id.toString())
+      assertNotNull(resolved)
+      assertEquals(did.didDocument.toString(), resolved.didDocument.toString())
+    }
   }
 
   @Nested
@@ -97,7 +122,7 @@ class DidDhtTest {
     @Test
     fun `to and from DNS packet - simple DID`() {
       val manager = InMemoryKeyManager()
-      val did = DidDht.create(manager)
+      val did = DidDht.create(manager, CreateDidDhtOptions(publish = false))
 
       require(did.didDocument != null)
 
@@ -114,7 +139,7 @@ class DidDhtTest {
     @Test
     fun `to and from DNS packet - DID with types`() {
       val manager = InMemoryKeyManager()
-      val did = DidDht.create(manager)
+      val did = DidDht.create(manager, CreateDidDhtOptions(publish = false))
 
       require(did.didDocument != null)
 
@@ -147,9 +172,10 @@ class DidDhtTest {
         .serviceEndpoint("https://example.com/service)")
         .build()
 
-      val opts: CreateDidDhtOptions = CreateDidDhtOptions(
+      val opts = CreateDidDhtOptions(
         verificationMethods = verificationMethodsToAdd,
-        services = listOf(serviceToAdd)
+        services = listOf(serviceToAdd),
+        publish = false
       )
       val did = DidDht.create(manager, opts)
 

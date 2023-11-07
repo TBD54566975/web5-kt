@@ -154,7 +154,7 @@ public class Dht(
      * @throws IllegalArgumentException if the message is malformed.
      * @throws SignatureException if the signature is invalid.
      */
-    public fun parsePkarrGetResponse(message: Bep44Message): Message {
+    public fun parseBep44GetResponse(message: Bep44Message): Message {
       require(message.v.isNotEmpty() && message.k.size == 32 && message.sig.size == 64) {
         "Malformed Bep44Message"
       }
