@@ -64,7 +64,7 @@ public class Dht(private val gateway: String = "https://diddht.tbddev.org") {
     }
 
     if (!response.status.isSuccess()) {
-      val err = runBlocking{response.bodyAsText()}
+      val err = runBlocking { response.bodyAsText() }
       throw Exception("Error putting message to DHT: $err")
     }
   }
@@ -188,8 +188,17 @@ public class Dht(private val gateway: String = "https://diddht.tbddev.org") {
         "Must supply an Ed25519 key"
       }
 
-      // encode v using bencode according to the BEP44 spec
-      val bytesToSign = bufferToSign(seq, v)
+      // encode v using bencode
+      val out = ByteArrayOutputStream()
+      BEncoder.bencode(v, out)
+      val vEncoded = out.toByteArray()
+
+      require(vEncoded.size <= 1000) {
+        "Value must be <= 1000 bytes commpressed"
+      }
+
+      // encode according to BEP44
+      val bytesToSign = "3:seqi${seq}e1:v".toByteArray() + vEncoded
 
       // sign and return the BEP44 message
       manager.sign(keyAlias, bytesToSign).let { signature ->
@@ -215,44 +224,24 @@ public class Dht(private val gateway: String = "https://diddht.tbddev.org") {
         "Malformed Bep44Message"
       }
 
-      // decode v using bencode
-      bufferToSign(message.seq, message.v).let { bytesToVerify ->
-        // create a JWK representation of the public key
-        val ed25519PublicKey = Ed25519.bytesToPublicKey(message.k)
-
-        // verify the signature
-        try {
-          Ed25519.verify(ed25519PublicKey, bytesToVerify, message.sig)
-        } catch (e: Exception) {
-          return false
-        }
-        return true
-      }
-    }
-
-    /**
-     * Creates a buffer to sign according to the BEP44 Signature Verification specification.
-     * https://www.bittorrent.org/beps/bep_0044.html
-     *
-     * @param seq The sequence number of the message.
-     * @param v The value to be bencoded and then sign.
-     * @return A buffer to sign [ByteArray].
-     * @throws IllegalArgumentException if the value to sign is empty.
-     * @throws IllegalArgumentException if the length of the compressed v value is > 1000 bytes.
-     */
-    private fun bufferToSign(seq: Long, v: ByteArray): ByteArray {
+      // encode v using bencode
       val out = ByteArrayOutputStream()
-      BEncoder.bencode(v, out)
-      val vEncoded = out.toString()
+      BEncoder.bencode(message.v, out)
+      val vEncoded = out.toByteArray()
 
-      require(vEncoded.toByteArray().size <= 1000) {
-        "Value must be <= 1000 bytes commpressed"
+      // prepare buffer and verify
+      val bytesToVerify = "3:seqi${message.seq}e1:v".toByteArray() + vEncoded
+
+      // create a JWK representation of the public key
+      val ed25519PublicKey = Ed25519.bytesToPublicKey(message.k)
+
+      // verify the signature
+      try {
+        Ed25519.verify(ed25519PublicKey, bytesToVerify, message.sig)
+      } catch (e: Exception) {
+        return false
       }
-
-      // encode according to BEP44 Signature Verification
-      val bufferToSign = ByteArrayOutputStream()
-      bufferToSign.write("3:seqi${seq}e1:v${vEncoded}".toByteArray())
-      return bufferToSign.toByteArray()
+      return true
     }
   }
 }

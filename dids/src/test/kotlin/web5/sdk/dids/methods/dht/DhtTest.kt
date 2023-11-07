@@ -54,7 +54,14 @@ class DhtTest {
       val bep44SignedMessage = Dht.signBep44Message(manager, keyAlias, seq, v)
       assertNotNull(bep44SignedMessage)
 
-      val verified = Dht.verifyBep44Message(bep44SignedMessage)
+      val toVerify = Bep44Message(
+        v = v,
+        sig = bep44SignedMessage.sig,
+        k = bep44SignedMessage.k,
+        seq = bep44SignedMessage.seq
+      )
+
+      val verified = Dht.verifyBep44Message(toVerify)
       assertEquals(true, verified)
     }
   }
@@ -102,18 +109,11 @@ class DhtTest {
 
       assertDoesNotThrow { dht.pkarrPut(did.suffix(), bep44Message) }
 
+      // sleep 10 seconds to wait for propagation
+      Thread.sleep(10000)
+
       val retrievedMessage = assertDoesNotThrow { dht.pkarrGet(did.suffix()) }
       assertNotNull(retrievedMessage)
-    }
-
-    @Test
-    fun `get`() {
-      val dht = Dht()
-      val retrievedMessage = assertDoesNotThrow { dht.pkarrGet("yj47pezutnpw9pyudeeai8cx8z8d6wg35genrkoqf9k3rmfzy58o") }
-      assertNotNull(retrievedMessage)
-
-      val parsedMessage = Dht.parsePkarrGetResponse(retrievedMessage)
-      println(parsedMessage.toString())
     }
   }
 }
