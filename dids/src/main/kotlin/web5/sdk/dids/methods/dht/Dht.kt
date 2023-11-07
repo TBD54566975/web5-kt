@@ -3,6 +3,7 @@ package web5.sdk.dids.methods.dht
 import com.nimbusds.jose.jwk.JWK
 import com.turn.ttorrent.bcodec.BEncoder
 import io.ktor.client.HttpClient
+import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.request.get
 import io.ktor.client.request.put
@@ -26,9 +27,12 @@ import java.security.SignatureException
 /**
  * A utility class for working with the BEP44 DHT specification and Pkarr relays.
  */
-public class Dht(private val gateway: String = "https://diddht.tbddev.org") {
+public class Dht(
+  private val gateway: String = "https://diddht.tbddev.org",
+  engine: HttpClientEngine = CIO.create()
+) {
 
-  private val client = HttpClient(CIO.create())
+  private val client = HttpClient(engine)
 
   /**
    * Puts a message to the DHT according to the Pkarr relay specification
