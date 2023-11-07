@@ -64,11 +64,28 @@ public class Pkarr {
       }
     }
 
+    /**
+     * Verifies a message according to the BEP44 Signature Verification specification.
+     * https://www.bittorrent.org/beps/bep_0044.html
+     *
+     * @param message The message to verify.
+     * @return True if the message is verified, false otherwise.
+     * @throws IllegalArgumentException if the Bep44Message is malformed.
+     */
     public fun verifyBep44Message(message: Bep44Message): Boolean {
+      require(message.v.isNotEmpty() && message.k.size == 32 && message.sig.size == 64) {
+        "Malformed Bep44Message"
+      }
+
+      // encode v using bencode
+      val out = ByteArrayOutputStream()
+      BEncoder.bencode(message.v, out)
+      val vEncoded = out.toString()
+
       // encode the message according to BEP44 Signature Verification
       val bufferToVerify = ByteArrayOutputStream()
       bufferToVerify.write("3:seqi${message.seq}e1:v".toByteArray())
-      bufferToVerify.write(message.v)
+      bufferToVerify.write(vEncoded.toByteArray())
       val bytesToVerify = bufferToVerify.toByteArray()
 
       // create a JWK representation of the public key
