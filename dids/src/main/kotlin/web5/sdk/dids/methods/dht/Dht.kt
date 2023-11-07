@@ -2,14 +2,104 @@ package web5.sdk.dids.methods.dht
 
 import com.nimbusds.jose.jwk.JWK
 import com.turn.ttorrent.bcodec.BEncoder
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.cio.CIO
+import io.ktor.client.request.get
+import io.ktor.client.request.put
+import io.ktor.client.request.setBody
+import io.ktor.client.statement.bodyAsText
+import io.ktor.client.statement.readBytes
+import io.ktor.http.ContentType
+import io.ktor.http.contentType
+import io.ktor.http.isSuccess
+import kotlinx.coroutines.runBlocking
 import org.xbill.DNS.DNSInput
 import org.xbill.DNS.Message
+import web5.sdk.common.ZBase32
 import web5.sdk.crypto.Ed25519
 import web5.sdk.crypto.KeyManager
 import java.io.ByteArrayOutputStream
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 import java.security.SignatureException
 
-public class Dht {
+/**
+ * A utility class for working with the BEP44 DHT specification and Pkarr relays.
+ */
+public class Dht(private val gateway: String = "https://diddht.tbddev.org") {
+
+  private val client = HttpClient(CIO.create())
+
+  /**
+   * Puts a message to the DHT according to the Pkarr relay specification
+   * https://github.com/Nuhvi/pkarr/blob/main/design/relays.md#put
+   *
+   * @param id The z-base-32 encoded identifier of the message to publish (e.g. a did:dht suffix value) [String].
+   * @param message The message to publish (a DNS packet) [Message].
+   * @throws IllegalArgumentException if the identifier is not a z-base-32 encoded Ed25519 public key.
+   * @throws IllegalArgumentException if the message is not fully formed.
+   * @throws Exception if the message is not successfully put to the DHT.
+   */
+  public fun pkarrPut(id: String, message: Bep44Message) {
+    require(ZBase32.decode(id).size == 32) {
+      "Identifier must be a z-base-32 encoded Ed25519 public key"
+    }
+    require(message.v.isNotEmpty() && message.sig.isNotEmpty()) {
+      "Message must be fully formed"
+    }
+
+    // construct a body of the form:
+    // 64 bytes sig : 8 bytes u64 big-endian seq : 0-1000 bytes of v.
+    val seqBuffer = ByteBuffer.allocate(Long.SIZE_BYTES)
+    seqBuffer.order(ByteOrder.BIG_ENDIAN)
+    seqBuffer.putLong(message.seq)
+    val seqBytes = seqBuffer.array()
+    val body = message.sig + seqBytes + message.v
+
+    val response = runBlocking {
+      client.put("${gateway}/${id}") {
+        contentType(ContentType.Application.OctetStream)
+        setBody(body)
+      }
+    }
+
+    if (!response.status.isSuccess()) {
+      val err = runBlocking{response.bodyAsText()}
+      throw Exception("Error putting message to DHT: $err")
+    }
+  }
+
+  /**
+   * Gets a message from the DHT according to the Pkarr relay specification
+   * https://github.com/Nuhvi/pkarr/blob/main/design/relays.md#get
+   *
+   * @param id The z-base-32 encoded identifier of the message to get (e.g. a did:dht suffix value) [String].
+   * @return A BEP44 message [Bep44Message].
+   * @throws IllegalArgumentException if the identifier is not a z-base-32 encoded Ed25519 public key.
+   * @throws Exception if the message is not successfully retrieved from the DHT.
+   */
+  public fun pkarrGet(id: String): Bep44Message {
+    val publicKey = ZBase32.decode(id)
+    require(publicKey.size == 32) {
+      "Identifier must be a z-base-32 encoded Ed25519 public key"
+    }
+
+    val response = runBlocking { client.get("${gateway}/${id}") }
+    if (!response.status.isSuccess()) {
+      throw Exception("Error getting message from DHT")
+    }
+
+    val responseBytes = runBlocking { response.readBytes() }
+    require(responseBytes.size >= 72) {
+      "Malformed response from DHT"
+    }
+    val sig = responseBytes.sliceArray(0..63)
+    val seq = ByteBuffer.wrap(responseBytes.sliceArray(64..71)).order(ByteOrder.BIG_ENDIAN).long
+    val v = responseBytes.sliceArray(72 until responseBytes.size)
+
+    return Bep44Message(v, publicKey, sig, seq)
+  }
+
   public companion object {
 
     /**

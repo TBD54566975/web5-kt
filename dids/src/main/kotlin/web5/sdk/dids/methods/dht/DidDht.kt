@@ -25,17 +25,6 @@ import web5.sdk.dids.*
 import java.net.URI
 
 /**
- * Configuration for [DidDht].
- *
- * @property didDhtGateway The URL of the DID DHT gateway to use.
- * @property engine The HTTP client engine to use for requests.
- */
-public class DidDhtConfiguration internal constructor(
-  private var didDhtGateway: String = "https://diddht.tbddev.org",
-  private var engine: HttpClientEngine? = null,
-)
-
-/**
  * Specifies options for creating a new "did:dht" Decentralized Identifier (DID).
  * @property verificationMethods A list of [JWK]s to add to the DID Document mapped to their purposes
  * as verification methods.
@@ -66,22 +55,34 @@ public class DidDht(uri: String, keyManager: KeyManager, public val didDocument:
   keyManager
 ) {
 
+  private val dht = Dht()
+
   /**
    * Resolves the current instance's [uri] to a [DidResolutionResult], which contains the DID Document
    * and possible related metadata.
    *
+   * @param id The "did:dht" DID that needs to be resolved.
    * @return A [DidResolutionResult] instance containing the DID Document and related context.
-   *
    * @throws IllegalArgumentException if the provided DID does not conform to the "did:dht" method.
    */
-  public fun resolve(): DidResolutionResult {
-    return resolve(this.uri)
+  public fun resolve(id: String = this.uri): DidResolutionResult {
+    return resolve(id)
+  }
+
+  /**
+   * Returns the suffix of the DID, which is the last part of the DID's method-specific identifier.
+   *
+   * @param id The DID to get the suffix of.
+   * @return The suffix of the DID [String].
+   */
+  public fun suffix(id: String = this.uri): String {
+    return id.split(":").last()
   }
 
   public companion object : DidMethod<DidDht, CreateDidDhtOptions> {
     override val methodName: String = "dht"
 
-    public const val TTL: Long = 7200
+    private const val TTL: Long = 7200
 
     /**
      * Creates a new "did:dht" DID, derived from an initial identity key, and stores the associated private key in the

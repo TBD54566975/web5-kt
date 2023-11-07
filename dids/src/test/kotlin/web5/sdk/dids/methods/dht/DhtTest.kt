@@ -3,9 +3,9 @@ package web5.sdk.dids.methods.dht
 import com.nimbusds.jose.jwk.Curve
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertDoesNotThrow
 import web5.sdk.crypto.Ed25519
 import web5.sdk.crypto.InMemoryKeyManager
-import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.text.hexToByteArray
@@ -81,6 +81,39 @@ class DhtTest {
       assertNotNull(parsedMessage)
 
       assertEquals(message.toString(), parsedMessage.toString())
+    }
+
+    @Test
+    fun `put and get a bep44 message to a pkarr relay`() {
+      val dht = Dht()
+      val manager = InMemoryKeyManager()
+      val did = DidDht.create(manager)
+
+      require(did.didDocument != null)
+
+      val kid = did.didDocument!!.verificationMethods?.first()?.publicKeyJwk?.get("kid")?.toString()
+      assertNotNull(kid)
+
+      val message = did.didDocument?.let { DidDht.toDnsPacket(it) }
+      assertNotNull(message)
+
+      val bep44Message = Dht.createBep44PutRequest(manager, kid, message)
+      assertNotNull(bep44Message)
+
+      assertDoesNotThrow { dht.pkarrPut(did.suffix(), bep44Message) }
+
+      val retrievedMessage = assertDoesNotThrow { dht.pkarrGet(did.suffix()) }
+      assertNotNull(retrievedMessage)
+    }
+
+    @Test
+    fun `get`() {
+      val dht = Dht()
+      val retrievedMessage = assertDoesNotThrow { dht.pkarrGet("yj47pezutnpw9pyudeeai8cx8z8d6wg35genrkoqf9k3rmfzy58o") }
+      assertNotNull(retrievedMessage)
+
+      val parsedMessage = Dht.parsePkarrGetResponse(retrievedMessage)
+      println(parsedMessage.toString())
     }
   }
 }
