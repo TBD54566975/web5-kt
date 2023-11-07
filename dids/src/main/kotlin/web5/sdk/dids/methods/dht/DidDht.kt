@@ -538,7 +538,7 @@ public class DidDht(
   /**
    * Calls [DidDht.fromDnsPacket] with the provided [did] and [msg] and returns the result.
    */
-  public fun fromDnsPacket(did: String, msg: Message): Pair<DIDDocument, List<Int>> {
+  public fun fromDnsPacket(did: String = this.uri, msg: Message): Pair<DIDDocument, List<Int>> {
     return DidDht.fromDnsPacket(did, msg)
   }
 

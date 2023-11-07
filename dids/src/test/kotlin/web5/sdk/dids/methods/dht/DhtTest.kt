@@ -6,8 +6,12 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
+import org.xbill.DNS.Message
 import web5.sdk.crypto.Ed25519
 import web5.sdk.crypto.InMemoryKeyManager
+import web5.sdk.crypto.Secp256k1
+import java.security.Signature
+import java.security.SignatureException
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
@@ -67,6 +71,21 @@ class DhtTest {
 
       assertDoesNotThrow { Dht.verifyBep44Message(toVerify) }
       assertTrue { toVerify == bep44SignedMessage }
+      assertTrue { toVerify.hashCode() == bep44SignedMessage.hashCode() }
+    }
+
+    @Test
+    fun `sign BEP44 message with wrong key type`() {
+      val manager = InMemoryKeyManager()
+      val keyAlias = manager.generatePrivateKey(Secp256k1.algorithm, Curve.SECP256K1)
+
+      val seq = 1L
+      val v = "Hello World!".toByteArray()
+
+      assertThrows<IllegalArgumentException> {
+        val bep44SignedMessage = Dht.signBep44Message(manager, keyAlias, seq, v)
+        assertNotNull(bep44SignedMessage)
+      }
     }
   }
 

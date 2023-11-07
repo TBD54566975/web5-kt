@@ -44,6 +44,7 @@ class DidDhtTest {
       val manager = InMemoryKeyManager()
       val did = DidDht.create(manager, CreateDidDhtOptions(publish = false))
 
+      assertDoesNotThrow { did.validate() }
       assertNotNull(did)
       assertNotNull(did.didDocument)
       assertEquals(1, did.didDocument!!.verificationMethods.size)
@@ -90,6 +91,26 @@ class DidDhtTest {
       assertNotNull(did.didDocument!!.services)
       assertEquals(1, did.didDocument!!.services.size)
       assertContains(did.didDocument!!.services[0].id.toString(), "test-service")
+    }
+
+    @Test
+    fun `create and transform to packet with types`() {
+      val manager = InMemoryKeyManager()
+      val did = DidDht.create(manager, CreateDidDhtOptions(publish = false))
+
+      assertDoesNotThrow { did.validate() }
+      assertNotNull(did)
+      assertNotNull(did.didDocument)
+
+      val packet = did.toDnsPacket(did.didDocument!!, listOf(1, 2))
+      assertNotNull(packet)
+
+      val docTypesPair = did.fromDnsPacket(msg = packet)
+      assertNotNull(docTypesPair)
+      assertNotNull(docTypesPair.first)
+      assertNotNull(docTypesPair.second)
+      assertEquals(did.didDocument, docTypesPair.first)
+      assertEquals(listOf(1, 2), docTypesPair.second)
     }
 
     @Test
