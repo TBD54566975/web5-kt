@@ -69,7 +69,7 @@ public class Dht(
 
     if (!response.status.isSuccess()) {
       val err = runBlocking { response.bodyAsText() }
-      throw Exception("Error putting message to DHT: $err")
+      throw RuntimeException("Error putting message to DHT: $err")
     }
   }
 
