@@ -1,13 +1,16 @@
 package web5.sdk.dids.methods.dht
 
 import com.nimbusds.jose.jwk.Curve
+import net.bytebuddy.pool.TypePool.Resolution.Illegal
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
+import org.junit.jupiter.api.assertThrows
 import web5.sdk.crypto.Ed25519
 import web5.sdk.crypto.InMemoryKeyManager
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 import kotlin.text.hexToByteArray
 
 class DhtTest {
@@ -63,6 +66,7 @@ class DhtTest {
       )
 
       assertDoesNotThrow { Dht.verifyBep44Message(toVerify) }
+      assertTrue { toVerify == bep44SignedMessage }
     }
   }
 
@@ -114,6 +118,33 @@ class DhtTest {
 
       val retrievedMessage = assertDoesNotThrow { dht.pkarrGet(did.suffix()) }
       assertNotNull(retrievedMessage)
+    }
+
+    @Test
+    fun `bad pkarr put`() {
+      val dht = Dht()
+      val manager = InMemoryKeyManager()
+      val did = DidDht.create(manager)
+
+      require(did.didDocument != null)
+
+      val kid = did.didDocument!!.verificationMethods?.first()?.publicKeyJwk?.get("kid")?.toString()
+      assertNotNull(kid)
+
+      val message = did.didDocument?.let { DidDht.toDnsPacket(it) }
+      assertNotNull(message)
+
+      val bep44Message = Dht.createBep44PutRequest(manager, kid, message)
+      assertNotNull(bep44Message)
+
+      assertThrows<IllegalArgumentException> { dht.pkarrPut("bad", bep44Message) }
+    }
+
+    @Test
+    fun `bad pkarr get`() {
+      val dht = Dht()
+
+      assertThrows<IllegalArgumentException> { dht.pkarrGet("bad") }
     }
   }
 }

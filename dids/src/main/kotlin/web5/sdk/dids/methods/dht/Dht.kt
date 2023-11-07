@@ -41,15 +41,11 @@ public class Dht(
    * @param id The z-base-32 encoded identifier of the message to publish (e.g. a did:dht suffix value) [String].
    * @param message The message to publish (a DNS packet) [Message].
    * @throws IllegalArgumentException if the identifier is not a z-base-32 encoded Ed25519 public key.
-   * @throws IllegalArgumentException if the message is not fully formed.
    * @throws Exception if the message is not successfully put to the DHT.
    */
   public fun pkarrPut(id: String, message: Bep44Message) {
     require(ZBase32.decode(id).size == 32) {
       "Identifier must be a z-base-32 encoded Ed25519 public key"
-    }
-    require(message.v.isNotEmpty() && message.sig.isNotEmpty()) {
-      "Message must be fully formed"
     }
 
     // construct a body of the form:
@@ -155,10 +151,6 @@ public class Dht(
      * @throws SignatureException if the signature is invalid.
      */
     public fun parseBep44GetResponse(message: Bep44Message): Message {
-      require(message.v.isNotEmpty() && message.k.size == 32 && message.sig.size == 64) {
-        "Malformed Bep44Message"
-      }
-
       // verify message signature
       verifyBep44Message(message)
 
@@ -223,10 +215,6 @@ public class Dht(
      * @throws SignatureException if the signature is invalid.
      */
     public fun verifyBep44Message(message: Bep44Message) {
-      require(message.v.isNotEmpty() && message.k.size == 32 && message.sig.size == 64) {
-        "Malformed Bep44Message"
-      }
-
       // encode v using bencode
       val out = ByteArrayOutputStream()
       BEncoder.bencode(message.v, out)
