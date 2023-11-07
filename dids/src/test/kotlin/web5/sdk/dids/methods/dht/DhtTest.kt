@@ -34,7 +34,8 @@ class DhtTest {
 
       assertEquals("48656c6c6f20576f726c6421", bep44SignedMessage.v.toHexString())
       assertEquals(
-        "c1dc657a17f54ca51933b17b7370b87faae10c7edd560fd4baad543869e30e8154c510f4d0b0d94d1e683891b06a07cecd9f0be325fe8f8a0466fe38011b2d0a",
+        "c1dc657a17f54ca51933b17b7370b87faae10c7edd560fd4baad543869e30e8154c510f4d0b0d94d1e683891b06a07cec" +
+          "d9f0be325fe8f8a0466fe38011b2d0a",
         bep44SignedMessage.sig.toHexString()
       )
       assertEquals(
@@ -61,8 +62,7 @@ class DhtTest {
         seq = bep44SignedMessage.seq
       )
 
-      val verified = Dht.verifyBep44Message(toVerify)
-      assertEquals(true, verified)
+      assertDoesNotThrow { Dht.verifyBep44Message(toVerify) }
     }
   }
 

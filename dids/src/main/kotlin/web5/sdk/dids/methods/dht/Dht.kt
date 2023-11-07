@@ -160,9 +160,7 @@ public class Dht(
       }
 
       // verify message signature
-      if (!verifyBep44Message(message)) {
-        throw SignatureException("Invalid signature")
-      }
+      verifyBep44Message(message)
 
       DNSInput(message.v).let { dnsInput ->
         return Message(dnsInput.readByteArray())
@@ -222,8 +220,9 @@ public class Dht(
      * @param message The message to verify.
      * @return True if the message is verified, false otherwise.
      * @throws IllegalArgumentException if the Bep44Message is malformed.
+     * @throws SignatureException if the signature is invalid.
      */
-    public fun verifyBep44Message(message: Bep44Message): Boolean {
+    public fun verifyBep44Message(message: Bep44Message) {
       require(message.v.isNotEmpty() && message.k.size == 32 && message.sig.size == 64) {
         "Malformed Bep44Message"
       }
@@ -240,12 +239,7 @@ public class Dht(
       val ed25519PublicKey = Ed25519.bytesToPublicKey(message.k)
 
       // verify the signature
-      try {
-        Ed25519.verify(ed25519PublicKey, bytesToVerify, message.sig)
-      } catch (e: Exception) {
-        return false
-      }
-      return true
+      Ed25519.verify(ed25519PublicKey, bytesToVerify, message.sig)
     }
   }
 }
