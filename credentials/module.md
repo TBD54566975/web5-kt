@@ -3,9 +3,9 @@
 This package provides the following functionality:
 
 * Creation, signing, verification, and general processing
-  of [`Verifiable Credentials`](https://www.w3.org/TR/vc-data-model/) (VCs).
+  of [Verifiable Credentials](https://www.w3.org/TR/vc-data-model/) (VCs).
 * Creation of [`StatusList2021Credential`](https://www.w3.org/TR/vc-status-list/#statuslist2021credential)
-* [`Presentation Exchange`](https://identity.foundation/presentation-exchange/) evaluation.
+* [Presentation Exchange](https://identity.foundation/presentation-exchange/) evaluation.
 
 ## Verifiable Credential
 
