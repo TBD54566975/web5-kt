@@ -102,7 +102,8 @@ class DidDhtTest {
       assertNotNull(did)
       assertNotNull(did.didDocument)
 
-      val packet = did.toDnsPacket(did.didDocument!!, listOf(1, 2))
+      val indexes = listOf(DidDhtTypeIndexing.Corporation, DidDhtTypeIndexing.SoftwarePackage)
+      val packet = did.toDnsPacket(did.didDocument!!, indexes)
       assertNotNull(packet)
 
       val docTypesPair = did.fromDnsPacket(msg = packet)
@@ -110,7 +111,7 @@ class DidDhtTest {
       assertNotNull(docTypesPair.first)
       assertNotNull(docTypesPair.second)
       assertEquals(did.didDocument, docTypesPair.first)
-      assertEquals(listOf(1, 2), docTypesPair.second)
+      assertEquals(indexes, docTypesPair.second)
     }
 
     @Test
@@ -164,8 +165,8 @@ class DidDhtTest {
 
       require(did.didDocument != null)
 
-      val types = listOf(1, 2)
-      val packet = DidDht.toDnsPacket(did.didDocument!!, types)
+      val indexes = listOf(DidDhtTypeIndexing.Corporation, DidDhtTypeIndexing.SoftwarePackage)
+      val packet = DidDht.toDnsPacket(did.didDocument!!, indexes)
       assertNotNull(packet)
 
       val didFromPacket = DidDht.fromDnsPacket(did.didDocument!!.id.toString(), packet)
@@ -174,7 +175,7 @@ class DidDhtTest {
       assertNotNull(didFromPacket.second)
 
       assertEquals(did.didDocument.toString(), didFromPacket.first.toString())
-      assertEquals(types, didFromPacket.second)
+      assertEquals(indexes, didFromPacket.second)
     }
 
     @Test

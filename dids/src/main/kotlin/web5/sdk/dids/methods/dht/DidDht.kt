@@ -38,6 +38,27 @@ public class DidDhtConfiguration internal constructor(
 )
 
 /**
+ * Type indexing types as per https://tbd54566975.github.io/did-dht-method/#type-indexing
+ */
+public enum class DidDhtTypeIndexing(public val index: Int) {
+  Organization(1),
+  Government(2),
+  Corporation(3),
+  LocalBusiness(4),
+  SoftwarePackage(5),
+  WebApp(6),
+  FinancialInstitution(7);
+
+  public companion object {
+
+    /**
+     * Returns the [DidDhtTypeIndexing] for the given [value], or null if not found.
+     */
+    public fun fromInt(value: Int): DidDhtTypeIndexing? = entries.find { it.index == value }
+  }
+}
+
+/**
  * Returns a [DidDhtApi] after applying [configurationBlock] on the default [DidDhtConfiguration].
  */
 public fun DidDhtApi(configurationBlock: DidDhtConfiguration.() -> Unit): DidDhtApi {
@@ -186,7 +207,10 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
     val bep44Message = dht.pkarrGet(getId)
     val dnsPacket = Dht.parseBep44GetResponse(bep44Message)
     fromDnsPacket(did, dnsPacket).let { (didDocument, types) ->
-      return DidResolutionResult(didDocument = didDocument, didDocumentMetadata = DidDocumentMetadata(types = types))
+      return DidResolutionResult(
+        didDocument = didDocument,
+        didDocumentMetadata = DidDocumentMetadata(types = types.map { it.index })
+      )
     }
   }
 
@@ -199,7 +223,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
    * @throws IllegalArgumentException if the provided DID does not conform to the "did:dht" method.
    * @throws Exception if the message is not successfully put to the DHT.
    */
-  public fun publish(manager: KeyManager, didDocument: DIDDocument, types: List<Int>? = null) {
+  public fun publish(manager: KeyManager, didDocument: DIDDocument, types: List<DidDhtTypeIndexing>? = null) {
     validate(didDocument.id.toString())
     val publishId = DidDht.suffix(didDocument.id.toString())
     val dnsPacket = toDnsPacket(didDocument, types)
@@ -267,7 +291,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
    * @param types A list of types to include in the packet.
    * @return A [Message] instance containing the DNS packet.
    */
-  public fun toDnsPacket(didDocument: DIDDocument, types: List<Int>? = null): Message {
+  public fun toDnsPacket(didDocument: DIDDocument, types: List<DidDhtTypeIndexing>? = null): Message {
     val message = Message(0).apply { header.setFlag(5) } // Set authoritative answer flag
 
     // map key ids to their verification method ids
@@ -352,9 +376,11 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
 
     // if there are types, add a Resource Record for them
     if (types != null) {
+      // convert types to integer values
+      val typeIndexes = types.map { it.index }
       message.addRecord(
         TXTRecord(
-          Name("_typ._did."), DClass.IN, ttl, "id=${types.joinToString(",")}"
+          Name("_typ._did."), DClass.IN, ttl, "id=${typeIndexes.joinToString(",")}"
         ), Section.ANSWER
       )
     }
@@ -371,12 +397,12 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
    * @return A [Pair] containing the [DIDDocument] and a list of types.
    * @throws IllegalArgumentException if the provided DID does not conform to the "did:dht" method.
    */
-  public fun fromDnsPacket(did: String, msg: Message): Pair<DIDDocument, List<Int>> {
+  public fun fromDnsPacket(did: String, msg: Message): Pair<DIDDocument, List<DidDhtTypeIndexing>> {
     val doc = DIDDocument.builder().id(URI.create(did))
 
     val verificationMethods = mutableListOf<VerificationMethod>()
     val services = mutableListOf<Service>()
-    val types = mutableListOf<Int>()
+    val types = mutableListOf<DidDhtTypeIndexing>()
     val keyLookup = mutableMapOf<String, String>()
 
     msg.getSection(Section.ANSWER).forEach { rr ->
@@ -418,7 +444,9 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
             // handle type indexing
             name == "_typ._did." -> {
               if (rr.strings[0].isNotEmpty() && rr.strings.size == 1) {
-                types += rr.strings[0].removePrefix("id=").split(",").map { it.toInt() }
+                types += rr.strings[0].removePrefix("id=").split(",").map {
+                  DidDhtTypeIndexing.fromInt(it.toInt()) ?: throw IllegalArgumentException("invalid type index")
+                }
               } else {
                 throw IllegalArgumentException("invalid types record")
               }
@@ -531,14 +559,14 @@ public class DidDht(
   /**
    * Calls [DidDht.toDnsPacket] with the provided [didDocument] and [types] and returns the result.
    */
-  public fun toDnsPacket(didDocument: DIDDocument, types: List<Int>? = null): Message {
+  public fun toDnsPacket(didDocument: DIDDocument, types: List<DidDhtTypeIndexing>? = null): Message {
     return DidDht.toDnsPacket(didDocument, types)
   }
 
   /**
    * Calls [DidDht.fromDnsPacket] with the provided [did] and [msg] and returns the result.
    */
-  public fun fromDnsPacket(did: String = this.uri, msg: Message): Pair<DIDDocument, List<Int>> {
+  public fun fromDnsPacket(did: String = this.uri, msg: Message): Pair<DIDDocument, List<DidDhtTypeIndexing>> {
     return DidDht.fromDnsPacket(did, msg)
   }
 
