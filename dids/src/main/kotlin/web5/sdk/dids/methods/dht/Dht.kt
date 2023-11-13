@@ -129,7 +129,7 @@ public class Dht(
         "Must supply an Ed25519 key"
       }
 
-      // set the sequence number to the current time in milliseconds
+      // set the sequence number to the current time in seconds
       val seq = System.currentTimeMillis() / 1000
       val v = message.toWire()
       if (v.isEmpty()) {
