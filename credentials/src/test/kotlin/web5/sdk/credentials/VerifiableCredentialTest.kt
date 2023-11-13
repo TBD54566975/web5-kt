@@ -14,11 +14,11 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import web5.sdk.crypto.AwsKeyManager
 import web5.sdk.crypto.InMemoryKeyManager
-import web5.sdk.dids.CreateDidIonOptions
-import web5.sdk.dids.DidIonHandle
-import web5.sdk.dids.DidIonManager
-import web5.sdk.dids.DidKey
-import web5.sdk.dids.ion.model.PublicKey
+import web5.sdk.dids.methods.ion.CreateDidIonOptions
+import web5.sdk.dids.methods.ion.DidIon
+import web5.sdk.dids.methods.ion.DidIonApi
+import web5.sdk.dids.methods.ion.JsonWebKey2020VerificationMethod
+import web5.sdk.dids.methods.key.DidKey
 import java.security.SignatureException
 import java.text.ParseException
 import java.util.UUID
@@ -43,7 +43,7 @@ class VerifiableCredentialTest {
         "2aWNlcyI6W119fV0sInVwZGF0ZUNvbW1pdG1lbnQiOiJFaUNsaVVIbHBQQjE0VVpkVzk4S250aG8zV2YxRjQxOU83cFhSMGhPeFAzRkNnIn0" +
         "sInN1ZmZpeERhdGEiOnsiZGVsdGFIYXNoIjoiRWlEU2FMNHZVNElzNmxDalp4YVp6Zl9lWFFMU3V5T3E5T0pNbVJHa2FFTzRCQSIsInJlY29" +
         "2ZXJ5Q29tbWl0bWVudCI6IkVpQzI0TFljVEdRN1JzaDdIRUl2TXQ0MGNGbmNhZGZReTdibDNoa3k0RkxUQ2cifX0"
-    val issuerDid = DidIonHandle(didUri, keyManager)
+    val issuerDid = DidIon(didUri, keyManager, didIonApi = DidIonApi {})
     val holderDid = DidKey.create(keyManager)
 
     val vc = VerifiableCredential.create(
@@ -155,15 +155,14 @@ class VerifiableCredentialTest {
     //Create an ION DID without an assertionMethod
     val alias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K)
     val verificationJwk = keyManager.getPublicKey(alias)
-    val key = PublicKey(
+    val key = JsonWebKey2020VerificationMethod(
       id = UUID.randomUUID().toString(),
-      type = "JsonWebKey2020",
       publicKeyJwk = verificationJwk,
-      purposes = emptyList() //No assertionMethod
+      relationships = emptyList() //No assertionMethod
     )
-    val issuerDid = DidIonManager.create(
+    val issuerDid = DidIon.create(
       InMemoryKeyManager(),
-      CreateDidIonOptions(verificationPublicKey = key)
+      CreateDidIonOptions(verificationMethodsToAdd = listOf(key))
     )
 
     val header = JWSHeader.Builder(JWSAlgorithm.ES256K)
@@ -175,8 +174,10 @@ class VerifiableCredentialTest {
     val exception = assertThrows(SignatureException::class.java) {
       VerifiableCredential.verify(vcJwt)
     }
-    assertEquals("Signature verification failed: Expected kid in JWS header to dereference a DID Document " +
-      "Verification Method with an Assertion verification relationship", exception.message)
+    assertEquals(
+      "Signature verification failed: Expected kid in JWS header to dereference a DID Document " +
+        "Verification Method with an Assertion verification relationship", exception.message
+    )
   }
 
   @Test

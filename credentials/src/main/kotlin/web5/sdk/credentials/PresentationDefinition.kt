@@ -127,6 +127,7 @@ public class SubmissionRequirement(
 /**
  * Enumeration representing presentation rule options.
  */
+// TODO this does not serialize correctly but sub reqs not supported right now
 public enum class Rules {
   All, Pick
 }

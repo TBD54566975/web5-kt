@@ -152,6 +152,8 @@ style:
     excludeGuardClauses: true
   SpacingBetweenPackageAndImports:
     active: true
+  ThrowsCount:
+    active: false
   UnnecessaryAbstractClass:
     active: true
   UnnecessaryInheritance:

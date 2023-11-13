@@ -1,4 +1,4 @@
-package web5.sdk.dids.ion.model
+package web5.sdk.dids.methods.ion.models
 
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonSubTypes
@@ -18,6 +18,7 @@ import com.fasterxml.jackson.databind.ser.std.StdSerializer
 import com.nimbusds.jose.jwk.JWK
 import web5.sdk.common.Convert
 import web5.sdk.common.EncodingFormat
+import web5.sdk.dids.PublicKeyPurpose
 
 /**
  * Represents an ION document containing public keys and services. See bullet 2 in https://identity.foundation/sidetree/spec/#replace.
@@ -85,17 +86,6 @@ private class JacksonJwk {
       return JWK.parse(node)
     }
   }
-}
-
-/**
- * Enum representing the purpose of a public key. See bullet 3.5 of https://identity.foundation/sidetree/spec/#add-public-keys
- */
-public enum class PublicKeyPurpose(@get:JsonValue public val code: String) {
-  AUTHENTICATION("authentication"),
-  KEY_AGREEMENT("keyAgreement"),
-  ASSERTION_METHOD("assertionMethod"),
-  CAPABILITY_DELEGATION("capabilityDelegation"),
-  CAPABILITY_INVOCATION("capabilityInvocation"),
 }
 
 /**
