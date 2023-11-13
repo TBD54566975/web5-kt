@@ -397,6 +397,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
    * @return A [Pair] containing the [DIDDocument] and a list of types.
    * @throws IllegalArgumentException if the provided DID does not conform to the "did:dht" method.
    */
+  @Suppress("CyclomaticComplexMethod")
   public fun fromDnsPacket(did: String, msg: Message): Pair<DIDDocument, List<DidDhtTypeIndexing>> {
     val doc = DIDDocument.builder().id(URI.create(did))
 
