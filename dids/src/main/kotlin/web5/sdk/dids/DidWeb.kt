@@ -15,6 +15,7 @@ import io.ktor.http.isSuccess
 import io.ktor.serialization.jackson.jackson
 import kotlinx.coroutines.runBlocking
 import web5.sdk.crypto.KeyManager
+import web5.sdk.dids.methods.ion.InvalidStatusException
 import java.net.URL
 import java.net.URLDecoder
 import kotlin.text.Charsets.UTF_8
@@ -36,8 +37,19 @@ import kotlin.text.Charsets.UTF_8
  */
 public class DidWeb(
   uri: String,
-  keyManager: KeyManager
-) : Did(uri, keyManager)
+  keyManager: KeyManager,
+  private val didWebApi: DidWebApi
+) : Did(uri, keyManager) {
+  /**
+   * Calls [DidWebApi.resolve] for this DID.
+   */
+  public fun resolve(options: ResolveDidOptions?): DidResolutionResult = didWebApi.resolve(uri, options)
+
+  /**
+   * Default companion object for creating a [DidWebApi] with a default configuration.
+   */
+  public companion object Default : DidWebApi(DidWebApiConfiguration())
+}
 
 /**
  * Configuration options for the [DidWebApi].
@@ -121,7 +133,4 @@ public sealed class DidWebApi(
   public override fun create(keyManager: KeyManager, options: CreateDidOptions?): DidWeb {
     throw RuntimeException("create operation not supported for did:web")
   }
-
-  /** A [DidWebApi] with default [DidWebApiConfiguration] parameters. */
-  public companion object Default : DidWebApi(DidWebApiConfiguration())
 }

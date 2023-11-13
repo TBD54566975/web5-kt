@@ -31,7 +31,7 @@ class DidWebTest {
     )
     for (testCase in testCases) {
       val exception = assertThrows<Exception> {
-        DidWebApi.resolve(testCase.did)
+        DidWeb.resolve(testCase.did)
       }
 
       assertEquals(testCase.expectedExceptionMessage, exception.message)
