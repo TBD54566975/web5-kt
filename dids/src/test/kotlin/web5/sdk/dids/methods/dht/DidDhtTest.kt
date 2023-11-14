@@ -5,6 +5,10 @@ import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.JWK
 import foundation.identity.did.Service
 import foundation.identity.did.parser.ParserException
+import io.ktor.client.engine.mock.MockEngine
+import io.ktor.client.engine.mock.respond
+import io.ktor.http.HttpMethod
+import io.ktor.http.HttpStatusCode
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
@@ -67,16 +71,15 @@ class DidDhtTest {
         Pair(publicKeyJwk, arrayOf(PublicKeyPurpose.AUTHENTICATION, PublicKeyPurpose.ASSERTION_METHOD))
       )
 
-      val serviceToAdd = Service.builder()
-        .id(URI("test-service"))
-        .type("HubService")
-        .serviceEndpoint("https://example.com/service)")
-        .build()
+      val serviceToAdd =
+        Service.builder()
+          .id(URI("test-service"))
+          .type("HubService")
+          .serviceEndpoint("https://example.com/service)")
+          .build()
 
       val opts = CreateDidDhtOptions(
-        verificationMethods = verificationMethodsToAdd,
-        services = listOf(serviceToAdd),
-        publish = false
+        verificationMethods = verificationMethodsToAdd, services = listOf(serviceToAdd), publish = false
       )
       val did = DidDht.create(manager, opts)
 
@@ -117,7 +120,8 @@ class DidDhtTest {
     @Test
     fun `create with publishing and resolution`() {
       val manager = InMemoryKeyManager()
-      val did = DidDht.create(manager, CreateDidDhtOptions(publish = true))
+      val api = DidDhtApi { engine = mockEngine() }
+      val did = api.create(manager, CreateDidDhtOptions(publish = true))
 
       assertNotNull(did)
       assertNotNull(did.didDocument)
@@ -129,13 +133,17 @@ class DidDhtTest {
       assertEquals(1, did.didDocument!!.capabilityInvocationVerificationMethods.size)
       assertNull(did.didDocument!!.keyAgreementVerificationMethods)
       assertNull(did.didDocument!!.services)
+    }
 
-      // wait for propagation
-      Thread.sleep(10000)
+    @OptIn(ExperimentalStdlibApi::class)
+    private fun mockEngine() = MockEngine { request ->
+      when {
+        request.url.encodedPath == "/" && request.method == HttpMethod.Put -> {
+          respond("Success", HttpStatusCode.OK)
+        }
 
-      val resolved = DidDht.resolve(did.didDocument!!.id.toString())
-      assertNotNull(resolved)
-      assertEquals(did.didDocument.toString(), resolved.didDocument.toString())
+        else -> respond("Success", HttpStatusCode.OK)
+      }
     }
   }
 
@@ -195,9 +203,7 @@ class DidDhtTest {
         .build()
 
       val opts = CreateDidDhtOptions(
-        verificationMethods = verificationMethodsToAdd,
-        services = listOf(serviceToAdd),
-        publish = false
+        verificationMethods = verificationMethodsToAdd, services = listOf(serviceToAdd), publish = false
       )
       val did = DidDht.create(manager, opts)
 

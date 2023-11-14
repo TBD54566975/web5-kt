@@ -23,7 +23,6 @@ import web5.sdk.crypto.Ed25519
 import web5.sdk.crypto.KeyManager
 import web5.sdk.crypto.Secp256k1
 import web5.sdk.dids.*
-import web5.sdk.dids.methods.ion.models.Document
 import java.net.URI
 
 /**
@@ -34,7 +33,7 @@ import java.net.URI
  */
 public class DidDhtConfiguration internal constructor(
   public val gateway: String = "https://diddht.tbddev.org",
-  public val engine: HttpClientEngine = CIO.create {},
+  public var engine: HttpClientEngine = CIO.create {},
 )
 
 /**
@@ -88,7 +87,7 @@ public class CreateDidDhtOptions(
 public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<DidDht, CreateDidDhtOptions> {
 
   private val engine: HttpClientEngine = configuration.engine
-  private val dht = Dht(configuration.gateway, engine)
+  private val dht = DhtClient(configuration.gateway, engine)
   private val ttl: Long = 7200
 
   override val methodName: String = "dht"
@@ -205,7 +204,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
     validate(did)
     val getId = DidDht.suffix(did)
     val bep44Message = dht.pkarrGet(getId)
-    val dnsPacket = Dht.parseBep44GetResponse(bep44Message)
+    val dnsPacket = DhtClient.parseBep44GetResponse(bep44Message)
     fromDnsPacket(did, dnsPacket).let { (didDocument, types) ->
       return DidResolutionResult(
         didDocument = didDocument,
@@ -227,7 +226,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
     validate(didDocument.id.toString())
     val publishId = DidDht.suffix(didDocument.id.toString())
     val dnsPacket = toDnsPacket(didDocument, types)
-    val bep44Message = Dht.createBep44PutRequest(manager, getIdentityKid(didDocument), dnsPacket)
+    val bep44Message = DhtClient.createBep44PutRequest(manager, getIdentityKid(didDocument), dnsPacket)
     dht.pkarrPut(publishId, bep44Message)
   }
 

@@ -27,7 +27,7 @@ import java.security.SignatureException
 /**
  * A utility class for working with the BEP44 DHT specification and Pkarr relays.
  */
-public class Dht(
+public class DhtClient(
   private val gateway: String = "https://diddht.tbddev.org",
   engine: HttpClientEngine = CIO.create()
 ) {
