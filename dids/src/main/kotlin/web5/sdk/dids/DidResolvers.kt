@@ -25,6 +25,7 @@ public object DidResolvers {
     DidKey.methodName to DidKey.Companion::resolve,
     DidIon.methodName to DidIon.Default::resolve,
     DidDht.methodName to DidDht.Default::resolve
+    DidWeb.methodName to DidIon.Default::resolve
   )
 
   /**
