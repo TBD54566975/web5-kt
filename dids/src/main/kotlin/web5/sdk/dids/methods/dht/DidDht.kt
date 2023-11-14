@@ -141,7 +141,8 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
     // map to the DID object model's verification methods
     val verificationMethods = (opts.verificationMethods?.map { (key, purposes) ->
       VerificationMethod.builder()
-        .id(URI.create("$id#${key.keyID}")).type("JsonWebKey2020")
+        .id(URI.create("$id#${key.keyID}"))
+        .type("JsonWebKey2020")
         .controller(URI.create(id))
         .publicKeyJwk(key.toPublicJWK().toJSONObject())
         .build().also { verificationMethod ->
