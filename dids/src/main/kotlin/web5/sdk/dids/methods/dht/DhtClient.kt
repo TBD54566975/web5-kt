@@ -43,6 +43,7 @@ internal class DhtClient(
    * @throws IllegalArgumentException if the identifier is not a z-base-32 encoded Ed25519 public key.
    * @throws Exception if the message is not successfully put to the DHT.
    */
+  @OptIn(ExperimentalStdlibApi::class)
   fun pkarrPut(id: String, message: Bep44Message) {
     require(ZBase32.decode(id).size == 32) {
       "Identifier must be a z-base-32 encoded Ed25519 public key"
