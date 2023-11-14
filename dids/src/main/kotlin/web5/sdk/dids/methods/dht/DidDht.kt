@@ -413,25 +413,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
           when {
             // handle verification methods
             name.startsWith("_k") -> {
-              val data = parseTxtData(rr.strings.joinToString(""))
-              val verificationMethodId = data["id"]!!
-              val keyBytes = Convert(data["k"]!!, EncodingFormat.Base64Url).toByteArray()
-
-              // TODO(gabe): support other key types
-              val publicKeyJwk = when (data["t"]!!) {
-                "0" -> Ed25519.bytesToPublicKey(keyBytes)
-                "1" -> Secp256k1.bytesToPublicKey(keyBytes)
-                else -> throw IllegalArgumentException("Unknown key type: ${data["t"]}")
-              }
-
-              verificationMethods += VerificationMethod.builder()
-                .id(URI.create("$did#$verificationMethodId"))
-                .type("JsonWebKey2020")
-                .controller(URI.create(did))
-                .publicKeyJwk(publicKeyJwk.toJSONObject())
-                .build()
-
-              keyLookup[name.split(".")[0].drop(1)] = "$did#$verificationMethodId"
+              handleVerificationMethods(rr, verificationMethods, did, keyLookup, name)
             }
             // handle services
             name.startsWith("_s") -> {
@@ -454,31 +436,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
             }
             // handle root record
             name == "_did." -> {
-              val rootData = rr.strings.joinToString(";").split(";")
-
-              val lists = mapOf(
-                "auth" to mutableListOf<VerificationMethod>(),
-                "asm" to mutableListOf(),
-                "agm" to mutableListOf(),
-                "inv" to mutableListOf(),
-                "del" to mutableListOf()
-              )
-
-              rootData.forEach { item ->
-                val (key, values) = item.split("=")
-                val valueItems = values.split(",")
-
-                valueItems.forEach {
-                  lists[key]?.add(VerificationMethod.builder().id(URI(keyLookup[it]!!)).build())
-                }
-              }
-
-              // add verification relationships
-              doc.authenticationVerificationMethods(lists["auth"])
-              doc.assertionMethodVerificationMethods(lists["asm"])
-              doc.keyAgreementVerificationMethods(lists["agm"])
-              doc.capabilityInvocationVerificationMethods(lists["inv"])
-              doc.capabilityDelegationVerificationMethods(lists["del"])
+              handleRootRecord(rr, keyLookup, doc)
             }
           }
         }
@@ -490,6 +448,66 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
     doc.services(services)
 
     return doc.build() to types
+  }
+
+  private fun handleVerificationMethods(
+    rr: TXTRecord,
+    verificationMethods: MutableList<VerificationMethod>,
+    did: String,
+    keyLookup: MutableMap<String, String>,
+    name: String
+  ) {
+    val data = parseTxtData(rr.strings.joinToString(""))
+    val verificationMethodId = data["id"]!!
+    val keyBytes = Convert(data["k"]!!, EncodingFormat.Base64Url).toByteArray()
+
+    // TODO(gabe): support other key types
+    val publicKeyJwk = when (data["t"]!!) {
+      "0" -> Ed25519.bytesToPublicKey(keyBytes)
+      "1" -> Secp256k1.bytesToPublicKey(keyBytes)
+      else -> throw IllegalArgumentException("Unknown key type: ${data["t"]}")
+    }
+
+    verificationMethods += VerificationMethod.builder()
+      .id(URI.create("$did#$verificationMethodId"))
+      .type("JsonWebKey2020")
+      .controller(URI.create(did))
+      .publicKeyJwk(publicKeyJwk.toJSONObject())
+      .build()
+
+    keyLookup[name.split(".")[0].drop(1)] = "$did#$verificationMethodId"
+  }
+
+  private fun handleRootRecord(
+    rr: TXTRecord,
+    keyLookup: MutableMap<String, String>,
+    doc: DIDDocument.Builder<*>
+  ) {
+    val rootData = rr.strings.joinToString(";").split(";")
+
+    val lists = mapOf(
+      "auth" to mutableListOf<VerificationMethod>(),
+      "asm" to mutableListOf(),
+      "agm" to mutableListOf(),
+      "inv" to mutableListOf(),
+      "del" to mutableListOf()
+    )
+
+    rootData.forEach { item ->
+      val (key, values) = item.split("=")
+      val valueItems = values.split(",")
+
+      valueItems.forEach {
+        lists[key]?.add(VerificationMethod.builder().id(URI(keyLookup[it]!!)).build())
+      }
+    }
+
+    // add verification relationships
+    doc.authenticationVerificationMethods(lists["auth"])
+    doc.assertionMethodVerificationMethods(lists["asm"])
+    doc.keyAgreementVerificationMethods(lists["agm"])
+    doc.capabilityInvocationVerificationMethods(lists["inv"])
+    doc.capabilityDelegationVerificationMethods(lists["del"])
   }
 
   /**

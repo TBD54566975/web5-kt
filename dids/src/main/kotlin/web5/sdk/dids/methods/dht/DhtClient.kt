@@ -27,7 +27,7 @@ import java.security.SignatureException
 /**
  * A utility class for working with the BEP44 DHT specification and Pkarr relays.
  */
-public class DhtClient(
+internal class DhtClient(
   private val gateway: String = "https://diddht.tbddev.org",
   engine: HttpClientEngine = CIO.create()
 ) {
@@ -43,7 +43,7 @@ public class DhtClient(
    * @throws IllegalArgumentException if the identifier is not a z-base-32 encoded Ed25519 public key.
    * @throws Exception if the message is not successfully put to the DHT.
    */
-  public fun pkarrPut(id: String, message: Bep44Message) {
+  fun pkarrPut(id: String, message: Bep44Message) {
     require(ZBase32.decode(id).size == 32) {
       "Identifier must be a z-base-32 encoded Ed25519 public key"
     }
@@ -100,7 +100,7 @@ public class DhtClient(
     return Bep44Message(v, publicKey, sig, seq)
   }
 
-  public companion object {
+  companion object {
 
     /**
      *  Creates a BEP44 Put request according to the BEP44 specification.
@@ -119,7 +119,7 @@ public class DhtClient(
      * @throws IllegalArgumentException if the private key is not an Ed25519 key.
      * @throws IllegalArgumentException if the message is empty.
      */
-    public fun createBep44PutRequest(manager: KeyManager, keyAlias: String, message: Message): Bep44Message {
+    fun createBep44PutRequest(manager: KeyManager, keyAlias: String, message: Message): Bep44Message {
       // get the public key to verify it is an Ed25519 key
       val pubKey = manager.getPublicKey(keyAlias)
       require(
@@ -150,7 +150,7 @@ public class DhtClient(
      * @throws IllegalArgumentException if the message is malformed.
      * @throws SignatureException if the signature is invalid.
      */
-    public fun parseBep44GetResponse(message: Bep44Message): Message {
+    fun parseBep44GetResponse(message: Bep44Message): Message {
       // verify message signature
       verifyBep44Message(message)
 
@@ -172,7 +172,7 @@ public class DhtClient(
      * @throws IllegalArgumentException if the value to sign is empty.
      * @throws IllegalArgumentException if the length of the compressed v value is > 1000 bytes.
      */
-    public fun signBep44Message(manager: KeyManager, keyAlias: String, seq: Long, v: ByteArray): Bep44Message {
+    fun signBep44Message(manager: KeyManager, keyAlias: String, seq: Long, v: ByteArray): Bep44Message {
       // get the public key to verify it is an Ed25519 key
       val pubKey = manager.getPublicKey(keyAlias)
       require(
@@ -214,7 +214,7 @@ public class DhtClient(
      * @throws IllegalArgumentException if the Bep44Message is malformed.
      * @throws SignatureException if the signature is invalid.
      */
-    public fun verifyBep44Message(message: Bep44Message) {
+    fun verifyBep44Message(message: Bep44Message) {
       // encode v using bencode
       val out = ByteArrayOutputStream()
       BEncoder.bencode(message.v, out)
@@ -241,7 +241,7 @@ public class DhtClient(
  * @property sig The 64 byte EdDSA signature over the value and sequence number.
  * @property seq The sequence number of the message.
  */
-public data class Bep44Message(
+internal data class Bep44Message(
   val v: ByteArray,
   val k: ByteArray,
   val sig: ByteArray,
