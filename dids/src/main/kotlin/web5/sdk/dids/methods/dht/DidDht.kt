@@ -3,7 +3,6 @@ package web5.sdk.dids.methods.dht
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.JWK
-import com.nimbusds.jose.util.Base64URL
 import foundation.identity.did.DID
 import foundation.identity.did.DIDDocument
 import foundation.identity.did.Service
@@ -17,6 +16,7 @@ import org.xbill.DNS.Name
 import org.xbill.DNS.Section
 import org.xbill.DNS.TXTRecord
 import web5.sdk.common.Convert
+import web5.sdk.common.EncodingFormat
 import web5.sdk.common.ZBase32
 import web5.sdk.crypto.Crypto
 import web5.sdk.crypto.Ed25519
@@ -305,10 +305,10 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
     didDocument.verificationMethods?.forEachIndexed { i, verificationMethod ->
       val publicKeyJwk = JWK.parse(verificationMethod.publicKeyJwk)
       val publicKeyBytes = Crypto.publicKeyToBytes(publicKeyJwk)
-      val base64UrlEncodedKey = Base64URL(Convert(publicKeyBytes).toBase64Url(padding = false))
-      val vmId = "k$i"
+      val base64UrlEncodedKey = Convert(publicKeyBytes).toBase64Url(padding = false)
+      val verificationMethodId = "k$i"
 
-      verificationMethodsById[verificationMethod.id.toString()] = vmId
+      verificationMethodsById[verificationMethod.id.toString()] = verificationMethodId
 
       val keyType = when (publicKeyJwk.algorithm) {
         JWSAlgorithm.EdDSA -> 0
@@ -318,14 +318,14 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
 
       message.addRecord(
         TXTRecord(
-          Name("_$vmId._did."),
+          Name("_$verificationMethodId._did."),
           DClass.IN,
           ttl,
           "id=${verificationMethod.id.rawFragment};t=$keyType;k=$base64UrlEncodedKey"
         ), Section.ANSWER
       )
 
-      verificationMethodIds += vmId
+      verificationMethodIds += verificationMethodId
     }
 
     // Add Resource Records for each Service
@@ -414,8 +414,8 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
             // handle verification methods
             name.startsWith("_k") -> {
               val data = parseTxtData(rr.strings.joinToString(""))
-              val vmID = data["id"]!!
-              val keyBytes = Base64URL(data["k"]!!).decode()
+              val verificationMethodId = data["id"]!!
+              val keyBytes = Convert(data["k"]!!, EncodingFormat.Base64Url).toByteArray()
 
               // TODO(gabe): support other key types
               val publicKeyJwk = when (data["t"]!!) {
@@ -425,13 +425,13 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
               }
 
               verificationMethods += VerificationMethod.builder()
-                .id(URI.create("$did#$vmID"))
+                .id(URI.create("$did#$verificationMethodId"))
                 .type("JsonWebKey2020")
                 .controller(URI.create(did))
-                .publicKeyJwk(publicKeyJwk.toPublicJWK().toJSONObject())
+                .publicKeyJwk(publicKeyJwk.toJSONObject())
                 .build()
 
-              keyLookup[name.split(".")[0].drop(1)] = "$did#$vmID"
+              keyLookup[name.split(".")[0].drop(1)] = "$did#$verificationMethodId"
             }
             // handle services
             name.startsWith("_s") -> {
@@ -560,7 +560,7 @@ public class DidDht(
   /**
    * Calls [DidDht.toDnsPacket] with the provided [didDocument] and [types] and returns the result.
    */
-  public fun toDnsPacket(didDocument: DIDDocument, types: List<DidDhtTypeIndexing>? = null): Message {
+  public fun toDnsPacket(didDocument: DIDDocument, types: List<DidDhtTypeIndexing>? = emptyList()): Message {
     return DidDht.toDnsPacket(didDocument, types)
   }
 
