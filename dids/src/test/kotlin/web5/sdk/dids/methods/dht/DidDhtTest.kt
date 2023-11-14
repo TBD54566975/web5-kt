@@ -135,7 +135,6 @@ class DidDhtTest {
       assertNull(did.didDocument!!.services)
     }
 
-    @OptIn(ExperimentalStdlibApi::class)
     private fun mockEngine() = MockEngine { request ->
       when {
         request.url.encodedPath == "/" && request.method == HttpMethod.Put -> {
