@@ -82,7 +82,7 @@ public class CreateDidDhtOptions(
 ) : CreateDidOptions
 
 /**
- * Base class for managing DID DHT operations. Uses the given [configuration].
+ * Base class for managing DID DHT operations. Uses the given [DidDhtConfiguration].
  */
 public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<DidDht, CreateDidDhtOptions> {
 
@@ -248,7 +248,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
    * @return The kid of the identity key.
    * @throws IllegalArgumentException if the provided DID does not conform to the "did:dht" method.
    */
-  public fun getIdentityKid(didDocument: DIDDocument): String {
+  private fun getIdentityKid(didDocument: DIDDocument): String {
     validate(didDocument.id.toString())
 
     val publicKeyJwk = JWK.parse(didDocument.verificationMethods?.first()?.publicKeyJwk)
@@ -260,7 +260,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
    *
    * @param identityKey the key used to generate the DID's identifier
    */
-  public fun getDidIdentifier(identityKey: JWK): String {
+  internal fun getDidIdentifier(identityKey: JWK): String {
     val publicKeyJwk = identityKey.toPublicJWK()
     val publicKeyBytes = Crypto.publicKeyToBytes(publicKeyJwk)
     val zBase32Encoded = ZBase32.encode(publicKeyBytes)
@@ -275,7 +275,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
    * @throws IllegalArgumentException if the provided DID does not conform to the "did:dht" method.
    * @throws ParserException if the provided DID is not a valid DID.
    */
-  public fun validate(did: String) {
+  internal fun validate(did: String) {
     val parsedDid = DID.fromString(did)
     require(parsedDid.methodName == DidDht.methodName) { "expected method to be dht" }
 
@@ -291,7 +291,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
    * @param types A list of types to include in the packet.
    * @return A [Message] instance containing the DNS packet.
    */
-  public fun toDnsPacket(didDocument: DIDDocument, types: List<DidDhtTypeIndexing>? = null): Message {
+  internal fun toDnsPacket(didDocument: DIDDocument, types: List<DidDhtTypeIndexing>? = null): Message {
     val message = Message(0).apply { header.setFlag(5) } // Set authoritative answer flag
 
     // map key ids to their verification method ids
@@ -397,8 +397,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
    * @return A [Pair] containing the [DIDDocument] and a list of types.
    * @throws IllegalArgumentException if the provided DID does not conform to the "did:dht" method.
    */
-  @Suppress("CyclomaticComplexMethod")
-  public fun fromDnsPacket(did: String, msg: Message): Pair<DIDDocument, List<DidDhtTypeIndexing>> {
+  internal fun fromDnsPacket(did: String, msg: Message): Pair<DIDDocument, List<DidDhtTypeIndexing>> {
     val doc = DIDDocument.builder().id(URI.create(did))
 
     val verificationMethods = mutableListOf<VerificationMethod>()

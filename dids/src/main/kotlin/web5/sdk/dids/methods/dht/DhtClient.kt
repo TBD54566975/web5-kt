@@ -79,7 +79,7 @@ internal class DhtClient(
    * @throws IllegalArgumentException if the identifier is not a z-base-32 encoded Ed25519 public key.
    * @throws Exception if the message is not successfully retrieved from the DHT.
    */
-  public fun pkarrGet(id: String): Bep44Message {
+  fun pkarrGet(id: String): Bep44Message {
     val publicKey = ZBase32.decode(id)
     require(publicKey.size == 32) {
       "Identifier must be a z-base-32 encoded Ed25519 public key"

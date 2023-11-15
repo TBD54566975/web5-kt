@@ -86,10 +86,11 @@ class DhtTest {
       val seq = 1L
       val v = "Hello World!".toByteArray()
 
-      assertThrows<IllegalArgumentException> {
+      val exception = assertThrows<IllegalArgumentException> {
         val bep44SignedMessage = DhtClient.signBep44Message(manager, keyAlias, seq, v)
         assertNotNull(bep44SignedMessage)
       }
+      assertEquals("Must supply an Ed25519 key", exception.message)
     }
   }
 
@@ -157,14 +158,16 @@ class DhtTest {
       val bep44Message = DhtClient.createBep44PutRequest(manager, kid, message)
       assertNotNull(bep44Message)
 
-      assertThrows<IllegalArgumentException> { dht.pkarrPut("bad", bep44Message) }
+      val exception = assertThrows<IllegalArgumentException> { dht.pkarrPut("bad", bep44Message) }
+      assertEquals("Identifier must be a z-base-32 encoded Ed25519 public key", exception.message)
     }
 
     @Test
     fun `bad pkarr get`() {
       val dht = DhtClient(engine = mockEngine())
 
-      assertThrows<IllegalArgumentException> { dht.pkarrGet("bad") }
+      val exception = assertThrows<IllegalArgumentException> { dht.pkarrGet("bad") }
+      assertEquals("Identifier must be a z-base-32 encoded Ed25519 public key", exception.message)
     }
 
     @OptIn(ExperimentalStdlibApi::class)
