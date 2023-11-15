@@ -277,7 +277,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
    */
   public fun validate(did: String) {
     val parsedDid = DID.fromString(did)
-    require(parsedDid.methodName == "dht") { "expected method to be dht" }
+    require(parsedDid.methodName == DidDht.methodName) { "expected method to be dht" }
 
     val decodedId = ZBase32.decode(parsedDid.methodSpecificId)
     require(decodedId.size == 32) { "expected size of decoded identifier to be 32" }
