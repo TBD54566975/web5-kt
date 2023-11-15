@@ -24,7 +24,8 @@ public object DidResolvers {
   private val methodResolvers = mutableMapOf<String, DidResolver>(
     DidKey.methodName to DidKey.Companion::resolve,
     DidJwk.methodName to DidJwk.Companion::resolve,
-    DidIon.methodName to DidIon.Default::resolve
+    DidIon.methodName to DidIon.Default::resolve,
+    DidWeb.methodName to DidWeb.Default::resolve
   )
 
   /**

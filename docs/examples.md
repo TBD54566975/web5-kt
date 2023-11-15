@@ -103,3 +103,9 @@ val deactivateResult = ionApi.deactivate(keyManager, did.uri, opts)
 
 > [!NOTE]
 > The `keyManager` MUST contain the recovery private key.
+
+### Resolve a Web did
+
+```kotlin
+val didResolutionResult = DidWeb.resolve("did:web:users.tbddev.org:demo")
+```
