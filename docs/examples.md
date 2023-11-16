@@ -18,7 +18,7 @@ val did = DidIon.create(InMemoryKeyManager())
 
 The private keys will be stored in the `InMemoryKeyManager`. All the defaults are used for 
 the `DidIonApi`, including the endpoint for the ION node used for creation, and uses
-`CIO` as the `HttpClientEngine` (see [ktor engines](https://ktor.io/docs/http-client-engines.html)).
+`OkHttp` as the `HttpClientEngine` (see [ktor engines](https://ktor.io/docs/http-client-engines.html)).
 
 ### Create an ION did with custom ION endpoint and engine
 
@@ -26,9 +26,10 @@ the `DidIonApi`, including the endpoint for the ION node used for creation, and 
 val keyManager = InMemoryKeyManager()
 val ionApi = DidIonApi {
   ionHost = "my_custom_ion_host"
-  engine = CIO.create {
-    maxConnectionsCount = 10
-    requestTimeout = 5.toDuration(DurationUnit.SECONDS).inWholeMilliseconds
+  engine = OkHttp.create {
+    preconfigured = OkHttpClient.Builder()
+      .connectTimeout(Duration.ofSeconds(4))
+      .build()
   }
 }
 val did = ionApi.create(keyManager)

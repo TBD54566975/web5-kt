@@ -25,7 +25,7 @@ dependencies {
   implementation("com.networknt:json-schema-validator:1.0.87")
 
   implementation("io.ktor:ktor-client-core:$ktor_version")
-  implementation("io.ktor:ktor-client-cio:$ktor_version")
+  implementation("io.ktor:ktor-client-okhttp:$ktor_version")
   implementation("io.ktor:ktor-client-content-negotiation:$ktor_version")
   implementation("io.ktor:ktor-serialization-jackson:$ktor_version")
   implementation("io.ktor:ktor-serialization-kotlinx-json:$ktor_version")
