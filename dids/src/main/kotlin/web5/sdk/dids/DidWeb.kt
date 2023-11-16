@@ -35,7 +35,7 @@ import kotlin.text.Charsets.UTF_8
  * val did = StatefulWebDid("did:web:tbd.website", keyManager)
  * ```
  */
-public class DidWeb(
+public class DidWeb internal constructor(
   uri: String,
   keyManager: KeyManager,
   private val didWebApi: DidWebApi
@@ -109,6 +109,11 @@ public sealed class DidWebApi(
     return DidResolutionResult(
       didDocument = mapper.readValue(body, DIDDocument::class.java),
     )
+  }
+
+  override fun load(did: String, keyManager: KeyManager): DidWeb {
+    validateKeyMaterialInsideKeyManager(did, keyManager)
+    return DidWeb(did, keyManager, this)
   }
 
   private fun getDocURL(didWebStr: String): String {

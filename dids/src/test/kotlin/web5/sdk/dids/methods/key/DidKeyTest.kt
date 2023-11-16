@@ -62,7 +62,7 @@ class DidKeyTest {
     val exception = assertThrows<IllegalArgumentException> {
       DidKey.load(did.uri.replace("key", "ion"), manager)
     }
-    assertTrue(exception.message!!.startsWith("did must start with the prefix \"id:key\""))
+    assertTrue(exception.message!!.startsWith("did must start with the prefix \"did:key\""))
   }
 
   @Nested

@@ -33,6 +33,7 @@ import web5.sdk.dids.CreateDidOptions
 import web5.sdk.dids.CreationMetadata
 import web5.sdk.dids.Did
 import web5.sdk.dids.DidMethod
+import web5.sdk.dids.DidResolutionMetadata
 import web5.sdk.dids.DidResolutionResult
 import web5.sdk.dids.PublicKeyPurpose
 import web5.sdk.dids.ResolveDidOptions
@@ -57,6 +58,7 @@ import web5.sdk.dids.methods.ion.models.SidetreeDeactivateOperation
 import web5.sdk.dids.methods.ion.models.SidetreeRecoverOperation
 import web5.sdk.dids.methods.ion.models.SidetreeUpdateOperation
 import web5.sdk.dids.methods.ion.models.UpdateOperationSignedData
+import web5.sdk.dids.validateKeyMaterialInsideKeyManager
 import java.net.URI
 import java.security.MessageDigest
 import java.util.UUID
@@ -160,10 +162,10 @@ public class DeactivateDidIonOptions(public val recoveryKeyAlias: String)
  * ### Usage Example:
  * ```kotlin
  * val keyManager = InMemoryKeyManager()
- * val did = DidIon("did:ion:example", keyManager)
+ * val did = DidIon.load("did:ion:example", keyManager)
  * ```
  */
-public class DidIon(
+public class DidIon internal constructor(
   uri: String,
   keyManager: KeyManager,
   public val creationMetadata: IonCreationMetadata? = null,
@@ -287,6 +289,12 @@ public sealed class DidIonApi(
       )
     }
     throw InvalidStatusException(response.status.value, "received error response: '$opBody'")
+  }
+
+  override fun load(did: String, keyManager: KeyManager): DidIon {
+    validateKeyMaterialInsideKeyManager(did, keyManager)
+    // TODO: validate other keys.
+    return DidIon(did, keyManager, null, this)
   }
 
   private fun canonicalized(data: Any): ByteArray {

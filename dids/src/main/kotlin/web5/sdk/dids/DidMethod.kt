@@ -1,5 +1,7 @@
 package web5.sdk.dids
 
+import com.nimbusds.jose.jwk.JWK
+import foundation.identity.did.DID
 import foundation.identity.did.VerificationMethod
 import web5.sdk.crypto.KeyManager
 import java.security.SignatureException
@@ -155,6 +157,17 @@ public interface DidMethod<T : Did, O : CreateDidOptions> {
    *         any associated metadata.
    */
   public fun resolve(did: String, options: ResolveDidOptions? = null): DidResolutionResult
+
+  /**
+   * Returns an instance of [T] for [did]. This function validates that all the key material needed for signing and
+   * managing the passed in [did] exists within the provided [keyManager].
+   *
+   * @param did A string containing the DID URI to load.
+   * @param keyManager An instance of [KeyManager] that should contain all the key material needed for signing and
+   *                  managing the passed in [did].
+   * @return An instance of [T] representing the loaded DID.
+   */
+  public fun load(did: String, keyManager: KeyManager): T
 }
 
 /**
@@ -175,4 +188,24 @@ public fun Did.findAssertionMethodById(assertionMethodId: String?): Verification
     else -> assertionMethods.firstOrNull()
   } ?: throw SignatureException("assertion method $assertionMethodId not found")
   return assertionMethod
+}
+
+internal fun <T : Did, O : CreateDidOptions> DidMethod<T, O>.validateKeyMaterialInsideKeyManager(
+  did: String, keyManager: KeyManager) {
+  require(DID.fromString(did).methodName == methodName) {
+    "did must start with the prefix \"did:$methodName\", but got $did"
+  }
+  val didResolutionResult = resolve(did)
+  val verificationMethods: List<VerificationMethod>? =
+    didResolutionResult.didDocument.allVerificationMethods
+
+  require(!verificationMethods.isNullOrEmpty()) {
+    throw SignatureException("No verification methods found in DID document")
+  }
+
+  verificationMethods.forEach {
+    val publicKeyJwk = JWK.parse(it.publicKeyJwk)
+    val keyAlias = keyManager.getDeterministicAlias(publicKeyJwk)
+    keyManager.getPublicKey(keyAlias)
+  }
 }

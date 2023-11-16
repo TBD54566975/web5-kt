@@ -16,7 +16,6 @@ import web5.sdk.crypto.AwsKeyManager
 import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.dids.methods.ion.CreateDidIonOptions
 import web5.sdk.dids.methods.ion.DidIon
-import web5.sdk.dids.methods.ion.DidIonApi
 import web5.sdk.dids.methods.ion.JsonWebKey2020VerificationMethod
 import web5.sdk.dids.methods.key.DidKey
 import java.security.SignatureException
@@ -43,7 +42,7 @@ class VerifiableCredentialTest {
         "2aWNlcyI6W119fV0sInVwZGF0ZUNvbW1pdG1lbnQiOiJFaUNsaVVIbHBQQjE0VVpkVzk4S250aG8zV2YxRjQxOU83cFhSMGhPeFAzRkNnIn0" +
         "sInN1ZmZpeERhdGEiOnsiZGVsdGFIYXNoIjoiRWlEU2FMNHZVNElzNmxDalp4YVp6Zl9lWFFMU3V5T3E5T0pNbVJHa2FFTzRCQSIsInJlY29" +
         "2ZXJ5Q29tbWl0bWVudCI6IkVpQzI0TFljVEdRN1JzaDdIRUl2TXQ0MGNGbmNhZGZReTdibDNoa3k0RkxUQ2cifX0"
-    val issuerDid = DidIon(didUri, keyManager, didIonApi = DidIonApi {})
+    val issuerDid = DidIon.load(didUri, keyManager)
     val holderDid = DidKey.create(keyManager)
 
     val vc = VerifiableCredential.create(

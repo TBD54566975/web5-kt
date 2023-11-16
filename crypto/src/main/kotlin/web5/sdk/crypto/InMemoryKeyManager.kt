@@ -80,7 +80,11 @@ public class InMemoryKeyManager : KeyManager {
    * @throws IllegalArgumentException if the key is not known to the [KeyManager]
    */
   override fun getDeterministicAlias(publicKey: JWK): String {
-    return publicKey.keyID
+    val kid = publicKey.keyID ?: publicKey.computeThumbprint().toString()
+    require(keyStore.containsKey(kid)) {
+      "key with alias $kid not found"
+    }
+    return kid
   }
 
   private fun getPrivateKey(keyAlias: String) =
@@ -117,5 +121,5 @@ public class InMemoryKeyManager : KeyManager {
    *
    * @return A list of key representations in map format.
    */
-    public fun export(): List<Map<String, Any>> = keyStore.map { it.value.toJSONObject() }
+  public fun export(): List<Map<String, Any>> = keyStore.map { it.value.toJSONObject() }
 }
