@@ -23,6 +23,7 @@ import web5.sdk.common.Convert
 import web5.sdk.crypto.Crypto
 import web5.sdk.dids.Did
 import web5.sdk.dids.DidResolvers
+import web5.sdk.dids.findAssertionMethodById
 import java.net.URI
 import java.security.SignatureException
 import java.util.Date
@@ -72,18 +73,7 @@ public class VerifiableCredential internal constructor(public val vcDataModel: V
    * ```
    */
   public fun sign(did: Did, assertionMethodId: String? = null): String {
-    val didResolutionResult = DidResolvers.resolve(did.uri)
-    val assertionMethods: List<VerificationMethod>? =
-      didResolutionResult.didDocument.assertionMethodVerificationMethodsDereferenced
-
-    require(!assertionMethods.isNullOrEmpty()) {
-      throw SignatureException("No assertion methods found in DID document")
-    }
-
-    val assertionMethod: VerificationMethod = when {
-      assertionMethodId != null -> assertionMethods.find { it.id.toString() == assertionMethodId }
-      else -> assertionMethods.firstOrNull()
-    } ?: throw SignatureException("assertion method $assertionMethodId not found")
+    val assertionMethod: VerificationMethod = did.findAssertionMethodById(assertionMethodId)
 
     // TODO: ensure that publicKeyJwk is not null
     val publicKeyJwk = JWK.parse(assertionMethod.publicKeyJwk)

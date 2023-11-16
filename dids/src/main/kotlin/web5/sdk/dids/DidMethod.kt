@@ -1,6 +1,8 @@
 package web5.sdk.dids
 
+import foundation.identity.did.VerificationMethod
 import web5.sdk.crypto.KeyManager
+import java.security.SignatureException
 
 /**
  * A base abstraction for Decentralized Identifiers (DID) compliant with the W3C DID standard.
@@ -153,4 +155,24 @@ public interface DidMethod<T : Did, O : CreateDidOptions> {
    *         any associated metadata.
    */
   public fun resolve(did: String, options: ResolveDidOptions? = null): DidResolutionResult
+}
+
+/**
+ * Finds the first available assertion method from the DID document associated with this [Did]. When [assertionMethodId]
+ * is null, the function will return the first available assertion method.
+ */
+public fun Did.findAssertionMethodById(assertionMethodId: String?): VerificationMethod {
+  val didResolutionResult = DidResolvers.resolve(uri)
+  val assertionMethods: List<VerificationMethod>? =
+    didResolutionResult.didDocument.assertionMethodVerificationMethodsDereferenced
+
+  require(!assertionMethods.isNullOrEmpty()) {
+    throw SignatureException("No assertion methods found in DID document")
+  }
+
+  val assertionMethod: VerificationMethod = when {
+    assertionMethodId != null -> assertionMethods.find { it.id.toString() == assertionMethodId }
+    else -> assertionMethods.firstOrNull()
+  } ?: throw SignatureException("assertion method $assertionMethodId not found")
+  return assertionMethod
 }

@@ -3,6 +3,7 @@ package web5.sdk.dids.methods.key
 import com.nimbusds.jose.Algorithm
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.jwk.Curve
+import com.nimbusds.jose.jwk.JWK
 import foundation.identity.did.DID
 import foundation.identity.did.DIDDocument
 import foundation.identity.did.VerificationMethod
@@ -16,6 +17,7 @@ import web5.sdk.dids.Did
 import web5.sdk.dids.DidMethod
 import web5.sdk.dids.DidResolutionResult
 import web5.sdk.dids.ResolveDidOptions
+import web5.sdk.dids.findAssertionMethodById
 import java.net.URI
 
 /**
@@ -58,7 +60,7 @@ public class CreateDidKeyOptions(
  * val did = DidKey("did:key:example", keyManager)
  * ```
  */
-public class DidKey(uri: String, keyManager: KeyManager) : Did(uri, keyManager) {
+public class DidKey private constructor(uri: String, keyManager: KeyManager) : Did(uri, keyManager) {
   /**
    * Resolves the current instance's [uri] to a [DidResolutionResult], which contains the DID Document
    * and possible related metadata.
@@ -109,6 +111,26 @@ public class DidKey(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
       val did = "did:key:$multibaseEncodedId"
 
       return DidKey(did, keyManager)
+    }
+
+    /**
+     * Instantiates a [DidKey] instance from a "did:key" DID URI, and validates that the associated key material exists
+     * in the provided [keyManager].
+     */
+    public fun load(did: String, keyManager: KeyManager): DidKey {
+      require(DID.fromString(did).methodName == methodName) {
+        "did must start with the prefix \"id:key\", but got $did"
+      }
+      val didKey = DidKey(did, keyManager)
+      validateKeyMaterialInsideKeyManager(didKey, keyManager)
+      return didKey
+    }
+
+    private fun validateKeyMaterialInsideKeyManager(didKey: DidKey, keyManager: KeyManager) {
+      val verificationMethod = didKey.findAssertionMethodById(null)
+      val publicKeyJwk = JWK.parse(verificationMethod.publicKeyJwk)
+      val keyAlias = keyManager.getDeterministicAlias(publicKeyJwk)
+      keyManager.getPublicKey(keyAlias)
     }
 
     /**
