@@ -291,10 +291,10 @@ public sealed class DidIonApi(
     throw InvalidStatusException(response.status.value, "received error response: '$opBody'")
   }
 
-  override fun load(did: String, keyManager: KeyManager): DidIon {
-    validateKeyMaterialInsideKeyManager(did, keyManager)
+  override fun load(uri: String, keyManager: KeyManager): DidIon {
+    validateKeyMaterialInsideKeyManager(uri, keyManager)
     // TODO: validate other keys.
-    return DidIon(did, keyManager, null, this)
+    return DidIon(uri, keyManager, null, this)
   }
 
   private fun canonicalized(data: Any): ByteArray {

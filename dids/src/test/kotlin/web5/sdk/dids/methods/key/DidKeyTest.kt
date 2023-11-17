@@ -127,7 +127,7 @@ class DidKeyTest {
         val km2 = InMemoryKeyManager()
         km2.import(jsonKeySet)
 
-        DidKey.load(did = didUri, keyManager = km2)
+        DidKey.load(uri = didUri, keyManager = km2)
       }
     }
   }

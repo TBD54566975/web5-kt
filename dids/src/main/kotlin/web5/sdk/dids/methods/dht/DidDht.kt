@@ -197,10 +197,10 @@ public class DidDht private constructor(
       TODO("Not yet implemented")
     }
 
-    override fun load(did: String, keyManager: KeyManager): DidDht {
-      validateKeyMaterialInsideKeyManager(did, keyManager)
-      validateIdentityKey(did, keyManager)
-      return DidDht(did, keyManager, null)
+    override fun load(uri: String, keyManager: KeyManager): DidDht {
+      validateKeyMaterialInsideKeyManager(uri, keyManager)
+      validateIdentityKey(uri, keyManager)
+      return DidDht(uri, keyManager, null)
     }
 
     private fun validateIdentityKey(did: String, keyManager: KeyManager) {

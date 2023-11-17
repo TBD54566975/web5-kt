@@ -111,9 +111,9 @@ public sealed class DidWebApi(
     )
   }
 
-  override fun load(did: String, keyManager: KeyManager): DidWeb {
-    validateKeyMaterialInsideKeyManager(did, keyManager)
-    return DidWeb(did, keyManager, this)
+  override fun load(uri: String, keyManager: KeyManager): DidWeb {
+    validateKeyMaterialInsideKeyManager(uri, keyManager)
+    return DidWeb(uri, keyManager, this)
   }
 
   private fun getDocURL(didWebStr: String): String {

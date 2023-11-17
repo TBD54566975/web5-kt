@@ -52,12 +52,6 @@ public class CreateDidKeyOptions(
  * @property keyManager A [KeyManager] instance utilized to manage the cryptographic keys associated with the DID.
  *
  * @constructor Initializes a new instance of [DidKey] with the provided [uri] and [keyManager].
- *
- * ### Usage Example:
- * ```kotlin
- * val keyManager = InMemoryKeyManager()
- * val did = DidKey.load("did:key:example", keyManager)
- * ```
  */
 public class DidKey private constructor(uri: String, keyManager: KeyManager) : Did(uri, keyManager) {
   /**
@@ -113,12 +107,18 @@ public class DidKey private constructor(uri: String, keyManager: KeyManager) : D
     }
 
     /**
-     * Instantiates a [DidKey] instance from a "did:key" DID URI, and validates that the associated key material exists
-     * in the provided [keyManager].
+     * Instantiates a [DidKey] instance from [uri] (which has to start with "did:key:"), and validates that the
+     * associated key material exists in the provided [keyManager].
+     *
+     * ### Usage Example:
+     * ```kotlin
+     * val keyManager = InMemoryKeyManager()
+     * val did = DidKey.load("did:key:example", keyManager)
+     * ```
      */
-    override fun load(did: String, keyManager: KeyManager): DidKey {
-      validateKeyMaterialInsideKeyManager(did, keyManager)
-      return DidKey(did, keyManager)
+    override fun load(uri: String, keyManager: KeyManager): DidKey {
+      validateKeyMaterialInsideKeyManager(uri, keyManager)
+      return DidKey(uri, keyManager)
     }
 
     /**
