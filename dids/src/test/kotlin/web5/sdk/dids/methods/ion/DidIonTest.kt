@@ -162,7 +162,7 @@ class DidIonTest {
   }
 
   @Test
-  fun `create with custom keys and subsequent load works`() {
+  fun createWithCustom() {
     val keyManager = spy(InMemoryKeyManager())
     val verificationKey = readKey("src/test/resources/verification_jwk.json")
     val updateKey = readKey("src/test/resources/update_jwk.json")
