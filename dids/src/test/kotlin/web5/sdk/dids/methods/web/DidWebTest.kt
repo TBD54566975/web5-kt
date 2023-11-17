@@ -1,4 +1,4 @@
-package web5.sdk.dids
+package web5.sdk.dids.methods.web
 
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond

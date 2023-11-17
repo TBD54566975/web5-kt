@@ -1,14 +1,20 @@
 # Module dids
 
-# Package web5.sdk.dids.methods.key
+This module contains the code for generating and resolving DIDs of different major methods.
+
+The documentations of each package contains examples on how to use the SDK. It's meant as a quick reference on how to
+effectively use this SDK.
+
+Since documentation is always a living document, there's a chance that some examples might be outdated.
+If you find yourself scratching your head because something doesn't work, the best place
+to look at is the test files. We strive to maintain a high test coverage, which should give
+you plenty of examples on how to use this SDK.
+
+# Package web5.sdk.dids.methods.ion
+
+Package that contains the `DidIon` class, which is used to create and resolve dids using the `ion` method.
 
 # Examples
-
-This is the set of examples which are quick reference on how to effectively use this SDK.
-Since this is a living document, there's a chance that some examples might be outdated.
-If you find yourself scratching your head because something doesn't work, the best place
-to look at is at the test files. We strive to maintain a high test coverage, which should give
-you plenty of examples on how to use this SDK.
 
 ## Creation
 
@@ -59,19 +65,7 @@ val opts = CreateDidIonOptions(
       relationships = listOf(PublicKeyPurpose.ASSERTION_METHOD)
     ),
   )
-val did = DidIon.create(keyManager, opts)
-```
-
-### Create a DID Key
-
-```kt
-package example
-
-import web5.sdk.crypto.InMemoryKeyManager
-import web5.sdk.dids.methods.key.DidKey
-
-val keyManager = InMemoryKeyManager()
-val did = DidKey.create(keyManager)
+  val did = DidIon . create (keyManager, opts)
 ```
 
 ## Resolution
@@ -82,18 +76,12 @@ val did = DidKey.create(keyManager)
 val didResolutionResult = DidIon.resolve("did:ion:EiClkZMDxPKqC9c-umQfTkR8vvZ9JPhl_xLDI9Nfk38w5w")
 ```
 
-### Resolve a Web did
-
-```kotlin
-val didResolutionResult = DidWeb.resolve("did:web:users.tbddev.org:demo")
-```
-
-
 ## DID ION Operations
 
 ### Recover an ION did
 
-Any sidetree based DID, including ION, supports a [recover operation](https://identity.foundation/sidetree/spec/#recover).
+Any sidetree based DID, including ION, supports
+a [recover operation](https://identity.foundation/sidetree/spec/#recover).
 This type of operation is useful when the update keys of your DID have been compromised.
 
 ```kotlin
@@ -131,16 +119,22 @@ val deactivateResult = ionApi.deactivate(keyManager, did.uri, opts)
 > [!NOTE]
 > The `keyManager` MUST contain the recovery private key.
 
-### Creating a DID Jwk
+# Package web5.sdk.dids.methods.key
+
+Package that contains the `DidKey` class, which is used to create and resolve dids using the `key` method.
+
+## Examples
+
+### Create a DID Key
 
 ```kt
 package example
 
 import web5.sdk.crypto.InMemoryKeyManager
-import web5.sdk.dids.methods.jwk.DidJwk
+import web5.sdk.dids.methods.key.DidKey
 
 val keyManager = InMemoryKeyManager()
-val did = DidJwk.create(keyManager)
+val did = DidKey.create(keyManager)
 ```
 
 ## Export / Import
@@ -205,3 +199,33 @@ fun main() {
 ```
 
 json serializing or deserializing an exported keyset is _not_ limited to Jackson. It can be done using any json library.
+
+# Package web5.sdk.dids.methods.web
+
+Package that contains the `DidWeb` class, which is used to create and resolve dids using the `web` method.
+
+## Examples
+
+### Resolve a Web did
+
+```kotlin
+val didResolutionResult = DidWeb.resolve("did:web:users.tbddev.org:demo")
+```
+
+# Package web5.sdk.dids.methods.jwk
+
+Package that contains the `DidJwk` class, which is used to create and resolve dids using the `jwk` method.
+
+## Examples
+
+### Creating a DID Jwk
+
+```kt
+package example
+
+import web5.sdk.crypto.InMemoryKeyManager
+import web5.sdk.dids.methods.jwk.DidJwk
+
+val keyManager = InMemoryKeyManager()
+val did = DidJwk.create(keyManager)
+```
