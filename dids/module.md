@@ -131,6 +131,18 @@ val deactivateResult = ionApi.deactivate(keyManager, did.uri, opts)
 > [!NOTE]
 > The `keyManager` MUST contain the recovery private key.
 
+### Creating a DID Jwk
+
+```kt
+package example
+
+import web5.sdk.crypto.InMemoryKeyManager
+import web5.sdk.dids.methods.jwk.DidJwk
+
+val keyManager = InMemoryKeyManager()
+val did = DidJwk.create(keyManager)
+```
+
 ## Export / Import
 
 If you're using `InMemoryKeyManager` you can export you can export a DID you've created and its associated private key
