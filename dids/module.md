@@ -6,6 +6,8 @@
 
 ## Creation
 
+### Creating a DID Key
+
 ```kt
 package example
 
@@ -14,6 +16,18 @@ import web5.sdk.dids.methods.key.DidKey
 
 val keyManager = InMemoryKeyManager()
 val did = DidKey.create(keyManager)
+```
+
+### Creating a DID Jwk
+
+```kt
+package example
+
+import web5.sdk.crypto.InMemoryKeyManager
+import web5.sdk.dids.methods.jwk.DidJwk
+
+val keyManager = InMemoryKeyManager()
+val did = DidJwk.create(keyManager)
 ```
 
 ## Export / Import
