@@ -12,4 +12,5 @@ web5.sdk.dids
 web5.sdk.dids.methods.dht
 web5.sdk.dids.methods.ion
 web5.sdk.dids.methods.ion.models
+web5.sdk.dids.methods.jwk
 web5.sdk.dids.methods.key
