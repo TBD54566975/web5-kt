@@ -203,7 +203,7 @@ public class DidDht private constructor(
       return DidDht(uri, keyManager, null)
     }
 
-    private fun validateIdentityKey(did: String, keyManager: KeyManager) {
+    internal fun validateIdentityKey(did: String, keyManager: KeyManager) {
       val parsedDid = DID.fromString(did)
       val decodedId = ZBase32.decode(parsedDid.methodSpecificId)
       require(decodedId.size == 32) { "expected size of decoded identifier to be 32" }
