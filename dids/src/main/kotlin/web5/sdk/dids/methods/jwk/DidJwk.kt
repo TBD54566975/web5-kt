@@ -52,12 +52,6 @@ public class CreateDidJwkOptions(
  * @property keyManager A [KeyManager] instance utilized to manage the cryptographic keys associated with the DID.
  *
  * @constructor Initializes a new instance of [DidJwk] with the provided [uri] and [keyManager].
- *
- * ### Usage Example:
- * ```kotlin
- * val keyManager = InMemoryKeyManager()
- * val did = DidJwk("did:jwk:example", keyManager)
- * ```
  */
 public class DidJwk private constructor(uri: String, keyManager: KeyManager) : Did(uri, keyManager) {
   /**

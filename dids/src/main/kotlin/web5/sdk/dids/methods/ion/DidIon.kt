@@ -158,12 +158,6 @@ public class DeactivateDidIonOptions(public val recoveryKeyAlias: String)
  * @property keyManager A [KeyManager] instance utilized to manage the cryptographic keys associated with the DID.
  * @property creationMetadata Metadata related to the creation of a DID. Useful for debugging purposes.
  * @property didIonApi A [DidIonApi] instance utilized to delegate all the calls to an ION node.
- *
- * ### Usage Example:
- * ```kotlin
- * val keyManager = InMemoryKeyManager()
- * val did = DidIon.load("did:ion:example", keyManager)
- * ```
  */
 public class DidIon internal constructor(
   uri: String,
@@ -291,6 +285,16 @@ public sealed class DidIonApi(
     throw InvalidStatusException(response.status.value, "received error response: '$opBody'")
   }
 
+  /**
+   * Instantiates a [DidIon] instance from [uri] (which has to start with "did:ion:"), and validates that the
+   * associated key material exists in the provided [keyManager].
+   *
+   * ### Usage Example:
+   * ```kotlin
+   * val keyManager = InMemoryKeyManager()
+   * val did = DidIon.load("did:ion:example", keyManager)
+   * ```
+   */
   override fun load(uri: String, keyManager: KeyManager): DidIon {
     validateKeyMaterialInsideKeyManager(uri, keyManager)
     // TODO: validate other keys.

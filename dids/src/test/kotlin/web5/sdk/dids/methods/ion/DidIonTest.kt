@@ -162,7 +162,7 @@ class DidIonTest {
   }
 
   @Test
-  fun createWithCustom() {
+  fun `create with custom keys and subsequent load works`() {
     val keyManager = spy(InMemoryKeyManager())
     val verificationKey = readKey("src/test/resources/verification_jwk.json")
     val updateKey = readKey("src/test/resources/update_jwk.json")
@@ -173,7 +173,7 @@ class DidIonTest {
     val recoveryKeyId = keyManager.import(recoveryKey)
     doReturn(recoveryKeyId).whenever(keyManager).generatePrivateKey(JWSAlgorithm.ES256K)
 
-    val manager = DidIonApi {
+    val didIonApi = DidIonApi {
       ionHost = "madeuphost"
       engine = mockEngine()
     }
@@ -193,7 +193,7 @@ class DidIonTest {
         )
       ),
     )
-    val did = manager.create(keyManager, opts)
+    val did = didIonApi.create(keyManager, opts)
     assertContains(did.uri, "did:ion:")
     assertContains(did.creationMetadata!!.longFormDid, did.creationMetadata!!.shortFormDid)
   }
