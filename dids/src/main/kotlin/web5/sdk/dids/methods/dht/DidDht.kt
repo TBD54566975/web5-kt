@@ -206,7 +206,9 @@ public class DidDht private constructor(
     internal fun validateIdentityKey(did: String, keyManager: KeyManager) {
       val parsedDid = DID.fromString(did)
       val decodedId = ZBase32.decode(parsedDid.methodSpecificId)
-      require(decodedId.size == 32) { "expected size of decoded identifier to be 32" }
+      require(decodedId.size == 32) {
+        "expected size of decoded identifier \"${parsedDid.methodSpecificId}\" to be 32"
+      }
 
       val publicKeyJwk = Ed25519.bytesToPublicKey(decodedId)
       val identityKeyAlias = keyManager.getDeterministicAlias(publicKeyJwk)
