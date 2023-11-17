@@ -63,7 +63,7 @@ public class DidWeb(
  * - [engine] is used to override the default ktor engine, which is [OkHttp].
  */
 public class DidWebApiConfiguration internal constructor(
-  public var engine: HttpClientEngine? = OkHttp.create { },
+  public var engine: HttpClientEngine? = null,
 )
 
 /**
