@@ -73,7 +73,8 @@ public class VerifiableCredential internal constructor(public val vcDataModel: V
    * ```
    */
   public fun sign(did: Did, assertionMethodId: String? = null): String {
-    val assertionMethod: VerificationMethod = did.findAssertionMethodById(assertionMethodId)
+    val didResolutionResult = DidResolvers.resolve(did.uri)
+    val assertionMethod: VerificationMethod = didResolutionResult.didDocument.findAssertionMethodById(assertionMethodId)
 
     // TODO: ensure that publicKeyJwk is not null
     val publicKeyJwk = JWK.parse(assertionMethod.publicKeyJwk)

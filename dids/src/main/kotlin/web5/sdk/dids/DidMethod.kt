@@ -2,6 +2,7 @@ package web5.sdk.dids
 
 import com.nimbusds.jose.jwk.JWK
 import foundation.identity.did.DID
+import foundation.identity.did.DIDDocument
 import foundation.identity.did.VerificationMethod
 import web5.sdk.crypto.KeyManager
 import java.security.SignatureException
@@ -171,22 +172,21 @@ public interface DidMethod<T : Did, O : CreateDidOptions> {
 }
 
 /**
- * Finds the first available assertion method from the DID document associated with this [Did]. When [assertionMethodId]
+ * Finds the first available assertion method from the [DIDDocument]. When [assertionMethodId]
  * is null, the function will return the first available assertion method.
  */
-public fun Did.findAssertionMethodById(assertionMethodId: String?): VerificationMethod {
-  val didResolutionResult = DidResolvers.resolve(uri)
-  val assertionMethods: List<VerificationMethod>? =
-    didResolutionResult.didDocument.assertionMethodVerificationMethodsDereferenced
-
-  require(!assertionMethods.isNullOrEmpty()) {
+public fun DIDDocument.findAssertionMethodById(assertionMethodId: String? = null): VerificationMethod {
+  require(!assertionMethodVerificationMethodsDereferenced.isNullOrEmpty()) {
     throw SignatureException("No assertion methods found in DID document")
   }
 
   val assertionMethod: VerificationMethod = when {
-    assertionMethodId != null -> assertionMethods.find { it.id.toString() == assertionMethodId }
-    else -> assertionMethods.firstOrNull()
-  } ?: throw SignatureException("assertion method $assertionMethodId not found")
+    assertionMethodId != null -> assertionMethodVerificationMethodsDereferenced.find {
+      it.id.toString() == assertionMethodId
+    }
+
+    else -> assertionMethodVerificationMethodsDereferenced.firstOrNull()
+  } ?: throw SignatureException("assertion method \"$assertionMethodId\" not found")
   return assertionMethod
 }
 
