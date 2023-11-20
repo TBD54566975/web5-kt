@@ -62,6 +62,7 @@ public object PresentationExchange {
       )
     }
   }
+
   private fun mapInputDescriptorsToVCs(
     vcJwtList: List<String>,
     presentationDefinition: PresentationDefinitionV2
