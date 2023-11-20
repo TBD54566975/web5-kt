@@ -94,7 +94,7 @@ public sealed class DidWebApi(
 
     val dns = DnsOverHttps.Builder().client(bootstrapClient)
       .url("https://dns.google/dns-query".toHttpUrl())
-      .bootstrapDnsHosts(InetAddress.getByName("8.8.4.4"), InetAddress.getByName("8.8.8.8"))
+      .bootstrapDnsHosts(InetAddress.getByName("9.9.9.9"))
       .build()
 
     val client = bootstrapClient.newBuilder().dns(dns).build()
