@@ -21,6 +21,7 @@ import web5.sdk.dids.DidMethod
 import web5.sdk.dids.DidResolutionResult
 import web5.sdk.dids.ResolveDidOptions
 import web5.sdk.dids.methods.ion.InvalidStatusException
+import web5.sdk.dids.validateKeyMaterialInsideKeyManager
 import java.net.URL
 import java.net.URLDecoder
 import kotlin.text.Charsets.UTF_8

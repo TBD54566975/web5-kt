@@ -9,8 +9,6 @@ import io.ktor.utils.io.ByteReadChannel
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import web5.sdk.crypto.InMemoryKeyManager
-import web5.sdk.dids.DidWeb
-import web5.sdk.dids.DidWebApi
 import web5.sdk.dids.methods.util.readKey
 import java.io.File
 import kotlin.test.assertEquals
