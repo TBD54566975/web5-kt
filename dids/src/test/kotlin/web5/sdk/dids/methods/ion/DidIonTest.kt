@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.nimbusds.jose.JWSAlgorithm
-import com.nimbusds.jose.jwk.JWK
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
 import io.ktor.client.engine.mock.toByteArray
@@ -28,6 +27,7 @@ import web5.sdk.dids.methods.ion.models.PublicKey
 import web5.sdk.dids.methods.ion.models.Service
 import web5.sdk.dids.methods.ion.models.SidetreeCreateOperation
 import web5.sdk.dids.methods.ion.models.SidetreeUpdateOperation
+import web5.sdk.dids.methods.util.readKey
 import java.io.File
 import kotlin.test.Ignore
 import kotlin.test.Test
@@ -173,7 +173,7 @@ class DidIonTest {
     val recoveryKeyId = keyManager.import(recoveryKey)
     doReturn(recoveryKeyId).whenever(keyManager).generatePrivateKey(JWSAlgorithm.ES256K)
 
-    val manager = DidIonApi {
+    val didIonApi = DidIonApi {
       ionHost = "madeuphost"
       engine = mockEngine()
     }
@@ -193,15 +193,9 @@ class DidIonTest {
         )
       ),
     )
-    val did = manager.create(keyManager, opts)
+    val did = didIonApi.create(keyManager, opts)
     assertContains(did.uri, "did:ion:")
     assertContains(did.creationMetadata!!.longFormDid, did.creationMetadata!!.shortFormDid)
-  }
-
-  private fun readKey(pathname: String): JWK {
-    return JWK.parse(
-      File(pathname).readText()
-    )
   }
 
   @Test

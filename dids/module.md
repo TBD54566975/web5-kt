@@ -10,6 +10,8 @@
 
 **Create**
 
+### Creating a DID Key
+
 ```kt
 package example
 
@@ -18,6 +20,18 @@ import web5.sdk.dids.methods.key.DidKey
 
 val keyManager = InMemoryKeyManager()
 val did = DidKey.create(keyManager)
+```
+
+### Creating a DID Jwk
+
+```kt
+package example
+
+import web5.sdk.crypto.InMemoryKeyManager
+import web5.sdk.dids.methods.jwk.DidJwk
+
+val keyManager = InMemoryKeyManager()
+val did = DidJwk.create(keyManager)
 ```
 
 **Resolve**
@@ -129,7 +143,7 @@ fun main() {
   val keyManager = InMemoryKeyManager()
   keyManager.import(jsonKeySet)
 
-  val did = DidKey(uri = didUri, keyManager = keyManager)
+  val did = DidKey.load(did = didUri, keyManager = keyManager)
 }
 ```
 

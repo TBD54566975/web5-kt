@@ -22,7 +22,13 @@ import web5.sdk.crypto.Crypto
 import web5.sdk.crypto.Ed25519
 import web5.sdk.crypto.KeyManager
 import web5.sdk.crypto.Secp256k1
-import web5.sdk.dids.*
+import web5.sdk.dids.CreateDidOptions
+import web5.sdk.dids.Did
+import web5.sdk.dids.DidMethod
+import web5.sdk.dids.DidResolutionResult
+import web5.sdk.dids.PublicKeyPurpose
+import web5.sdk.dids.ResolveDidOptions
+import web5.sdk.dids.validateKeyMaterialInsideKeyManager
 import java.net.URI
 
 /**
@@ -255,7 +261,23 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
     return publicKeyJwk.keyID
   }
 
-  /**
+  override fun load(uri: String, keyManager: KeyManager): DidDht {
+      validateKeyMaterialInsideKeyManager(uri, keyManager)
+      validateIdentityKey(uri, keyManager)
+      return DidDht(uri, keyManager, null)
+    }
+
+    internal fun validateIdentityKey(did: String, keyManager: KeyManager) {
+      val parsedDid = DID.fromString(did)
+      val decodedId = ZBase32.decode(parsedDid.methodSpecificId)
+      require(decodedId.size == 32) {
+        "expected size of decoded identifier \"${parsedDid.methodSpecificId}\" to be 32"
+      }
+
+      val publicKeyJwk = Ed25519.bytesToPublicKey(decodedId)
+      val identityKeyAlias = keyManager.getDeterministicAlias(publicKeyJwk)
+      keyManager.getPublicKey(identityKeyAlias)
+    }/**
    * Generates the identifier for a did:dht DID given its identity key.
    *
    * @param identityKey the key used to generate the DID's identifier
