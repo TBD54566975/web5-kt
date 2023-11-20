@@ -1,6 +1,8 @@
 package web5.sdk.credentials
 
 import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.node.ObjectNode
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.networknt.schema.JsonSchema
 import com.nfeld.jsonpathkt.JsonPath
 import com.nfeld.jsonpathkt.extension.read
@@ -37,13 +39,13 @@ public object PresentationExchange {
    * as this feature is not implemented. Then, it maps the input descriptors in the presentation definition to the
    * corresponding VCs. If the number of mapped descriptors does not match the required count, an error is thrown.
    *
-   * @param vcJwts List of VCs in JWT format to validate.
+   * @param vcJwts Iterable of VCs in JWT format to validate.
    * @param presentationDefinition The Presentation Definition V2 object against which VCs are validated.
    * @throws UnsupportedOperationException If Submission Requirements are present in the definition.
    * @throws PresentationExchangeError If the number of input descriptors matched is less than required.
    */
   public fun satisfiesPresentationDefinition(
-    vcJwts: List<String>,
+    vcJwts: Iterable<String>,
     presentationDefinition: PresentationDefinitionV2
   ) {
     if (!presentationDefinition.submissionRequirements.isNullOrEmpty()) {
@@ -64,26 +66,15 @@ public object PresentationExchange {
   }
 
   private fun mapInputDescriptorsToVCs(
-    vcJwtList: List<String>,
+    vcJwtList: Iterable<String>,
     presentationDefinition: PresentationDefinitionV2
   ): Map<InputDescriptorV2, List<String>> {
-    val map = mutableMapOf<InputDescriptorV2, MutableList<String>>()
-
-    presentationDefinition.inputDescriptors.forEach { inputDescriptor ->
-      val satisfyingVCs = mutableListOf<String>()
-
-      vcJwtList.forEach { vcJwt ->
-        if (vcSatisfiesInputDescriptor(vcJwt, inputDescriptor)) {
-          satisfyingVCs.add(vcJwt)
-        }
+    return presentationDefinition.inputDescriptors.associateWith { inputDescriptor ->
+      val satisfyingVCs = vcJwtList.filter { vcJwt ->
+        vcSatisfiesInputDescriptor(vcJwt, inputDescriptor)
       }
-
-      if (satisfyingVCs.size > 0) {
-        map[inputDescriptor] = satisfyingVCs
-      }
-    }
-
-    return map
+      satisfyingVCs
+    }.filterValues { it.isNotEmpty() }
   }
 
   /**
@@ -147,11 +138,27 @@ public object PresentationExchange {
     for (fieldValue in matchedFields) {
       if (fieldValue.isArray() && fieldValue.any { valueSatisfiesFieldFilterSchema(it, schema) }) {
         return true
-      } else if (!fieldValue.isArray() && valueSatisfiesFieldFilterSchema(fieldValue, schema)) {
+      }
+
+      if (fieldValue.isArray() && schema.isExpectingArray() && valueSatisfiesFieldFilterSchema(fieldValue, schema)) {
+        return true
+      }
+
+      if (!fieldValue.isArray() && valueSatisfiesFieldFilterSchema(fieldValue, schema)) {
         return true
       }
     }
     return false
+  }
+
+  private fun JsonSchema.isExpectingArray(): Boolean {
+    val schemaNode: JsonNode = this.schemaNode
+    return if (schemaNode is ObjectNode) {
+      val typeNode = schemaNode.get("type")
+      typeNode != null && typeNode.asText() == "array"
+    } else {
+      false
+    }
   }
 
   /**

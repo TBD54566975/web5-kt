@@ -62,6 +62,23 @@ class PresentationExchangeTest {
     }
 
     @Test
+    fun `does not throw when VC satisfies PD with field filter schema on array and single path`() {
+      val pd = jsonMapper.readValue(
+        readPd("src/test/resources/pd_filter_array_single_path.json"),
+        PresentationDefinitionV2::class.java
+      )
+      val vc = VerifiableCredential.create(
+        type = "StreetCred",
+        issuer = issuerDid.uri,
+        subject = holderDid.uri,
+        data = StreetCredibility(localRespect = "high", legit = true)
+      )
+      val vcJwt = vc.sign(issuerDid)
+
+      assertDoesNotThrow { PresentationExchange.satisfiesPresentationDefinition(listOf(vcJwt), pd) }
+    }
+
+    @Test
     fun `does not throw when VC satisfies PD with field filter schema on value`() {
       val pd = jsonMapper.readValue(
         readPd("src/test/resources/pd_filter_value.json"),
@@ -246,6 +263,25 @@ class PresentationExchangeTest {
     fun `throws when VC does not satisfy filter streetCred requirements`() {
       val pd = jsonMapper.readValue(
         readPd("src/test/resources/pd_filter_array.json"),
+        PresentationDefinitionV2::class.java
+      )
+      val vc = VerifiableCredential.create(
+        type = "DateOfBirth",
+        issuer = issuerDid.uri,
+        subject = holderDid.uri,
+        data = DateOfBirth(dateOfBirth = "01-02-03")
+      )
+      val vcJwt = vc.sign(issuerDid)
+
+      assertFailure {
+        PresentationExchange.satisfiesPresentationDefinition(listOf(vcJwt), pd)
+      }.messageContains("Missing input descriptors: The presentation definition requires")
+    }
+
+    @Test
+    fun `throws when VC does not satisfy filter streetCred requirements single path`() {
+      val pd = jsonMapper.readValue(
+        readPd("src/test/resources/pd_filter_array_single_path.json"),
         PresentationDefinitionV2::class.java
       )
       val vc = VerifiableCredential.create(
