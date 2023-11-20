@@ -97,8 +97,7 @@ val opts = RecoverDidIonOptions(
 val recoverResult = DidIon.recover(keyManager, did.uri, opts)
 ```
 
-> [!NOTE]
-> The `keyManager` MUST contain the recovery private key.
+**NOTE**: The `keyManager` MUST contain the recovery private key.
 
 ### Deactivate an ION did
 
@@ -116,8 +115,7 @@ val opts = DeactivateDidIonOptions(
 val deactivateResult = ionApi.deactivate(keyManager, did.uri, opts)
 ```
 
-> [!NOTE]
-> The `keyManager` MUST contain the recovery private key.
+**NOTE**: The `keyManager` MUST contain the recovery private key.
 
 # Package web5.sdk.dids.methods.key
 
