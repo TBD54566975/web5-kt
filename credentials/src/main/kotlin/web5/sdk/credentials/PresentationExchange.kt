@@ -30,12 +30,17 @@ public object PresentationExchange {
   }
 
   /**
-   * Validates if a Verifiable Credential JWT satisfies a Presentation Definition.
+   * Validates a list of Verifiable Credentials (VCs) against a specified Presentation Definition.
    *
-   * @param vcJwts The Verifiable Credentials as a JWT string.
-   * @param presentationDefinition The Presentation Definition to validate against.
-   * @throws UnsupportedOperationException If the Presentation Definition's Submission Requirements exists
-   * @throws PresentationExchangeError If the Presentation Definition is not fulfilled
+   * This function ensures that the provided VCs meet the criteria defined in the Presentation Definition.
+   * It first checks for the presence of Submission Requirements in the definition and throws an exception if they exist,
+   * as this feature is not implemented. Then, it maps the input descriptors in the presentation definition to the
+   * corresponding VCs. If the number of mapped descriptors does not match the required count, an error is thrown.
+   *
+   * @param vcJwts List of VCs in JWT format to validate.
+   * @param presentationDefinition The Presentation Definition V2 object against which VCs are validated.
+   * @throws UnsupportedOperationException If Submission Requirements are present in the definition.
+   * @throws PresentationExchangeError If the number of input descriptors matched is less than required.
    */
   public fun satisfiesPresentationDefinition(
     vcJwts: List<String>,
