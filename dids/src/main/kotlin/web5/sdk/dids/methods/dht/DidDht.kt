@@ -24,6 +24,7 @@ import web5.sdk.crypto.KeyManager
 import web5.sdk.crypto.Secp256k1
 import web5.sdk.dids.CreateDidOptions
 import web5.sdk.dids.Did
+import web5.sdk.dids.DidDocumentMetadata
 import web5.sdk.dids.DidMethod
 import web5.sdk.dids.DidResolutionResult
 import web5.sdk.dids.PublicKeyPurpose
@@ -264,7 +265,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
   override fun load(uri: String, keyManager: KeyManager): DidDht {
       validateKeyMaterialInsideKeyManager(uri, keyManager)
       validateIdentityKey(uri, keyManager)
-      return DidDht(uri, keyManager, null)
+      return DidDht(uri, keyManager, null, this)
     }
 
     internal fun validateIdentityKey(did: String, keyManager: KeyManager) {

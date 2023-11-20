@@ -6,10 +6,6 @@
 
 ## Create & Resolve
 
-### DID Key
-
-**Create**
-
 ### Creating a DID Key
 
 ```kt
@@ -34,20 +30,7 @@ val keyManager = InMemoryKeyManager()
 val did = DidJwk.create(keyManager)
 ```
 
-**Resolve**
-
-```kt
-package example
-
-import web5.sdk.dids.DidResolvers
-
-// did is the same as the value from the example above
-val didResolutionResult = DidResolvers.resolve(did.uri)
-```
-
-### DID DHT
-
-**Create**
+### Creating a DID DHT
 
 ```kt
 package example
@@ -75,7 +58,7 @@ val opts = CreateDidDhtOptions(
 val did = DidDht.create(keyManager, opts)
 ```
 
-**Resolve**
+### Resolving a DID
 
 ```kt
 package example
