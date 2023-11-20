@@ -31,8 +31,43 @@ class DidDhtTest {
       assertNotNull(identifier)
 
       assertDoesNotThrow {
-          DidDht.validate(identifier)
+        DidDht.validate(identifier)
       }
+    }
+
+    @Test
+    fun `validate identity key`() {
+      val manager = InMemoryKeyManager()
+      val keyAlias = manager.generatePrivateKey(JWSAlgorithm.EdDSA, Curve.Ed25519)
+      val publicKey = manager.getPublicKey(keyAlias)
+      val identifier = DidDht.getDidIdentifier(publicKey)
+
+      assertDoesNotThrow {
+        DidDht.validateIdentityKey(identifier, manager)
+      }
+    }
+
+    @Test
+    fun `validate identity key throws exception when private key not in manager`() {
+      val manager = InMemoryKeyManager()
+
+      val exception = assertThrows<IllegalArgumentException> {
+        DidDht.validateIdentityKey("did:dht:1bxdi3tbf1ud6cpk3ef9pz83erk9c6mmh877qfhfcd7ppzbgh7co", manager)
+      }
+      assertEquals("key with alias azV60laS2T5XWKymWbZO8f-tz_LFy87aIl07pI01P9w not found", exception.message)
+    }
+
+    @Test
+    fun `validate identity key throws exception when encoded bytes are not 32`() {
+      val manager = InMemoryKeyManager()
+
+      val exception = assertThrows<IllegalArgumentException> {
+        DidDht.validateIdentityKey("did:dht:1bxdi3tbf1ud6cpk3ef9pz83erk9c6mmh877qfhfcd7ppzbgh7co7", manager)
+      }
+      assertEquals(
+        "expected size of decoded identifier \"1bxdi3tbf1ud6cpk3ef9pz83erk9c6mmh877qfhfcd7ppzbgh7co7\" to be 32",
+        exception.message
+      )
     }
   }
 
@@ -72,7 +107,7 @@ class DidDhtTest {
         .serviceEndpoint("https://example.com/service)")
         .build()
 
-      val opts: CreateDidDhtOptions = CreateDidDhtOptions(
+      val opts = CreateDidDhtOptions(
         verificationMethods = verificationMethodsToAdd,
         services = listOf(serviceToAdd)
       )
@@ -147,7 +182,7 @@ class DidDhtTest {
         .serviceEndpoint("https://example.com/service)")
         .build()
 
-      val opts: CreateDidDhtOptions = CreateDidDhtOptions(
+      val opts = CreateDidDhtOptions(
         verificationMethods = verificationMethodsToAdd,
         services = listOf(serviceToAdd)
       )

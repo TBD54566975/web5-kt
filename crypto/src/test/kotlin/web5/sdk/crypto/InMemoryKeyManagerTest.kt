@@ -8,6 +8,7 @@ import com.nimbusds.jose.crypto.bc.BouncyCastleProviderSingleton
 import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.JWK
 import com.nimbusds.jose.jwk.gen.ECKeyGenerator
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
@@ -23,6 +24,16 @@ class InMemoryKeyManagerTest {
     val defaultAlias = keyManager.getDeterministicAlias(publicKey)
 
     assertEquals(alias, defaultAlias)
+  }
+
+  @Test
+  fun `exception is thrown when kid not found`() {
+    val keyManager = InMemoryKeyManager()
+    val jwk = Crypto.generatePrivateKey(JWSAlgorithm.ES256K)
+    val exception = assertThrows<IllegalArgumentException> {
+      keyManager.getDeterministicAlias(jwk.toPublicJWK())
+    }
+    assertTrue(exception.message!!.matches("key with alias .* not found".toRegex()))
   }
 
   @Test

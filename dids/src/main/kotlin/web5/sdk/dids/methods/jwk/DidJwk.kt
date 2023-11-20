@@ -16,6 +16,7 @@ import web5.sdk.dids.Did
 import web5.sdk.dids.DidMethod
 import web5.sdk.dids.DidResolutionResult
 import web5.sdk.dids.ResolveDidOptions
+import web5.sdk.dids.validateKeyMaterialInsideKeyManager
 import java.net.URI
 
 /**
@@ -51,14 +52,8 @@ public class CreateDidJwkOptions(
  * @property keyManager A [KeyManager] instance utilized to manage the cryptographic keys associated with the DID.
  *
  * @constructor Initializes a new instance of [DidJwk] with the provided [uri] and [keyManager].
- *
- * ### Usage Example:
- * ```kotlin
- * val keyManager = InMemoryKeyManager()
- * val did = DidJwk("did:jwk:example", keyManager)
- * ```
  */
-public class DidJwk(uri: String, keyManager: KeyManager) : Did(uri, keyManager) {
+public class DidJwk private constructor(uri: String, keyManager: KeyManager) : Did(uri, keyManager) {
   /**
    * Resolves the current instance's [uri] to a [DidResolutionResult], which contains the DID Document
    * and possible related metadata.
@@ -160,6 +155,22 @@ public class DidJwk(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
       val didDocument = didDocumentBuilder.build()
 
       return DidResolutionResult(didDocument = didDocument, context = "https://w3id.org/did-resolution/v1")
+    }
+
+
+    /**
+     * Instantiates a [DidJwk] instance from [uri] (which has to start with "did:jwk:"), and validates that the
+     * associated key material exists in the provided [keyManager].
+     *
+     * ### Usage Example:
+     * ```kotlin
+     * val keyManager = InMemoryKeyManager()
+     * val did = DidJwk.load("did:jwk:example", keyManager)
+     * ```
+     */
+    override fun load(uri: String, keyManager: KeyManager): DidJwk {
+      validateKeyMaterialInsideKeyManager(uri, keyManager)
+      return DidJwk(uri, keyManager)
     }
   }
 }
