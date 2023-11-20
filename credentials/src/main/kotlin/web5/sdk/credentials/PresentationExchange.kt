@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.networknt.schema.JsonSchema
 import com.nfeld.jsonpathkt.JsonPath
 import com.nfeld.jsonpathkt.extension.read
-import com.nimbusds.jose.Payload
 import com.nimbusds.jwt.JWTParser
 import com.nimbusds.jwt.SignedJWT
 
@@ -33,73 +32,120 @@ public object PresentationExchange {
   /**
    * Validates if a Verifiable Credential JWT satisfies a Presentation Definition.
    *
-   * @param vcJwt The Verifiable Credential JWT as a string.
+   * @param vcJwts The Verifiable Credentials as a JWT string.
    * @param presentationDefinition The Presentation Definition to validate against.
-   * @throws UnsupportedOperationException If the Presentation Definition's Submission Requirements
-   * feature is not implemented.
+   * @throws UnsupportedOperationException If the Presentation Definition's Submission Requirements exists
+   * @throws PresentationExchangeError If the Presentation Definition is not fulfilled
    */
   public fun satisfiesPresentationDefinition(
-    vcJwt: String,
+    vcJwts: List<String>,
     presentationDefinition: PresentationDefinitionV2
   ) {
-    val vc = JWTParser.parse(vcJwt) as SignedJWT
-
     if (!presentationDefinition.submissionRequirements.isNullOrEmpty()) {
       throw UnsupportedOperationException(
         "Presentation Definition's Submission Requirements feature is not implemented"
       )
     }
 
-    presentationDefinition.inputDescriptors
-      .filter { !it.constraints.fields.isNullOrEmpty() }
-      .forEach { inputDescriptorWithFields ->
-        validateInputDescriptorsWithFields(inputDescriptorWithFields, vc.payload)
+    val inputDescriptorToVcMap = mapInputDescriptorsToVCs(vcJwts, presentationDefinition)
+
+    if (inputDescriptorToVcMap.size != presentationDefinition.inputDescriptors.size) {
+      throw PresentationExchangeError(
+        "Missing input descriptors: The presentation definition requires " +
+          "${presentationDefinition.inputDescriptors.size} descriptors, but only " +
+          "${inputDescriptorToVcMap.size} were found. Check and provide the missing descriptors."
+      )
+    }
+  }
+  private fun mapInputDescriptorsToVCs(
+    vcJwtList: List<String>,
+    presentationDefinition: PresentationDefinitionV2
+  ): Map<InputDescriptorV2, List<String>> {
+    val map = mutableMapOf<InputDescriptorV2, MutableList<String>>()
+
+    presentationDefinition.inputDescriptors.forEach { inputDescriptor ->
+      val satisfyingVCs = mutableListOf<String>()
+
+      vcJwtList.forEach { vcJwt ->
+        if (vcSatisfiesInputDescriptor(vcJwt, inputDescriptor)) {
+          satisfyingVCs.add(vcJwt)
+        }
       }
+
+      if (satisfyingVCs.size > 0) {
+        map[inputDescriptor] = satisfyingVCs
+      }
+    }
+
+    return map
   }
 
   /**
-   * Validates the input descriptors with associated fields in a Verifiable Credential.
+   * Evaluates if a Verifiable Credential (VC) satisfies the criteria defined in an Input Descriptor.
    *
-   * @param inputDescriptorWithFields The Input Descriptor with associated fields.
-   * @param vcPayload The payload of the Verifiable Credential.
+   * Parses a Verifiable Credential (VC) from JWT format and verifies if it satisfies the Input Descriptor's criteria.
+   * This function evaluates each required field (where 'optional' is not true) in the descriptor against the VC's JSON payload.
+   * It extracts data from the VC payload using JSON paths defined in each field and checks compliance with any defined schema.
+   * Returns false if any required field is missing or fails schema validation, indicating non-compliance with the Input Descriptor.
+   * Otherwise, it returns true, signifying that the VC meets all criteria.
+   *
+   * @param vcJwt The JWT string representing the Verifiable Credential.
+   * @param inputDescriptor An instance of InputDescriptorV2 defining the criteria to be satisfied by the VC.
+   * @return Boolean indicating whether the VC satisfies the criteria of the Input Descriptor.
+   * @throws PresentationExchangeError Any errors during processing
    */
-  private fun validateInputDescriptorsWithFields(
-    inputDescriptorWithFields: InputDescriptorV2,
-    vcPayload: Payload
-  ) {
-    val requiredFields = inputDescriptorWithFields.constraints.fields!!.filter { it.optional != true }
+  private fun vcSatisfiesInputDescriptor(
+    vcJwt: String,
+    inputDescriptor: InputDescriptorV2
+  ): Boolean {
+    val vc = JWTParser.parse(vcJwt) as SignedJWT
 
-    requiredFields.forEach { field ->
-      val vcPayloadJson = JsonPath.parse(vcPayload.toString())
-        ?: throw PresentationExchangeError("Failed to parse VC $vcPayload as JsonNode")
+    val vcPayloadJson = JsonPath.parse(vc.payload.toString())
+      ?: throw PresentationExchangeError("Failed to parse VC payload as JSON.")
 
-      val matchedFields = field.path.mapNotNull { path -> vcPayloadJson.read<JsonNode>(path) }
-      if (matchedFields.isEmpty()) {
-        throw PresentationExchangeError("Could not find matching field for path: ${field.path.joinToString()}")
-      }
+    // If the Input Descriptor has constraints and fields defined, evaluate them.
+    inputDescriptor.constraints?.fields?.let { fields ->
+      val requiredFields = fields.filter { field -> field.optional != true }
 
-      when {
-        field.filterSchema != null -> {
-          matchedFields.any { fieldValue ->
-            when {
-              // When the field is an array, JSON schema is applied to each array item.
-              fieldValue.isArray -> {
-                if (fieldValue.none { valueSatisfiesFieldFilterSchema(it, field.filterSchema!!) })
-                  throw PresentationExchangeError("Validating $fieldValue against ${field.filterSchema} failed")
-                true
-              }
-
-              // Otherwise, JSON schema is applied to the entire value.
-              else -> {
-                valueSatisfiesFieldFilterSchema(fieldValue, field.filterSchema!!)
-              }
-            }
-          }
+      for (field in requiredFields) {
+        val matchedFields = field.path.mapNotNull { path -> vcPayloadJson.read<JsonNode>(path) }
+        if (matchedFields.isEmpty()) {
+          // If no matching fields are found for a required field, the VC does not satisfy this Input Descriptor.
+          return false
         }
 
-        else -> return
+        // If there is a filter schema, process it
+        if (field.filterSchema != null) {
+          val satisfiesSchema = evaluateMatchedFields(matchedFields, field.filterSchema!!)
+          if (!satisfiesSchema) {
+            // If the field value does not satisfy the schema, the VC does not satisfy this Input Descriptor.
+            return false
+          }
+        }
       }
     }
+
+    // If the VC passes all the checks, it satisfies the criteria of the Input Descriptor.
+    return true
+  }
+
+  /**
+   * Checks if any JsonNode in 'matchedFields' satisfies the 'schema'.
+   * Iterates through nodes: if a node or any element in a node array meets the schema, returns true; otherwise false.
+   *
+   * @param matchedFields List of JsonNodes to validate.
+   * @param schema JsonSchema to validate against.
+   * @return True if any field satisfies the schema, false if none do.
+   */
+  private fun evaluateMatchedFields(matchedFields: List<JsonNode>, schema: JsonSchema): Boolean {
+    for (fieldValue in matchedFields) {
+      if (fieldValue.isArray() && fieldValue.any { valueSatisfiesFieldFilterSchema(it, schema) }) {
+        return true
+      } else if (!fieldValue.isArray() && valueSatisfiesFieldFilterSchema(fieldValue, schema)) {
+        return true
+      }
+    }
+    return false
   }
 
   /**
