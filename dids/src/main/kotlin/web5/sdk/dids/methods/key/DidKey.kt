@@ -16,6 +16,7 @@ import web5.sdk.dids.Did
 import web5.sdk.dids.DidMethod
 import web5.sdk.dids.DidResolutionResult
 import web5.sdk.dids.ResolveDidOptions
+import web5.sdk.dids.validateKeyMaterialInsideKeyManager
 import java.net.URI
 
 /**
@@ -51,14 +52,8 @@ public class CreateDidKeyOptions(
  * @property keyManager A [KeyManager] instance utilized to manage the cryptographic keys associated with the DID.
  *
  * @constructor Initializes a new instance of [DidKey] with the provided [uri] and [keyManager].
- *
- * ### Usage Example:
- * ```kotlin
- * val keyManager = InMemoryKeyManager()
- * val did = DidKey("did:key:example", keyManager)
- * ```
  */
-public class DidKey(uri: String, keyManager: KeyManager) : Did(uri, keyManager) {
+public class DidKey private constructor(uri: String, keyManager: KeyManager) : Did(uri, keyManager) {
   /**
    * Resolves the current instance's [uri] to a [DidResolutionResult], which contains the DID Document
    * and possible related metadata.
@@ -109,6 +104,21 @@ public class DidKey(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
       val did = "did:key:$multibaseEncodedId"
 
       return DidKey(did, keyManager)
+    }
+
+    /**
+     * Instantiates a [DidKey] instance from [uri] (which has to start with "did:key:"), and validates that the
+     * associated key material exists in the provided [keyManager].
+     *
+     * ### Usage Example:
+     * ```kotlin
+     * val keyManager = InMemoryKeyManager()
+     * val did = DidKey.load("did:key:example", keyManager)
+     * ```
+     */
+    override fun load(uri: String, keyManager: KeyManager): DidKey {
+      validateKeyMaterialInsideKeyManager(uri, keyManager)
+      return DidKey(uri, keyManager)
     }
 
     /**
@@ -166,3 +176,4 @@ public class DidKey(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
     }
   }
 }
+

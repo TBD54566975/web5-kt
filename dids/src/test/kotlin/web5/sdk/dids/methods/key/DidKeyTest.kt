@@ -11,6 +11,7 @@ import com.nimbusds.jose.jwk.JWK
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
+import org.junit.jupiter.api.assertThrows
 import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.dids.DidResolvers
 import kotlin.test.assertEquals
@@ -35,6 +36,33 @@ class DidKeyTest {
       val keyAlias = did.keyManager.getDeterministicAlias(jwk)
       val publicKey = did.keyManager.getPublicKey(keyAlias)
     }
+  }
+
+  @Test
+  fun `load fails when key manager does not contain private key`() {
+    val manager = InMemoryKeyManager()
+    val exception = assertThrows<IllegalArgumentException> {
+      DidKey.load("did:key:z6MkiTBz1ymuepAQ4HEHYSF1H8quG5GLVVQR3djdX3mDooWp", manager)
+    }
+    assertEquals("key with alias 9ZP03Nu8GrXPAUkbKNxHOKBzxPX83SShgFkRNK-f2lw not found", exception.message)
+  }
+
+  @Test
+  fun `load returns instance when key manager contains private key`() {
+    val manager = InMemoryKeyManager()
+    val did = DidKey.create(manager)
+    val didKey = DidKey.load(did.uri, manager)
+    assertEquals(did.uri, didKey.uri)
+  }
+
+  @Test
+  fun `throws exception when loading a different type of did`() {
+    val manager = InMemoryKeyManager()
+    val did = DidKey.create(manager)
+    val exception = assertThrows<IllegalArgumentException> {
+      DidKey.load(did.uri.replace("key", "ion"), manager)
+    }
+    assertTrue(exception.message!!.startsWith("did must start with the prefix \"did:key\""))
   }
 
   @Nested
@@ -99,7 +127,7 @@ class DidKeyTest {
         val km2 = InMemoryKeyManager()
         km2.import(jsonKeySet)
 
-        DidKey(uri = didUri, keyManager = km2)
+        DidKey.load(uri = didUri, keyManager = km2)
       }
     }
   }

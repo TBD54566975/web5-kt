@@ -194,7 +194,7 @@ fun main() {
   val keyManager = InMemoryKeyManager()
   keyManager.import(jsonKeySet)
 
-  val did = DidKey(uri = didUri, keyManager = keyManager)
+  val did = DidKey.load(did = didUri, keyManager = keyManager)
 }
 ```
 
