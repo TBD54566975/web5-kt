@@ -18,8 +18,9 @@ All the web5 libraries are published on [JitPack](https://jitpack.io). To start 
 
 ```kotlin
 repositories {
-  maven(url = "https://jitpack.io")
+  maven("https://jitpack.io")
   maven("https://repo.danubetech.com/repository/maven-public/")
+  maven("https://repository.jboss.org/nexus/content/repositories/thirdparty-releases/")
 }
 
 dependencies {

@@ -59,6 +59,7 @@ public class DidResolutionMetadata(
  * @property nextVersionId The version ID expected for the next version of the DID document.
  * @property equivalentId Alternative ID that can be used interchangeably with the canonical DID.
  * @property canonicalId The canonical ID of the DID as per method-specific rules.
+ * @property types Returns types for DIDs that support type indexing.
  */
 public class DidDocumentMetadata(
   public var created: String? = null,
@@ -70,5 +71,6 @@ public class DidDocumentMetadata(
   public var equivalentId: List<String>? = null,
   public var canonicalId: String? = null,
   public val method: MetadataMethod? = null,
+  public val types: List<Int>? = null
 )
 
