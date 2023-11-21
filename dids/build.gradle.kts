@@ -4,15 +4,11 @@ plugins {
 }
 
 repositories {
-  maven {
-    url = uri("https://jitpack.io")
-  }
   mavenCentral()
-  maven {
-    url = uri("https://repo.danubetech.com/repository/maven-public")
-  }
+  maven("https://repo.danubetech.com/repository/maven-public")
   maven("https://jitpack.io")
   maven("https://jcenter.bintray.com/")
+  maven("https://repository.jboss.org/nexus/content/repositories/thirdparty-releases/")
 }
 
 val ktor_version = "2.3.4"
@@ -39,4 +35,5 @@ dependencies {
   testImplementation("commons-codec:commons-codec:1.16.0")
 
   implementation("dnsjava:dnsjava:3.5.2")
+  implementation("com.github.mpetazzoni:ttorrent:ttorrent-2.0")
 }
