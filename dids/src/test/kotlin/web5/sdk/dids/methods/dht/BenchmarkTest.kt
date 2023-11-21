@@ -26,7 +26,7 @@ class BenchmarkTest {
     val endTime = System.nanoTime()
     val duration = (endTime - startTime) / 1_000_000_000.0  // Convert nanoseconds to seconds
 
-    println("Total time taken: $duration milliseconds")
+    println("Total time taken: $duration seconds")
   }
 
   private fun createDidDhtAndSign() {
