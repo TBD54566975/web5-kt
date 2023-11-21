@@ -38,6 +38,8 @@ public class VerificationMethodCreationParams(
   }
 }
 
+private const val JsonWebKey2020Type = "JsonWebKey2020"
+
 /**
  * A [VerificationMethodSpec] according to https://w3c-ccg.github.io/lds-jws2020/.
  *
@@ -50,7 +52,7 @@ public class JsonWebKey2020VerificationMethod(
   public val relationships: Iterable<PublicKeyPurpose> = emptySet()
 ) : VerificationMethodSpec, VerificationMethodGenerator {
   override fun generate(): Pair<String?, PublicKey> {
-    return Pair(null, PublicKey(id, "JsonWebKey2020", controller, publicKeyJwk, relationships))
+    return Pair(null, PublicKey(id, JsonWebKey2020Type, controller, publicKeyJwk, relationships))
   }
 }
 
@@ -86,7 +88,7 @@ internal class VerificationMethodKeyManagerGenerator(
       alias,
       PublicKey(
         id = UUID.randomUUID().toString(),
-        type = "JsonWebKey2020",
+        type = JsonWebKey2020Type,
         publicKeyJwk = publicKeyJwk,
         purposes = params.relationships,
       )
@@ -95,18 +97,23 @@ internal class VerificationMethodKeyManagerGenerator(
 }
 
 /**
+ * Converts a [VerificationMethodSpec] to a [VerificationMethodGenerator] with the given [keyManager].
+ */
+public fun VerificationMethodSpec.toGenerator(keyManager: KeyManager): VerificationMethodGenerator {
+  return when (this) {
+    is VerificationMethodCreationParams -> toGenerator(keyManager)
+    is VerificationMethodGenerator -> this
+    else -> {
+      throw IllegalArgumentException("Unsupported VerificationMethodSpec type: ${this::class.simpleName}")
+    }
+  }
+}
+
+/**
  * Converts a list of [VerificationMethodSpec] to a list of [VerificationMethodGenerator]s with the given [keyManager].
  */
 public fun Iterable<VerificationMethodSpec>.toGenerators(keyManager: KeyManager): List<VerificationMethodGenerator> {
-  return buildList {
-    for (verificationMethodSpec in this@toGenerators) {
-      when (verificationMethodSpec) {
-        is VerificationMethodCreationParams -> add(verificationMethodSpec.toGenerator(keyManager))
-
-        is VerificationMethodGenerator -> add(verificationMethodSpec)
-      }
-    }
-  }
+  return this.map { it.toGenerator(keyManager) }
 }
 
 /**

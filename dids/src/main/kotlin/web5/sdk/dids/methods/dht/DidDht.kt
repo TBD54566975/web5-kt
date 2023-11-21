@@ -30,9 +30,8 @@ import web5.sdk.dids.DidResolutionResult
 import web5.sdk.dids.PublicKeyPurpose
 import web5.sdk.dids.ResolveDidOptions
 import web5.sdk.dids.validateKeyMaterialInsideKeyManager
-import web5.sdk.dids.verificationmethods.VerificationMethodGenerator
 import web5.sdk.dids.verificationmethods.VerificationMethodSpec
-import web5.sdk.dids.verificationmethods.toGenerators
+import web5.sdk.dids.verificationmethods.toPublicKeys
 import java.net.URI
 
 /**
@@ -148,16 +147,26 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
     }
 
     // map to the DID object model's verification methods
-    val verificationMethods = opts.verificationMethodsToAdd
-      .toGenerators(keyManager)
-      .toVerificationMethods(id).map { (purposes, verificationMethod) ->
-        purposes.forEach { relationship ->
-          relationshipsMap.getOrPut(relationship) { mutableListOf() }.add(
-            VerificationMethod.builder().id(verificationMethod.id).build()
-          )
-        }
-        verificationMethod
-      } + identityVerificationMethod
+    val verificationMethodToPublicKey = opts.verificationMethodsToAdd
+      .toPublicKeys(keyManager)
+      .associate { (_, publicKey) ->
+        val key = publicKey.publicKeyJwk
+        val verificationMethod = VerificationMethod.builder()
+          .id(URI.create("$id#${publicKey.id}"))
+          .type(publicKey.type)
+          .controller(URI.create(id))
+          .publicKeyJwk(key.toPublicJWK().toJSONObject())
+          .build()
+        verificationMethod to publicKey
+      }
+    verificationMethodToPublicKey.forEach { (verificationMethod, publicKey) ->
+      publicKey.purposes.forEach { relationship ->
+        relationshipsMap.getOrPut(relationship) { mutableListOf() }.add(
+          VerificationMethod.builder().id(verificationMethod.id).build()
+        )
+      }
+    }
+    val verificationMethods = verificationMethodToPublicKey.keys + identityVerificationMethod
     opts.servicesToAdd.forEach { service ->
       requireNotNull(service.id) { "Service id cannot be null" }
       requireNotNull(service.type) { "Service type cannot be null" }
@@ -176,7 +185,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
     val didDocument =
       DIDDocument.builder()
         .id(URI(id))
-        .verificationMethods(verificationMethods)
+        .verificationMethods(verificationMethods.toList())
         .services(services)
         .assertionMethodVerificationMethods(relationshipsMap[PublicKeyPurpose.ASSERTION_METHOD])
         .authenticationVerificationMethods(relationshipsMap[PublicKeyPurpose.AUTHENTICATION])
@@ -541,24 +550,6 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
       val (key, value) = it.split("=")
       key to value
     }
-  }
-}
-
-private fun Iterable<VerificationMethodGenerator>.toVerificationMethods(id: String)
-  : List<Pair<Iterable<PublicKeyPurpose>, VerificationMethod>> {
-  return this.map {
-    val (_, publicKey) = it.generate()
-    val key = publicKey.publicKeyJwk
-    val purposes = publicKey.purposes
-    Pair(
-      purposes,
-      VerificationMethod.builder()
-        .id(URI.create("$id#${publicKey.id}"))
-        .type(publicKey.type)
-        .controller(URI.create(id))
-        .publicKeyJwk(key.toPublicJWK().toJSONObject())
-        .build()
-    )
   }
 }
 
