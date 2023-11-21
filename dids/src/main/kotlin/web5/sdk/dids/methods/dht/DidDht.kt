@@ -30,6 +30,9 @@ import web5.sdk.dids.DidResolutionResult
 import web5.sdk.dids.PublicKeyPurpose
 import web5.sdk.dids.ResolveDidOptions
 import web5.sdk.dids.validateKeyMaterialInsideKeyManager
+import web5.sdk.dids.verificationmethods.VerificationMethodGenerator
+import web5.sdk.dids.verificationmethods.VerificationMethodSpec
+import web5.sdk.dids.verificationmethods.toGenerators
 import java.net.URI
 
 /**
@@ -77,14 +80,13 @@ private class DidDhtApiImpl(configuration: DidDhtConfiguration) : DidDhtApi(conf
 
 /**
  * Specifies options for creating a new "did:dht" Decentralized Identifier (DID).
- * @property verificationMethods A list of [JWK]s to add to the DID Document mapped to their purposes
- * as verification methods.
- * @property services A list of [Service]s to add to the DID Document.
+ * @property verificationMethodsToAdd List of specs that will be added to the DID ION document.
+ * @property servicesToAdd A list of [Service]s to add to the DID Document.
  * @property publish Whether to publish the DID Document to the DHT after creation.
  */
 public class CreateDidDhtOptions(
-  public val verificationMethods: Iterable<Pair<JWK, Array<PublicKeyPurpose>>>? = null,
-  public val services: Iterable<Service>? = null,
+  public val verificationMethodsToAdd: Iterable<VerificationMethodSpec> = emptyList(),
+  public val servicesToAdd: Iterable<Service> = emptyList(),
   public val publish: Boolean = true,
 ) : CreateDidOptions
 
@@ -146,27 +148,23 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
     }
 
     // map to the DID object model's verification methods
-    val verificationMethods = (opts.verificationMethods?.map { (key, purposes) ->
-      VerificationMethod.builder()
-        .id(URI.create("$id#${key.keyID}"))
-        .type("JsonWebKey2020")
-        .controller(URI.create(id))
-        .publicKeyJwk(key.toPublicJWK().toJSONObject())
-        .build().also { verificationMethod ->
-          purposes.forEach { relationship ->
-            relationshipsMap.getOrPut(relationship) { mutableListOf() }.add(
-              VerificationMethod.builder().id(verificationMethod.id).build()
-            )
-          }
+    val verificationMethods = opts.verificationMethodsToAdd
+      .toGenerators(keyManager)
+      .toVerificationMethods(id).map { (purposes, verificationMethod) ->
+        purposes.forEach { relationship ->
+          relationshipsMap.getOrPut(relationship) { mutableListOf() }.add(
+            VerificationMethod.builder().id(verificationMethod.id).build()
+          )
         }
-    } ?: emptyList()) + identityVerificationMethod
-    opts.services?.forEach { service ->
+        verificationMethod
+      } + identityVerificationMethod
+    opts.servicesToAdd.forEach { service ->
       requireNotNull(service.id) { "Service id cannot be null" }
       requireNotNull(service.type) { "Service type cannot be null" }
       requireNotNull(service.serviceEndpoint) { "Service serviceEndpoint cannot be null" }
     }
     // map to the DID object model's services
-    val services = opts.services?.map { service ->
+    val services = opts.servicesToAdd.map { service ->
       Service.builder()
         .id(URI.create("$id#${service.id}"))
         .type(service.type)
@@ -263,22 +261,24 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
   }
 
   override fun load(uri: String, keyManager: KeyManager): DidDht {
-      validateKeyMaterialInsideKeyManager(uri, keyManager)
-      validateIdentityKey(uri, keyManager)
-      return DidDht(uri, keyManager, null, this)
+    validateKeyMaterialInsideKeyManager(uri, keyManager)
+    validateIdentityKey(uri, keyManager)
+    return DidDht(uri, keyManager, null, this)
+  }
+
+  internal fun validateIdentityKey(did: String, keyManager: KeyManager) {
+    val parsedDid = DID.fromString(did)
+    val decodedId = ZBase32.decode(parsedDid.methodSpecificId)
+    require(decodedId.size == 32) {
+      "expected size of decoded identifier \"${parsedDid.methodSpecificId}\" to be 32"
     }
 
-    internal fun validateIdentityKey(did: String, keyManager: KeyManager) {
-      val parsedDid = DID.fromString(did)
-      val decodedId = ZBase32.decode(parsedDid.methodSpecificId)
-      require(decodedId.size == 32) {
-        "expected size of decoded identifier \"${parsedDid.methodSpecificId}\" to be 32"
-      }
+    val publicKeyJwk = Ed25519.bytesToPublicKey(decodedId)
+    val identityKeyAlias = keyManager.getDeterministicAlias(publicKeyJwk)
+    keyManager.getPublicKey(identityKeyAlias)
+  }
 
-      val publicKeyJwk = Ed25519.bytesToPublicKey(decodedId)
-      val identityKeyAlias = keyManager.getDeterministicAlias(publicKeyJwk)
-      keyManager.getPublicKey(identityKeyAlias)
-    }/**
+  /**
    * Generates the identifier for a did:dht DID given its identity key.
    *
    * @param identityKey the key used to generate the DID's identifier
@@ -541,6 +541,24 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
       val (key, value) = it.split("=")
       key to value
     }
+  }
+}
+
+private fun Iterable<VerificationMethodGenerator>.toVerificationMethods(id: String)
+  : List<Pair<Iterable<PublicKeyPurpose>, VerificationMethod>> {
+  return this.map {
+    val (_, publicKey) = it.generate()
+    val key = publicKey.publicKeyJwk
+    val purposes = publicKey.purposes
+    Pair(
+      purposes,
+      VerificationMethod.builder()
+        .id(URI.create("$id#${publicKey.id}"))
+        .type(publicKey.type)
+        .controller(URI.create(id))
+        .publicKeyJwk(key.toPublicJWK().toJSONObject())
+        .build()
+    )
   }
 }
 

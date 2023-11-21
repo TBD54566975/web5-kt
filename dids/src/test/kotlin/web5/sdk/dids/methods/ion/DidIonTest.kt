@@ -22,12 +22,16 @@ import org.mockito.kotlin.spy
 import org.mockito.kotlin.whenever
 import web5.sdk.crypto.AwsKeyManager
 import web5.sdk.crypto.InMemoryKeyManager
+import web5.sdk.dids.PublicKey
 import web5.sdk.dids.PublicKeyPurpose
-import web5.sdk.dids.methods.ion.models.PublicKey
 import web5.sdk.dids.methods.ion.models.Service
 import web5.sdk.dids.methods.ion.models.SidetreeCreateOperation
 import web5.sdk.dids.methods.ion.models.SidetreeUpdateOperation
 import web5.sdk.dids.methods.util.readKey
+import web5.sdk.dids.verificationmethods.EcdsaSecp256k1VerificationKey2019VerificationMethod
+import web5.sdk.dids.verificationmethods.JsonWebKey2020VerificationMethod
+import web5.sdk.dids.verificationmethods.VerificationMethodCreationParams
+import web5.sdk.dids.verificationmethods.VerificationMethodSpec
 import java.io.File
 import kotlin.test.Ignore
 import kotlin.test.Test

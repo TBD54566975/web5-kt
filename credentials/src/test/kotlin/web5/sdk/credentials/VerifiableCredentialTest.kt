@@ -16,8 +16,8 @@ import web5.sdk.crypto.AwsKeyManager
 import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.dids.methods.ion.CreateDidIonOptions
 import web5.sdk.dids.methods.ion.DidIon
-import web5.sdk.dids.methods.ion.JsonWebKey2020VerificationMethod
 import web5.sdk.dids.methods.key.DidKey
+import web5.sdk.dids.verificationmethods.JsonWebKey2020VerificationMethod
 import java.security.SignatureException
 import java.text.ParseException
 import java.util.UUID

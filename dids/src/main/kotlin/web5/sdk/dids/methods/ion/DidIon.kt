@@ -1,12 +1,10 @@
 package web5.sdk.dids.methods.ion
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.nimbusds.jose.Algorithm
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.JWSHeader
 import com.nimbusds.jose.JWSObject
 import com.nimbusds.jose.Payload
-import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.JWK
 import com.nimbusds.jose.util.Base64URL
 import foundation.identity.did.DID
@@ -27,7 +25,6 @@ import kotlinx.coroutines.runBlocking
 import org.erdtman.jcs.JsonCanonicalizer
 import web5.sdk.common.Convert
 import web5.sdk.common.Varint
-import web5.sdk.crypto.KeyGenOptions
 import web5.sdk.crypto.KeyManager
 import web5.sdk.dids.CreateDidOptions
 import web5.sdk.dids.CreationMetadata
@@ -35,6 +32,7 @@ import web5.sdk.dids.Did
 import web5.sdk.dids.DidMethod
 import web5.sdk.dids.DidResolutionMetadata
 import web5.sdk.dids.DidResolutionResult
+import web5.sdk.dids.PublicKey
 import web5.sdk.dids.PublicKeyPurpose
 import web5.sdk.dids.ResolveDidOptions
 import web5.sdk.dids.methods.ion.models.AddPublicKeysAction
@@ -46,7 +44,6 @@ import web5.sdk.dids.methods.ion.models.Document
 import web5.sdk.dids.methods.ion.models.InitialState
 import web5.sdk.dids.methods.ion.models.OperationSuffixDataObject
 import web5.sdk.dids.methods.ion.models.PatchAction
-import web5.sdk.dids.methods.ion.models.PublicKey
 import web5.sdk.dids.methods.ion.models.RecoveryUpdateSignedData
 import web5.sdk.dids.methods.ion.models.RemovePublicKeysAction
 import web5.sdk.dids.methods.ion.models.RemoveServicesAction
@@ -59,9 +56,11 @@ import web5.sdk.dids.methods.ion.models.SidetreeRecoverOperation
 import web5.sdk.dids.methods.ion.models.SidetreeUpdateOperation
 import web5.sdk.dids.methods.ion.models.UpdateOperationSignedData
 import web5.sdk.dids.validateKeyMaterialInsideKeyManager
+import web5.sdk.dids.verificationmethods.VerificationMethodCreationParams
+import web5.sdk.dids.verificationmethods.VerificationMethodSpec
+import web5.sdk.dids.verificationmethods.toPublicKeys
 import java.net.URI
 import java.security.MessageDigest
-import java.util.UUID
 
 private const val operationsPath = "/operations"
 private const val identifiersPath = "/identifiers"
@@ -790,103 +789,6 @@ public class CreateDidIonOptions(
   override val servicesToAdd: Iterable<Service> = emptyList(),
 ) : CreateDidOptions, CommonOptions
 
-/** Common interface for options available when adding a VerificationMethod. */
-public interface VerificationMethodSpec
-
-private interface VerificationMethodGenerator {
-  fun generate(): Pair<String?, PublicKey>
-}
-
-/**
- * A [VerificationMethodSpec] where a [KeyManager] will be used to generate the underlying verification method keys.
- * The parameters [algorithm], [curve], and [options] will be forwarded to the keyManager.
- *
- * [relationships] will be used to determine the verification relationships in the DID Document being created.
- * */
-public class VerificationMethodCreationParams(
-  public val algorithm: Algorithm,
-  public val curve: Curve? = null,
-  public val options: KeyGenOptions? = null,
-  public val relationships: Iterable<PublicKeyPurpose>
-) : VerificationMethodSpec {
-  internal fun toGenerator(keyManager: KeyManager): VerificationMethodKeyManagerGenerator {
-    return VerificationMethodKeyManagerGenerator(keyManager, this)
-  }
-}
-
-/**
- * A [VerificationMethodSpec] according to https://w3c-ccg.github.io/lds-jws2020/.
- *
- * The [id] property cannot be over 50 chars and must only use characters from the Base64URL character set.
- */
-public class JsonWebKey2020VerificationMethod(
-  public val id: String,
-  public val controller: String? = null,
-  public val publicKeyJwk: JWK,
-  public val relationships: Iterable<PublicKeyPurpose> = emptySet()
-) : VerificationMethodSpec, VerificationMethodGenerator {
-  override fun generate(): Pair<String?, PublicKey> {
-    return Pair(null, PublicKey(id, "JsonWebKey2020", controller, publicKeyJwk, relationships))
-  }
-}
-
-/**
- * A [VerificationMethodSpec] according to https://w3c-ccg.github.io/lds-ecdsa-secp256k1-2019/.
- *
- * The [id] property cannot be over 50 chars and must only use characters from the Base64URL character set.
- */
-public class EcdsaSecp256k1VerificationKey2019VerificationMethod(
-  public val id: String,
-  public val controller: String? = null,
-  public val publicKeyJwk: JWK,
-  public val relationships: Iterable<PublicKeyPurpose> = emptySet()
-) : VerificationMethodSpec, VerificationMethodGenerator {
-  override fun generate(): Pair<String, PublicKey> {
-    return Pair(id, PublicKey(id, "EcdsaSecp256k1VerificationKey2019", controller, publicKeyJwk, relationships))
-  }
-}
-
-internal class VerificationMethodKeyManagerGenerator(
-  val keyManager: KeyManager,
-  val params: VerificationMethodCreationParams,
-) : VerificationMethodGenerator {
-
-  override fun generate(): Pair<String, PublicKey> {
-    val alias = keyManager.generatePrivateKey(
-      algorithm = params.algorithm,
-      curve = params.curve,
-      options = params.options
-    )
-    val publicKeyJwk = keyManager.getPublicKey(alias)
-    return Pair(
-      alias,
-      PublicKey(
-        id = UUID.randomUUID().toString(),
-        type = "JsonWebKey2020",
-        publicKeyJwk = publicKeyJwk,
-        purposes = params.relationships,
-      )
-    )
-  }
-}
-
-
-private fun Iterable<VerificationMethodSpec>.toGenerators(keyManager: KeyManager): List<VerificationMethodGenerator> {
-  return buildList {
-    for (verificationMethodSpec in this@toGenerators) {
-      when (verificationMethodSpec) {
-        is VerificationMethodCreationParams -> add(verificationMethodSpec.toGenerator(keyManager))
-
-        is VerificationMethodGenerator -> add(verificationMethodSpec)
-      }
-    }
-  }
-
-}
-
-private fun Iterable<VerificationMethodSpec>.toPublicKeys(keyManager: KeyManager) = toGenerators(
-  keyManager
-).map { it.generate() }
 
 /**
  * Metadata related to the creation of a DID (Decentralized Identifier) on the Sidetree protocol.
