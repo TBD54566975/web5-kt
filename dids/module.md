@@ -10,6 +10,50 @@ If you find yourself scratching your head because something doesn't work, the be
 to look at is the test files. We strive to maintain a high test coverage, which should give
 you plenty of examples on how to use this SDK.
 
+# Package web5.sdk.dids.methods.dht
+
+Package that contains the `DidDht` class, which is used to create and resolve dids using the `dht` method.
+
+# Examples
+
+## Creation
+
+### Creating a DID DHT
+
+```kt
+package example
+
+import web5.sdk.crypto.InMemoryKeyManager
+import web5.sdk.dids.methods.dht.DidDht
+import web5.sdk.dids.methods.dht.CreateDidDhtOptions
+import foundation.identity.did.Service
+
+val keyManager = InMemoryKeyManager()
+
+// Add a service to the DID Document
+val service = Service.builder()
+  .id(URI("test-service"))
+  .type("HubService")
+  .serviceEndpoint("https://example.com/service)")
+  .build()
+
+val opts = CreateDidDhtOptions(
+  services = listOf(service),
+  // Automatically publishes to the DHT
+  publish = true
+)
+
+val did = DidDht.create(keyManager, opts)
+```
+
+## Resolution
+
+### Resolve a DID DHT
+
+```kotlin
+val did = DidDht.resolve("did:dht:uAAAAB")
+```
+
 # Package web5.sdk.dids.methods.ion
 
 Package that contains the `DidIon` class, which is used to create and resolve dids using the `ion` method.
