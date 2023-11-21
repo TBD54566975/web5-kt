@@ -93,8 +93,8 @@ public sealed class DidWebApi(
     val bootstrapClient = OkHttpClient.Builder().cache(appCache).build()
 
     val dns = DnsOverHttps.Builder().client(bootstrapClient)
-      .url("https://dns.google/dns-query".toHttpUrl())
-      .bootstrapDnsHosts(InetAddress.getByName("9.9.9.9"))
+      .url("https://dns.quad9.net/dns-query".toHttpUrl())
+      .bootstrapDnsHosts(InetAddress.getByName("9.9.9.9"), InetAddress.getByName("149.112.112.112"))
       .build()
 
     val client = bootstrapClient.newBuilder().dns(dns).build()
