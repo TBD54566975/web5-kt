@@ -33,6 +33,7 @@ import web5.sdk.dids.CreateDidOptions
 import web5.sdk.dids.CreationMetadata
 import web5.sdk.dids.Did
 import web5.sdk.dids.DidMethod
+import web5.sdk.dids.DidResolutionMetadata
 import web5.sdk.dids.DidResolutionResult
 import web5.sdk.dids.PublicKeyPurpose
 import web5.sdk.dids.ResolveDidOptions
@@ -57,6 +58,7 @@ import web5.sdk.dids.methods.ion.models.SidetreeDeactivateOperation
 import web5.sdk.dids.methods.ion.models.SidetreeRecoverOperation
 import web5.sdk.dids.methods.ion.models.SidetreeUpdateOperation
 import web5.sdk.dids.methods.ion.models.UpdateOperationSignedData
+import web5.sdk.dids.validateKeyMaterialInsideKeyManager
 import java.net.URI
 import java.security.MessageDigest
 import java.util.UUID
@@ -156,14 +158,8 @@ public class DeactivateDidIonOptions(public val recoveryKeyAlias: String)
  * @property keyManager A [KeyManager] instance utilized to manage the cryptographic keys associated with the DID.
  * @property creationMetadata Metadata related to the creation of a DID. Useful for debugging purposes.
  * @property didIonApi A [DidIonApi] instance utilized to delegate all the calls to an ION node.
- *
- * ### Usage Example:
- * ```kotlin
- * val keyManager = InMemoryKeyManager()
- * val did = DidIon("did:ion:example", keyManager)
- * ```
  */
-public class DidIon(
+public class DidIon internal constructor(
   uri: String,
   keyManager: KeyManager,
   public val creationMetadata: IonCreationMetadata? = null,
@@ -287,6 +283,22 @@ public sealed class DidIonApi(
       )
     }
     throw InvalidStatusException(response.status.value, "received error response: '$opBody'")
+  }
+
+  /**
+   * Instantiates a [DidIon] instance from [uri] (which has to start with "did:ion:"), and validates that the
+   * associated key material exists in the provided [keyManager].
+   *
+   * ### Usage Example:
+   * ```kotlin
+   * val keyManager = InMemoryKeyManager()
+   * val did = DidIon.load("did:ion:example", keyManager)
+   * ```
+   */
+  override fun load(uri: String, keyManager: KeyManager): DidIon {
+    validateKeyMaterialInsideKeyManager(uri, keyManager)
+    // TODO: validate other keys.
+    return DidIon(uri, keyManager, null, this)
   }
 
   private fun canonicalized(data: Any): ByteArray {

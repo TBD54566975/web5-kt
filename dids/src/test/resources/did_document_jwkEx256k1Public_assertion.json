@@ -1,0 +1,29 @@
+{
+  "@context": [
+    "https://www.w3.org/ns/did/v1",
+    "https://w3id.org/security/suites/jws-2020/v1"
+  ],
+  "id": "did:web:example-with-verification-method.com",
+  "verificationMethod": [
+    {
+      "controller": "did:web:example-with-verification-method.com",
+      "id": "did:example:123#key-0",
+      "publicKeyJwk": {
+        "kty": "EC",
+        "crv": "secp256k1",
+        "x": "nIqlRCx0eyBSXcQnqDpReSv4zuWhwCRWssoc9L_nj6A",
+        "y": "iG29VK6l2U5sKBZUSJePvyFusXgSlK2dDFlWaCM8F7k"
+      },
+      "type": "JsonWebKey2020"
+    }
+  ],
+  "authentication": [
+    "did:web:example-with-verification-method.com#key-0"
+  ],
+  "assertionMethod": [
+    "did:web:example-with-verification-method.com#key-0"
+  ],
+  "keyAgreement": [
+    "did:web:example-with-verification-method.com#key-0"
+  ]
+}
