@@ -9,7 +9,7 @@ import foundation.identity.did.Service
 import foundation.identity.did.VerificationMethod
 import foundation.identity.did.parser.ParserException
 import io.ktor.client.engine.HttpClientEngine
-import io.ktor.client.engine.cio.CIO
+import io.ktor.client.engine.okhttp.OkHttp
 import org.xbill.DNS.DClass
 import org.xbill.DNS.Message
 import org.xbill.DNS.Name
@@ -36,11 +36,11 @@ import java.net.URI
  * Configuration for the [DidDhtApi].
  *
  * @property gateway The DID DHT gateway URL.
- * @property engine The engine to use. When absent, a new one will be created from the [CIO] factory.
+ * @property engine The engine to use. When absent, a new one will be created from the [OkHttp] factory.
  */
 public class DidDhtConfiguration internal constructor(
   public val gateway: String = "https://diddht.tbddev.org",
-  public var engine: HttpClientEngine = CIO.create {},
+  public var engine: HttpClientEngine = OkHttp.create {},
 )
 
 /**
