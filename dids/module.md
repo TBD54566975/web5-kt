@@ -51,7 +51,7 @@ val did = DidDht.create(keyManager, opts)
 ### Resolve a DID DHT
 
 ```kotlin
-val did = DidDht.resolve("did:dht:uAAAAB")
+val did = DidDht.resolve("did:dht:gb46emk73wkenrut43ii67a3o5qctojcaucebth7r83pst6yeh8o")
 ```
 
 # Package web5.sdk.dids.methods.ion
