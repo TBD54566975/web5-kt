@@ -5,6 +5,7 @@ import web5.sdk.dids.methods.dht.DidDht
 import web5.sdk.dids.methods.ion.DidIon
 import web5.sdk.dids.methods.jwk.DidJwk
 import web5.sdk.dids.methods.key.DidKey
+import web5.sdk.dids.methods.web.DidWeb
 
 /**
  * Type alias for a DID resolver function.

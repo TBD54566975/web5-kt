@@ -47,7 +47,8 @@ dependencies {
 
 # Examples
 
-We maintain a [web5 cookbook](./docs/examples.md). Check it out for a comprehensive set of examples.
+Examples are hosted in the public documentation for each module, which is hosted
+in [GitHub Pages](https://tbd54566975.github.io/web5-kt/docs/htmlMultiModule/credentials/index.html).
 
 # Development
 

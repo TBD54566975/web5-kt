@@ -356,7 +356,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
           Name("_$verificationMethodId._did."),
           DClass.IN,
           ttl,
-          "id=${verificationMethod.id.rawFragment};t=$keyType;k=$base64UrlEncodedKey"
+          "id=${verificationMethod.id.rawFragment},t=$keyType,k=$base64UrlEncodedKey"
         ), Section.ANSWER
       )
 
@@ -371,7 +371,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
           Name("_$sId._did."),
           DClass.IN,
           ttl,
-          "id=${service.id.rawFragment};t=${service.type};uri=${service.serviceEndpoint}"
+          "id=${service.id.rawFragment},t=${service.type},uri=${service.serviceEndpoint}"
         ), Section.ANSWER
       )
       serviceIds += sId
@@ -549,7 +549,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
    * @param data The string to parse.
    */
   private fun parseTxtData(data: String): Map<String, String> {
-    return data.split(";").associate {
+    return data.split(",").associate {
       val (key, value) = it.split("=")
       key to value
     }

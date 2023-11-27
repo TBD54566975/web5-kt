@@ -1,6 +1,13 @@
 # Module credentials
 
-This package provides the following functionality:
+The credentials module contains classes and utilities that make it easier to work with Verifiable Credentials.
+
+# Package web5.sdk.credentials
+
+This package provides function for working with verifiable credentials, status list credentials, and verifiable 
+presentations.
+
+Specifically, it includes:
 
 * Creation, signing, verification, and general processing
   of [Verifiable Credentials](https://www.w3.org/TR/vc-data-model/) (VCs).
