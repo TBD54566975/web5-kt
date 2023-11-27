@@ -99,6 +99,34 @@ class DidDhtTest {
     }
 
     @Test
+    fun `create with bad verification method id throws error`() {
+      val manager = InMemoryKeyManager()
+
+      val exception = assertThrows<IllegalArgumentException> {
+        DidDht.create(
+          manager,
+          CreateDidDhtOptions(
+            verificationMethodsToAdd = listOf(
+              JsonWebKey2020VerificationMethod(
+                id = "0",
+                publicKeyJwk = manager.getPublicKey(
+                  manager.generatePrivateKey(
+                    JWSAlgorithm.EdDSA,
+                    Curve.Ed25519
+                  )
+                ).toPublicJWK(),
+                relationships = listOf(PublicKeyPurpose.AUTHENTICATION)
+              )
+            ),
+            publish = false
+          )
+        )
+      }
+
+      assertEquals("id for verification method cannot be \"0\"", exception.message)
+    }
+
+    @Test
     fun `create with another key and service`() {
       val manager = InMemoryKeyManager()
 

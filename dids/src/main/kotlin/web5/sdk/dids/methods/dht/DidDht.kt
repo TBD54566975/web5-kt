@@ -79,7 +79,8 @@ private class DidDhtApiImpl(configuration: DidDhtConfiguration) : DidDhtApi(conf
 
 /**
  * Specifies options for creating a new "did:dht" Decentralized Identifier (DID).
- * @property verificationMethodsToAdd List of specs that will be added to the DID ION document.
+ * @property verificationMethodsToAdd List of specs that will be added to the DID ION document. It's important to note
+ * that each verification method's id must be different from "0".
  * @property servicesToAdd A list of [Service]s to add to the DID Document.
  * @property publish Whether to publish the DID Document to the DHT after creation.
  */
@@ -149,8 +150,10 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
     // map to the DID object model's verification methods
     val verificationMethodToPublicKey = opts.verificationMethodsToAdd
       .toPublicKeys(keyManager)
-      .associate { (_, publicKey) ->
+      .associate { (alias, publicKey) ->
         val key = publicKey.publicKeyJwk
+        require(publicKey.id != "0") { "id for verification method cannot be \"0\"" }
+
         val verificationMethod = VerificationMethod.builder()
           .id(URI.create("$id#${publicKey.id}"))
           .type(publicKey.type)
