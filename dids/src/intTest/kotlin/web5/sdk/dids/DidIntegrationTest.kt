@@ -3,6 +3,7 @@ package web5.sdk.dids
 import org.junit.jupiter.api.Test
 import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.dids.methods.ion.DidIon
+import web5.sdk.dids.methods.web.DidWeb
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
