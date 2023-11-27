@@ -79,14 +79,14 @@ private class DidDhtApiImpl(configuration: DidDhtConfiguration) : DidDhtApi(conf
 
 /**
  * Specifies options for creating a new "did:dht" Decentralized Identifier (DID).
- * @property verificationMethodsToAdd List of specs that will be added to the DID ION document. It's important to note
+ * @property verificationMethods List of specs that will be added to the DID ION document. It's important to note
  * that each verification method's id must be different from "0".
- * @property servicesToAdd A list of [Service]s to add to the DID Document.
+ * @property services A list of [Service]s to add to the DID Document.
  * @property publish Whether to publish the DID Document to the DHT after creation.
  */
 public class CreateDidDhtOptions(
-  public val verificationMethodsToAdd: Iterable<VerificationMethodSpec> = emptyList(),
-  public val servicesToAdd: Iterable<Service> = emptyList(),
+  public val verificationMethods: Iterable<VerificationMethodSpec> = emptyList(),
+  public val services: Iterable<Service> = emptyList(),
   public val publish: Boolean = true,
 ) : CreateDidOptions
 
@@ -148,7 +148,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
     }
 
     // map to the DID object model's verification methods
-    val verificationMethodToPublicKey = opts.verificationMethodsToAdd
+    val verificationMethodToPublicKey = opts.verificationMethods
       .toPublicKeys(keyManager)
       .associate { (alias, publicKey) ->
         val key = publicKey.publicKeyJwk
@@ -170,13 +170,13 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
       }
     }
     val verificationMethods = verificationMethodToPublicKey.keys + identityVerificationMethod
-    opts.servicesToAdd.forEach { service ->
+    opts.services.forEach { service ->
       requireNotNull(service.id) { "Service id cannot be null" }
       requireNotNull(service.type) { "Service type cannot be null" }
       requireNotNull(service.serviceEndpoint) { "Service serviceEndpoint cannot be null" }
     }
     // map to the DID object model's services
-    val services = opts.servicesToAdd.map { service ->
+    val services = opts.services.map { service ->
       Service.builder()
         .id(URI.create("$id#${service.id}"))
         .type(service.type)

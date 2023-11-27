@@ -106,7 +106,7 @@ class DidDhtTest {
         DidDht.create(
           manager,
           CreateDidDhtOptions(
-            verificationMethodsToAdd = listOf(
+            verificationMethods = listOf(
               JsonWebKey2020VerificationMethod(
                 id = "0",
                 publicKeyJwk = manager.getPublicKey(
@@ -153,7 +153,7 @@ class DidDhtTest {
           .build()
 
       val opts = CreateDidDhtOptions(
-        verificationMethodsToAdd = verificationMethodsToAdd, servicesToAdd = listOf(serviceToAdd), publish = false
+        verificationMethods = verificationMethodsToAdd, services = listOf(serviceToAdd), publish = false
       )
       val did = DidDht.create(manager, opts)
 
@@ -305,7 +305,7 @@ class DidDhtTest {
         .build()
 
       val opts = CreateDidDhtOptions(
-        verificationMethodsToAdd = verificationMethodsToAdd, servicesToAdd = listOf(serviceToAdd), publish = false
+        verificationMethods = verificationMethodsToAdd, services = listOf(serviceToAdd), publish = false
       )
       val did = DidDht.create(manager, opts)
 
