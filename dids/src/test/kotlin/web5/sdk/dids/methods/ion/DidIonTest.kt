@@ -86,7 +86,7 @@ class DidIonTest {
       DidIon.create(
         InMemoryKeyManager(),
         CreateDidIonOptions(
-          verificationMethodsToAdd = listOf(
+          verificationMethods = listOf(
             JsonWebKey2020VerificationMethod(
               id = "space is not part of the base64 url chars",
               publicKeyJwk = verificationKey
@@ -137,7 +137,7 @@ class DidIonTest {
         DidIon.create(
           InMemoryKeyManager(),
           CreateDidIonOptions(
-            servicesToAdd = listOf(testCase.service)
+            services = listOf(testCase.service)
           )
         )
       }
@@ -153,7 +153,7 @@ class DidIonTest {
       DidIon.create(
         InMemoryKeyManager(),
         CreateDidIonOptions(
-          verificationMethodsToAdd = listOf(
+          verificationMethods = listOf(
             JsonWebKey2020VerificationMethod(
               id = "something_thats_really_really_really_really_really_really_long",
               publicKeyJwk = verificationKey
@@ -182,14 +182,14 @@ class DidIonTest {
       engine = mockEngine()
     }
     val opts = CreateDidIonOptions(
-      verificationMethodsToAdd = listOf(
+      verificationMethods = listOf(
         JsonWebKey2020VerificationMethod(
           id = verificationKey.keyID,
           publicKeyJwk = verificationKey,
           relationships = listOf(PublicKeyPurpose.AUTHENTICATION),
         )
       ),
-      servicesToAdd = listOf(
+      services = listOf(
         Service(
           id = "dwn",
           type = "DWN",
@@ -226,7 +226,7 @@ class DidIonTest {
       engine = mockEngine()
     }.create(
       keyManager, CreateDidIonOptions(
-      verificationMethodsToAdd = listOf(
+      verificationMethods = listOf(
         VerificationMethodCreationParams(
           JWSAlgorithm.ES256K,
           relationships = listOf(PublicKeyPurpose.AUTHENTICATION, PublicKeyPurpose.ASSERTION_METHOD)
@@ -316,8 +316,8 @@ class DidIonTest {
           "did:ion:123",
           UpdateDidIonOptions(
             updateKeyAlias = updateKeyAlias,
-            servicesToAdd = testCase.services,
-            verificationMethodsToAdd = testCase.publicKeys,
+            services = testCase.services,
+            verificationMethods = testCase.publicKeys,
           )
         )
       }
@@ -359,8 +359,8 @@ class DidIonTest {
     val (result, _) = DidIon.createOperation(
       keyManager,
       CreateDidIonOptions(
-        verificationMethodsToAdd = listOf(verificationMethod1),
-        servicesToAdd = listOf(service),
+        verificationMethods = listOf(verificationMethod1),
+        services = listOf(service),
       )
     )
 
@@ -426,9 +426,9 @@ class DidIonTest {
       "did:ion:EiDyOQbbZAa3aiRzeCkV7LOx3SERjjH93EXoIM3UoN4oWg",
       UpdateDidIonOptions(
         updateKeyAlias = updateKeyId,
-        servicesToAdd = listOf(service),
+        services = listOf(service),
         idsOfServicesToRemove = setOf("someId1"),
-        verificationMethodsToAdd = listOf(publicKey1),
+        verificationMethods = listOf(publicKey1),
         idsOfPublicKeysToRemove = setOf("someId2"),
       ),
     )
@@ -461,8 +461,8 @@ class DidIonTest {
       "did:ion:EiDyOQbbZAa3aiRzeCkV7LOx3SERjjH93EXoIM3UoN4oWg",
       RecoverDidIonOptions(
         recoveryKeyAlias = recoveryKeyAlias,
-        verificationMethodsToAdd = listOf(publicKey1),
-        servicesToAdd = listOf(service),
+        verificationMethods = listOf(publicKey1),
+        services = listOf(service),
       )
     )
 

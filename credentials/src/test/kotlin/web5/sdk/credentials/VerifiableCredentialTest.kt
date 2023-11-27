@@ -161,7 +161,7 @@ class VerifiableCredentialTest {
     )
     val issuerDid = DidIon.create(
       InMemoryKeyManager(),
-      CreateDidIonOptions(verificationMethodsToAdd = listOf(key))
+      CreateDidIonOptions(verificationMethods = listOf(key))
     )
 
     val header = JWSHeader.Builder(JWSAlgorithm.ES256K)

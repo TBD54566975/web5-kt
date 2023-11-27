@@ -94,16 +94,16 @@ private class DidIonApiImpl(configuration: DidIonConfiguration) : DidIonApi(conf
  * The options when updating an ION did.
  *
  * @param updateKeyAlias The alias within the key manager that refers to the last update key.
- * @param servicesToAdd The services to add in the did document.
+ * @param services The services to add in the did document.
  * @param idsOfServicesToRemove Ids of the services to remove from the did document.
- * @param verificationMethodsToAdd List of specs that will be added to the DID ION document.
+ * @param verificationMethods List of specs that will be added to the DID ION document.
  * @param idsOfPublicKeysToRemove Keys to remove from the DID document.
  */
 public data class UpdateDidIonOptions(
   val updateKeyAlias: String,
-  override val servicesToAdd: Iterable<Service> = emptyList(),
+  override val services: Iterable<Service> = emptyList(),
   val idsOfServicesToRemove: Iterable<String> = emptyList(),
-  override val verificationMethodsToAdd: Iterable<VerificationMethodSpec> = emptyList(),
+  override val verificationMethods: Iterable<VerificationMethodSpec> = emptyList(),
   val idsOfPublicKeysToRemove: Iterable<String> = emptyList(),
 ) : CommonOptions {
   internal fun toPatches(publicKeys: Iterable<PublicKey>): List<PatchAction> {
@@ -112,7 +112,7 @@ public data class UpdateDidIonOptions(
     }
 
     return buildList {
-      addIfNotEmpty(servicesToAdd, ::AddServicesAction)
+      addIfNotEmpty(services, ::AddServicesAction)
       addIfNotEmpty(idsOfServicesToRemove, ::RemoveServicesAction)
       addIfNotEmpty(publicKeys, ::AddPublicKeysAction)
       addIfNotEmpty(idsOfPublicKeysToRemove, ::RemovePublicKeysAction)
@@ -125,8 +125,8 @@ public data class UpdateDidIonOptions(
  *
  * @param recoveryKeyAlias is the alias within the keyManager to use when signing. It must match the recovery used with
  *   the last recovery operation.
- * @param verificationMethodsToAdd List of specs that will be added to the DID ION document.
- * @param servicesToAdd When provided, the services will be added to the DID document. Note that for each of the
+ * @param verificationMethods List of specs that will be added to the DID ION document.
+ * @param services When provided, the services will be added to the DID document. Note that for each of the
  * services that should be added, the following must hold:
  *   - The `id` field cannot be over 50 chars and must only use characters from the Base64URL character set.
  *   - The `type` field cannot be over 30 characters.
@@ -134,8 +134,8 @@ public data class UpdateDidIonOptions(
  */
 public class RecoverDidIonOptions(
   public val recoveryKeyAlias: String,
-  public override val verificationMethodsToAdd: Iterable<VerificationMethodSpec> = emptyList(),
-  public override val servicesToAdd: Iterable<Service> = emptyList(),
+  public override val verificationMethods: Iterable<VerificationMethodSpec> = emptyList(),
+  public override val services: Iterable<Service> = emptyList(),
 ) : CommonOptions
 
 /**
@@ -362,9 +362,9 @@ public sealed class DidIonApi(
     val reveal = updatePublicKey.reveal()
     val commitment = newUpdatePublicKey.commitment()
 
-    validateServices(options.servicesToAdd)
+    validateServices(options.services)
 
-    val publicKeysWithAliases = options.verificationMethodsToAdd.toPublicKeys(keyManager)
+    val publicKeysWithAliases = options.verificationMethods.toPublicKeys(keyManager)
     val publicKeys = publicKeysWithAliases.map { it.second }
     validateDidDocumentKeys(publicKeys)
 
@@ -452,7 +452,7 @@ public sealed class DidIonApi(
     val publicKeysToAdd = publicKeysWithAlias.map { it.second }
     validateDidDocumentKeys(publicKeysToAdd)
 
-    validateServices(options?.servicesToAdd ?: emptyList())
+    validateServices(options?.services ?: emptyList())
 
     val createOperationDelta = Delta(
       patches = options.toPatches(publicKeysToAdd),
@@ -481,7 +481,7 @@ public sealed class DidIonApi(
   }
 
   private fun publicKeysWithAliasesToAdd(options: CommonOptions?, keyManager: KeyManager) =
-    if (options == null || options.verificationMethodsToAdd.count() == 0) {
+    if (options == null || options.verificationMethods.count() == 0) {
       listOf<VerificationMethodSpec>(
         VerificationMethodCreationParams(
           JWSAlgorithm.ES256K,
@@ -489,7 +489,7 @@ public sealed class DidIonApi(
         )
       ).toPublicKeys(keyManager)
     } else {
-      options.verificationMethodsToAdd.toPublicKeys(keyManager)
+      options.verificationMethods.toPublicKeys(keyManager)
     }
 
   private fun validateServices(services: Iterable<Service>) = services.forEach {
@@ -557,7 +557,7 @@ public sealed class DidIonApi(
     val publicKeysToAdd = publicKeyWithAliases.map { it.second }
     validateDidDocumentKeys(publicKeysToAdd)
 
-    validateServices(options.servicesToAdd)
+    validateServices(options.services)
 
     val delta = Delta(
       patches = options.toPatches(publicKeysToAdd),
@@ -670,7 +670,7 @@ private fun CommonOptions?.toPatches(publicKeysToAdd: Iterable<PublicKey>): Iter
     ReplaceAction(
       Document(
         publicKeys = publicKeysToAdd,
-        services = this?.servicesToAdd ?: emptyList()
+        services = this?.services ?: emptyList()
       )
     )
   )
@@ -692,8 +692,8 @@ public class IonRecoverResult(
   public val operationsResponse: String)
 
 private interface CommonOptions {
-  val verificationMethodsToAdd: Iterable<VerificationMethodSpec>
-  val servicesToAdd: Iterable<Service>
+  val verificationMethods: Iterable<VerificationMethodSpec>
+  val services: Iterable<Service>
 }
 
 private fun JWK.commitment(): Commitment {
@@ -777,16 +777,16 @@ public data class KeyAliases(
  * Options available when creating an ion did.
  *
  *
- * @param verificationMethodsToAdd List of specs that will be added to the DID ION document.
- * @param servicesToAdd When provided, the services will be added to the DID document. Note that for each of the
+ * @param verificationMethods List of specs that will be added to the DID ION document.
+ * @param services When provided, the services will be added to the DID document. Note that for each of the
  * services that should be added, the following must hold:
  *   - The `id` field cannot be over 50 chars and must only use characters from the Base64URL character set.
  *   - The `type` field cannot be over 30 characters.
  *   - The `serviceEndpoint` must be a valid URI.
  */
 public class CreateDidIonOptions(
-  override val verificationMethodsToAdd: Iterable<VerificationMethodSpec> = emptyList(),
-  override val servicesToAdd: Iterable<Service> = emptyList(),
+  override val verificationMethods: Iterable<VerificationMethodSpec> = emptyList(),
+  override val services: Iterable<Service> = emptyList(),
 ) : CreateDidOptions, CommonOptions
 
 
