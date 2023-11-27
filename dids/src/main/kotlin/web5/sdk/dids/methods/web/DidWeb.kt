@@ -1,4 +1,4 @@
-package web5.sdk.dids
+package web5.sdk.dids.methods.web
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import foundation.identity.did.DID
@@ -19,7 +19,13 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.dnsoverhttps.DnsOverHttps
 import web5.sdk.crypto.KeyManager
+import web5.sdk.dids.CreateDidOptions
+import web5.sdk.dids.Did
+import web5.sdk.dids.DidMethod
+import web5.sdk.dids.DidResolutionResult
+import web5.sdk.dids.ResolveDidOptions
 import web5.sdk.dids.methods.ion.InvalidStatusException
+import web5.sdk.dids.validateKeyMaterialInsideKeyManager
 import java.io.File
 import java.net.InetAddress
 import java.net.URL

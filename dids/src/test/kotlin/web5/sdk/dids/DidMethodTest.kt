@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.dids.methods.key.DidKey
+import web5.sdk.dids.methods.web.DidWebApi
 import java.security.SignatureException
 import kotlin.test.assertEquals
 
