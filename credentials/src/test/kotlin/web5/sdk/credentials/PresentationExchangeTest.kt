@@ -131,7 +131,7 @@ class PresentationExchangeTest {
     }
 
     @Test
-    fun `does not throw when VC satisfies PD with no filter dob filed constraint and extra VC`() {
+    fun `does not throw when VC satisfies PD with no filter dob field constraint and extra VC`() {
       val pd = jsonMapper.readValue(
         readPd("src/test/resources/pd_path_no_filter_dob.json"),
         PresentationDefinitionV2::class.java
