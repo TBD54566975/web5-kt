@@ -1,4 +1,4 @@
-package web5.sdk.dids
+package web5.sdk.dids.methods.web
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import foundation.identity.did.DID
@@ -15,7 +15,13 @@ import io.ktor.http.isSuccess
 import io.ktor.serialization.jackson.jackson
 import kotlinx.coroutines.runBlocking
 import web5.sdk.crypto.KeyManager
+import web5.sdk.dids.CreateDidOptions
+import web5.sdk.dids.Did
+import web5.sdk.dids.DidMethod
+import web5.sdk.dids.DidResolutionResult
+import web5.sdk.dids.ResolveDidOptions
 import web5.sdk.dids.methods.ion.InvalidStatusException
+import web5.sdk.dids.validateKeyMaterialInsideKeyManager
 import java.net.URL
 import java.net.URLDecoder
 import kotlin.text.Charsets.UTF_8
@@ -35,7 +41,7 @@ import kotlin.text.Charsets.UTF_8
  * val did = StatefulWebDid("did:web:tbd.website", keyManager)
  * ```
  */
-public class DidWeb(
+public class DidWeb internal constructor(
   uri: String,
   keyManager: KeyManager,
   private val didWebApi: DidWebApi
@@ -109,6 +115,11 @@ public sealed class DidWebApi(
     return DidResolutionResult(
       didDocument = mapper.readValue(body, DIDDocument::class.java),
     )
+  }
+
+  override fun load(uri: String, keyManager: KeyManager): DidWeb {
+    validateKeyMaterialInsideKeyManager(uri, keyManager)
+    return DidWeb(uri, keyManager, this)
   }
 
   private fun getDocURL(didWebStr: String): String {
