@@ -103,6 +103,9 @@ subprojects {
 
   tasks.test {
     useJUnitPlatform()
+    reports {
+      junitXml
+    }
     testLogging {
       events("passed", "skipped", "failed", "standardOut", "standardError")
       exceptionFormat = TestExceptionFormat.FULL

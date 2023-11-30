@@ -2,12 +2,16 @@ package web5.sdk.credentials
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.ObjectNode
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.networknt.schema.JsonSchema
 import com.nfeld.jsonpathkt.JsonPath
 import com.nfeld.jsonpathkt.extension.read
 import com.nimbusds.jwt.JWTParser
 import com.nimbusds.jwt.SignedJWT
+import web5.sdk.credentials.model.DescriptorMap
+import web5.sdk.credentials.model.InputDescriptorV2
+import web5.sdk.credentials.model.PresentationDefinitionV2
+import web5.sdk.credentials.model.PresentationSubmission
+import java.util.UUID
 
 /**
  * The `PresentationExchange` object provides functions for working with Verifiable Credentials
@@ -65,6 +69,52 @@ public object PresentationExchange {
     }
   }
 
+  /**
+   * Creates a Presentation Submission against a list of Verifiable Credentials (VCs) against a specified
+   * Presentation Definition.
+   *
+   *
+   * @param vcJwts Iterable of VCs in JWT format to validate.
+   * @param presentationDefinition The Presentation Definition V2 object against which VCs are validated.
+   * @return A PresentationSubmission object.
+   * @throws UnsupportedOperationException if the presentation definition contains submission requirements.
+   * @throws IllegalStateException if no VC corresponds to an input descriptor or if a VC's index is not found.
+   * @throws PresentationExchangeError If the number of input descriptors matched is less than required.
+   */
+  public fun createPresentationFromCredentials(
+    vcJwts: Iterable<String>,
+    presentationDefinition: PresentationDefinitionV2
+  ): PresentationSubmission {
+
+    satisfiesPresentationDefinition(vcJwts, presentationDefinition)
+
+    val inputDescriptorToVcMap = mapInputDescriptorsToVCs(vcJwts, presentationDefinition)
+    val vcJwtToIndexMap = vcJwts.withIndex().associate { (index, vcJwt) -> vcJwt to index }
+
+    val descriptorMapList = mutableListOf<DescriptorMap>()
+    for ((inputDescriptor, vcList) in inputDescriptorToVcMap) {
+      // Even if multiple VCs satisfy the input descriptor we use the first
+      val vcJwt = vcList.firstOrNull()
+      checkNotNull(vcJwt) { "Illegal state: no vc corresponds to input descriptor" }
+
+      val vcIndex = vcJwtToIndexMap[vcJwt]
+      checkNotNull(vcIndex) { "Illegal state: vcJwt index not found" }
+
+      descriptorMapList.add(
+        DescriptorMap(
+          id = inputDescriptor.id,
+          path = "$.verifiableCredential[$vcIndex]",
+          format = "jwt_vc"
+        ))
+    }
+
+    return PresentationSubmission(
+      id = UUID.randomUUID().toString(),
+      definitionId = presentationDefinition.id,
+      descriptorMap = descriptorMapList
+    )
+  }
+
   private fun mapInputDescriptorsToVCs(
     vcJwtList: Iterable<String>,
     presentationDefinition: PresentationDefinitionV2
@@ -101,7 +151,7 @@ public object PresentationExchange {
       ?: throw PresentationExchangeError("Failed to parse VC payload as JSON.")
 
     // If the Input Descriptor has constraints and fields defined, evaluate them.
-    inputDescriptor.constraints?.fields?.let { fields ->
+    inputDescriptor.constraints.fields?.let { fields ->
       val requiredFields = fields.filter { field -> field.optional != true }
 
       for (field in requiredFields) {
