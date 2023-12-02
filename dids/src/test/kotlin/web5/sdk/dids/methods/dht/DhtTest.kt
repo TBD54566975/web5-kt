@@ -15,9 +15,7 @@ import org.junit.jupiter.api.assertThrows
 import web5.sdk.crypto.Ed25519
 import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.crypto.Secp256k1
-import web5.sdk.dids.exceptions.PkarrRecordResponseException
 import java.io.File
-import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
