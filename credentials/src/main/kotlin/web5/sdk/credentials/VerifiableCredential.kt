@@ -186,6 +186,8 @@ public class VerifiableCredential internal constructor(public val vcDataModel: V
         }
         .build()
 
+      validateDataModel(vcDataModel.toMap())
+
       return VerifiableCredential(vcDataModel)
     }
 
@@ -308,7 +310,12 @@ public class VerifiableCredential internal constructor(public val vcDataModel: V
      */
     public fun fromJson(vcJson: String): VerifiableCredential {
       val typeRef = object : TypeReference<HashMap<String, Any>>() {}
-      val model = objectMapper.readValue(vcJson, typeRef)
+      val vcMap = objectMapper.readValue(vcJson, typeRef)
+      validateDataModel(vcMap)
+      return VerifiableCredential(VcDataModel.fromMap(vcMap))
+    }
+
+    private fun validateDataModel(model: Map<String, Any>) {
       require(model["credentialSubject"] != null) {
         "credentialSubject property is required"
       }
@@ -402,8 +409,6 @@ public class VerifiableCredential internal constructor(public val vcDataModel: V
           "credentialStatus must contain an id property"
         }
       }
-
-      return VerifiableCredential(VcDataModel.fromMap(model))
     }
   }
 }

@@ -140,7 +140,7 @@ class VerifiableCredentialTest {
   )
 
   @Test
-  fun `creates a verifiable credential as a jwt`() {
+  fun `creates test vectors`() {
     // read a map from a json file
     val mapper = jacksonObjectMapper()
     val testVectors =
