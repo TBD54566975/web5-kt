@@ -1,5 +1,6 @@
 package web5.sdk.crypto
 
+import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.crypto.bc.BouncyCastleProviderSingleton
 import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.ECKey
@@ -59,7 +60,7 @@ public object Secp256k1 : KeyGenerator, Signer {
     Security.addProvider(BouncyCastleProviderSingleton.getInstance())
   }
 
-  override val algorithm: JWSAlgorithm = JWSAlgorithm.ES256K
+  override val algorithm: Algorithm = Algorithm.ES256K
   override val keyType: KeyType = KeyType.EC
 
   /** [reference](https://github.com/multiformats/multicodec/blob/master/table.csv#L92). */
@@ -139,7 +140,7 @@ public object Secp256k1 : KeyGenerator, Signer {
    */
   override fun generatePrivateKey(options: KeyGenOptions?): JWK {
     return ECKeyGenerator(Curve.SECP256K1)
-      .algorithm(JWSAlgorithm.ES256K.toJwsAlgorithm())
+      .algorithm(JWSAlgorithm.ES256K)
       .provider(BouncyCastleProviderSingleton.getInstance())
       .keyIDFromThumbprint(true)
       .keyUse(KeyUse.SIGNATURE)
@@ -176,7 +177,7 @@ public object Secp256k1 : KeyGenerator, Signer {
     val rawY = pointQ.rawYCoord.encoded
 
     return ECKey.Builder(Curve.SECP256K1, Base64URL.encode(rawX), Base64URL.encode(rawY))
-      .algorithm(JWSAlgorithm.ES256K.toJwsAlgorithm())
+      .algorithm(JWSAlgorithm.ES256K)
       .keyIDFromThumbprint()
       .keyUse(KeyUse.SIGNATURE)
       .build()
@@ -187,7 +188,7 @@ public object Secp256k1 : KeyGenerator, Signer {
     val yBytes = publicKeyBytes.sliceArray(33..64)
 
     return ECKey.Builder(Curve.SECP256K1, Base64URL.encode(xBytes), Base64URL.encode(yBytes))
-      .algorithm(JWSAlgorithm.ES256K.toJwsAlgorithm())
+      .algorithm(JWSAlgorithm.ES256K)
       .keyIDFromThumbprint()
       .keyUse(KeyUse.SIGNATURE)
       .build()

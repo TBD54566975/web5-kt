@@ -34,14 +34,14 @@ import java.security.interfaces.ECPublicKey
  * e.g. alias/6uNnyj7xZUgtKTEOFV2mz0f7Hd3cxIH1o5VXsOo4u1M
  *
  * AWSKeyManager supports a limited set ECDSA curves for signing:
- * - [JWSAlgorithm.ES256K]
+ * - [Algorithm.ES256K]
  */
 public class AwsKeyManager @JvmOverloads constructor(
   private val kmsClient: AWSKMS = AWSKMSClientBuilder.standard().build()
 ) : KeyManager {
 
   private data class AlgorithmDetails(
-    val algorithm: JWSAlgorithm,
+    val algorithm: Algorithm,
     val curve: Curve,
     val keySpec: KeySpec,
     val signingAlgorithm: SigningAlgorithmSpec,
@@ -49,8 +49,8 @@ public class AwsKeyManager @JvmOverloads constructor(
   )
 
   private val algorithmDetails = mapOf(
-    JWSAlgorithm.ES256K to AlgorithmDetails(
-      algorithm = JWSAlgorithm.ES256K,
+    Algorithm.ES256K to AlgorithmDetails(
+      algorithm = Algorithm.ES256K,
       curve = Curve.SECP256K1,
       keySpec = KeySpec.ECC_SECG_P256K1,
       signingAlgorithm = SigningAlgorithmSpec.ECDSA_SHA_256,
@@ -80,7 +80,7 @@ public class AwsKeyManager @JvmOverloads constructor(
 //    )
   )
 
-  private fun getAlgorithmDetails(algorithm: JWSAlgorithm): AlgorithmDetails {
+  private fun getAlgorithmDetails(algorithm: Algorithm): AlgorithmDetails {
     return algorithmDetails[algorithm]
       ?: throw IllegalArgumentException("Algorithm $algorithm is not supported")
   }
@@ -101,7 +101,7 @@ public class AwsKeyManager @JvmOverloads constructor(
    * @throws IllegalArgumentException if the [algorithm] is not supported by AWS
    * @throws [AWSKMSException] for any error originating from the [AWSKMS] client
    */
-  override fun generatePrivateKey(algorithm: JWSAlgorithm, curve: Curve?, options: KeyGenOptions?): String {
+  override fun generatePrivateKey(algorithm: Algorithm, curve: Curve?, options: KeyGenOptions?): String {
     val keySpec = getAlgorithmDetails(algorithm).keySpec
     val createKeyRequest = CreateKeyRequest()
       .withKeySpec(keySpec)
@@ -133,7 +133,7 @@ public class AwsKeyManager @JvmOverloads constructor(
       else -> throw IllegalArgumentException("Unknown key type $publicKey")
     }
     return jwkBuilder
-      .algorithm(algorithmDetails.algorithm.toJwsAlgorithm())
+      .algorithm(algorithmDetails.algorithm.toNimbusdsJWSAlgorithm())
       .keyID(keyAlias)
       .keyUse(KeyUse.SIGNATURE)
       .build()
@@ -160,7 +160,7 @@ public class AwsKeyManager @JvmOverloads constructor(
       .withSigningAlgorithm(algorithmDetails.signingAlgorithm)
     val signResponse = kmsClient.sign(signRequest)
     val derSignatureBytes = signResponse.signature.array()
-    return transcodeDerSignatureToConcat(derSignatureBytes, algorithmDetails.algorithm.toJwsAlgorithm())
+    return transcodeDerSignatureToConcat(derSignatureBytes, algorithmDetails.algorithm.toNimbusdsJWSAlgorithm())
   }
 
   /**

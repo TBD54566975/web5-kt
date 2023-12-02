@@ -19,9 +19,9 @@ import org.junit.jupiter.api.assertThrows
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.spy
 import org.mockito.kotlin.whenever
+import web5.sdk.crypto.Algorithm
 import web5.sdk.crypto.AwsKeyManager
 import web5.sdk.crypto.InMemoryKeyManager
-import web5.sdk.crypto.JWSAlgorithm
 import web5.sdk.dids.PublicKeyPurpose
 import web5.sdk.dids.methods.ion.models.PublicKey
 import web5.sdk.dids.methods.ion.models.Service
@@ -167,11 +167,11 @@ class DidIonTest {
     val verificationKey = readKey("src/test/resources/verification_jwk.json")
     val updateKey = readKey("src/test/resources/update_jwk.json")
     val updateKeyId = keyManager.import(updateKey)
-    doReturn(updateKeyId).whenever(keyManager).generatePrivateKey(JWSAlgorithm.ES256K)
+    doReturn(updateKeyId).whenever(keyManager).generatePrivateKey(Algorithm.ES256K)
 
     val recoveryKey = readKey("src/test/resources/recovery_jwk.json")
     val recoveryKeyId = keyManager.import(recoveryKey)
-    doReturn(recoveryKeyId).whenever(keyManager).generatePrivateKey(JWSAlgorithm.ES256K)
+    doReturn(recoveryKeyId).whenever(keyManager).generatePrivateKey(Algorithm.ES256K)
 
     val didIonApi = DidIonApi {
       ionHost = "madeuphost"
@@ -224,11 +224,11 @@ class DidIonTest {
       keyManager, CreateDidIonOptions(
       verificationMethodsToAdd = listOf(
         VerificationMethodCreationParams(
-          JWSAlgorithm.ES256K,
+          Algorithm.ES256K,
           relationships = listOf(PublicKeyPurpose.AUTHENTICATION, PublicKeyPurpose.ASSERTION_METHOD)
         ),
         VerificationMethodCreationParams(
-          JWSAlgorithm.ES256K,
+          Algorithm.ES256K,
           relationships = listOf(PublicKeyPurpose.ASSERTION_METHOD)
         ),
       )
@@ -249,10 +249,10 @@ class DidIonTest {
   @Test
   fun `update throws exception when given invalid input`() {
     val keyManager = InMemoryKeyManager()
-    val keyAlias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K)
+    val keyAlias = keyManager.generatePrivateKey(Algorithm.ES256K)
     val publicKey = keyManager.getPublicKey(keyAlias)
 
-    val updateKeyAlias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K)
+    val updateKeyAlias = keyManager.generatePrivateKey(Algorithm.ES256K)
 
     class TestCase(
       val services: Iterable<Service> = emptyList(),
@@ -350,7 +350,7 @@ class DidIonTest {
     val nextUpdateKey = readKey("src/test/resources/jwkEs256k2Public.json")
     val nextUpdateKeyId = keyManager.import(nextUpdateKey)
 
-    doReturn(nextUpdateKeyId, recoveryKeyAlias).whenever(keyManager).generatePrivateKey(JWSAlgorithm.ES256K)
+    doReturn(nextUpdateKeyId, recoveryKeyAlias).whenever(keyManager).generatePrivateKey(Algorithm.ES256K)
 
     val (result, _) = DidIon.createOperation(
       keyManager,
@@ -390,7 +390,7 @@ class DidIonTest {
 
     val nextUpdateKey = readKey("src/test/resources/jwkEs256k2Public.json")
     val nextUpdateKeyId = keyManager.import(nextUpdateKey)
-    doReturn(nextUpdateKeyId).whenever(keyManager).generatePrivateKey(JWSAlgorithm.ES256K)
+    doReturn(nextUpdateKeyId).whenever(keyManager).generatePrivateKey(Algorithm.ES256K)
 
     val service: Service = mapper.readValue(File("src/test/resources/service1.json").readText())
     val publicKey1 = publicKey1VerificationMethod(mapper)
@@ -450,7 +450,7 @@ class DidIonTest {
     val nextUpdateKey = readKey("src/test/resources/jwkEs256k3Public.json")
     val nextUpdateKeyId = keyManager.import(nextUpdateKey)
 
-    doReturn(nextRecoveryKeyId, nextUpdateKeyId).whenever(keyManager).generatePrivateKey(JWSAlgorithm.ES256K)
+    doReturn(nextRecoveryKeyId, nextUpdateKeyId).whenever(keyManager).generatePrivateKey(Algorithm.ES256K)
 
     val (recoverOperation, keyAliases) = DidIon.createRecoverOperation(
       keyManager,

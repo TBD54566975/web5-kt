@@ -2,9 +2,9 @@ package web5.sdk.common
 
 import com.nimbusds.jose.jwk.Curve
 import org.junit.jupiter.api.Test
+import web5.sdk.crypto.Algorithm
 import web5.sdk.crypto.Crypto
 import web5.sdk.crypto.InMemoryKeyManager
-import web5.sdk.crypto.JWSAlgorithm
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 
@@ -40,7 +40,7 @@ class ZBase32Test {
     val manager = InMemoryKeyManager()
 
     for (i in 0..50) {
-      val keyAlias = manager.generatePrivateKey(JWSAlgorithm.EdDSA, Curve.Ed25519)
+      val keyAlias = manager.generatePrivateKey(Algorithm.EdDSA, Curve.Ed25519)
       val pubKeyJwk = manager.getPublicKey(keyAlias)
       val pubKeyBytes = Crypto.publicKeyToBytes(pubKeyJwk)
       val encodedPubKey = ZBase32.encode(pubKeyBytes)

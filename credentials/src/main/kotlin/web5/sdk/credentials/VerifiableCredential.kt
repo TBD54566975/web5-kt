@@ -20,7 +20,7 @@ import foundation.identity.did.DIDURL
 import foundation.identity.did.VerificationMethod
 import web5.sdk.common.Convert
 import web5.sdk.crypto.Crypto
-import web5.sdk.crypto.toWeb5JWSAlgorithm
+import web5.sdk.crypto.toWeb5Algorithm
 import web5.sdk.dids.Did
 import web5.sdk.dids.DidResolvers
 import web5.sdk.dids.findAssertionMethodById
@@ -264,7 +264,7 @@ public class VerifiableCredential internal constructor(public val vcDataModel: V
       val toVerifyBytes = jwt.signingInput
       val signatureBytes = jwt.signature.decode()
 
-      Crypto.verify(publicKeyJwk, toVerifyBytes, signatureBytes, jwt.header.algorithm.toWeb5JWSAlgorithm())
+      Crypto.verify(publicKeyJwk, toVerifyBytes, signatureBytes, jwt.header.algorithm.toWeb5Algorithm())
     }
 
     /**

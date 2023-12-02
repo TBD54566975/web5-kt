@@ -63,7 +63,7 @@ public interface KeyGenOptions
  */
 public interface KeyGenerator {
   /**  Indicates the algorithm intended to be used with the key. */
-  public val algorithm: JWSAlgorithm
+  public val algorithm: Algorithm
 
   /** Indicates the cryptographic algorithm family used with the key. */
   public val keyType: KeyType

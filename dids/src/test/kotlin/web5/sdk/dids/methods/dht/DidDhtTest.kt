@@ -13,8 +13,8 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
 import web5.sdk.common.ZBase32
+import web5.sdk.crypto.Algorithm
 import web5.sdk.crypto.InMemoryKeyManager
-import web5.sdk.crypto.JWSAlgorithm
 import web5.sdk.dids.PublicKeyPurpose
 import java.net.URI
 import kotlin.test.assertContains
@@ -28,7 +28,7 @@ class DidDhtTest {
     @Test
     fun `did dht identifier`() {
       val manager = InMemoryKeyManager()
-      val keyAlias = manager.generatePrivateKey(JWSAlgorithm.EdDSA, Curve.Ed25519)
+      val keyAlias = manager.generatePrivateKey(Algorithm.EdDSA, Curve.Ed25519)
       val publicKey = manager.getPublicKey(keyAlias)
 
       val identifier = DidDht.getDidIdentifier(publicKey)
@@ -42,7 +42,7 @@ class DidDhtTest {
     @Test
     fun `validate identity key`() {
       val manager = InMemoryKeyManager()
-      val keyAlias = manager.generatePrivateKey(JWSAlgorithm.EdDSA, Curve.Ed25519)
+      val keyAlias = manager.generatePrivateKey(Algorithm.EdDSA, Curve.Ed25519)
       val publicKey = manager.getPublicKey(keyAlias)
       val identifier = DidDht.getDidIdentifier(publicKey)
 
@@ -100,7 +100,7 @@ class DidDhtTest {
     fun `create with another key and service`() {
       val manager = InMemoryKeyManager()
 
-      val otherKey = manager.generatePrivateKey(JWSAlgorithm.ES256K, Curve.SECP256K1)
+      val otherKey = manager.generatePrivateKey(Algorithm.ES256K, Curve.SECP256K1)
       val publicKeyJwk = manager.getPublicKey(otherKey).toPublicJWK()
       val verificationMethodsToAdd: Iterable<Pair<JWK, Array<PublicKeyPurpose>>> = listOf(
         Pair(publicKeyJwk, arrayOf(PublicKeyPurpose.AUTHENTICATION, PublicKeyPurpose.ASSERTION_METHOD))
@@ -249,7 +249,7 @@ class DidDhtTest {
     fun `to and from DNS packet - complex DID`() {
       val manager = InMemoryKeyManager()
 
-      val otherKey = manager.generatePrivateKey(JWSAlgorithm.ES256K, Curve.SECP256K1)
+      val otherKey = manager.generatePrivateKey(Algorithm.ES256K, Curve.SECP256K1)
       val publicKeyJwk = manager.getPublicKey(otherKey).toPublicJWK()
       val verificationMethodsToAdd: Iterable<Pair<JWK, Array<PublicKeyPurpose>>> = listOf(
         Pair(publicKeyJwk, arrayOf(PublicKeyPurpose.AUTHENTICATION, PublicKeyPurpose.ASSERTION_METHOD))

@@ -6,8 +6,8 @@ import foundation.identity.did.DIDDocument
 import foundation.identity.did.VerificationMethod
 import io.ipfs.multibase.Multibase
 import web5.sdk.common.Varint
+import web5.sdk.crypto.Algorithm
 import web5.sdk.crypto.Crypto
-import web5.sdk.crypto.JWSAlgorithm
 import web5.sdk.crypto.KeyManager
 import web5.sdk.crypto.Secp256k1
 import web5.sdk.dids.CreateDidOptions
@@ -35,7 +35,7 @@ import java.net.URI
  * ```
  */
 public class CreateDidKeyOptions(
-  public val algorithm: JWSAlgorithm = JWSAlgorithm.ES256K,
+  public val algorithm: Algorithm = Algorithm.ES256K,
   public val curve: Curve? = null
 ) : CreateDidOptions
 
@@ -89,7 +89,7 @@ public class DidKey private constructor(uri: String, keyManager: KeyManager) : D
       val publicKey = keyManager.getPublicKey(keyAlias)
       var publicKeyBytes = Crypto.publicKeyToBytes(publicKey)
 
-      if (opts.algorithm == JWSAlgorithm.ES256K) {
+      if (opts.algorithm == Algorithm.ES256K) {
         publicKeyBytes = Secp256k1.compressPublicKey(publicKeyBytes)
       }
 

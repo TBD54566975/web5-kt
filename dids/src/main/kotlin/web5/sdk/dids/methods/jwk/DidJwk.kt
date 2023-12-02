@@ -8,7 +8,7 @@ import foundation.identity.did.DIDDocument
 import foundation.identity.did.VerificationMethod
 import web5.sdk.common.Convert
 import web5.sdk.common.EncodingFormat
-import web5.sdk.crypto.JWSAlgorithm
+import web5.sdk.crypto.Algorithm
 import web5.sdk.crypto.KeyManager
 import web5.sdk.dids.CreateDidOptions
 import web5.sdk.dids.Did
@@ -35,7 +35,7 @@ import java.net.URI
  * ```
  */
 public class CreateDidJwkOptions(
-  public val algorithm: JWSAlgorithm = JWSAlgorithm.ES256K,
+  public val algorithm: Algorithm = Algorithm.ES256K,
   public val curve: Curve? = null
 ) : CreateDidOptions
 
