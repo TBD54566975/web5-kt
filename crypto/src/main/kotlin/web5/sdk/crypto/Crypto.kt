@@ -7,7 +7,7 @@ import web5.sdk.crypto.Crypto.generatePrivateKey
 import web5.sdk.crypto.Crypto.publicKeyToBytes
 import web5.sdk.crypto.Crypto.sign
 
-public typealias CryptoAlgorithm = Pair<Algorithm?, Curve?>
+public typealias CryptoAlgorithm = Pair<JWSAlgorithm?, Curve?>
 
 /**
  * Cryptography utility object providing key generation, signature creation, and other crypto-related functionalities.
@@ -74,7 +74,7 @@ public object Crypto {
    * @return The generated private key as a JWK object.
    * @throws IllegalArgumentException if the provided algorithm or curve is not supported.
    */
-  public fun generatePrivateKey(algorithm: Algorithm, curve: Curve? = null, options: KeyGenOptions? = null): JWK {
+  public fun generatePrivateKey(algorithm: JWSAlgorithm, curve: Curve? = null, options: KeyGenOptions? = null): JWK {
     val keyGenerator = getKeyGenerator(algorithm, curve)
     return keyGenerator.generatePrivateKey(options)
   }
@@ -88,7 +88,7 @@ public object Crypto {
   public fun computePublicKey(privateKey: JWK): JWK {
     val rawCurve = privateKey.toJSONObject()["crv"]
     val curve = rawCurve?.let { Curve.parse(it.toString()) }
-    val generator = getKeyGenerator(privateKey.algorithm, curve)
+    val generator = getKeyGenerator(privateKey.algorithm?.name?.let { JWSAlgorithm.valueOf(it) }, curve)
 
     return generator.computePublicKey(privateKey)
   }
@@ -108,7 +108,7 @@ public object Crypto {
     val rawCurve = privateKey.toJSONObject()["crv"]
     val curve = rawCurve?.let { Curve.parse(it.toString()) }
 
-    val signer = getSigner(privateKey.algorithm, curve)
+    val signer = getSigner(privateKey.algorithm.toWeb5JWSAlgorithm(), curve)
 
     return signer.sign(privateKey, payload, options)
   }
@@ -135,8 +135,8 @@ public object Crypto {
    *                                  provides an algorithm.
    *
    */
-  public fun verify(publicKey: JWK, signedPayload: ByteArray, signature: ByteArray, algorithm: Algorithm? = null) {
-    val alg = publicKey.algorithm ?: algorithm
+  public fun verify(publicKey: JWK, signedPayload: ByteArray, signature: ByteArray, algorithm: JWSAlgorithm? = null) {
+    val alg = publicKey.algorithm.toWeb5JWSAlgorithm() ?: algorithm
     ?: throw IllegalArgumentException("Algorithm must either be set on JWK or provided explicitly.")
 
     val curve = getJwkCurve(publicKey)
@@ -167,7 +167,7 @@ public object Crypto {
    */
   public fun publicKeyToBytes(publicKey: JWK): ByteArray {
     val curve = getJwkCurve(publicKey)
-    val generator = getKeyGenerator(publicKey.algorithm, curve)
+    val generator = getKeyGenerator(publicKey.algorithm.toWeb5JWSAlgorithm(), curve)
 
     return generator.publicKeyToBytes(publicKey)
   }
@@ -183,7 +183,7 @@ public object Crypto {
    * @return The corresponding [KeyGenerator].
    * @throws IllegalArgumentException if the algorithm or curve is not supported.
    */
-  public fun getKeyGenerator(algorithm: Algorithm?, curve: Curve? = null): KeyGenerator {
+  public fun getKeyGenerator(algorithm: JWSAlgorithm?, curve: Curve? = null): KeyGenerator {
     return keyGenerators.getOrElse(Pair(algorithm, curve)) {
       throw IllegalArgumentException("Algorithm $algorithm not supported")
     }
@@ -216,7 +216,7 @@ public object Crypto {
    * @return The corresponding [Signer].
    * @throws IllegalArgumentException if the algorithm or curve is not supported.
    */
-  public fun getSigner(algorithm: Algorithm?, curve: Curve? = null): Signer {
+  public fun getSigner(algorithm: JWSAlgorithm?, curve: Curve? = null): Signer {
     return signers.getOrElse(Pair(algorithm, curve)) {
       throw IllegalArgumentException("Algorithm $algorithm not supported")
     }
@@ -233,7 +233,7 @@ public object Crypto {
    * @return The corresponding [Signer] capable of verification.
    * @throws IllegalArgumentException if the algorithm or curve is not supported.
    */
-  public fun getVerifier(algorithm: Algorithm, curve: Curve? = null): Signer {
+  public fun getVerifier(algorithm: JWSAlgorithm, curve: Curve? = null): Signer {
     return getSigner(algorithm, curve)
   }
 
@@ -260,7 +260,7 @@ public object Crypto {
    * Multicodec identifiers are useful for encoding the format or type of the key in systems that
    * leverage multiple cryptographic standards.
    *
-   * @param algorithm The cryptographic [Algorithm] for which the multicodec is requested.
+   * @param algorithm The cryptographic [JWSAlgorithm] for which the multicodec is requested.
    * @param curve The cryptographic [Curve] associated with the algorithm, or null if not applicable.
    * @return The multicodec identifier as an [Int] if a mapping exists, or null if the algorithm and curve
    *         combination is not supported or mapped.
@@ -270,7 +270,14 @@ public object Crypto {
    * val multicodec = getAlgorithmMultiCodec(JWSAlgorithm.EdDSA, Curve.Ed25519)
    * ```
    */
-  public fun getAlgorithmMultiCodec(algorithm: Algorithm, curve: Curve?): Int? {
+  public fun getAlgorithmMultiCodec(algorithm: JWSAlgorithm, curve: Curve?): Int? {
     return multiCodecsByAlgorithm[Pair(algorithm, curve)]
   }
+}
+
+/**
+ * Converts a [Algorithm] from the nimbuds library to a [JWSAlgorithm].
+ */
+public fun Algorithm?.toWeb5JWSAlgorithm(): JWSAlgorithm? {
+  return this?.name?.let { JWSAlgorithm.valueOf(it) }
 }

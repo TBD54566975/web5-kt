@@ -4,7 +4,6 @@ import com.amazonaws.AmazonServiceException
 import com.amazonaws.auth.AWSStaticCredentialsProvider
 import com.amazonaws.auth.BasicAWSCredentials
 import com.amazonaws.services.kms.AWSKMSClient
-import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.jwk.KeyType
 import com.nimbusds.jose.jwk.KeyUse
 import org.junit.jupiter.api.Disabled
@@ -26,7 +25,7 @@ class AwsKeyManagerTest {
     assertEquals(alias, publicKey.keyID)
     assertEquals(KeyType.EC, publicKey.keyType)
     assertEquals(KeyUse.SIGNATURE, publicKey.keyUse)
-    assertEquals(JWSAlgorithm.ES256K, publicKey.algorithm)
+    assertEquals(JWSAlgorithm.ES256K.name, publicKey.algorithm.name)
   }
 
   @Test

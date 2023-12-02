@@ -3,7 +3,6 @@ package web5.sdk.crypto
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
-import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.crypto.bc.BouncyCastleProviderSingleton
 import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.JWK

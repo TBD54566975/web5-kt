@@ -1,6 +1,5 @@
 package web5.sdk.dids.methods.jwk
 
-import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.jwk.JWK
 import org.erdtman.jcs.JsonCanonicalizer
 import org.junit.jupiter.api.Nested
@@ -8,6 +7,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import web5.sdk.common.Convert
 import web5.sdk.crypto.InMemoryKeyManager
+import web5.sdk.crypto.JWSAlgorithm
 import web5.sdk.dids.DidResolvers
 import java.io.File
 import kotlin.test.assertEquals
@@ -31,7 +31,7 @@ class DidJwkTest {
       val keyAlias = did.keyManager.getDeterministicAlias(jwk)
       val publicKey = did.keyManager.getPublicKey(keyAlias)
 
-      assertEquals(JWSAlgorithm.ES256K, publicKey.algorithm)
+      assertEquals(JWSAlgorithm.ES256K.name, publicKey.algorithm.name)
     }
   }
 

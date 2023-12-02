@@ -1,6 +1,5 @@
 package web5.sdk.crypto
 
-import com.nimbusds.jose.Algorithm
 import com.nimbusds.jose.jwk.JWK
 import com.nimbusds.jose.jwk.KeyType
 
@@ -64,7 +63,7 @@ public interface KeyGenOptions
  */
 public interface KeyGenerator {
   /**  Indicates the algorithm intended to be used with the key. */
-  public val algorithm: Algorithm
+  public val algorithm: JWSAlgorithm
 
   /** Indicates the cryptographic algorithm family used with the key. */
   public val keyType: KeyType

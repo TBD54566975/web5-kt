@@ -1,6 +1,5 @@
 package web5.sdk.dids.methods.dht
 
-import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.JWK
 import foundation.identity.did.DID
@@ -20,8 +19,10 @@ import web5.sdk.common.EncodingFormat
 import web5.sdk.common.ZBase32
 import web5.sdk.crypto.Crypto
 import web5.sdk.crypto.Ed25519
+import web5.sdk.crypto.JWSAlgorithm
 import web5.sdk.crypto.KeyManager
 import web5.sdk.crypto.Secp256k1
+import web5.sdk.crypto.toWeb5JWSAlgorithm
 import web5.sdk.dids.CreateDidOptions
 import web5.sdk.dids.Did
 import web5.sdk.dids.DidDocumentMetadata
@@ -333,7 +334,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
 
       verificationMethodsById[verificationMethod.id.toString()] = verificationMethodId
 
-      val keyType = when (publicKeyJwk.algorithm) {
+      val keyType = when (publicKeyJwk.algorithm.toWeb5JWSAlgorithm()) {
         JWSAlgorithm.EdDSA -> 0
         JWSAlgorithm.ES256K -> 1
         else -> throw IllegalArgumentException("unsupported algorithm: ${publicKeyJwk.algorithm}")

@@ -124,7 +124,7 @@ internal class DhtClient(
       val pubKey = manager.getPublicKey(keyAlias)
       require(
         pubKey.keyType == Ed25519.keyType &&
-          pubKey.algorithm == Ed25519.algorithm
+          pubKey.algorithm.name == Ed25519.algorithm.name
       ) {
         "Must supply an Ed25519 key"
       }
@@ -177,7 +177,7 @@ internal class DhtClient(
       val pubKey = manager.getPublicKey(keyAlias)
       require(
         pubKey.keyType == Ed25519.keyType &&
-          pubKey.algorithm == Ed25519.algorithm
+          pubKey.algorithm.name == Ed25519.algorithm.name
       ) {
         "Must supply an Ed25519 key"
       }

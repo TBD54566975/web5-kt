@@ -1,6 +1,5 @@
 package web5.sdk.dids.methods.dht
 
-import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.JWK
 import foundation.identity.did.Service
@@ -9,13 +8,13 @@ import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
-import io.ktor.util.hex
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
 import web5.sdk.common.ZBase32
 import web5.sdk.crypto.InMemoryKeyManager
+import web5.sdk.crypto.JWSAlgorithm
 import web5.sdk.dids.PublicKeyPurpose
 import java.net.URI
 import kotlin.test.assertContains

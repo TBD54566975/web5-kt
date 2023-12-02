@@ -1,8 +1,6 @@
 package web5.sdk.dids.methods.ion
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.nimbusds.jose.Algorithm
-import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.JWSHeader
 import com.nimbusds.jose.JWSObject
 import com.nimbusds.jose.Payload
@@ -27,6 +25,7 @@ import kotlinx.coroutines.runBlocking
 import org.erdtman.jcs.JsonCanonicalizer
 import web5.sdk.common.Convert
 import web5.sdk.common.Varint
+import web5.sdk.crypto.JWSAlgorithm
 import web5.sdk.crypto.KeyGenOptions
 import web5.sdk.crypto.KeyManager
 import web5.sdk.dids.CreateDidOptions
@@ -399,7 +398,7 @@ public sealed class DidIonApi(
   }
 
   private fun sign(serializableObject: Any, keyManager: KeyManager, signKeyAlias: String): JWSObject {
-    val header = JWSHeader.Builder(JWSAlgorithm.ES256K).build()
+    val header = JWSHeader.Builder(com.nimbusds.jose.JWSAlgorithm.ES256K).build()
     val payload = Payload(mapper.writeValueAsString(serializableObject))
     val jwsObject = JWSObject(header, payload)
     val signatureBytes = keyManager.sign(signKeyAlias, jwsObject.signingInput)
@@ -804,7 +803,7 @@ private interface VerificationMethodGenerator {
  * [relationships] will be used to determine the verification relationships in the DID Document being created.
  * */
 public class VerificationMethodCreationParams(
-  public val algorithm: Algorithm,
+  public val algorithm: JWSAlgorithm,
   public val curve: Curve? = null,
   public val options: KeyGenOptions? = null,
   public val relationships: Iterable<PublicKeyPurpose>

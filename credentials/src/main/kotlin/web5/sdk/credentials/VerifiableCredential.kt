@@ -10,7 +10,6 @@ import com.fasterxml.jackson.module.kotlin.convertValue
 import com.nfeld.jsonpathkt.JsonPath
 import com.nfeld.jsonpathkt.extension.read
 import com.nimbusds.jose.JOSEObjectType
-import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.JWSHeader
 import com.nimbusds.jose.jwk.JWK
 import com.nimbusds.jose.util.Base64URL
@@ -21,6 +20,7 @@ import foundation.identity.did.DIDURL
 import foundation.identity.did.VerificationMethod
 import web5.sdk.common.Convert
 import web5.sdk.crypto.Crypto
+import web5.sdk.crypto.toWeb5JWSAlgorithm
 import web5.sdk.dids.Did
 import web5.sdk.dids.DidResolvers
 import web5.sdk.dids.findAssertionMethodById
@@ -82,7 +82,7 @@ public class VerifiableCredential internal constructor(public val vcDataModel: V
 
     // TODO: figure out how to make more reliable since algorithm is technically not a required property of a JWK
     val algorithm = publicKeyJwk.algorithm
-    val jwsAlgorithm = JWSAlgorithm.parse(algorithm.toString())
+    val jwsAlgorithm = com.nimbusds.jose.JWSAlgorithm.parse(algorithm.toString())
 
     val kid = when (assertionMethod.id.isAbsolute) {
       true -> assertionMethod.id.toString()
@@ -264,7 +264,7 @@ public class VerifiableCredential internal constructor(public val vcDataModel: V
       val toVerifyBytes = jwt.signingInput
       val signatureBytes = jwt.signature.decode()
 
-      Crypto.verify(publicKeyJwk, toVerifyBytes, signatureBytes, jwt.header.algorithm)
+      Crypto.verify(publicKeyJwk, toVerifyBytes, signatureBytes, jwt.header.algorithm.toWeb5JWSAlgorithm())
     }
 
     /**
