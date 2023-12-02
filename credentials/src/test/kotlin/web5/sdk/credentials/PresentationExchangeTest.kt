@@ -5,9 +5,9 @@ import assertk.assertions.messageContains
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
-import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.assertDoesNotThrow
+import org.junit.jupiter.api.assertThrows
 import web5.sdk.credentials.exceptions.PresentationExchangeException
 import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.dids.methods.key.DidKey
@@ -236,7 +236,7 @@ class PresentationExchangeTest {
       )
       val vcJwt = vc.sign(issuerDid)
 
-      assertThrows(PresentationExchangeException::class.java) {
+      assertThrows<PresentationExchangeException> {
         PresentationExchange.satisfiesPresentationDefinition(listOf(vcJwt), pd)
       }
 
@@ -261,7 +261,7 @@ class PresentationExchangeTest {
       )
       val vcJwt = vc.sign(issuerDid)
 
-      assertThrows(PresentationExchangeException::class.java) {
+      assertThrows<PresentationExchangeException> {
         PresentationExchange.satisfiesPresentationDefinition(listOf(vcJwt), pd)
       }
 
@@ -284,7 +284,7 @@ class PresentationExchangeTest {
       )
       val vcJwt = vc.sign(issuerDid)
 
-      assertThrows(PresentationExchangeException::class.java) {
+      assertThrows<PresentationExchangeException> {
         PresentationExchange.satisfiesPresentationDefinition(listOf(vcJwt), pd)
       }
 
