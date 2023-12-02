@@ -5,4 +5,4 @@ package web5.sdk.credentials.exceptions
  *
  * @param message the exception message
  */
-public class PresentationExchangeException(message: String) : Exception(message)
+public class PresentationExchangeException(message: String) : RuntimeException(message)

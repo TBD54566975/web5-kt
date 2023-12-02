@@ -6,4 +6,4 @@ package web5.sdk.credentials.exceptions
  * @param message the exception message detailing the error
  * @param cause the underlying exception
  */
-public class BitstringExpansionException(message: String, cause: Throwable) : Exception(message, cause)
+public class BitstringExpansionException(message: String, cause: Throwable) : RuntimeException(message, cause)
