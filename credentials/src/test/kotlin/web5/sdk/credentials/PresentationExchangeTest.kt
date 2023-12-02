@@ -5,8 +5,10 @@ import assertk.assertions.messageContains
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.assertDoesNotThrow
+import web5.sdk.credentials.exceptions.PresentationExchangeException
 import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.dids.methods.key.DidKey
 import java.io.File
@@ -234,9 +236,14 @@ class PresentationExchangeTest {
       )
       val vcJwt = vc.sign(issuerDid)
 
+      assertThrows(PresentationExchangeException::class.java) {
+        PresentationExchange.satisfiesPresentationDefinition(listOf(vcJwt), pd)
+      }
+
       assertFailure {
         PresentationExchange.satisfiesPresentationDefinition(listOf(vcJwt), pd)
       }.messageContains("Missing input descriptors: The presentation definition requires")
+
     }
 
 
@@ -253,6 +260,10 @@ class PresentationExchangeTest {
         data = StreetCredibility(localRespect = "high", legit = true)
       )
       val vcJwt = vc.sign(issuerDid)
+
+      assertThrows(PresentationExchangeException::class.java) {
+        PresentationExchange.satisfiesPresentationDefinition(listOf(vcJwt), pd)
+      }
 
       assertFailure {
         PresentationExchange.satisfiesPresentationDefinition(listOf(vcJwt), pd)
@@ -272,6 +283,10 @@ class PresentationExchangeTest {
         data = DateOfBirth(dateOfBirth = "01-02-03")
       )
       val vcJwt = vc.sign(issuerDid)
+
+      assertThrows(PresentationExchangeException::class.java) {
+        PresentationExchange.satisfiesPresentationDefinition(listOf(vcJwt), pd)
+      }
 
       assertFailure {
         PresentationExchange.satisfiesPresentationDefinition(listOf(vcJwt), pd)

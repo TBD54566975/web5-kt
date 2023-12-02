@@ -4,10 +4,13 @@ import com.danubetech.verifiablecredentials.CredentialSubject
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
+import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.plugins.ResponseException
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.get
+import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
+import io.ktor.http.isSuccess
 import io.ktor.serialization.jackson.jackson
 import kotlinx.coroutines.runBlocking
 import web5.sdk.credentials.exceptions.BitstringExpansionException
@@ -180,8 +183,8 @@ public object StatusListCredential {
    * @param credentialToValidate The [VerifiableCredential] to be validated against the status list.
    * @param httpClient An optional [HttpClient] for fetching the status list credential. If not provided, a default HTTP client will be used.
    * @return A [Boolean] indicating whether the `credentialToValidate` is part of the status list.
-   * @throws StatusListCredentialFetchException
-   * @throws VerifiableCredentialParseException
+   * @throws StatusListCredentialFetchException If the status list credential cannot be fetched.
+   * @throws VerifiableCredentialParseException If the status list verifiable credential cannot be parsed.
    *
    * This function fetches the status list credential from a URL present in the `credentialToValidate`.
    * It supports using either a user-provided `httpClient` or a default client when no client is passed in.
@@ -225,8 +228,13 @@ public object StatusListCredential {
 
   private suspend fun HttpClient.fetchStatusListCredential(url: String): VerifiableCredential {
     try {
-      val body: String = this.get(url).bodyAsText()
-      return VerifiableCredential.parseJwt(body)
+      val response: HttpResponse = this.get(url)
+      if (response.status.isSuccess()) {
+        val body = response.bodyAsText()
+        return VerifiableCredential.parseJwt(body)
+      } else {
+        throw ClientRequestException(response, "Failed to retrieve VerifiableCredentialType from $url")
+      }
     } catch (e: ResponseException) { // ClientRequestException will be caught here since it is a subclass of ResponseException
       throw StatusListCredentialFetchException("Failed to fetch the status list credential: ${e.message}", e)
     } catch (e: IllegalArgumentException) {
@@ -313,7 +321,6 @@ public object StatusListCredential {
    * 2. Decompresses the decoded bitstring using the GZIP compression algorithm.
    * 3. Iterates through the decompressed bitstring and collects the indices of bits set to 1.
    */
-  @Throws(BitstringExpansionException::class)
   private fun bitstringExpansion(compressedBitstring: String): List<String> {
     val decoded: ByteArray
     try {

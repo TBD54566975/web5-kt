@@ -15,7 +15,9 @@ import org.junit.jupiter.api.assertThrows
 import web5.sdk.crypto.Ed25519
 import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.crypto.Secp256k1
+import web5.sdk.dids.exceptions.PkarrRecordResponseException
 import java.io.File
+import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
@@ -163,10 +165,10 @@ class DhtTest {
     }
 
     @Test
-    fun `bad pkarr get`() {
+    fun `bad pkarr get, size is not 32`() {
       val dht = DhtClient(engine = mockEngine())
 
-      val exception = assertThrows<IllegalArgumentException> { dht.pkarrGet("bad") }
+      val exception = assertThrows<IllegalArgumentException> { dht.pkarrGet("XYTMMDGTWXNCOSCXTOXHDJO6Z4======") }
       assertEquals("Identifier must be a z-base-32 encoded Ed25519 public key", exception.message)
     }
 
