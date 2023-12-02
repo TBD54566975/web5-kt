@@ -1,9 +1,9 @@
 package web5.sdk.common
 
-import com.nimbusds.jose.jwk.Curve
 import org.junit.jupiter.api.Test
 import web5.sdk.crypto.Algorithm
 import web5.sdk.crypto.Crypto
+import web5.sdk.crypto.Curve
 import web5.sdk.crypto.InMemoryKeyManager
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals

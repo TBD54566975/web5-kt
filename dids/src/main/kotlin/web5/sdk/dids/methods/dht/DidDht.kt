@@ -1,6 +1,5 @@
 package web5.sdk.dids.methods.dht
 
-import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.JWK
 import foundation.identity.did.DID
 import foundation.identity.did.DIDDocument
@@ -19,6 +18,7 @@ import web5.sdk.common.EncodingFormat
 import web5.sdk.common.ZBase32
 import web5.sdk.crypto.Algorithm
 import web5.sdk.crypto.Crypto
+import web5.sdk.crypto.Curve
 import web5.sdk.crypto.Ed25519
 import web5.sdk.crypto.KeyManager
 import web5.sdk.crypto.Secp256k1

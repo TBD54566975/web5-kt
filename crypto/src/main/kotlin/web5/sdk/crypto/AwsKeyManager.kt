@@ -13,7 +13,6 @@ import com.amazonaws.services.kms.model.MessageType
 import com.amazonaws.services.kms.model.SignRequest
 import com.amazonaws.services.kms.model.SigningAlgorithmSpec
 import com.nimbusds.jose.crypto.impl.ECDSA
-import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.ECKey
 import com.nimbusds.jose.jwk.JWK
 import com.nimbusds.jose.jwk.KeyUse
@@ -129,7 +128,7 @@ public class AwsKeyManager @JvmOverloads constructor(
 
     val algorithmDetails = getAlgorithmDetails(publicKeyResponse.keySpec.enum())
     val jwkBuilder = when (publicKey) {
-      is ECPublicKey -> ECKey.Builder(algorithmDetails.curve, publicKey)
+      is ECPublicKey -> ECKey.Builder(algorithmDetails.curve.toNimbusdsCurve(), publicKey)
       else -> throw IllegalArgumentException("Unknown key type $publicKey")
     }
     return jwkBuilder

@@ -5,13 +5,13 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.nimbusds.jose.JWSAlgorithm
-import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.ECKey
 import com.nimbusds.jose.jwk.JWK
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
+import web5.sdk.crypto.Curve
 import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.dids.DidResolvers
 import kotlin.test.assertEquals
@@ -100,7 +100,7 @@ class DidKeyTest {
       assertTrue(publicKeyJwk is ECKey)
 
       assertEquals(publicKeyJwk.algorithm, JWSAlgorithm.ES256K)
-      assertEquals(Curve.SECP256K1, publicKeyJwk.curve)
+      assertEquals(Curve.SECP256K1.ianaName, publicKeyJwk.curve.name)
       assertEquals("TEIJN9vnTq1EXMkqzo7yN_867-foKc2pREv45Fw_QA8", publicKeyJwk.x.toString())
       assertEquals("9yiymlzdxKCiRbYq7p-ArRB-C1ytjHE-eb7RDTi6rVc", publicKeyJwk.y.toString())
 

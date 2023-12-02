@@ -1,6 +1,5 @@
 package web5.sdk.dids.methods.key
 
-import com.nimbusds.jose.jwk.Curve
 import foundation.identity.did.DID
 import foundation.identity.did.DIDDocument
 import foundation.identity.did.VerificationMethod
@@ -8,6 +7,7 @@ import io.ipfs.multibase.Multibase
 import web5.sdk.common.Varint
 import web5.sdk.crypto.Algorithm
 import web5.sdk.crypto.Crypto
+import web5.sdk.crypto.Curve
 import web5.sdk.crypto.KeyManager
 import web5.sdk.crypto.Secp256k1
 import web5.sdk.dids.CreateDidOptions

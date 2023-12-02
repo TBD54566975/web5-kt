@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.nimbusds.jose.crypto.bc.BouncyCastleProviderSingleton
-import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.JWK
 import com.nimbusds.jose.jwk.gen.ECKeyGenerator
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -58,7 +57,9 @@ class InMemoryKeyManagerTest {
 
   @Test
   fun `key without kid can be imported`() {
-    val jwk = ECKeyGenerator(Curve.SECP256K1).provider(BouncyCastleProviderSingleton.getInstance()).generate()
+    val jwk = ECKeyGenerator(com.nimbusds.jose.jwk.Curve.SECP256K1)
+      .provider(BouncyCastleProviderSingleton.getInstance())
+      .generate()
     val keyManager = InMemoryKeyManager()
 
     val alias = keyManager.import(jwk)

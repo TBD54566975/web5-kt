@@ -4,7 +4,6 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.nimbusds.jose.JWSHeader
 import com.nimbusds.jose.JWSObject
 import com.nimbusds.jose.Payload
-import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.JWK
 import com.nimbusds.jose.util.Base64URL
 import foundation.identity.did.DID
@@ -26,6 +25,7 @@ import org.erdtman.jcs.JsonCanonicalizer
 import web5.sdk.common.Convert
 import web5.sdk.common.Varint
 import web5.sdk.crypto.Algorithm
+import web5.sdk.crypto.Curve
 import web5.sdk.crypto.KeyGenOptions
 import web5.sdk.crypto.KeyManager
 import web5.sdk.dids.CreateDidOptions

@@ -1,6 +1,5 @@
 package web5.sdk.dids.methods.dht
 
-import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.JWK
 import foundation.identity.did.Service
 import foundation.identity.did.parser.ParserException
@@ -14,6 +13,7 @@ import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
 import web5.sdk.common.ZBase32
 import web5.sdk.crypto.Algorithm
+import web5.sdk.crypto.Curve
 import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.dids.PublicKeyPurpose
 import java.net.URI

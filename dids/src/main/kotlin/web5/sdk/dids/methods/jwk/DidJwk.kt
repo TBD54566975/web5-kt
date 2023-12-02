@@ -1,6 +1,5 @@
 package web5.sdk.dids.methods.jwk
 
-import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.JWK
 import com.nimbusds.jose.jwk.KeyUse
 import foundation.identity.did.DID
@@ -9,6 +8,7 @@ import foundation.identity.did.VerificationMethod
 import web5.sdk.common.Convert
 import web5.sdk.common.EncodingFormat
 import web5.sdk.crypto.Algorithm
+import web5.sdk.crypto.Curve
 import web5.sdk.crypto.KeyManager
 import web5.sdk.dids.CreateDidOptions
 import web5.sdk.dids.Did

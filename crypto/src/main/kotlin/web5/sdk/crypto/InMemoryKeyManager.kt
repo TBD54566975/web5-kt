@@ -1,6 +1,5 @@
 package web5.sdk.crypto
 
-import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.JWK
 
 /**
