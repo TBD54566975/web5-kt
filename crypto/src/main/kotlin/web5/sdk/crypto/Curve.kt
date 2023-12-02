@@ -18,10 +18,9 @@ public enum class Curve(public val ianaName: String) {
     private val ianaNames = Curve.entries.associateBy { it.ianaName }
 
     /**
-     * Parses a curve name and returns the corresponding [Curve] object.
-     *
-     * @param ianaName The curve name as specified in https://www.iana.org/assignments/jose/jose.xhtml#web-key-elliptic-curve
-     * @return The corresponding [Curve] object, or null if the curve name is invalid.
+     * Returns a [Curve] object given it's [ianaName]. The [ianaName] is how the curve was registered in the IANA table
+     * available at https://www.iana.org/assignments/jose/jose.xhtml#web-key-elliptic-curve. When there is no Curve for
+     * the given [ianaName], null is returned.
      */
     public fun parse(ianaName: String): Curve? {
       return ianaNames[ianaName]

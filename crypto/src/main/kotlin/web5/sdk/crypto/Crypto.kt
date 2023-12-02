@@ -272,10 +272,3 @@ public object Crypto {
     return multiCodecsByAlgorithm[Pair(algorithm, curve)]
   }
 }
-
-/**
- * Converts an [Algorithm] from the nimbusds library to a [Algorithm].
- */
-public fun com.nimbusds.jose.Algorithm?.toWeb5Algorithm(): Algorithm? {
-  return this?.name?.let { Algorithm.valueOf(it) }
-}
