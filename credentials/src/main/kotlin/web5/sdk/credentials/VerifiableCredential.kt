@@ -3,6 +3,7 @@ package web5.sdk.credentials
 import com.danubetech.verifiablecredentials.CredentialSubject
 import com.danubetech.verifiablecredentials.credentialstatus.CredentialStatus
 import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
@@ -306,7 +307,103 @@ public class VerifiableCredential internal constructor(public val vcDataModel: V
      * ```
      */
     public fun fromJson(vcJson: String): VerifiableCredential {
-      return VerifiableCredential(VcDataModel.fromJson(vcJson))
+      val typeRef = object : TypeReference<HashMap<String, Any>>() {}
+      val model = objectMapper.readValue(vcJson, typeRef)
+      require(model["credentialSubject"] != null) {
+        "credentialSubject property is required"
+      }
+      val context = model["@context"]
+      require(context is List<*> && context.isNotEmpty()) {
+        "context must have at least one entry but got $context"
+      }
+
+      require(context.first().toString() == "https://www.w3.org/2018/credentials/v1") {
+        "first item of context must be https://www.w3.org/2018/credentials/v1"
+      }
+
+      val uriRegex = Regex("\\w+:(/?/?)\\S+")
+
+      val id = model["id"]
+      if (id != null) {
+        require(id is String) {
+          "id must be a string but found $id"
+        }
+        require(uriRegex.matches(id)) {
+          "id must be a URI but found $id"
+        }
+      }
+
+      val type = model["type"]
+      require(type is List<*> && type.isNotEmpty()) {
+        "type property must have one or more URIs"
+      }
+      require("VerifiableCredential" == type.first()) {
+        "first item of type must be \"VerifiableCredential\""
+      }
+
+      val issuanceDate = model["issuanceDate"]
+
+      @Suppress("MaxLineLength")
+      val dateTimeLexicalRegex =
+        "-?([1-9][0-9]{3,}|0[0-9]{3})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T(([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?|(24:00:00(\\.0+)?))(Z|([+\\-])((0[0-9]|1[0-3]):[0-5][0-9]|14:00))?".toRegex()
+      require(issuanceDate != null) {
+        "issuanceDate property is required"
+      }
+
+      require(issuanceDate is String && dateTimeLexicalRegex.matches(issuanceDate)) {
+        "issuanceDate must be in XMLSCHEMA11-2 combined date-time format. For example: 2010-01-01T19:23:24Z"
+      }
+
+      val issuer = model["issuer"]
+      require(issuer != null) {
+        "issuer property is required"
+      }
+
+      require(issuer !is List<*>) {
+        "issuer cannot be a list"
+      }
+
+      when (issuer) {
+        is String -> {
+          require(uriRegex.matches(issuer)) {
+            "when issuer is a string, it must be a URI but was $issuer"
+          }
+        }
+
+        is Map<*, *> -> {
+          require(issuer.containsValue("id")) {
+            "when issuer is an object, it must contain an id property"
+          }
+        }
+
+        else -> {
+          throw IllegalArgumentException("issuer must be a URI but found $issuer")
+        }
+      }
+
+      val expirationDate = model["expirationDate"]
+      if (expirationDate != null) {
+        require(expirationDate is String && dateTimeLexicalRegex.matches(expirationDate)) {
+          "expirationDate must be in XMLSCHEMA11-2 combined date-time format. For example: 2010-01-01T19:23:24Z"
+        }
+      }
+
+      val credentialStatus = model["credentialStatus"]
+      if (credentialStatus != null) {
+        require(credentialStatus is Map<*, *>) {
+          "credentialStatus must be an object but found $credentialStatus"
+        }
+
+        require(credentialStatus.contains("type")) {
+          "credentialStatus must contain a type property"
+        }
+
+        require(credentialStatus.contains("id")) {
+          "credentialStatus must contain an id property"
+        }
+      }
+
+      return VerifiableCredential(VcDataModel.fromMap(model))
     }
   }
 }
