@@ -43,8 +43,10 @@ public object PresentationExchange {
    * @param vcJwts Iterable of VCs in JWT format to validate.
    * @param presentationDefinition The Presentation Definition V2 object against which VCs are validated.
    * @throws UnsupportedOperationException If Submission Requirements are present in the definition.
-   * @throws PresentationExchangeException If the number of input descriptors matched is less than required.
+   * @throws PresentationExchangeException If the number of input descriptors matched is less than required
+   * or if the VC payload cannot be parsed as JSON.
    */
+  @Throws(UnsupportedOperationException::class, PresentationExchangeException::class)
   public fun satisfiesPresentationDefinition(
     vcJwts: Iterable<String>,
     presentationDefinition: PresentationDefinitionV2

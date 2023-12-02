@@ -77,7 +77,7 @@ internal class DhtClient(
    * @param id The z-base-32 encoded identifier of the message to get (e.g. a did:dht suffix value) [String].
    * @return A BEP44 message [Bep44Message].
    * @throws IllegalArgumentException if the identifier is not a z-base-32 encoded Ed25519 public key.
-   * @throws Exception if the message is not successfully retrieved from the DHT.
+   * @throws PkarrRecordResponseException if the response from the dht gateway is not successful.
    */
   @Throws(PkarrRecordResponseException::class)
   fun pkarrGet(id: String): Bep44Message {
