@@ -165,10 +165,10 @@ class DhtTest {
     }
 
     @Test
-    fun `bad pkarr get, size is not 32`() {
+    fun `bad pkarr get`() {
       val dht = DhtClient(engine = mockEngine())
 
-      val exception = assertThrows<IllegalArgumentException> { dht.pkarrGet("XYTMMDGTWXNCOSCXTOXHDJO6Z4======") }
+      val exception = assertThrows<IllegalArgumentException> { dht.pkarrGet("bad") }
       assertEquals("Identifier must be a z-base-32 encoded Ed25519 public key", exception.message)
     }
 
