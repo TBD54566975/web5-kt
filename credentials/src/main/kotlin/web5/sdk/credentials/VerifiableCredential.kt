@@ -383,9 +383,11 @@ public class VerifiableCredential internal constructor(public val vcDataModel: V
           }
         }
 
-        else -> {
-          throw IllegalArgumentException("issuer must be a URI but found $issuer")
-        }
+        else ->
+          throw IllegalArgumentException(
+            "issuer must be a URI or an object containing an id property, but found $issuer"
+          )
+
       }
 
       val expirationDate = model["expirationDate"]

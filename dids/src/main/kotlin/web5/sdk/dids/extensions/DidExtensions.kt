@@ -9,7 +9,7 @@ import web5.sdk.dids.methods.jwk.DidJwk
 import web5.sdk.dids.methods.key.DidKey
 import web5.sdk.dids.methods.web.DidWeb
 
-private val methodObjects = mapOf(
+internal val supportedMethods = mapOf(
   DidKey.methodName to DidKey.Companion,
   DidJwk.methodName to DidJwk.Companion,
   DidIon.methodName to DidIon.Default,
@@ -23,5 +23,5 @@ private val methodObjects = mapOf(
  * to be used when the method of the DID is unknown.
  */
 public fun Did.Companion.load(didUri: String, keyManager: KeyManager): Did {
-  return methodObjects.getValue(DID.fromString(didUri).methodName).load(didUri, keyManager)
+  return supportedMethods.getValue(DID.fromString(didUri).methodName).load(didUri, keyManager)
 }
