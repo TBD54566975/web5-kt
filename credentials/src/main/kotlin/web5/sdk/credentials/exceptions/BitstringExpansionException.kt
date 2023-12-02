@@ -1,7 +1,7 @@
 package web5.sdk.credentials.exceptions
 
 /**
- * Bitstring expansion exception
+ * Bitstring expansion exception.
  *
  * @param message the exception message detailing the error
  * @param cause the underlying exception

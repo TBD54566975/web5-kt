@@ -1,7 +1,7 @@
 package web5.sdk.credentials.exceptions
 
 /**
- * Verifiable credential parse exception
+ * Verifiable credential parse exception.
  *
  * @param message the exception message detailing the error
  * @param cause the underlying exception

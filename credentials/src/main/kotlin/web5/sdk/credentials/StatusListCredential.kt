@@ -87,7 +87,10 @@ public object StatusListCredential {
       statusListIndexes = prepareCredentialsForStatusList(statusPurpose, issuedCredentials)
       bitString = bitstringGeneration(statusListIndexes)
     } catch (e: Exception) {
-      throw StatusListCredentialCreateException("An error occurred during the creation of the status list credential: ${e.message}", e)
+      throw StatusListCredentialCreateException(
+        "An error occurred during the creation of the status list credential: ${e.message}",
+        e
+      )
     }
 
     try {
@@ -233,12 +236,19 @@ public object StatusListCredential {
         val body = response.bodyAsText()
         return VerifiableCredential.parseJwt(body)
       } else {
-        throw ClientRequestException(response, "Failed to retrieve VerifiableCredentialType from $url")
+        throw ClientRequestException(
+          response,
+          "Failed to retrieve VerifiableCredentialType from $url"
+        )
       }
-    } catch (e: ResponseException) { // ClientRequestException will be caught here since it is a subclass of ResponseException
+    } catch (e: ResponseException) {
+      // ClientRequestException will be caught here since it is a subclass of ResponseException
       throw StatusListCredentialFetchException("Failed to fetch the status list credential: ${e.message}", e)
     } catch (e: IllegalArgumentException) {
-      throw VerifiableCredentialParseException("Failed to parse VC after fetching status list credential: ${e.message}", e)
+      throw VerifiableCredentialParseException(
+        "Failed to parse VC after fetching status list credential: ${e.message}",
+        e
+      )
     }
   }
 

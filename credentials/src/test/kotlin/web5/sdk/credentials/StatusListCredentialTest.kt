@@ -440,7 +440,8 @@ class StatusListCredentialTest {
   }
 
   @Test
-  fun `FAIL should asynchronously validate if a credential is in the status list using a mock HTTP client`(): Unit = runBlocking {
+  fun `should throw StatusListCredentialFetchException if client fails to fetch StatusListCredential`
+    (): Unit = runBlocking {
     val keyManager = InMemoryKeyManager()
     val issuerDid = DidKey.create(keyManager)
     val holderDid = DidKey.create(keyManager)
@@ -467,6 +468,7 @@ class StatusListCredentialTest {
             "/credentials/status/3" -> {
               respondBadRequest()
             }
+
             else -> error("Unhandled ${request.url.fullPath}")
           }
         }
