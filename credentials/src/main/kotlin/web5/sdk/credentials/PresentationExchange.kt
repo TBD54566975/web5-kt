@@ -8,6 +8,7 @@ import com.nfeld.jsonpathkt.JsonPath
 import com.nfeld.jsonpathkt.extension.read
 import com.nimbusds.jwt.JWTParser
 import com.nimbusds.jwt.SignedJWT
+import web5.sdk.credentials.exceptions.PresentationExchangeException
 
 /**
  * The `PresentationExchange` object provides functions for working with Verifiable Credentials
@@ -57,7 +58,7 @@ public object PresentationExchange {
     val inputDescriptorToVcMap = mapInputDescriptorsToVCs(vcJwts, presentationDefinition)
 
     if (inputDescriptorToVcMap.size != presentationDefinition.inputDescriptors.size) {
-      throw PresentationExchangeError(
+      throw PresentationExchangeException(
         "Missing input descriptors: The presentation definition requires " +
           "${presentationDefinition.inputDescriptors.size} descriptors, but only " +
           "${inputDescriptorToVcMap.size} were found. Check and provide the missing descriptors."
@@ -98,7 +99,7 @@ public object PresentationExchange {
     val vc = JWTParser.parse(vcJwt) as SignedJWT
 
     val vcPayloadJson = JsonPath.parse(vc.payload.toString())
-      ?: throw PresentationExchangeError("Failed to parse VC payload as JSON.")
+      ?: throw PresentationExchangeException("Failed to parse VC payload as JSON.")
 
     // If the Input Descriptor has constraints and fields defined, evaluate them.
     inputDescriptor.constraints?.fields?.let { fields ->
@@ -177,10 +178,3 @@ public object PresentationExchange {
     }
   }
 }
-
-/**
- * Custom error class for exceptions related to the Presentation Exchange.
- *
- * @param message The error message.
- */
-public class PresentationExchangeError(message: String) : Error(message)

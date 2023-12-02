@@ -19,6 +19,7 @@ import org.xbill.DNS.Message
 import web5.sdk.common.ZBase32
 import web5.sdk.crypto.Ed25519
 import web5.sdk.crypto.KeyManager
+import web5.sdk.dids.exceptions.PkarrRecordResponseException
 import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -65,7 +66,7 @@ internal class DhtClient(
 
     if (!response.status.isSuccess()) {
       val err = runBlocking { response.bodyAsText() }
-      throw RuntimeException("Error putting message to DHT: $err")
+      throw PkarrRecordResponseException("Error writing Pkarr Record Set for id $id. Error: $err")
     }
   }
 
@@ -86,7 +87,8 @@ internal class DhtClient(
 
     val response = runBlocking { client.get("${gateway}/${id}") }
     if (!response.status.isSuccess()) {
-      throw RuntimeException("Error getting message from DHT")
+      val err = runBlocking { response.bodyAsText() }
+      throw PkarrRecordResponseException("Error reading Pkarr Record Set of id $id. Error: $err")
     }
 
     val responseBytes = runBlocking { response.readBytes() }
