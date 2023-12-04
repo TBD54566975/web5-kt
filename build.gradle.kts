@@ -12,6 +12,7 @@ plugins {
   `maven-publish`
   id("org.jetbrains.dokka") version "1.9.0"
   id("org.jetbrains.kotlinx.kover") version "0.7.3"
+  idea
 }
 
 repositories {
@@ -35,18 +36,65 @@ subprojects {
     plugin("maven-publish")
     plugin("org.jetbrains.dokka")
     plugin("org.jetbrains.kotlinx.kover")
+    plugin("idea")
   }
 
   tasks.withType<Detekt>().configureEach {
     jvmTarget = "1.8"
   }
 
+  sourceSets {
+    create("intTest") {
+      compileClasspath += sourceSets.main.get().output
+      runtimeClasspath += sourceSets.main.get().output
+    }
+  }
+
+  val intTestImplementation by configurations.getting {
+    extendsFrom(configurations.implementation.get())
+  }
+  val intTestRuntimeOnly by configurations.getting
+
+  configurations["intTestRuntimeOnly"].extendsFrom(configurations.runtimeOnly.get())
+
   dependencies {
     detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.23.1")
 
     testImplementation("org.junit.jupiter:junit-jupiter:5.9.2")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+
+    intTestImplementation(kotlin("test"))
+    intTestImplementation("org.junit.jupiter:junit-jupiter:5.9.2")
+    intTestRuntimeOnly("org.junit.platform:junit-platform-launcher")
   }
+
+  idea {
+    module {
+      testSources.from(sourceSets["intTest"].java.srcDirs)
+      testSources.from(sourceSets["intTest"].kotlin.srcDirs)
+    }
+  }
+
+  val integrationTest = task<Test>("integrationTest") {
+    description = "Runs integration tests."
+    group = "verification"
+
+    testClassesDirs = sourceSets["intTest"].output.classesDirs
+    classpath = sourceSets["intTest"].runtimeClasspath
+    shouldRunAfter("test")
+
+    useJUnitPlatform()
+
+    testLogging {
+      events("passed", "skipped", "failed", "standardOut", "standardError")
+      exceptionFormat = TestExceptionFormat.FULL
+      showExceptions = true
+      showCauses = true
+      showStackTraces = true
+    }
+  }
+
+  tasks.check { dependsOn(integrationTest) }
 
   detekt {
     config.setFrom("$rootDir/config/detekt.yml")

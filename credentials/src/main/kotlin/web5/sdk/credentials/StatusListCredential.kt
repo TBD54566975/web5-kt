@@ -3,7 +3,7 @@ package web5.sdk.credentials
 import com.danubetech.verifiablecredentials.CredentialSubject
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.ktor.client.HttpClient
-import io.ktor.client.engine.cio.CIO
+import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.plugins.ResponseException
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
@@ -212,7 +212,7 @@ public object StatusListCredential {
   }
 
   private fun defaultHttpClient(): HttpClient {
-    return HttpClient(CIO) {
+    return HttpClient(OkHttp) {
       install(ContentNegotiation) {
         jackson { jacksonObjectMapper() }
       }
