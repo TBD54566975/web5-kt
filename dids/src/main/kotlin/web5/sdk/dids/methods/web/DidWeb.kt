@@ -41,7 +41,7 @@ import kotlin.text.Charsets.UTF_8
  * val did = StatefulWebDid("did:web:tbd.website", keyManager)
  * ```
  */
-public class DidWeb internal constructor(
+public class DidWeb(
   uri: String,
   keyManager: KeyManager,
   private val didWebApi: DidWebApi
