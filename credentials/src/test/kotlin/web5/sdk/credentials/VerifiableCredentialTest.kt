@@ -6,14 +6,12 @@ import com.nimbusds.jose.JWSHeader
 import com.nimbusds.jose.JWSSigner
 import com.nimbusds.jose.crypto.Ed25519Signer
 import com.nimbusds.jose.jwk.Curve
-import com.nimbusds.jose.jwk.JWK
 import com.nimbusds.jose.jwk.gen.OctetKeyPairGenerator
 import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jwt.SignedJWT
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
-import web5.sdk.common.Convert
 import web5.sdk.crypto.AwsKeyManager
 import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.dids.Did
@@ -23,14 +21,12 @@ import web5.sdk.dids.methods.ion.DidIon
 import web5.sdk.dids.methods.ion.JsonWebKey2020VerificationMethod
 import web5.sdk.dids.methods.key.DidKey
 import java.io.File
-import java.net.URI
 import java.security.SignatureException
 import java.text.ParseException
 import java.util.UUID
 import kotlin.test.Ignore
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
-import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 
 data class StreetCredibility(val localRespect: String, val legit: Boolean)
@@ -100,27 +96,6 @@ class VerifiableCredentialTest {
     assertEquals("expected data to be parseable into a JSON object", exception.message)
   }
 
-  @Test
-  fun createJwk() {
-    val privateJwk = JWK.parse(
-      """{
-          "kty": "EC",
-          "d": "OeBCt3M8roz9F9Ny192TtZXf_-qPzAkwSM6ep7QdSO4",
-          "use": "sig",
-          "crv": "secp256k1",
-          "kid": "NB_qlUIr06-AikVVMFreq0lc-omQtzc6lwhhcvgO6r4",
-          "x": "DdtN8W6x_34pB_nkxR0e1tmDkNnsJeusBAEPzKWgf_Y",
-          "y": "u3W135inodLqtcEb9jNGS3JsM_uFKmkJSb8Trc9luWI",
-          "alg": "ES256K"
-        }"""
-    )
-    val publicKey = privateJwk.toPublicJWK()
-    val base64Encoded = Convert(publicKey.toJSONString()).toBase64Url(padding = false)
-
-    val did = "did:jwk:$base64Encoded"
-    println(did)
-  }
-
   data class TestVectors(
     val description: String,
     val vectors: List<TestVector>
@@ -165,11 +140,6 @@ class VerifiableCredentialTest {
         VerifiableCredential.fromJson(mapper.writeValueAsString(testInput.credential))
       }
     }
-  }
-
-  @Test
-  fun foo() {
-    assertFalse(URI("example").isAbsolute)
   }
 
   @Test
