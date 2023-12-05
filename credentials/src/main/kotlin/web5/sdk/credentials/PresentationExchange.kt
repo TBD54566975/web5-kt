@@ -70,7 +70,7 @@ public object PresentationExchange {
   }
 
   /**
-   * Creates a Presentation Submission against a list of Verifiable Credentials (VCs) against a specified
+   * Creates a Presentation Submission in which the list of Verifiable Credentials JWTs (VCs) fulfills the given Presentation Definition. 
    * Presentation Definition.
    *
    *
