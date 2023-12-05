@@ -8,7 +8,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
  *
  * @see [Presentation Submission](https://identity.foundation/presentation-exchange/spec/v2.0.0/#presentation-submission)
  */
-public data class PresentationSubmission(
+public class PresentationSubmission(
   val id: String,
   @JsonProperty("definition_id")
   val definitionId: String,
