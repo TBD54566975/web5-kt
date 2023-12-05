@@ -9,11 +9,11 @@ import com.fasterxml.jackson.annotation.JsonProperty
  * @see [Presentation Submission](https://identity.foundation/presentation-exchange/spec/v2.0.0/#presentation-submission)
  */
 public class PresentationSubmission(
-  val id: String,
+  public val id: String,
   @JsonProperty("definition_id")
-  val definitionId: String,
+  public val definitionId: String,
   @JsonProperty("descriptor_map")
-  val descriptorMap: List<DescriptorMap>
+  public val descriptorMap: List<DescriptorMap>
 )
 
 /**
@@ -21,9 +21,9 @@ public class PresentationSubmission(
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class DescriptorMap(
-  val id: String,
-  val format: String,
-  val path: String,
+  public val id: String,
+  public val format: String,
+  public val path: String,
   @JsonProperty("path_nested")
-  val pathNested: DescriptorMap? = null
+  public val pathNested: DescriptorMap? = null
 )
