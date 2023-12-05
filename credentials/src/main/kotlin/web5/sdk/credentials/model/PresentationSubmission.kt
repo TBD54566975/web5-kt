@@ -20,7 +20,7 @@ public data class PresentationSubmission(
  * Represents descriptor map for a presentation submission.
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public data class DescriptorMap(
+public class DescriptorMap(
   val id: String,
   val format: String,
   val path: String,
