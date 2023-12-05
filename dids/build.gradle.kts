@@ -23,9 +23,11 @@ dependencies {
   implementation("com.github.multiformats:java-multibase:1.1.0")
 
   implementation("io.ktor:ktor-client-core:$ktor_version")
-  implementation("io.ktor:ktor-client-cio:$ktor_version")
+  implementation("io.ktor:ktor-client-okhttp:$ktor_version")
   implementation("io.ktor:ktor-client-content-negotiation:$ktor_version")
   implementation("io.ktor:ktor-serialization-jackson:$ktor_version")
+
+  implementation("com.squareup.okhttp3:okhttp-dnsoverhttps:4.11.0")
 
   implementation("io.github.erdtman:java-json-canonicalization:1.1")
 
