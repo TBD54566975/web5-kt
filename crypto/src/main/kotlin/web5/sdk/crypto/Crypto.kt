@@ -1,7 +1,5 @@
 package web5.sdk.crypto
 
-import com.nimbusds.jose.Algorithm
-import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.JWK
 import web5.sdk.crypto.Crypto.generatePrivateKey
 import web5.sdk.crypto.Crypto.publicKeyToBytes
@@ -88,7 +86,7 @@ public object Crypto {
   public fun computePublicKey(privateKey: JWK): JWK {
     val rawCurve = privateKey.toJSONObject()["crv"]
     val curve = rawCurve?.let { Curve.parse(it.toString()) }
-    val generator = getKeyGenerator(privateKey.algorithm, curve)
+    val generator = getKeyGenerator(privateKey.algorithm?.name?.let { Algorithm.valueOf(it) }, curve)
 
     return generator.computePublicKey(privateKey)
   }
@@ -108,7 +106,7 @@ public object Crypto {
     val rawCurve = privateKey.toJSONObject()["crv"]
     val curve = rawCurve?.let { Curve.parse(it.toString()) }
 
-    val signer = getSigner(privateKey.algorithm, curve)
+    val signer = getSigner(privateKey.algorithm.toWeb5Algorithm(), curve)
 
     return signer.sign(privateKey, payload, options)
   }
@@ -136,7 +134,7 @@ public object Crypto {
    *
    */
   public fun verify(publicKey: JWK, signedPayload: ByteArray, signature: ByteArray, algorithm: Algorithm? = null) {
-    val alg = publicKey.algorithm ?: algorithm
+    val alg = publicKey.algorithm.toWeb5Algorithm() ?: algorithm
     ?: throw IllegalArgumentException("Algorithm must either be set on JWK or provided explicitly.")
 
     val curve = getJwkCurve(publicKey)
@@ -167,7 +165,7 @@ public object Crypto {
    */
   public fun publicKeyToBytes(publicKey: JWK): ByteArray {
     val curve = getJwkCurve(publicKey)
-    val generator = getKeyGenerator(publicKey.algorithm, curve)
+    val generator = getKeyGenerator(publicKey.algorithm.toWeb5Algorithm(), curve)
 
     return generator.publicKeyToBytes(publicKey)
   }

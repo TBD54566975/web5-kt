@@ -1,6 +1,5 @@
 package web5.sdk.crypto
 
-import com.nimbusds.jose.Algorithm
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.crypto.bc.BouncyCastleProviderSingleton
 import com.nimbusds.jose.jwk.Curve
@@ -61,7 +60,7 @@ public object Secp256k1 : KeyGenerator, Signer {
     Security.addProvider(BouncyCastleProviderSingleton.getInstance())
   }
 
-  override val algorithm: Algorithm = JWSAlgorithm.ES256K
+  override val algorithm: Algorithm = Algorithm.ES256K
   override val keyType: KeyType = KeyType.EC
 
   /** [reference](https://github.com/multiformats/multicodec/blob/master/table.csv#L92). */

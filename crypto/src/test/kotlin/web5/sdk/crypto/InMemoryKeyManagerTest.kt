@@ -3,9 +3,7 @@ package web5.sdk.crypto
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
-import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.crypto.bc.BouncyCastleProviderSingleton
-import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.JWK
 import com.nimbusds.jose.jwk.gen.ECKeyGenerator
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -19,7 +17,7 @@ class InMemoryKeyManagerTest {
   @Test
   fun `test alias is consistent`() {
     val keyManager = InMemoryKeyManager()
-    val alias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K)
+    val alias = keyManager.generatePrivateKey(Algorithm.ES256K)
     val publicKey = keyManager.getPublicKey(alias)
     val defaultAlias = keyManager.getDeterministicAlias(publicKey)
 
@@ -29,7 +27,7 @@ class InMemoryKeyManagerTest {
   @Test
   fun `exception is thrown when kid not found`() {
     val keyManager = InMemoryKeyManager()
-    val jwk = Crypto.generatePrivateKey(JWSAlgorithm.ES256K)
+    val jwk = Crypto.generatePrivateKey(Algorithm.ES256K)
     val exception = assertThrows<IllegalArgumentException> {
       keyManager.getDeterministicAlias(jwk.toPublicJWK())
     }
@@ -38,7 +36,7 @@ class InMemoryKeyManagerTest {
 
   @Test
   fun `public key is available after import`() {
-    val jwk = Crypto.generatePrivateKey(JWSAlgorithm.ES256K)
+    val jwk = Crypto.generatePrivateKey(Algorithm.ES256K)
     val keyManager = InMemoryKeyManager()
 
     val alias = keyManager.import(jwk)
@@ -49,7 +47,7 @@ class InMemoryKeyManagerTest {
 
   @Test
   fun `public keys can be imported`() {
-    val jwk = Crypto.generatePrivateKey(JWSAlgorithm.ES256K)
+    val jwk = Crypto.generatePrivateKey(Algorithm.ES256K)
     val keyManager = InMemoryKeyManager()
 
     val alias = keyManager.import(jwk.toPublicJWK())
@@ -59,7 +57,9 @@ class InMemoryKeyManagerTest {
 
   @Test
   fun `key without kid can be imported`() {
-    val jwk = ECKeyGenerator(Curve.SECP256K1).provider(BouncyCastleProviderSingleton.getInstance()).generate()
+    val jwk = ECKeyGenerator(com.nimbusds.jose.jwk.Curve.SECP256K1)
+      .provider(BouncyCastleProviderSingleton.getInstance())
+      .generate()
     val keyManager = InMemoryKeyManager()
 
     val alias = keyManager.import(jwk)
@@ -71,7 +71,7 @@ class InMemoryKeyManagerTest {
   @Test
   fun `export returns all keys`() {
     val keyManager = InMemoryKeyManager()
-    keyManager.generatePrivateKey(JWSAlgorithm.EdDSA, Curve.Ed25519)
+    keyManager.generatePrivateKey(Algorithm.EdDSA, Curve.Ed25519)
 
     val keySet = keyManager.export()
     assertEquals(1, keySet.size)

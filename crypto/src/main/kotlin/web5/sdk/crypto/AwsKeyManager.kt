@@ -12,10 +12,7 @@ import com.amazonaws.services.kms.model.KeyUsageType
 import com.amazonaws.services.kms.model.MessageType
 import com.amazonaws.services.kms.model.SignRequest
 import com.amazonaws.services.kms.model.SigningAlgorithmSpec
-import com.nimbusds.jose.Algorithm
-import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.crypto.impl.ECDSA
-import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.ECKey
 import com.nimbusds.jose.jwk.JWK
 import com.nimbusds.jose.jwk.KeyUse
@@ -36,14 +33,14 @@ import java.security.interfaces.ECPublicKey
  * e.g. alias/6uNnyj7xZUgtKTEOFV2mz0f7Hd3cxIH1o5VXsOo4u1M
  *
  * AWSKeyManager supports a limited set ECDSA curves for signing:
- * - [JWSAlgorithm.ES256K]
+ * - [Algorithm.ES256K]
  */
 public class AwsKeyManager @JvmOverloads constructor(
   private val kmsClient: AWSKMS = AWSKMSClientBuilder.standard().build()
 ) : KeyManager {
 
   private data class AlgorithmDetails(
-    val algorithm: JWSAlgorithm,
+    val algorithm: Algorithm,
     val curve: Curve,
     val keySpec: KeySpec,
     val signingAlgorithm: SigningAlgorithmSpec,
@@ -51,8 +48,8 @@ public class AwsKeyManager @JvmOverloads constructor(
   )
 
   private val algorithmDetails = mapOf(
-    JWSAlgorithm.ES256K to AlgorithmDetails(
-      algorithm = JWSAlgorithm.ES256K,
+    Algorithm.ES256K to AlgorithmDetails(
+      algorithm = Algorithm.ES256K,
       curve = Curve.SECP256K1,
       keySpec = KeySpec.ECC_SECG_P256K1,
       signingAlgorithm = SigningAlgorithmSpec.ECDSA_SHA_256,
@@ -83,7 +80,8 @@ public class AwsKeyManager @JvmOverloads constructor(
   )
 
   private fun getAlgorithmDetails(algorithm: Algorithm): AlgorithmDetails {
-    return algorithmDetails[algorithm] ?: throw IllegalArgumentException("Algorithm $algorithm is not supported")
+    return algorithmDetails[algorithm]
+      ?: throw IllegalArgumentException("Algorithm $algorithm is not supported")
   }
 
   private fun getAlgorithmDetails(keySpec: KeySpec): AlgorithmDetails {
@@ -130,11 +128,11 @@ public class AwsKeyManager @JvmOverloads constructor(
 
     val algorithmDetails = getAlgorithmDetails(publicKeyResponse.keySpec.enum())
     val jwkBuilder = when (publicKey) {
-      is ECPublicKey -> ECKey.Builder(algorithmDetails.curve, publicKey)
+      is ECPublicKey -> ECKey.Builder(algorithmDetails.curve.toNimbusdsCurve(), publicKey)
       else -> throw IllegalArgumentException("Unknown key type $publicKey")
     }
     return jwkBuilder
-      .algorithm(algorithmDetails.algorithm)
+      .algorithm(algorithmDetails.algorithm.toNimbusdsJWSAlgorithm())
       .keyID(keyAlias)
       .keyUse(KeyUse.SIGNATURE)
       .build()
@@ -161,7 +159,7 @@ public class AwsKeyManager @JvmOverloads constructor(
       .withSigningAlgorithm(algorithmDetails.signingAlgorithm)
     val signResponse = kmsClient.sign(signRequest)
     val derSignatureBytes = signResponse.signature.array()
-    return transcodeDerSignatureToConcat(derSignatureBytes, algorithmDetails.algorithm)
+    return transcodeDerSignatureToConcat(derSignatureBytes, algorithmDetails.algorithm.toNimbusdsJWSAlgorithm())
   }
 
   /**
@@ -214,7 +212,8 @@ public class AwsKeyManager @JvmOverloads constructor(
    * KMS returns the signature encoded as ASN.1 DER. Convert to the "R+S" concatenation format required by JWS.
    * https://www.rfc-editor.org/rfc/rfc7515#appendix-A.3.1
    */
-  private fun transcodeDerSignatureToConcat(derSignature: ByteArray, algorithm: JWSAlgorithm): ByteArray {
+  private fun transcodeDerSignatureToConcat(
+    derSignature: ByteArray, algorithm: com.nimbusds.jose.JWSAlgorithm): ByteArray {
     val signatureLength = ECDSA.getSignatureByteArrayLength(algorithm)
     val jwsSignature = ECDSA.transcodeSignatureToConcat(derSignature, signatureLength)
     ECDSA.ensureLegalSignature(jwsSignature, algorithm) // throws if trash-sig

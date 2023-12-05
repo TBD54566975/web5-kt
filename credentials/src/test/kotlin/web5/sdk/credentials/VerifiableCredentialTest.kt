@@ -1,7 +1,6 @@
 package web5.sdk.credentials
 
 import com.nimbusds.jose.JOSEObjectType
-import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.JWSHeader
 import com.nimbusds.jose.JWSSigner
 import com.nimbusds.jose.crypto.Ed25519Signer
@@ -12,6 +11,7 @@ import com.nimbusds.jwt.SignedJWT
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
+import web5.sdk.crypto.Algorithm
 import web5.sdk.crypto.AwsKeyManager
 import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.dids.methods.ion.CreateDidIonOptions
@@ -152,7 +152,7 @@ class VerifiableCredentialTest {
     val keyManager = InMemoryKeyManager()
 
     //Create an ION DID without an assertionMethod
-    val alias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K)
+    val alias = keyManager.generatePrivateKey(Algorithm.ES256K)
     val verificationJwk = keyManager.getPublicKey(alias)
     val key = JsonWebKey2020VerificationMethod(
       id = UUID.randomUUID().toString(),
@@ -164,7 +164,7 @@ class VerifiableCredentialTest {
       CreateDidIonOptions(verificationMethodsToAdd = listOf(key))
     )
 
-    val header = JWSHeader.Builder(JWSAlgorithm.ES256K)
+    val header = JWSHeader.Builder(com.nimbusds.jose.JWSAlgorithm.ES256K)
       .keyID(issuerDid.uri)
       .build()
     //A detached payload JWT
@@ -196,7 +196,7 @@ class VerifiableCredentialTest {
       .build()
 
     val signedJWT = SignedJWT(
-      JWSHeader.Builder(JWSAlgorithm.EdDSA).keyID(jwk.keyID).build(),
+      JWSHeader.Builder(com.nimbusds.jose.JWSAlgorithm.EdDSA).keyID(jwk.keyID).build(),
       claimsSet
     )
 
@@ -220,7 +220,7 @@ class VerifiableCredentialTest {
       .build()
 
     val signedJWT = SignedJWT(
-      JWSHeader.Builder(JWSAlgorithm.EdDSA).keyID(jwk.keyID).build(),
+      JWSHeader.Builder(com.nimbusds.jose.JWSAlgorithm.EdDSA).keyID(jwk.keyID).build(),
       claimsSet
     )
 

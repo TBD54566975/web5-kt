@@ -1,12 +1,9 @@
 package web5.sdk.dids.methods.ion
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.nimbusds.jose.Algorithm
-import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.JWSHeader
 import com.nimbusds.jose.JWSObject
 import com.nimbusds.jose.Payload
-import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.JWK
 import com.nimbusds.jose.util.Base64URL
 import foundation.identity.did.DID
@@ -27,6 +24,8 @@ import kotlinx.coroutines.runBlocking
 import org.erdtman.jcs.JsonCanonicalizer
 import web5.sdk.common.Convert
 import web5.sdk.common.Varint
+import web5.sdk.crypto.Algorithm
+import web5.sdk.crypto.Curve
 import web5.sdk.crypto.KeyGenOptions
 import web5.sdk.crypto.KeyManager
 import web5.sdk.dids.CreateDidOptions
@@ -357,7 +356,7 @@ public sealed class DidIonApi(
     }
     val updatePublicKey = keyManager.getPublicKey(options.updateKeyAlias)
 
-    val newUpdateKeyAlias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K)
+    val newUpdateKeyAlias = keyManager.generatePrivateKey(Algorithm.ES256K)
     val newUpdatePublicKey = keyManager.getPublicKey(newUpdateKeyAlias)
 
     val reveal = updatePublicKey.reveal()
@@ -399,7 +398,7 @@ public sealed class DidIonApi(
   }
 
   private fun sign(serializableObject: Any, keyManager: KeyManager, signKeyAlias: String): JWSObject {
-    val header = JWSHeader.Builder(JWSAlgorithm.ES256K).build()
+    val header = JWSHeader.Builder(com.nimbusds.jose.JWSAlgorithm.ES256K).build()
     val payload = Payload(mapper.writeValueAsString(serializableObject))
     val jwsObject = JWSObject(header, payload)
     val signatureBytes = keyManager.sign(signKeyAlias, jwsObject.signingInput)
@@ -444,7 +443,7 @@ public sealed class DidIonApi(
 
   internal fun createOperation(keyManager: KeyManager, options: CreateDidIonOptions?)
     : Pair<SidetreeCreateOperation, KeyAliases> {
-    val updateKeyAlias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K)
+    val updateKeyAlias = keyManager.generatePrivateKey(Algorithm.ES256K)
     val updatePublicJwk = keyManager.getPublicKey(updateKeyAlias)
 
     val publicKeyCommitment = updatePublicJwk.commitment()
@@ -460,7 +459,7 @@ public sealed class DidIonApi(
       updateCommitment = publicKeyCommitment
     )
 
-    val recoveryKeyAlias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K)
+    val recoveryKeyAlias = keyManager.generatePrivateKey(Algorithm.ES256K)
     val recoveryPublicJwk = keyManager.getPublicKey(recoveryKeyAlias)
     val recoveryCommitment = recoveryPublicJwk.commitment()
 
@@ -485,7 +484,7 @@ public sealed class DidIonApi(
     if (options == null || options.verificationMethodsToAdd.count() == 0) {
       listOf<VerificationMethodSpec>(
         VerificationMethodCreationParams(
-          JWSAlgorithm.ES256K,
+          Algorithm.ES256K,
           relationships = listOf(PublicKeyPurpose.AUTHENTICATION, PublicKeyPurpose.ASSERTION_METHOD)
         )
       ).toPublicKeys(keyManager)
@@ -546,11 +545,11 @@ public sealed class DidIonApi(
     val recoveryPublicKey = keyManager.getPublicKey(options.recoveryKeyAlias)
     val reveal = recoveryPublicKey.reveal()
 
-    val nextRecoveryKeyAlias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K)
+    val nextRecoveryKeyAlias = keyManager.generatePrivateKey(Algorithm.ES256K)
     val nextRecoveryPublicKey = keyManager.getPublicKey(nextRecoveryKeyAlias)
     val nextRecoveryCommitment = nextRecoveryPublicKey.commitment()
 
-    val nextUpdateKeyAlias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K)
+    val nextUpdateKeyAlias = keyManager.generatePrivateKey(Algorithm.ES256K)
     val nextUpdatePublicKey = keyManager.getPublicKey(nextUpdateKeyAlias)
     val nextUpdateCommitment = nextUpdatePublicKey.commitment()
 

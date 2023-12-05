@@ -2,7 +2,6 @@ package web5.sdk.crypto
 
 import com.google.crypto.tink.subtle.Ed25519Sign
 import com.google.crypto.tink.subtle.Ed25519Verify
-import com.nimbusds.jose.Algorithm
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.JWK
@@ -36,7 +35,7 @@ import java.security.SignatureException
  */
 
 public object Ed25519 : KeyGenerator, Signer {
-  override val algorithm: Algorithm = JWSAlgorithm.EdDSA
+  override val algorithm: Algorithm = Algorithm.EdDSA
   override val keyType: KeyType = KeyType.OKP
 
   public const val PUB_MULTICODEC: Int = 0xed
@@ -89,7 +88,7 @@ public object Ed25519 : KeyGenerator, Signer {
     val base64UrlEncodedPublicKey = Convert(publicKeyBytes).toBase64Url(padding = false)
 
     return OctetKeyPair.Builder(Curve.Ed25519, Base64URL(base64UrlEncodedPublicKey))
-      .algorithm(algorithm)
+      .algorithm(algorithm.toNimbusdsJWSAlgorithm())
       .keyIDFromThumbprint()
       .d(Base64URL(base64UrlEncodedPrivateKey))
       .keyUse(KeyUse.SIGNATURE)
@@ -100,7 +99,7 @@ public object Ed25519 : KeyGenerator, Signer {
     val base64UrlEncodedPublicKey = Convert(publicKeyBytes).toBase64Url(padding = false)
 
     return OctetKeyPair.Builder(Curve.Ed25519, Base64URL(base64UrlEncodedPublicKey))
-      .algorithm(algorithm)
+      .algorithm(algorithm.toNimbusdsJWSAlgorithm())
       .keyIDFromThumbprint()
       .keyUse(KeyUse.SIGNATURE)
       .build()
