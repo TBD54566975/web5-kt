@@ -1,35 +1,31 @@
-name: Security Check
+name: Security Scanning
 
 on:
-  push:
+  pull_request_target:
     branches:
       - main
 
-  pull_request:
+  push:
     branches:
-      - "*"
+      - main
+      - leordev/* # todo: remove before merging
+
+  # Run every day at 5am UTC
+  schedule:
+    - cron: "0 5 * * *"
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
 jobs:
-  security-audit:
+  snyk:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout source
+      - name: Checkout
         uses: actions/checkout@v4
-
-      - uses: gradle/wrapper-validation-action@v1
-
-      - uses: actions/setup-java@v3
         with:
-          distribution: "corretto"
-          java-version: 11
-
-      - uses: actions/cache@v3
-        with:
-          path: ~/.gradle/caches
-          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle.kts') }}-${{ hashFiles('**/gradle/wrapper/gradle-wrapper.properties') }}-${{ hashFiles('**/versions.properties') }}
+          ref: ${{ github.head_ref }}
 
       - name: Install Snyk
         uses: snyk/actions/setup@master
@@ -44,3 +40,23 @@ jobs:
         if: always()
         with:
           sarif_file: snyk.sarif
+
+  fossa:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+
+      - name: Run FOSSA Scan
+        uses: fossas/fossa-action@main
+        with:
+          api-key: ${{ secrets.FOSSA_API_KEY }}
+
+      - name: Run FOSSA Test
+        uses: fossas/fossa-action@main
+        with:
+          api-key: ${{ secrets.FOSSA_API_KEY }}
+          run-tests: true
