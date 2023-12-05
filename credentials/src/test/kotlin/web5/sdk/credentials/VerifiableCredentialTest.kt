@@ -96,52 +96,6 @@ class VerifiableCredentialTest {
     assertEquals("expected data to be parseable into a JSON object", exception.message)
   }
 
-  data class TestVectors(
-    val description: String,
-    val vectors: List<TestVector>
-  )
-
-  data class TestVector(
-    val description: String,
-    val input: TestInput,
-    val output: String?,
-    val errors: Boolean?,
-  )
-
-  data class TestInput(
-    val signerDidUri: String?,
-    val signerPrivateJwk: Map<String, Any>?,
-    val credential: Map<String, Any>?,
-  )
-
-  @Test
-  fun `creates test vectors`() {
-    // read a map from a json file
-    val mapper = jacksonObjectMapper()
-    val testVectors =
-      mapper.readValue(File("../test-vectors/credentials/create.json"), TestVectors::class.java)
-
-    testVectors.vectors.filterNot { it.errors ?: false }.forEach { vector ->
-      val testInput = vector.input
-
-      val vc = VerifiableCredential.fromJson(mapper.writeValueAsString(testInput.credential))
-
-      val keyManager = InMemoryKeyManager()
-      keyManager.import(listOf(testInput.signerPrivateJwk!!))
-      val issuerDid = Did.load(testInput.signerDidUri!!, keyManager)
-      val vcJwt = vc.sign(issuerDid)
-
-      assertEquals(vector.output, vcJwt, vector.description)
-    }
-
-    testVectors.vectors.filter { it.errors ?: false }.forEach { vector ->
-      val testInput = vector.input
-      assertFails(vector.description) {
-        VerifiableCredential.fromJson(mapper.writeValueAsString(testInput.credential))
-      }
-    }
-  }
-
   @Test
   fun `verify does not throw an exception if vc is legit`() {
     val keyManager = InMemoryKeyManager()
@@ -267,5 +221,61 @@ class VerifiableCredentialTest {
     assertEquals(vc.type, parsedVc.type)
     assertEquals(vc.issuer, parsedVc.issuer)
     assertEquals(vc.subject, parsedVc.subject)
+  }
+}
+
+class TestVectorsCredentialsTest {
+  data class TestVectors(
+    val description: String,
+    val vectors: List<TestVector>
+  )
+
+  data class TestVector(
+    val description: String,
+    val input: TestInput,
+    val output: String?,
+    val errors: Boolean?,
+  )
+
+  data class TestInput(
+    val signerDidUri: String?,
+    val signerPrivateJwk: Map<String, Any>?,
+    val credential: Map<String, Any>?,
+  )
+
+  @Test
+  fun create_success() {
+    // read a map from a json file
+    val mapper = jacksonObjectMapper()
+    val testVectors =
+      mapper.readValue(File("../test-vectors/credentials/create_success.json"), TestVectors::class.java)
+
+    testVectors.vectors.filterNot { it.errors ?: false }.forEach { vector ->
+      val testInput = vector.input
+
+      val vc = VerifiableCredential.fromJson(mapper.writeValueAsString(testInput.credential))
+
+      val keyManager = InMemoryKeyManager()
+      keyManager.import(listOf(testInput.signerPrivateJwk!!))
+      val issuerDid = Did.load(testInput.signerDidUri!!, keyManager)
+      val vcJwt = vc.sign(issuerDid)
+
+      assertEquals(vector.output, vcJwt, vector.description)
+    }
+  }
+
+  @Test
+  fun create_failure() {
+    // read a map from a json file
+    val mapper = jacksonObjectMapper()
+    val testVectors =
+      mapper.readValue(File("../test-vectors/credentials/create_failure.json"), TestVectors::class.java)
+
+    testVectors.vectors.filter { it.errors ?: false }.forEach { vector ->
+      val testInput = vector.input
+      assertFails(vector.description) {
+        VerifiableCredential.fromJson(mapper.writeValueAsString(testInput.credential))
+      }
+    }
   }
 }
