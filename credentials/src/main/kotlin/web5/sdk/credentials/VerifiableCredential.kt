@@ -186,6 +186,7 @@ public class VerifiableCredential internal constructor(public val vcDataModel: V
         }
         .build()
 
+      // This should be a no-op just to make sure we've set all the correct fields.
       validateDataModel(vcDataModel.toMap())
 
       return VerifiableCredential(vcDataModel)
@@ -302,12 +303,15 @@ public class VerifiableCredential internal constructor(public val vcDataModel: V
      *
      * @param vcJson The verifiable credential JSON as a [String].
      * @return A [VerifiableCredential] instance derived from the JSON.
+     * @throws IllegalArgumentException if the credential within [vcJson] does not conform to the W3C Verifiable
+     *   Credential Data Model 1.1 as specified in https://www.w3.org/TR/vc-data-model/.
      *
      * Example:
      * ```
      * val vc = VerifiableCredential.fromJson(vcJsonString)
      * ```
      */
+    @Throws(IllegalArgumentException::class)
     public fun fromJson(vcJson: String): VerifiableCredential {
       val typeRef = object : TypeReference<HashMap<String, Any>>() {}
       val vcMap = objectMapper.readValue(vcJson, typeRef)
@@ -315,6 +319,10 @@ public class VerifiableCredential internal constructor(public val vcDataModel: V
       return VerifiableCredential(VcDataModel.fromMap(vcMap))
     }
 
+    /**
+     * Throws an [IllegalArgumentException] if the provided [model] does not conform to the W3C Verifiable Credentials
+     * Data Model 1.1 as specified in https://www.w3.org/TR/vc-data-model/.
+     */
     private fun validateDataModel(model: Map<String, Any>) {
       require(model["credentialSubject"] != null) {
         "credentialSubject property is required"
