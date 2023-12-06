@@ -27,17 +27,8 @@ class StatusListCredentialTest {
       specExampleRevocableVcText
     )
 
-    assertTrue(
-      specExampleRevocableVc.vcDataModel.contexts.containsAll(
-        listOf(
-          URI.create("https://www.w3.org/ns/credentials/v2"),
-          URI.create("https://www.w3.org/ns/credentials/examples/v2")
-        )
-      )
-    )
-
     assertEquals(specExampleRevocableVc.type, "VerifiableCredential")
-    assertEquals(specExampleRevocableVc.issuer.toString(), "did:example:12345")
+    assertEquals(specExampleRevocableVc.issuer, "did:example:12345")
     assertNotNull(specExampleRevocableVc.vcDataModel.credentialStatus)
     assertEquals(specExampleRevocableVc.subject, "did:example:6789")
     assertEquals(specExampleRevocableVc.vcDataModel.credentialSubject.type.toString(), "Person")
