@@ -143,6 +143,6 @@ public sealed class DidWebApi(
   }
 
   public override fun create(keyManager: KeyManager, options: CreateDidOptions?): DidWeb {
-    throw NotImplementedException("create operation not supported for did:web")
+    throw UnsupportedOperationException("Create operation is not supported for did:web")
   }
 }

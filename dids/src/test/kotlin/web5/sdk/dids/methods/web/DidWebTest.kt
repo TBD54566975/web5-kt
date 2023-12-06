@@ -78,6 +78,16 @@ class DidWebTest {
     assertEquals("key with alias CfveyLOfYrOhSgD66MA6PO9J5sAnj_J-Z0URcD6VGVU not found", exception.message)
   }
 
+  @Test
+  fun `create throws exception`() {
+    val exception = assertThrows<UnsupportedOperationException> {
+      DidWebApi {
+        engine = mockEngine()
+      }.create(InMemoryKeyManager())
+    }
+    assertEquals("Create operation is not supported for did:web", exception.message)
+  }
+
   private fun mockEngine() = MockEngine { request ->
     when (request.url.toString()) {
       "https://example.com/.well-known/did.json" -> {
