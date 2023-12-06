@@ -223,6 +223,25 @@ class PresentationExchangeTest {
     }
 
     @Test
+    fun `throws when we fail to parse the VC`() {
+      val pd = jsonMapper.readValue(
+        readPd("src/test/resources/pd_sanctions.json"),
+        PresentationDefinitionV2::class.java
+      )
+
+      val vcJwt = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+
+      assertThrows<PresentationExchangeException> {
+        PresentationExchange.satisfiesPresentationDefinition(listOf(vcJwt), pd)
+      }
+
+      assertFailure {
+        PresentationExchange.satisfiesPresentationDefinition(listOf(vcJwt), pd)
+      }.messageContains("Failed to parse VC payload as JSON.")
+
+    }
+
+    @Test
     fun `throws when VC does not satisfy sanctions requirements`() {
       val pd = jsonMapper.readValue(
         readPd("src/test/resources/pd_sanctions.json"),
