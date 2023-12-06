@@ -38,7 +38,7 @@ public object PresentationExchange {
    * This function ensures that the provided VCs meet the criteria defined in the Presentation Definition.
    * It first checks for the presence of Submission Requirements in the definition and throws an exception if they exist,
    * as this feature is not implemented. Then, it maps the input descriptors in the presentation definition to the
-   * corresponding VCs. If the number of mapped descriptors does not match the required count, an error is thrown.
+   * corresponding VCs. If the number of mapped descriptors does not match the required count, an exception is thrown.
    *
    * @param vcJwts Iterable of VCs in JWT format to validate.
    * @param presentationDefinition The Presentation Definition V2 object against which VCs are validated.
