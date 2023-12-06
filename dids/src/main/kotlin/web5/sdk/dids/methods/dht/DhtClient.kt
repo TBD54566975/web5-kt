@@ -4,7 +4,7 @@ import com.nimbusds.jose.jwk.JWK
 import com.turn.ttorrent.bcodec.BEncoder
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.HttpClientEngine
-import io.ktor.client.engine.cio.CIO
+import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.request.get
 import io.ktor.client.request.put
 import io.ktor.client.request.setBody
@@ -29,7 +29,7 @@ import java.security.SignatureException
  */
 internal class DhtClient(
   private val gateway: String = "https://diddht.tbddev.org",
-  engine: HttpClientEngine = CIO.create()
+  engine: HttpClientEngine = OkHttp.create()
 ) {
 
   private val client = HttpClient(engine)

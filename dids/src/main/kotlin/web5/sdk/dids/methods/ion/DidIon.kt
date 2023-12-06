@@ -12,7 +12,7 @@ import com.nimbusds.jose.util.Base64URL
 import foundation.identity.did.DID
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.HttpClientEngine
-import io.ktor.client.engine.cio.CIO
+import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.get
 import io.ktor.client.request.post
@@ -72,7 +72,7 @@ private val sha256MultiCodec = Varint.encode(0x12)
  * Configuration for the [DidIonApi].
  *
  * @property ionHost The ION host URL.
- * @property engine The engine to use. When absent, a new one will be created from the [CIO] factory.
+ * @property engine The engine to use. When absent, a new one will be created from the [OkHttp] factory.
  */
 public class DidIonConfiguration internal constructor(
   public var ionHost: String = "https://ion.tbddev.org",
@@ -215,7 +215,7 @@ public sealed class DidIonApi(
   private val operationsEndpoint = configuration.ionHost + operationsPath
   private val identifiersEndpoint = configuration.ionHost + identifiersPath
 
-  private val engine: HttpClientEngine = configuration.engine ?: CIO.create {}
+  private val engine: HttpClientEngine = configuration.engine ?: OkHttp.create {}
 
   private val client = HttpClient(engine) {
     install(ContentNegotiation) {
