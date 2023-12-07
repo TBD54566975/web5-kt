@@ -13,8 +13,38 @@ This repo contains 4 jvm packages:
 
 # Quickstart
 
-All the web5 libraries are published on [JitPack](https://jitpack.io). To start simply add the following to your
-`gradle.build.kts` file:
+You can add this library you your project using Gradle or Maven. There are two ways to do so. The first is pulling the
+package from Maven Central. The second is pulling the package from JitPack.
+
+## Maven Central
+
+When pulling from Maven Central, you can pull the entire library or just a single module. Examples of both are shown
+below. Please note that you need to add the repositories shows below to your `build.gradle.kts` file. This is because
+the libraries that we depend on are hosted in places
+
+```kt
+repositories {
+  maven("https://jitpack.io")
+  maven("https://repo.danubetech.com/repository/maven-public/")
+  maven("https://repository.jboss.org/nexus/content/repositories/thirdparty-releases/")
+}
+  
+dependencies {
+  // If you want to pull the entire library
+  implementation("xyz.block:web5:0.1.0")
+  
+  // If you want to pull a single module
+  implementation("xyz.block:web5-common:0.1.0")
+  implementation("xyz.block:web5-credentials:0.1.0")
+  implementation("xyz.block:web5-crypto:0.1.0")
+  implementation("xyz.block:web5-dids:0.1.0")
+}
+```
+
+## JitPack
+
+You can also pull the jars for this library from [JitPack](https://jitpack.io). To start simply add the following to your
+`build.gradle.kts` file:
 
 ```kotlin
 repositories {

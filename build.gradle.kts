@@ -22,7 +22,10 @@ repositories {
 }
 
 dependencies {
-  detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.23.1")
+  api(project(":common"))
+  api(project(":credentials"))
+  api(project(":crypto"))
+  api(project(":dids"))
 }
 
 allprojects {
