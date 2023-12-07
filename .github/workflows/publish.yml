@@ -3,14 +3,12 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version to publish'
+        description: 'Version to publish. For example "0.0.1"'
         required: true
         default: '0.0.0'
   push:
     tags:
       - v*
-    branches:
-      - issue_68
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -19,11 +17,14 @@ jobs:
       - name: Set up Java
         uses: actions/setup-java@v3
         with:
+          distribution: 'corretto'
           java-version: '11'
-          distribution: 'adopt'
-      - name: Run chmod to make gradlew executable
-        run: chmod +x ./gradlew
-      - name: Publish package to local staging directory
+      - uses: actions/cache@v3
+        with:
+          path: ~/.gradle/caches
+          key: gradle-ubuntu-latest-${{ hashFiles('**/*.gradle.kts') }}-${{ hashFiles('**/gradle/wrapper/gradle-wrapper.properties') }}-${{ hashFiles('**/versions.properties') }}
+
+      - name: Publish packages to sonatype staging
         run: |
           if [ -n "${{ github.event.inputs.version }}" ]; then
             ./gradlew -Pversion=${{ github.event.inputs.version }} :publishToSonatype :closeSonatypeStagingRepository
