@@ -160,8 +160,8 @@ subprojects {
     }
 
     signing {
-      val signingKey: String? = System.getenv("ORG_GRADLE_PROJECT_SIGNINGKEY")
-      val signingPassword: String? = System.getenv("ORG_GRADLE_PROJECT_SIGNINGPASSWORD")
+      val signingKey: String? by project
+      val signingPassword: String? by project
       useInMemoryPgpKeys(signingKey, signingPassword)
       sign(publishing.publications[publicationName])
     }
@@ -245,10 +245,10 @@ publishing {
 }
 
 signing {
-  val signingKey: String? = System.getenv("ORG_GRADLE_PROJECT_SIGNINGKEY")
-  val signingPassword: String? = System.getenv("ORG_GRADLE_PROJECT_SIGNINGPASSWORD")
+  val signingKey: String? by project
+  val signingPassword: String? by project
   useInMemoryPgpKeys(signingKey, signingPassword)
-  sign(publishing.publications[name])
+  sign(publishing.publications["web5"])
 }
 
 nexusPublishing {
