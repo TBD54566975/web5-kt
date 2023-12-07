@@ -6,11 +6,11 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.net.URL
 
 plugins {
-  id("org.jetbrains.kotlin.jvm") version "1.9.0"
+  id("org.jetbrains.kotlin.jvm") version "1.9.+"
   id("java-library")
   id("io.gitlab.arturbosch.detekt") version "1.23.1"
   `maven-publish`
-  id("org.jetbrains.dokka") version "latest.release"
+  id("org.jetbrains.dokka") version "1.9.+"
   id("org.jetbrains.kotlinx.kover") version "0.7.3"
   idea
 }
