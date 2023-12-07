@@ -8,7 +8,6 @@ import com.nfeld.jsonpathkt.JsonPath
 import com.nfeld.jsonpathkt.extension.read
 import com.nimbusds.jwt.JWTParser
 import com.nimbusds.jwt.SignedJWT
-import web5.sdk.credentials.exceptions.PresentationExchangeException
 
 /**
  * The `PresentationExchange` object provides functions for working with Verifiable Credentials
@@ -23,6 +22,7 @@ public object PresentationExchange {
    * @return A list of Verifiable Credentials that satisfy the Presentation Definition.
    * @throws UnsupportedOperationException If the method is untested and not recommended for use.
    */
+  @Throws(UnsupportedOperationException::class)
   public fun selectCredentials(
     credentials: List<VerifiableCredential>,
     presentationDefinition: PresentationDefinitionV2
@@ -94,6 +94,7 @@ public object PresentationExchange {
    * @return Boolean indicating whether the VC satisfies the criteria of the Input Descriptor.
    * @throws PresentationExchangeException If the VC payload cannot be parsed as JSON.
    */
+  @Throws(PresentationExchangeException::class)
   private fun vcSatisfiesInputDescriptor(
     vcJwt: String,
     inputDescriptor: InputDescriptorV2

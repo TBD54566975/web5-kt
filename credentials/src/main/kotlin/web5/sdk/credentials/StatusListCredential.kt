@@ -13,10 +13,6 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.http.isSuccess
 import io.ktor.serialization.jackson.jackson
 import kotlinx.coroutines.runBlocking
-import web5.sdk.credentials.exceptions.BitstringExpansionException
-import web5.sdk.credentials.exceptions.StatusListCredentialCreateException
-import web5.sdk.credentials.exceptions.StatusListCredentialFetchException
-import web5.sdk.credentials.exceptions.VerifiableCredentialParseException
 import web5.sdk.dids.DidResolvers
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
@@ -67,7 +63,7 @@ public object StatusListCredential {
    * @param statusPurpose The status purpose of the status list cred, eg: revocation, as a [StatusPurpose].
    * @param issuedCredentials The credentials to be included in the status list credential, eg: revoked credentials, list of type [VerifiableCredential].
    * @return A [VerifiableCredential] instance.
-   *
+   * @throws StatusListCredentialCreateException If the status list credential cannot be created.
    * Example:
    * ```
    * val statusListCredential = StatusListCredential.create("http://example.com/statuslistcred/id123", "http://example.com/issuers/1", StatusPurpose.REVOCATION, listOf(vc1,vc2))
@@ -87,10 +83,7 @@ public object StatusListCredential {
       statusListIndexes = prepareCredentialsForStatusList(statusPurpose, issuedCredentials)
       bitString = bitstringGeneration(statusListIndexes)
     } catch (e: Exception) {
-      throw StatusListCredentialCreateException(
-        "An error occurred during the creation of the status list credential: ${e.message}",
-        e
-      )
+      throw StatusListCredentialCreateException(e)
     }
 
     try {
@@ -198,6 +191,7 @@ public object StatusListCredential {
    * val isRevoked = validateCredentialInStatusList(credentialToCheck)
    * ```
    */
+  @Throws(StatusListCredentialFetchException::class, VerifiableCredentialParseException::class)
   public fun validateCredentialInStatusList(
     credentialToValidate: VerifiableCredential,
     httpClient: HttpClient? = null // default HTTP client but can be overridden
@@ -243,12 +237,9 @@ public object StatusListCredential {
       }
     } catch (e: ResponseException) {
       // ClientRequestException will be caught here since it is a subclass of ResponseException
-      throw StatusListCredentialFetchException("Failed to fetch the status list credential: ${e.message}", e)
+      throw StatusListCredentialFetchException(e)
     } catch (e: IllegalArgumentException) {
-      throw VerifiableCredentialParseException(
-        "Failed to parse VC after fetching status list credential: ${e.message}",
-        e
-      )
+      throw VerifiableCredentialParseException(e)
     }
   }
 
@@ -330,13 +321,17 @@ public object StatusListCredential {
    * 1. Decodes the provided compressed bitstring from its base64 representation.
    * 2. Decompresses the decoded bitstring using the GZIP compression algorithm.
    * 3. Iterates through the decompressed bitstring and collects the indices of bits set to 1.
+   * @param compressedBitstring base64 encoded and compressed bitstring to decode and expand.
+   * @return A list of indices where the bit is set to 1 (i.e. the status list indexes).
+   * @throws BitstringExpansionException if the bitstring cannot be decoded or expanded.
    */
+  @Throws(BitstringExpansionException::class)
   private fun bitstringExpansion(compressedBitstring: String): List<String> {
     val decoded: ByteArray
     try {
       decoded = Base64.getDecoder().decode(compressedBitstring)
     } catch (e: Exception) {
-      throw BitstringExpansionException("Failed to decode compressed bitstring: ${e.message}", e)
+      throw BitstringExpansionException(e, "Failed to decode compressed bitstring: ${e.message}")
     }
 
     val bitstringInputStream = ByteArrayInputStream(decoded)
@@ -345,7 +340,7 @@ public object StatusListCredential {
     try {
       GZIPInputStream(bitstringInputStream).use { it.copyTo(byteArrayOutputStream) }
     } catch (e: Exception) {
-      throw BitstringExpansionException("Failed to unzip status list bitstring using GZIP: ${e.message}", e)
+      throw BitstringExpansionException(e, "Failed to unzip status list bitstring using GZIP: ${e.message}")
     }
 
     val unzipped = byteArrayOutputStream.toByteArray()
