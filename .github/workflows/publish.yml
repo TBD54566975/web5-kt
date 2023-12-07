@@ -1,12 +1,16 @@
 name: Publish package to the Maven Central Repository
 on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish'
+        required: true
+        default: '0.0.0'
   push:
     tags:
       - v*
     branches:
       - issue_68
-  pull_request:
-    branches: [ main ]
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -20,24 +24,14 @@ jobs:
       - name: Run chmod to make gradlew executable
         run: chmod +x ./gradlew
       - name: Publish package to local staging directory
-        run: ./gradlew :publish
-      - name: Publish package to maven central
+        run: |
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            ./gradlew -Pversion=${{ github.event.inputs.version }} :publishToSonatype :closeSonatypeStagingRepository
+          else
+            ./gradlew -Pversion=$(echo "${{ github.ref_name }}" | cut -c2-) :publishToSonatype :closeSonatypeStagingRepository
+          fi
         env:
-          JRELEASER_NEXUS2_USERNAME: ${{ secrets.JRELEASER_NEXUS2_USERNAME }}
-          JRELEASER_NEXUS2_PASSWORD: ${{ secrets.JRELEASER_NEXUS2_PASSWORD }}
-          JRELEASER_GPG_PASSPHRASE: ${{ secrets.JRELEASER_GPG_PASSPHRASE }}
-          JRELEASER_GPG_SECRET_KEY: ${{ secrets.JRELEASER_GPG_SECRET_KEY }}
-          JRELEASER_GPG_PUBLIC_KEY: ${{ secrets.JRELEASER_GPG_PUBLIC_KEY }}
-          JRELEASER_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: ./gradlew :jreleaserDeploy -DaltDeploymentRepository=local::file:./build/staging-deploy
-
-          # Persist logs
-
-      - name: JReleaser release output
-        if: always()
-        uses: actions/upload-artifact@v3
-        with:
-          name: jreleaser-release
-          path: |
-            out/jreleaser/trace.log
-            out/jreleaser/output.properties
+          ORG_GRADLE_PROJECT_signingKey: ${{ secrets.ORG_GRADLE_PROJECT_signingKey }}
+          ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.ORG_GRADLE_PROJECT_signingPassword }}
+          ORG_GRADLE_PROJECT_sonatypeUsername: ${{ secrets.ORG_GRADLE_PROJECT_sonatypeUsername }}
+          ORG_GRADLE_PROJECT_sonatypePassword: ${{ secrets.ORG_GRADLE_PROJECT_sonatypePassword }}
