@@ -24,7 +24,6 @@ public object PresentationExchange {
    * @param vcJwts Iterable of VCs in JWT format to select from.
    * @param presentationDefinition The Presentation Definition to match against.
    * @return A list of Verifiable Credentials that satisfy the Presentation Definition.
-   * @throws UnsupportedOperationException If the method is untested and not recommended for use.
    */
   public fun selectCredentials(
     vcJwts: Iterable<String>,
