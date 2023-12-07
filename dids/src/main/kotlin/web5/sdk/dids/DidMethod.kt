@@ -175,6 +175,7 @@ public interface DidMethod<T : Did, O : CreateDidOptions> {
  * Finds the first available assertion method from the [DIDDocument]. When [assertionMethodId]
  * is null, the function will return the first available assertion method.
  */
+@JvmOverloads
 public fun DIDDocument.findAssertionMethodById(assertionMethodId: String? = null): VerificationMethod {
   require(!assertionMethodVerificationMethodsDereferenced.isNullOrEmpty()) {
     throw SignatureException("No assertion methods found in DID document")

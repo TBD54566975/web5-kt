@@ -188,6 +188,7 @@ public object StatusListCredential {
    * val isRevoked = validateCredentialInStatusList(credentialToCheck)
    * ```
    */
+  @JvmOverloads
   public fun validateCredentialInStatusList(
     credentialToValidate: VerifiableCredential,
     httpClient: HttpClient? = null // default HTTP client but can be overridden
