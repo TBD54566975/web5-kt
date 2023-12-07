@@ -12,7 +12,7 @@ repositories {
 }
 
 val ktor_version = "2.3.4"
-val jackson_version = "2.13.0"
+val jackson_version = "2.13.5"
 
 dependencies {
   api("com.danubetech:verifiable-credentials-java:1.6.0")
