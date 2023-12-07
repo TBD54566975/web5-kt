@@ -25,6 +25,7 @@ jobs:
           key: gradle-ubuntu-latest-${{ hashFiles('**/*.gradle.kts') }}-${{ hashFiles('**/gradle/wrapper/gradle-wrapper.properties') }}-${{ hashFiles('**/versions.properties') }}
 
       - name: Publish packages to sonatype staging
+        # TODO: Change to closeAndReleaseSonatypeStagingRepository once we are confident that the workflow works as expected.
         run: |
           if [ -n "${{ github.event.inputs.version }}" ]; then
             ./gradlew -Pversion=${{ github.event.inputs.version }} :publishToSonatype :closeSonatypeStagingRepository
