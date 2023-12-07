@@ -21,18 +21,17 @@ public object PresentationExchange {
   /**
    * Selects credentials that satisfy a given presentation definition.
    *
-   * @param credentials The list of Verifiable Credentials to select from.
+   * @param vcJwts Iterable of VCs in JWT format to select from.
    * @param presentationDefinition The Presentation Definition to match against.
    * @return A list of Verifiable Credentials that satisfy the Presentation Definition.
    * @throws UnsupportedOperationException If the method is untested and not recommended for use.
    */
   public fun selectCredentials(
-    credentials: List<VerifiableCredential>,
+    vcJwts: Iterable<String>,
     presentationDefinition: PresentationDefinitionV2
-  ): List<VerifiableCredential> {
-    throw UnsupportedOperationException("pex is untested")
-    // Uncomment the following line to filter credentials based on the Presentation Definition
-    // return credentials.filter { satisfiesPresentationDefinition(it, presentationDefinition) }
+  ): List<String> {
+    val inputDescriptorToVcMap = mapInputDescriptorsToVCs(vcJwts, presentationDefinition)
+    return inputDescriptorToVcMap.flatMap { it.value }.toSet().toList()
   }
 
   /**

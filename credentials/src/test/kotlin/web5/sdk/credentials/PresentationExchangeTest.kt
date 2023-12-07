@@ -14,7 +14,6 @@ import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
-import kotlin.test.assertTrue
 
 data class DateOfBirth(val dateOfBirth: String)
 data class Address(val address: String)
@@ -397,6 +396,156 @@ class PresentationExchangeTest {
 
       assertEquals(1, presentationSubmission.descriptorMap.size)
       assertEquals("$.verifiableCredential[0]", presentationSubmission.descriptorMap[0].path)
+    }
+  }
+
+  @Nested
+  inner class SelectCredentials {
+    @Test
+    fun `selects 1 correct credential`() {
+      val pd = jsonMapper.readValue(
+        readPd("src/test/resources/pd_filter_array_single_path.json"),
+        PresentationDefinitionV2::class.java
+      )
+
+      val vc = VerifiableCredential.create(
+        type = "StreetCred",
+        issuer = issuerDid.uri,
+        subject = holderDid.uri,
+        data = StreetCredibility(localRespect = "high", legit = true)
+      )
+      val vcJwt = vc.sign(issuerDid)
+
+      val selectedCreds = PresentationExchange.selectCredentials(listOf(vcJwt), pd)
+
+      assertEquals( 1, selectedCreds.size)
+      assertEquals( vcJwt, selectedCreds[0])
+    }
+
+    @Test
+    fun `selects 2 correct credential`() {
+      val pd = jsonMapper.readValue(
+        readPd("src/test/resources/pd_filter_array_single_path.json"),
+        PresentationDefinitionV2::class.java
+      )
+
+      val vc1 = VerifiableCredential.create(
+        type = "StreetCred",
+        issuer = issuerDid.uri,
+        subject = holderDid.uri,
+        data = StreetCredibility(localRespect = "high", legit = true)
+      )
+      val vcJwt1 = vc1.sign(issuerDid)
+
+      val vc2 = VerifiableCredential.create(
+        type = "StreetCred",
+        issuer = issuerDid.uri,
+        subject = holderDid.uri,
+        data = StreetCredibility(localRespect = "high", legit = true)
+      )
+      val vcJwt2 = vc2.sign(issuerDid)
+
+      val selectedCreds = PresentationExchange.selectCredentials(listOf(vcJwt1, vcJwt2), pd)
+
+      assertEquals( 2, selectedCreds.size)
+      assertEquals( listOf(vcJwt1, vcJwt2), selectedCreds)
+    }
+
+    @Test
+    fun `selects 2 correct credential out of 3`() {
+      val pd = jsonMapper.readValue(
+        readPd("src/test/resources/pd_filter_array_single_path.json"),
+        PresentationDefinitionV2::class.java
+      )
+
+      val vc1 = VerifiableCredential.create(
+        type = "StreetCred",
+        issuer = issuerDid.uri,
+        subject = holderDid.uri,
+        data = StreetCredibility(localRespect = "high", legit = true)
+      )
+      val vcJwt1 = vc1.sign(issuerDid)
+
+      val vc2 = VerifiableCredential.create(
+        type = "StreetCred",
+        issuer = issuerDid.uri,
+        subject = holderDid.uri,
+        data = StreetCredibility(localRespect = "high", legit = true)
+      )
+
+      val vcJwt2 = vc2.sign(issuerDid)
+
+      val vc3 = VerifiableCredential.create(
+        type = "DateOfBirth",
+        issuer = issuerDid.uri,
+        subject = holderDid.uri,
+        data = DateOfBirth(dateOfBirth = "1-1-1111")
+      )
+
+      val vcJwt3 = vc3.sign(issuerDid)
+
+      val selectedCreds = PresentationExchange.selectCredentials(listOf(vcJwt1, vcJwt2, vcJwt3), pd)
+
+      assertEquals( 2, selectedCreds.size)
+      assertEquals( listOf(vcJwt1, vcJwt2), selectedCreds)
+    }
+
+    @Test
+    fun `selects 2 correct credential with two input descriptors`() {
+      val pd = jsonMapper.readValue(
+        readPd("src/test/resources/pd_filter_array_multiple_input_descriptors.json"),
+        PresentationDefinitionV2::class.java
+      )
+
+      val vc1 = VerifiableCredential.create(
+        type = "DateOfBirthSSN",
+        issuer = issuerDid.uri,
+        subject = holderDid.uri,
+        data = DateOfBirthSSN(dateOfBirth = "1999-01-01", ssn = "456-123-123")
+      )
+      val vcJwt1 = vc1.sign(issuerDid)
+
+      val vc2 = VerifiableCredential.create(
+        type = "DateOfBirthSSN",
+        issuer = issuerDid.uri,
+        subject = holderDid.uri,
+        data = DateOfBirth(dateOfBirth = "1999-01-01")
+      )
+      val vcJwt2 = vc2.sign(issuerDid)
+
+      val selectedCreds = PresentationExchange.selectCredentials(listOf(vcJwt1, vcJwt2), pd)
+
+      assertEquals( 2, selectedCreds.size)
+      assertEquals( listOf(vcJwt1, vcJwt2), selectedCreds)
+    }
+  }
+
+  @Nested
+  inner class SelectCredentialsSpec {
+    @org.junit.jupiter.api.Test
+    fun select_credentials_v1() {
+      val jsonString = File("../test-vectors/presentation-exchange/select-credentials-v1.json").readText()
+      val jsonNode = jsonMapper.readTree(jsonString)
+
+      val vectors = jsonNode.get("vectors")
+
+      for (i in 0 until vectors.size()) {
+        val input = vectors[i].get("input")
+
+        val inputPdJsonString = input.get("presentationDefinition").toString()
+        val inputVcJwts = input.get("credentialJwts").map { it.asText() }
+
+        val expectedOutput = vectors[i].get("output").get("selectedCredentials").map { it.asText() }
+
+        val inputPd = jsonMapper.readValue(
+          inputPdJsonString,
+          PresentationDefinitionV2::class.java
+        )
+
+        val selectedCreds = PresentationExchange.selectCredentials(inputVcJwts, inputPd)
+
+        assertEquals(expectedOutput, selectedCreds)
+      }
     }
   }
 }
