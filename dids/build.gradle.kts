@@ -12,13 +12,14 @@ repositories {
 }
 
 val ktor_version = "2.3.4"
+val jackson_version = "2.13.0"
 
 dependencies {
   api("decentralized-identity:did-common-java:1.9.0")
 
   implementation(project(":common"))
   implementation(project(":crypto"))
-  implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.0")
+  implementation("com.fasterxml.jackson.module:jackson-module-kotlin:$jackson_version")
   implementation("com.nimbusds:nimbus-jose-jwt:9.34")
   implementation("com.github.multiformats:java-multibase:1.1.0")
 
@@ -27,7 +28,7 @@ dependencies {
   implementation("io.ktor:ktor-client-content-negotiation:$ktor_version")
   implementation("io.ktor:ktor-serialization-jackson:$ktor_version")
 
-  implementation("com.squareup.okhttp3:okhttp-dnsoverhttps:4.11.0")
+  implementation("com.squareup.okhttp3:okhttp-dnsoverhttps:4.12.0")
 
   implementation("io.github.erdtman:java-json-canonicalization:1.1")
 
