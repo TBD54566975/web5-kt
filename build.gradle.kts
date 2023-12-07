@@ -3,7 +3,6 @@ import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.jetbrains.dokka.DokkaConfiguration
 import org.jetbrains.dokka.gradle.DokkaTaskPartial
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import org.jreleaser.model.Active
 import java.net.URL
 
 plugins {
@@ -14,8 +13,8 @@ plugins {
   id("org.jetbrains.dokka") version "1.9.0"
   id("org.jetbrains.kotlinx.kover") version "0.7.3"
   signing
-  id("org.jreleaser") version "1.9.0"
   idea
+  id("io.github.gradle-nexus.publish-plugin") version "1.3.0"
 }
 
 repositories {
@@ -27,7 +26,6 @@ dependencies {
 }
 
 allprojects {
-  version = "0.0.9"
   group = "xyz.block"
 }
 
@@ -41,7 +39,6 @@ subprojects {
     plugin("org.jetbrains.kotlinx.kover")
     plugin("maven-publish")
     plugin("signing")
-    plugin("org.jreleaser")
     plugin("idea")
   }
 
@@ -123,19 +120,20 @@ subprojects {
     targetCompatibility = JavaVersion.VERSION_11
   }
 
+  val publicationName = "${rootProject.name}-${project.name}"
   publishing {
     publications {
-      create<MavenPublication>("web5") {
+      create<MavenPublication>(publicationName) {
         groupId = project.group.toString()
-        artifactId = project.name
-        version = project.version.toString()
+        artifactId = name
         description = "Kotlin SDK for web5 functionality"
+        version = project.property("version").toString()
         from(components["java"])
       }
       withType<MavenPublication> {
         pom {
+          name = publicationName
           packaging = "jar"
-          name.set("web5-" + project.name)
           description.set("web5 kotlin SDK")
           url.set("https://github.com/TBD54566975/web5-kt")
           inceptionYear.set("2023")
@@ -161,10 +159,11 @@ subprojects {
       }
     }
 
-    repositories {
-      maven {
-        url = layout.buildDirectory.dir("staging-deploy").get().asFile.toURI()
-      }
+    signing {
+      val signingKey: String? by project
+      val signingPassword: String? by project
+      useInMemoryPgpKeys(signingKey, signingPassword)
+      sign(publishing.publications[publicationName])
     }
   }
 
@@ -189,10 +188,6 @@ subprojects {
     }
   }
 
-  signing {
-    sign(publishing.publications["web5"])
-  }
-
   tasks.test {
     useJUnitPlatform()
     testLogging {
@@ -203,35 +198,64 @@ subprojects {
       showStackTraces = true
     }
   }
-
-  jreleaser {
-    project {
-      copyright.set("Block Inc.")
-    }
-    gitRootSearch.set(true)
-    signing {
-      active.set(Active.ALWAYS)
-      armored.set(true)
-    }
-    deploy {
-      maven {
-        nexus2 {
-          create("maven-central") {
-            active.set(Active.ALWAYS)
-            url.set("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
-            snapshotUrl.set("https://s01.oss.sonatype.org/content/repositories/snapshots/")
-            closeRepository.set(false)
-            releaseRepository.set(false)
-            stagingRepositories.add("build/staging-deploy")
-          }
-        }
-      }
-    }
-  }
 }
 
 // Configures only the parent MultiModule task,
 // this will not affect subprojects
 tasks.dokkaHtmlMultiModule {
   moduleName.set("Web5 SDK Documentation")
+}
+
+publishing {
+  publications {
+    create<MavenPublication>("web5") {
+      groupId = project.group.toString()
+      artifactId = name
+      description = "Kotlin SDK for web5 functionality"
+      version = project.property("version").toString()
+      from(components["java"])
+
+      pom {
+        packaging = "jar"
+        name = project.name
+        description.set("web5 kotlin SDK")
+        url.set("https://github.com/TBD54566975/web5-kt")
+        inceptionYear.set("2023")
+        licenses {
+          license {
+            name.set("The Apache License, Version 2.0")
+            url.set("https://github.com/TBD54566975/web5-kt/blob/main/LICENSE")
+          }
+        }
+        developers {
+          developer {
+            id.set("TBD54566975")
+            name.set("Block Inc.")
+            email.set("tbd-releases@tbd.email")
+          }
+        }
+        scm {
+          connection.set("scm:git:git@github.com:TBD54566975/web5-kt.git")
+          developerConnection.set("scm:git:ssh:git@github.com:TBD54566975/web5-kt.git")
+          url.set("https://github.com/TBD54566975/web5-kt")
+        }
+      }
+    }
+  }
+}
+
+signing {
+  val signingKey: String? by project
+  val signingPassword: String? by project
+  useInMemoryPgpKeys(signingKey, signingPassword)
+  sign(publishing.publications["web5"])
+}
+
+nexusPublishing {
+  repositories {
+    sonatype {  //only for users registered in Sonatype after 24 Feb 2021
+      nexusUrl.set(uri("https://s01.oss.sonatype.org/service/local/"))
+      snapshotRepositoryUrl.set(uri("https://s01.oss.sonatype.org/content/repositories/snapshots/"))
+    }
+  }
 }
