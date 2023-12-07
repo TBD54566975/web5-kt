@@ -15,7 +15,7 @@ val ktor_version = "2.3.4"
 val jackson_version = "2.13.0"
 
 dependencies {
-  api("com.danubetech:verifiable-credentials-java:1.5.0")
+  api("com.danubetech:verifiable-credentials-java:1.6.0")
 
   implementation(project(":dids"))
   implementation(project(":common"))
