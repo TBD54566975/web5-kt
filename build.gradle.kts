@@ -5,8 +5,6 @@ import org.jetbrains.dokka.gradle.DokkaTaskPartial
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.net.URL
 
-
-
 plugins {
   id("org.jetbrains.kotlin.jvm") version "1.9.0"
   id("java-library")
