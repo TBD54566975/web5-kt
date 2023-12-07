@@ -17,10 +17,12 @@ plugins {
 
 repositories {
   mavenCentral()
+  maven("https://jitpack.io")
 }
 
 dependencies {
   detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.23.1")
+  detektPlugins("com.github.TBD54566975:tbd-detekt-rules:0.0.1")
 }
 
 allprojects {
@@ -29,6 +31,11 @@ allprojects {
 }
 
 subprojects {
+  repositories {
+    mavenCentral()
+    maven("https://jitpack.io")
+  }
+
   apply {
     plugin("io.gitlab.arturbosch.detekt")
     plugin("org.jetbrains.kotlin.jvm")
@@ -59,6 +66,7 @@ subprojects {
 
   dependencies {
     detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.23.1")
+    detektPlugins("com.github.TBD54566975:tbd-detekt-rules:0.0.1")
 
     testImplementation("org.junit.jupiter:junit-jupiter:5.9.2")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
