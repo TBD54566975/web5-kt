@@ -52,11 +52,43 @@ in [GitHub Pages](https://tbd54566975.github.io/web5-kt/docs/htmlMultiModule/cre
 
 # Development
 
+## Prerequisites
+
+Install java version 11. If you're installing a higher version, it must be compatible with Gradle 8.2.
+
+If you want to have multiple version of Java installed in your machine, we recommend using [jenv](https://www.jenv.be/).
+
+> [!NOTE]: Restart your shell after installation.
+
+## Build
+
 To build and run test just run:
 
 ```bash
 ./gradlew build --console=rich
 ```
+
+## Releasing
+
+In order to release to Central Repository, simply cut a new release tag in the Github UI. There is a configured [Github
+Action](./.github/workflows/publish.yml) that will automatically publish the release to Central Repository. You can cut
+the release by going to the [create a new releases page](https://github.com/TBD54566975/web5-kt/releases/new). When
+creating a new tag, the name should be in the format `vX.Y.Z`. Please note that once a release is made, it is immutable
+and cannot be deleted.
+
+### Manual Release
+
+If you want to do a manual release, you have two options:
+1. Dispatch the [publish workflow](./.github/workflows/publish.yml) workflow from the Github UI. Go to the [publish 
+   Actions](https://github.com/TBD54566975/web5-kt/actions) > "Run workflow". 
+2. Setup your local environment to publish to Central Repository. This is more involved. You'll need to:
+   1. Define all the environment variables described in the [publish workflow](./.github/workflows/publish.yml) file. You
+      can find the values in the [secrets and variable](https://github.com/TBD54566975/web5-kt/settings/secrets/actions)
+      page.
+   2. Run the following command (you can change `samplebranch` to any branch name):
+      ```bash
+      ./gradlew -Pversion=samplebranch-SNAPSHOT publishToSonatype closeAndReleaseSonatypeStagingRepository
+      ```
 
 # Other Docs
 
