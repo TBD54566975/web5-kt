@@ -22,7 +22,7 @@ repositories {
 
 dependencies {
   detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.23.1")
-  detektPlugins("com.github.TBD54566975:tbd-detekt-rules:0.0.1")
+  detektPlugins("com.github.TBD54566975:tbd-detekt-rules:v0.0.1")
 }
 
 allprojects {
