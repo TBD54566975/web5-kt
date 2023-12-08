@@ -191,6 +191,7 @@ public object StatusListCredential {
    * val isRevoked = validateCredentialInStatusList(credentialToCheck)
    * ```
    */
+  @JvmOverloads
   @Throws(StatusListCredentialFetchException::class, StatusListCredentialParseException::class)
   public fun validateCredentialInStatusList(
     credentialToValidate: VerifiableCredential,

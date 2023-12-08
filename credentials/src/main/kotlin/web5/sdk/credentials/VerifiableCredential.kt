@@ -73,6 +73,7 @@ public class VerifiableCredential internal constructor(public val vcDataModel: V
    * val signedVc = verifiableCredential.sign(myDid)
    * ```
    */
+  @JvmOverloads
   public fun sign(did: Did, assertionMethodId: String? = null): String {
     val didResolutionResult = DidResolvers.resolve(did.uri)
     val assertionMethod: VerificationMethod = didResolutionResult.didDocument.findAssertionMethodById(assertionMethodId)
@@ -153,6 +154,7 @@ public class VerifiableCredential internal constructor(public val vcDataModel: V
      * val vc = VerifiableCredential.create("ExampleCredential", "http://example.com/issuers/1", "http://example.com/subjects/1", myData)
      * ```
      */
+    @JvmOverloads
     public fun <T> create(
       type: String,
       issuer: String,
