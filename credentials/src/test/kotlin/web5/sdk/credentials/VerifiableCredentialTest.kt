@@ -1,6 +1,6 @@
 package web5.sdk.credentials
 
-import com.nimbusds.jose.JOSEObjectType
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.JWSHeader
 import com.nimbusds.jose.JWSSigner
@@ -14,16 +14,19 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import web5.sdk.crypto.AwsKeyManager
 import web5.sdk.crypto.InMemoryKeyManager
+import web5.sdk.dids.Did
+import web5.sdk.dids.extensions.load
 import web5.sdk.dids.methods.ion.CreateDidIonOptions
 import web5.sdk.dids.methods.ion.DidIon
 import web5.sdk.dids.methods.ion.JsonWebKey2020VerificationMethod
 import web5.sdk.dids.methods.key.DidKey
+import java.io.File
 import java.security.SignatureException
 import java.text.ParseException
 import java.util.UUID
 import kotlin.test.Ignore
-import kotlin.test.assertContains
 import kotlin.test.assertEquals
+import kotlin.test.assertFails
 import kotlin.test.assertNotNull
 
 data class StreetCredibility(val localRespect: String, val legit: Boolean)
@@ -91,43 +94,6 @@ class VerifiableCredentialTest {
 
     // Optionally, further verify the exception (e.g., check the message)
     assertEquals("expected data to be parseable into a JSON object", exception.message)
-  }
-
-  @Test
-  fun `signing works`() {
-    val keyManager = InMemoryKeyManager()
-    val issuerDid = DidKey.create(keyManager)
-    val holderDid = DidKey.create(keyManager)
-
-    val vc = VerifiableCredential.create(
-      type = "StreetCred",
-      issuer = issuerDid.uri,
-      subject = holderDid.uri,
-      data = StreetCredibility(localRespect = "high", legit = true)
-    )
-
-    val vcJwt = vc.sign(issuerDid)
-    val parsedJwt = SignedJWT.parse(vcJwt) // validates JWT
-
-    val didDocument = issuerDid.resolve().didDocument
-    val assertionMethod = didDocument.assertionMethodVerificationMethodsDereferenced.first()
-
-    val jwtHeader = parsedJwt.header
-    assertNotNull(jwtHeader.algorithm)
-    assertEquals(JOSEObjectType.JWT, jwtHeader.type)
-    assertEquals(assertionMethod.id.toString(), jwtHeader.keyID)
-
-    val jwtClaims = parsedJwt.jwtClaimsSet
-    assertNotNull(jwtClaims.issueTime)
-    assertNotNull(jwtClaims.getClaim("vc"))
-    assertEquals(issuerDid.uri, jwtClaims.issuer)
-    assertEquals(holderDid.uri, jwtClaims.subject)
-
-    val vcDataModelJson = jwtClaims.getJSONObjectClaim("vc")
-    val vcDataModel = VcDataModel.fromMap(vcDataModelJson)
-
-    assertEquals(holderDid.uri, vcDataModel.credentialSubject.id.toString())
-    assertContains(vcDataModel.types, "StreetCred")
   }
 
   @Test
@@ -255,5 +221,61 @@ class VerifiableCredentialTest {
     assertEquals(vc.type, parsedVc.type)
     assertEquals(vc.issuer, parsedVc.issuer)
     assertEquals(vc.subject, parsedVc.subject)
+  }
+}
+
+class TestVectorsCredentialsTest {
+  data class TestVectors(
+    val description: String,
+    val vectors: List<TestVector>
+  )
+
+  data class TestVector(
+    val description: String,
+    val input: TestInput,
+    val output: String?,
+    val errors: Boolean?,
+  )
+
+  data class TestInput(
+    val signerDidUri: String?,
+    val signerPrivateJwk: Map<String, Any>?,
+    val credential: Map<String, Any>?,
+  )
+
+  @Test
+  fun create_success() {
+    // read a map from a json file
+    val mapper = jacksonObjectMapper()
+    val testVectors =
+      mapper.readValue(File("../test-vectors/credentials/create_success.json"), TestVectors::class.java)
+
+    testVectors.vectors.filterNot { it.errors ?: false }.forEach { vector ->
+      val testInput = vector.input
+
+      val vc = VerifiableCredential.fromJson(mapper.writeValueAsString(testInput.credential))
+
+      val keyManager = InMemoryKeyManager()
+      keyManager.import(listOf(testInput.signerPrivateJwk!!))
+      val issuerDid = Did.load(testInput.signerDidUri!!, keyManager)
+      val vcJwt = vc.sign(issuerDid)
+
+      assertEquals(vector.output, vcJwt, vector.description)
+    }
+  }
+
+  @Test
+  fun create_failure() {
+    // read a map from a json file
+    val mapper = jacksonObjectMapper()
+    val testVectors =
+      mapper.readValue(File("../test-vectors/credentials/create_failure.json"), TestVectors::class.java)
+
+    testVectors.vectors.filter { it.errors ?: false }.forEach { vector ->
+      val testInput = vector.input
+      assertFails(vector.description) {
+        VerifiableCredential.fromJson(mapper.writeValueAsString(testInput.credential))
+      }
+    }
   }
 }

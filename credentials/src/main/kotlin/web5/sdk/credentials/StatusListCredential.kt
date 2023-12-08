@@ -8,6 +8,7 @@ import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.plugins.ResponseException
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.get
+import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.isSuccess
 import io.ktor.serialization.jackson.jackson
@@ -62,13 +63,13 @@ public object StatusListCredential {
    * @param statusPurpose The status purpose of the status list cred, eg: revocation, as a [StatusPurpose].
    * @param issuedCredentials The credentials to be included in the status list credential, eg: revoked credentials, list of type [VerifiableCredential].
    * @return A [VerifiableCredential] instance.
-   *
+   * @throws StatusListCredentialCreateException If the status list credential cannot be created.
    * Example:
    * ```
    * val statusListCredential = StatusListCredential.create("http://example.com/statuslistcred/id123", "http://example.com/issuers/1", StatusPurpose.REVOCATION, listOf(vc1,vc2))
    * ```
    */
-  @Throws(RuntimeException::class)
+  @Throws(StatusListCredentialCreateException::class)
   public fun create(
     statusListCredentialId: String,
     issuer: String,
@@ -82,7 +83,7 @@ public object StatusListCredential {
       statusListIndexes = prepareCredentialsForStatusList(statusPurpose, issuedCredentials)
       bitString = bitstringGeneration(statusListIndexes)
     } catch (e: Exception) {
-      throw RuntimeException("An error occurred during the creation of the status list credential: ${e.message}", e)
+      throw StatusListCredentialCreateException(e, "Failed to create status list credential: ${e.message}")
     }
 
     try {
@@ -178,6 +179,8 @@ public object StatusListCredential {
    * @param credentialToValidate The [VerifiableCredential] to be validated against the status list.
    * @param httpClient An optional [HttpClient] for fetching the status list credential. If not provided, a default HTTP client will be used.
    * @return A [Boolean] indicating whether the `credentialToValidate` is part of the status list.
+   * @throws StatusListCredentialFetchException If the status list credential cannot be fetched.
+   * @throws StatusListCredentialParseException If the status list credential cannot be parsed.
    *
    * This function fetches the status list credential from a URL present in the `credentialToValidate`.
    * It supports using either a user-provided `httpClient` or a default client when no client is passed in.
@@ -189,24 +192,25 @@ public object StatusListCredential {
    * ```
    */
   @JvmOverloads
+  @Throws(StatusListCredentialFetchException::class, StatusListCredentialParseException::class)
   public fun validateCredentialInStatusList(
     credentialToValidate: VerifiableCredential,
     httpClient: HttpClient? = null // default HTTP client but can be overridden
   ): Boolean {
     return runBlocking {
       var isDefaultClient = false
-      val clientToUse = httpClient ?: defaultHttpClient().also { isDefaultClient = true }
+      val client = httpClient ?: defaultHttpClient().also { isDefaultClient = true }
 
       try {
         val statusListEntryValue: StatusList2021Entry =
           StatusList2021Entry.fromJsonObject(credentialToValidate.vcDataModel.credentialStatus.jsonObject)
         val statusListCredential =
-          clientToUse.fetchStatusListCredential(statusListEntryValue.statusListCredential.toString())
+          client.fetchStatusListCredential(statusListEntryValue.statusListCredential.toString())
 
         return@runBlocking validateCredentialInStatusList(credentialToValidate, statusListCredential)
       } finally {
         if (isDefaultClient) {
-          clientToUse.close()
+          client.close()
         }
       }
     }
@@ -222,17 +226,21 @@ public object StatusListCredential {
 
   private suspend fun HttpClient.fetchStatusListCredential(url: String): VerifiableCredential {
     try {
-      val response: io.ktor.client.statement.HttpResponse = this.get(url)
+      val response: HttpResponse = this.get(url)
       if (response.status.isSuccess()) {
         val body = response.bodyAsText()
         return VerifiableCredential.parseJwt(body)
       } else {
-        throw ClientRequestException(response, "Failed to retrieve VerifiableCredentialType from $url")
+        throw ClientRequestException(
+          response,
+          "Failed to retrieve VerifiableCredentialType from $url"
+        )
       }
-    } catch (e: ClientRequestException) {
-      throw Exception("Failed to fetch the status list credential due to a request error: ${e.message}", e)
     } catch (e: ResponseException) {
-      throw Exception("Failed to fetch the status list credential due to a response error: ${e.message}", e)
+      // ClientRequestException will be caught here since it is a subclass of ResponseException
+      throw StatusListCredentialFetchException(e, "Failed to fetch status list credential: ${e.message}")
+    } catch (e: IllegalArgumentException) {
+      throw StatusListCredentialParseException(e, "Failed to parse status list credential: ${e.message}")
     }
   }
 
@@ -314,14 +322,17 @@ public object StatusListCredential {
    * 1. Decodes the provided compressed bitstring from its base64 representation.
    * 2. Decompresses the decoded bitstring using the GZIP compression algorithm.
    * 3. Iterates through the decompressed bitstring and collects the indices of bits set to 1.
+   * @param compressedBitstring base64 encoded and compressed bitstring to decode and expand.
+   * @return A list of indices where the bit is set to 1 (i.e. the status list indexes).
+   * @throws BitstringExpansionException if the bitstring cannot be decoded or expanded.
    */
-  @Throws(Exception::class)
+  @Throws(BitstringExpansionException::class)
   private fun bitstringExpansion(compressedBitstring: String): List<String> {
     val decoded: ByteArray
     try {
       decoded = Base64.getDecoder().decode(compressedBitstring)
     } catch (e: Exception) {
-      throw RuntimeException("decoding compressed bitstring", e)
+      throw BitstringExpansionException(e, "Failed to decode compressed bitstring: ${e.message}")
     }
 
     val bitstringInputStream = ByteArrayInputStream(decoded)
@@ -330,7 +341,7 @@ public object StatusListCredential {
     try {
       GZIPInputStream(bitstringInputStream).use { it.copyTo(byteArrayOutputStream) }
     } catch (e: Exception) {
-      throw RuntimeException("unzipping status list bitstring using GZIP", e)
+      throw BitstringExpansionException(e, "Failed to unzip status list bitstring using GZIP: ${e.message}")
     }
 
     val unzipped = byteArrayOutputStream.toByteArray()

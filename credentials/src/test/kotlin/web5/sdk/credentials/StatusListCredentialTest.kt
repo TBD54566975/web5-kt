@@ -3,6 +3,7 @@ package web5.sdk.credentials
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
+import io.ktor.client.engine.mock.respondBadRequest
 import io.ktor.http.fullPath
 import io.ktor.http.headersOf
 import kotlinx.coroutines.runBlocking
@@ -27,17 +28,8 @@ class StatusListCredentialTest {
       specExampleRevocableVcText
     )
 
-    assertTrue(
-      specExampleRevocableVc.vcDataModel.contexts.containsAll(
-        listOf(
-          URI.create("https://www.w3.org/ns/credentials/v2"),
-          URI.create("https://www.w3.org/ns/credentials/examples/v2")
-        )
-      )
-    )
-
     assertEquals(specExampleRevocableVc.type, "VerifiableCredential")
-    assertEquals(specExampleRevocableVc.issuer.toString(), "did:example:12345")
+    assertEquals(specExampleRevocableVc.issuer, "did:example:12345")
     assertNotNull(specExampleRevocableVc.vcDataModel.credentialStatus)
     assertEquals(specExampleRevocableVc.subject, "did:example:6789")
     assertEquals(specExampleRevocableVc.vcDataModel.credentialSubject.type.toString(), "Person")
@@ -209,7 +201,7 @@ class StatusListCredentialTest {
       credentialStatus2
     )
 
-    val exception = assertThrows<Exception> {
+    val exception = assertThrows<StatusListCredentialCreateException> {
       StatusListCredential.create(
         "revocation-id",
         issuerDid.uri,
@@ -245,7 +237,7 @@ class StatusListCredentialTest {
       credentialStatus = credentialStatus1
     )
 
-    val exception = assertThrows<Exception> {
+    val exception = assertThrows<StatusListCredentialCreateException> {
       StatusListCredential.create(
         "revocation-id",
         issuerDid.uri,
@@ -281,7 +273,7 @@ class StatusListCredentialTest {
       credentialStatus = credentialStatus1
     )
 
-    val exception = assertThrows<Exception> {
+    val exception = assertThrows<StatusListCredentialCreateException> {
       StatusListCredential.create(
         "revocation-id",
         issuerDid.uri,
@@ -432,5 +424,47 @@ class StatusListCredentialTest {
 
     val revoked2 = StatusListCredential.validateCredentialInStatusList(vc2, mockedHttpClient)
     assertFalse(revoked2)
+  }
+
+  @Test
+  fun `should throw StatusListCredentialFetchException if client fails to fetch StatusListCredential`
+    (): Unit = runBlocking {
+    val keyManager = InMemoryKeyManager()
+    val issuerDid = DidKey.create(keyManager)
+    val holderDid = DidKey.create(keyManager)
+
+    val credentialStatus1 = StatusList2021Entry.builder()
+      .id(URI.create("cred-with-status-id"))
+      .statusPurpose("revocation")
+      .statusListIndex("123")
+      .statusListCredential(URI.create("https://example.com/credentials/status/3"))
+      .build()
+
+    val credToValidate = VerifiableCredential.create(
+      type = "StreetCred",
+      issuer = issuerDid.uri,
+      subject = holderDid.uri,
+      data = StreetCredibility(localRespect = "high", legit = true),
+      credentialStatus = credentialStatus1
+    )
+
+    val mockedHttpClient = HttpClient(MockEngine) {
+      engine {
+        addHandler { request ->
+          when (request.url.fullPath) {
+            "/credentials/status/3" -> {
+              respondBadRequest()
+            }
+
+            else -> error("Unhandled ${request.url.fullPath}")
+          }
+        }
+      }
+    }
+
+    assertThrows<StatusListCredentialFetchException> {
+      StatusListCredential.validateCredentialInStatusList(credToValidate, mockedHttpClient)
+    }
+
   }
 }

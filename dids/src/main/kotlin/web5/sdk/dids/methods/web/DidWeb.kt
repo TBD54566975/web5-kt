@@ -13,6 +13,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import io.ktor.serialization.jackson.jackson
+import jdk.jshell.spi.ExecutionControl.NotImplementedException
 import kotlinx.coroutines.runBlocking
 import okhttp3.Cache
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -159,6 +160,6 @@ public sealed class DidWebApi(
   }
 
   public override fun create(keyManager: KeyManager, options: CreateDidOptions?): DidWeb {
-    throw RuntimeException("create operation not supported for did:web")
+    throw UnsupportedOperationException("Create operation is not supported for did:web")
   }
 }
