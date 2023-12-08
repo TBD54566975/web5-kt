@@ -1,5 +1,6 @@
 package web5.sdk.credentials
 
+import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.JWSHeader
@@ -224,33 +225,38 @@ class VerifiableCredentialTest {
   }
 }
 
+data class TestVectors<T>(
+  val description: String,
+  val vectors: List<TestVector<T>>
+)
+
+data class TestVector<T>(
+  val description: String,
+  val input: T,
+  val output: String?,
+  val errors: Boolean?,
+)
+
 class TestVectorsCredentialsTest {
-  data class TestVectors(
-    val description: String,
-    val vectors: List<TestVector>
-  )
 
-  data class TestVector(
-    val description: String,
-    val input: TestInput,
-    val output: String?,
-    val errors: Boolean?,
-  )
-
-  data class TestInput(
+  data class CreateTestInput(
     val signerDidUri: String?,
     val signerPrivateJwk: Map<String, Any>?,
     val credential: Map<String, Any>?,
+  )
+
+  data class VerifyTestInput(
+    val vcJwt: String,
   )
 
   @Test
   fun create_success() {
     // read a map from a json file
     val mapper = jacksonObjectMapper()
-    val testVectors =
-      mapper.readValue(File("../test-vectors/credentials/create_success.json"), TestVectors::class.java)
+    val typeRef = object : TypeReference<TestVectors<CreateTestInput>>() {}
+    val testVectors = mapper.readValue(File("../test-vectors/credentials/create_success.json"), typeRef)
 
-    testVectors.vectors.filterNot { it.errors ?: false }.forEach { vector ->
+    testVectors.vectors.forEach { vector ->
       val testInput = vector.input
 
       val vc = VerifiableCredential.fromJson(mapper.writeValueAsString(testInput.credential))
@@ -265,13 +271,45 @@ class TestVectorsCredentialsTest {
   }
 
   @Test
+  fun verify_success() {
+    // read a map from a json file
+    val mapper = jacksonObjectMapper()
+    val typeRef = object : TypeReference<TestVectors<VerifyTestInput>>() {}
+    val testVectors = mapper.readValue(File("../test-vectors/credentials/verify_success.json"), typeRef)
+
+    testVectors.vectors.forEach { vector ->
+      val testInput = vector.input
+
+      assertDoesNotThrow {
+        VerifiableCredential.verify(testInput.vcJwt)
+      }
+    }
+  }
+
+  @Test
+  fun verify_failure() {
+    // read a map from a json file
+    val mapper = jacksonObjectMapper()
+    val typeRef = object : TypeReference<TestVectors<VerifyTestInput>>() {}
+    val testVectors = mapper.readValue(File("../test-vectors/credentials/verify_failure.json"), typeRef)
+
+    testVectors.vectors.forEach { vector ->
+      val testInput = vector.input
+
+      assertFails {
+        VerifiableCredential.verify(testInput.vcJwt)
+      }
+    }
+  }
+
+  @Test
   fun create_failure() {
     // read a map from a json file
     val mapper = jacksonObjectMapper()
-    val testVectors =
-      mapper.readValue(File("../test-vectors/credentials/create_failure.json"), TestVectors::class.java)
+    val typeRef = object : TypeReference<TestVectors<CreateTestInput>>() {}
+    val testVectors = mapper.readValue(File("../test-vectors/credentials/create_failure.json"), typeRef)
 
-    testVectors.vectors.filter { it.errors ?: false }.forEach { vector ->
+    testVectors.vectors.forEach { vector ->
       val testInput = vector.input
       assertFails(vector.description) {
         VerifiableCredential.fromJson(mapper.writeValueAsString(testInput.credential))
