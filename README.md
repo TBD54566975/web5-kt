@@ -24,6 +24,7 @@ the libraries that we depend on are hosted in places
 
 ```kt
 repositories {
+  mavenCentral()
   maven("https://jitpack.io")
   maven("https://repo.danubetech.com/repository/maven-public/")
   maven("https://repository.jboss.org/nexus/content/repositories/thirdparty-releases/")
@@ -48,6 +49,7 @@ You can also pull the jars for this library from [JitPack](https://jitpack.io). 
 
 ```kotlin
 repositories {
+  mavenCentral()
   maven("https://jitpack.io")
   maven("https://repo.danubetech.com/repository/maven-public/")
   maven("https://repository.jboss.org/nexus/content/repositories/thirdparty-releases/")
