@@ -524,7 +524,7 @@ class PresentationExchangeTest {
   inner class SelectCredentialsSpec {
     @org.junit.jupiter.api.Test
     fun select_credentials_v1() {
-      val jsonString = File("../test-vectors/presentation-exchange/select-credentials-v1.json").readText()
+      val jsonString = File("../test-vectors/presentation-exchange/select_credentials_v1.json").readText()
       val jsonNode = jsonMapper.readTree(jsonString)
 
       val vectors = jsonNode.get("vectors")
