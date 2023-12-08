@@ -83,7 +83,7 @@ public object StatusListCredential {
       statusListIndexes = prepareCredentialsForStatusList(statusPurpose, issuedCredentials)
       bitString = bitstringGeneration(statusListIndexes)
     } catch (e: Exception) {
-      throw StatusListCredentialCreateException(e)
+      throw StatusListCredentialCreateException(e, "Failed to create status list credential: ${e.message}")
     }
 
     try {
@@ -180,7 +180,7 @@ public object StatusListCredential {
    * @param httpClient An optional [HttpClient] for fetching the status list credential. If not provided, a default HTTP client will be used.
    * @return A [Boolean] indicating whether the `credentialToValidate` is part of the status list.
    * @throws StatusListCredentialFetchException If the status list credential cannot be fetched.
-   * @throws VerifiableCredentialParseException If the status list verifiable credential cannot be parsed.
+   * @throws StatusListCredentialParseException If the status list credential cannot be parsed.
    *
    * This function fetches the status list credential from a URL present in the `credentialToValidate`.
    * It supports using either a user-provided `httpClient` or a default client when no client is passed in.
@@ -191,7 +191,7 @@ public object StatusListCredential {
    * val isRevoked = validateCredentialInStatusList(credentialToCheck)
    * ```
    */
-  @Throws(StatusListCredentialFetchException::class, VerifiableCredentialParseException::class)
+  @Throws(StatusListCredentialFetchException::class, StatusListCredentialParseException::class)
   public fun validateCredentialInStatusList(
     credentialToValidate: VerifiableCredential,
     httpClient: HttpClient? = null // default HTTP client but can be overridden
@@ -237,9 +237,9 @@ public object StatusListCredential {
       }
     } catch (e: ResponseException) {
       // ClientRequestException will be caught here since it is a subclass of ResponseException
-      throw StatusListCredentialFetchException(e)
+      throw StatusListCredentialFetchException(e, "Failed to fetch status list credential: ${e.message}")
     } catch (e: IllegalArgumentException) {
-      throw VerifiableCredentialParseException(e)
+      throw StatusListCredentialParseException(e, "Failed to parse status list credential: ${e.message}")
     }
   }
 

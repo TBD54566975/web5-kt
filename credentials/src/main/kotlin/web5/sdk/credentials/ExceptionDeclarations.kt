@@ -7,14 +7,13 @@ package web5.sdk.credentials
  * @param cause the underlying exception
  * @param message the exception message detailing the error
  */
-public class BitstringExpansionException(cause: Throwable, message: String? = null) : RuntimeException(message, cause)
+public class BitstringExpansionException(cause: Throwable, message: String? = null)
+  : RuntimeException(message, cause)
 
 /**
- * Presentation exchange exception.
- *
- * @param message the exception message
+ * Json path parse exception.
  */
-public class PresentationExchangeException(message: String) : RuntimeException(message)
+public class JsonPathParseException : RuntimeException()
 
 /**
  * Status list credential create exception.
@@ -22,7 +21,8 @@ public class PresentationExchangeException(message: String) : RuntimeException(m
  * @param cause the underlying exception
  * @param message the exception message detailing the error
  */
-public class StatusListCredentialCreateException(cause: Throwable, message: String? = null) : RuntimeException(message, cause)
+public class StatusListCredentialCreateException(cause: Throwable, message: String? = null)
+  : RuntimeException(message, cause)
 
 /**
  * Status list credential fetch exception.
@@ -30,7 +30,8 @@ public class StatusListCredentialCreateException(cause: Throwable, message: Stri
  * @param cause the underlying exception
  * @param message the exception message detailing the error
  */
-public class StatusListCredentialFetchException(cause: Throwable, message: String? = null) : RuntimeException(message, cause)
+public class StatusListCredentialFetchException(cause: Throwable, message: String? = null)
+  : RuntimeException(message, cause)
 
 /**
  * Verifiable credential parse exception.
@@ -38,4 +39,5 @@ public class StatusListCredentialFetchException(cause: Throwable, message: Strin
  * @param cause the underlying exception
  * @param message the exception message detailing the error
  */
-public class VerifiableCredentialParseException(cause: Throwable, message: String? = null) : RuntimeException(message, cause)
+public class StatusListCredentialParseException(cause: Throwable, message: String? = null)
+  : RuntimeException(message, cause)

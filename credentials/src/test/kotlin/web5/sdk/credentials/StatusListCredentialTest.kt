@@ -7,11 +7,7 @@ import io.ktor.client.engine.mock.respondBadRequest
 import io.ktor.http.fullPath
 import io.ktor.http.headersOf
 import kotlinx.coroutines.runBlocking
-import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.assertThrows
-import web5.sdk.credentials.exceptions.PresentationExchangeException
-import web5.sdk.credentials.exceptions.StatusListCredentialCreateException
-import web5.sdk.credentials.exceptions.StatusListCredentialFetchException
 import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.dids.methods.key.DidKey
 import java.io.File

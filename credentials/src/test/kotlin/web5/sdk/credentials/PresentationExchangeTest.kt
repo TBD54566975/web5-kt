@@ -8,7 +8,6 @@ import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
-import web5.sdk.credentials.exceptions.PresentationExchangeException
 import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.dids.methods.key.DidKey
 import java.io.File
@@ -231,13 +230,9 @@ class PresentationExchangeTest {
 
       val vcJwt = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
 
-      assertThrows<PresentationExchangeException> {
+      assertThrows<JsonPathParseException> {
         PresentationExchange.satisfiesPresentationDefinition(listOf(vcJwt), pd)
       }
-
-      assertFailure {
-        PresentationExchange.satisfiesPresentationDefinition(listOf(vcJwt), pd)
-      }.messageContains("Failed to parse VC payload as JSON.")
 
     }
 
@@ -255,7 +250,7 @@ class PresentationExchangeTest {
       )
       val vcJwt = vc.sign(issuerDid)
 
-      assertThrows<PresentationExchangeException> {
+      assertThrows<IllegalArgumentException> {
         PresentationExchange.satisfiesPresentationDefinition(listOf(vcJwt), pd)
       }
 
@@ -280,7 +275,7 @@ class PresentationExchangeTest {
       )
       val vcJwt = vc.sign(issuerDid)
 
-      assertThrows<PresentationExchangeException> {
+      assertThrows<IllegalArgumentException> {
         PresentationExchange.satisfiesPresentationDefinition(listOf(vcJwt), pd)
       }
 
@@ -303,7 +298,7 @@ class PresentationExchangeTest {
       )
       val vcJwt = vc.sign(issuerDid)
 
-      assertThrows<PresentationExchangeException> {
+      assertThrows<IllegalArgumentException> {
         PresentationExchange.satisfiesPresentationDefinition(listOf(vcJwt), pd)
       }
 
