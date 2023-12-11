@@ -1,5 +1,9 @@
 # `credentials` Test Vectors
 
+This directory contains test vectors for the `credentials` module. It's important to note that the test vectors ensure
+that
+the implementations are following the [Verifiable Credential 1.1 specification](https://www.w3.org/TR/vc-data-model/).
+
 ## `create`
 
 Create test vectors are available for [success](./create_success.json) and [failure](./create_failure.json) test cases.
