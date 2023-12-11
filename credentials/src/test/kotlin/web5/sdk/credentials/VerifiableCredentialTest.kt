@@ -249,21 +249,19 @@ class TestVectorsCredentialsTest {
     val vcJwt: String,
   )
 
+  private val mapper = jacksonObjectMapper()
+
   @Test
   fun create_success() {
-    // read a map from a json file
-    val mapper = jacksonObjectMapper()
     val typeRef = object : TypeReference<TestVectors<CreateTestInput>>() {}
     val testVectors = mapper.readValue(File("../test-vectors/credentials/create_success.json"), typeRef)
 
     testVectors.vectors.forEach { vector ->
-      val testInput = vector.input
-
-      val vc = VerifiableCredential.fromJson(mapper.writeValueAsString(testInput.credential))
+      val vc = VerifiableCredential.fromJson(mapper.writeValueAsString(vector.input.credential))
 
       val keyManager = InMemoryKeyManager()
-      keyManager.import(listOf(testInput.signerPrivateJwk!!))
-      val issuerDid = Did.load(testInput.signerDidUri!!, keyManager)
+      keyManager.import(listOf(vector.input.signerPrivateJwk!!))
+      val issuerDid = Did.load(vector.input.signerDidUri!!, keyManager)
       val vcJwt = vc.sign(issuerDid)
 
       assertEquals(vector.output, vcJwt, vector.description)
@@ -272,47 +270,36 @@ class TestVectorsCredentialsTest {
 
   @Test
   fun verify_success() {
-    // read a map from a json file
-    val mapper = jacksonObjectMapper()
     val typeRef = object : TypeReference<TestVectors<VerifyTestInput>>() {}
     val testVectors = mapper.readValue(File("../test-vectors/credentials/verify_success.json"), typeRef)
 
     testVectors.vectors.forEach { vector ->
-      val testInput = vector.input
-
       assertDoesNotThrow {
-        VerifiableCredential.verify(testInput.vcJwt)
+        VerifiableCredential.verify(vector.input.vcJwt)
       }
     }
   }
 
   @Test
   fun verify_failure() {
-    // read a map from a json file
-    val mapper = jacksonObjectMapper()
     val typeRef = object : TypeReference<TestVectors<VerifyTestInput>>() {}
     val testVectors = mapper.readValue(File("../test-vectors/credentials/verify_failure.json"), typeRef)
 
     testVectors.vectors.forEach { vector ->
-      val testInput = vector.input
-
       assertFails {
-        VerifiableCredential.verify(testInput.vcJwt)
+        VerifiableCredential.verify(vector.input.vcJwt)
       }
     }
   }
 
   @Test
   fun create_failure() {
-    // read a map from a json file
-    val mapper = jacksonObjectMapper()
     val typeRef = object : TypeReference<TestVectors<CreateTestInput>>() {}
     val testVectors = mapper.readValue(File("../test-vectors/credentials/create_failure.json"), typeRef)
 
     testVectors.vectors.forEach { vector ->
-      val testInput = vector.input
       assertFails(vector.description) {
-        VerifiableCredential.fromJson(mapper.writeValueAsString(testInput.credential))
+        VerifiableCredential.fromJson(mapper.writeValueAsString(vector.input.credential))
       }
     }
   }
