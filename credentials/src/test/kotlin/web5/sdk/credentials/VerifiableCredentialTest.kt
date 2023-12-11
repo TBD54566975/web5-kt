@@ -226,7 +226,7 @@ class VerifiableCredentialTest {
   }
 }
 
-class TestVectorsCredentialsTest {
+class Web5TestVectorsCredentialsTest {
 
   data class CreateTestInput(
     val signerDidUri: String?,
