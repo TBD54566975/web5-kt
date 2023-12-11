@@ -2,12 +2,16 @@ package web5.sdk.credentials
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.ObjectNode
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.networknt.schema.JsonSchema
 import com.nfeld.jsonpathkt.JsonPath
 import com.nfeld.jsonpathkt.extension.read
 import com.nimbusds.jwt.JWTParser
 import com.nimbusds.jwt.SignedJWT
+import web5.sdk.credentials.model.DescriptorMap
+import web5.sdk.credentials.model.InputDescriptorV2
+import web5.sdk.credentials.model.PresentationDefinitionV2
+import web5.sdk.credentials.model.PresentationSubmission
+import java.util.UUID
 
 /**
  * The `PresentationExchange` object provides functions for working with Verifiable Credentials
@@ -22,6 +26,7 @@ public object PresentationExchange {
    * @return A list of Verifiable Credentials that satisfy the Presentation Definition.
    * @throws UnsupportedOperationException If the method is untested and not recommended for use.
    */
+  @Throws(UnsupportedOperationException::class)
   public fun selectCredentials(
     credentials: List<VerifiableCredential>,
     presentationDefinition: PresentationDefinitionV2
@@ -37,13 +42,15 @@ public object PresentationExchange {
    * This function ensures that the provided VCs meet the criteria defined in the Presentation Definition.
    * It first checks for the presence of Submission Requirements in the definition and throws an exception if they exist,
    * as this feature is not implemented. Then, it maps the input descriptors in the presentation definition to the
-   * corresponding VCs. If the number of mapped descriptors does not match the required count, an error is thrown.
+   * corresponding VCs. If the number of mapped descriptors does not match the required count, an exception is thrown.
    *
    * @param vcJwts Iterable of VCs in JWT format to validate.
    * @param presentationDefinition The Presentation Definition V2 object against which VCs are validated.
    * @throws UnsupportedOperationException If Submission Requirements are present in the definition.
-   * @throws PresentationExchangeError If the number of input descriptors matched is less than required.
+   * @throws IllegalArgumentException If the number of input descriptors matched is less than required
+   * or if the VC payload cannot be parsed as JSON.
    */
+  @Throws(UnsupportedOperationException::class, IllegalArgumentException::class)
   public fun satisfiesPresentationDefinition(
     vcJwts: Iterable<String>,
     presentationDefinition: PresentationDefinitionV2
@@ -56,13 +63,57 @@ public object PresentationExchange {
 
     val inputDescriptorToVcMap = mapInputDescriptorsToVCs(vcJwts, presentationDefinition)
 
-    if (inputDescriptorToVcMap.size != presentationDefinition.inputDescriptors.size) {
-      throw PresentationExchangeError(
-        "Missing input descriptors: The presentation definition requires " +
-          "${presentationDefinition.inputDescriptors.size} descriptors, but only " +
-          "${inputDescriptorToVcMap.size} were found. Check and provide the missing descriptors."
-      )
+    require(inputDescriptorToVcMap.size == presentationDefinition.inputDescriptors.size) {
+      "Missing input descriptors: The presentation definition requires " +
+        "${presentationDefinition.inputDescriptors.size} descriptors, but only " +
+        "${inputDescriptorToVcMap.size} were found. Check and provide the missing descriptors."
     }
+  }
+
+  /**
+   * Creates a Presentation Submission in which the list of Verifiable Credentials JWTs (VCs) fulfills the given Presentation Definition. 
+   * Presentation Definition.
+   *
+   *
+   * @param vcJwts Iterable of VCs in JWT format to validate.
+   * @param presentationDefinition The Presentation Definition V2 object against which VCs are validated.
+   * @return A PresentationSubmission object.
+   * @throws UnsupportedOperationException if the presentation definition contains submission requirements.
+   * @throws IllegalStateException if no VC corresponds to an input descriptor or if a VC's index is not found.
+   * @throws PresentationExchangeError If the number of input descriptors matched is less than required.
+   */
+  public fun createPresentationFromCredentials(
+    vcJwts: Iterable<String>,
+    presentationDefinition: PresentationDefinitionV2
+  ): PresentationSubmission {
+
+    satisfiesPresentationDefinition(vcJwts, presentationDefinition)
+
+    val inputDescriptorToVcMap = mapInputDescriptorsToVCs(vcJwts, presentationDefinition)
+    val vcJwtToIndexMap = vcJwts.withIndex().associate { (index, vcJwt) -> vcJwt to index }
+
+    val descriptorMapList = mutableListOf<DescriptorMap>()
+    for ((inputDescriptor, vcList) in inputDescriptorToVcMap) {
+      // Even if multiple VCs satisfy the input descriptor we use the first
+      val vcJwt = vcList.firstOrNull()
+      checkNotNull(vcJwt) { "Illegal state: no vc corresponds to input descriptor" }
+
+      val vcIndex = vcJwtToIndexMap[vcJwt]
+      checkNotNull(vcIndex) { "Illegal state: vcJwt index not found" }
+
+      descriptorMapList.add(
+        DescriptorMap(
+          id = inputDescriptor.id,
+          path = "$.verifiableCredential[$vcIndex]",
+          format = "jwt_vc"
+        ))
+    }
+
+    return PresentationSubmission(
+      id = UUID.randomUUID().toString(),
+      definitionId = presentationDefinition.id,
+      descriptorMap = descriptorMapList
+    )
   }
 
   private fun mapInputDescriptorsToVCs(
@@ -89,8 +140,9 @@ public object PresentationExchange {
    * @param vcJwt The JWT string representing the Verifiable Credential.
    * @param inputDescriptor An instance of InputDescriptorV2 defining the criteria to be satisfied by the VC.
    * @return Boolean indicating whether the VC satisfies the criteria of the Input Descriptor.
-   * @throws PresentationExchangeError Any errors during processing
+   * @throws JsonPathParseException If the VC payload cannot be parsed as JSON.
    */
+  @Throws(JsonPathParseException::class)
   private fun vcSatisfiesInputDescriptor(
     vcJwt: String,
     inputDescriptor: InputDescriptorV2
@@ -98,10 +150,10 @@ public object PresentationExchange {
     val vc = JWTParser.parse(vcJwt) as SignedJWT
 
     val vcPayloadJson = JsonPath.parse(vc.payload.toString())
-      ?: throw PresentationExchangeError("Failed to parse VC payload as JSON.")
+      ?: throw JsonPathParseException()
 
     // If the Input Descriptor has constraints and fields defined, evaluate them.
-    inputDescriptor.constraints?.fields?.let { fields ->
+    inputDescriptor.constraints.fields?.let { fields ->
       val requiredFields = fields.filter { field -> field.optional != true }
 
       for (field in requiredFields) {
@@ -177,10 +229,3 @@ public object PresentationExchange {
     }
   }
 }
-
-/**
- * Custom error class for exceptions related to the Presentation Exchange.
- *
- * @param message The error message.
- */
-public class PresentationExchangeError(message: String) : Error(message)

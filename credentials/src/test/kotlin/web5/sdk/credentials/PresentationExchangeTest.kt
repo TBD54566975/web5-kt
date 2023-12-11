@@ -7,10 +7,14 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.assertDoesNotThrow
+import org.junit.jupiter.api.assertThrows
+import web5.sdk.credentials.model.PresentationDefinitionV2
 import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.dids.methods.key.DidKey
 import java.io.File
 import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 
 data class DateOfBirth(val dateOfBirth: String)
 data class Address(val address: String)
@@ -221,6 +225,21 @@ class PresentationExchangeTest {
     }
 
     @Test
+    fun `throws when we fail to parse the VC`() {
+      val pd = jsonMapper.readValue(
+        readPd("src/test/resources/pd_sanctions.json"),
+        PresentationDefinitionV2::class.java
+      )
+
+      val vcJwt = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+
+      assertThrows<JsonPathParseException> {
+        PresentationExchange.satisfiesPresentationDefinition(listOf(vcJwt), pd)
+      }
+
+    }
+
+    @Test
     fun `throws when VC does not satisfy sanctions requirements`() {
       val pd = jsonMapper.readValue(
         readPd("src/test/resources/pd_sanctions.json"),
@@ -234,9 +253,14 @@ class PresentationExchangeTest {
       )
       val vcJwt = vc.sign(issuerDid)
 
+      assertThrows<IllegalArgumentException> {
+        PresentationExchange.satisfiesPresentationDefinition(listOf(vcJwt), pd)
+      }
+
       assertFailure {
         PresentationExchange.satisfiesPresentationDefinition(listOf(vcJwt), pd)
       }.messageContains("Missing input descriptors: The presentation definition requires")
+
     }
 
 
@@ -253,6 +277,10 @@ class PresentationExchangeTest {
         data = StreetCredibility(localRespect = "high", legit = true)
       )
       val vcJwt = vc.sign(issuerDid)
+
+      assertThrows<IllegalArgumentException> {
+        PresentationExchange.satisfiesPresentationDefinition(listOf(vcJwt), pd)
+      }
 
       assertFailure {
         PresentationExchange.satisfiesPresentationDefinition(listOf(vcJwt), pd)
@@ -272,6 +300,10 @@ class PresentationExchangeTest {
         data = DateOfBirth(dateOfBirth = "01-02-03")
       )
       val vcJwt = vc.sign(issuerDid)
+
+      assertThrows<IllegalArgumentException> {
+        PresentationExchange.satisfiesPresentationDefinition(listOf(vcJwt), pd)
+      }
 
       assertFailure {
         PresentationExchange.satisfiesPresentationDefinition(listOf(vcJwt), pd)
@@ -295,6 +327,104 @@ class PresentationExchangeTest {
       assertFailure {
         PresentationExchange.satisfiesPresentationDefinition(listOf(vcJwt), pd)
       }.messageContains("Missing input descriptors: The presentation definition requires")
+    }
+  }
+
+  @Nested
+  inner class CreatePresentationFromCredentials {
+    @Test
+    fun `creates valid submission when VC satisfies tbdex PD`() {
+      val pd = jsonMapper.readValue(
+        readPd("src/test/resources/pd_sanctions.json"),
+        PresentationDefinitionV2::class.java
+      )
+
+      val presentationSubmission = PresentationExchange.createPresentationFromCredentials(listOf(sanctionsVcJwt), pd)
+
+      assertNotNull(presentationSubmission.id)
+      assertEquals(pd.id, presentationSubmission.definitionId)
+
+      assertEquals(1, presentationSubmission.descriptorMap.size)
+      assertNotNull(presentationSubmission.descriptorMap[0].id)
+      assertEquals("jwt_vc", presentationSubmission.descriptorMap[0].format)
+      assertEquals("$.verifiableCredential[0]", presentationSubmission.descriptorMap[0].path)
+    }
+
+    @Test
+    fun `creates valid submission when VC satisfies PD with no filter dob filed constraint and extra VC`() {
+      val pd = jsonMapper.readValue(
+        readPd("src/test/resources/pd_path_no_filter_dob.json"),
+        PresentationDefinitionV2::class.java
+      )
+
+      val vc1 = VerifiableCredential.create(
+        type = "DateOfBirth",
+        issuer = issuerDid.uri,
+        subject = holderDid.uri,
+        data = DateOfBirth(dateOfBirth = "Data1")
+      )
+      val vcJwt1 = vc1.sign(issuerDid)
+
+      val vc2 = VerifiableCredential.create(
+        type = "Address",
+        issuer = issuerDid.uri,
+        subject = holderDid.uri,
+        data = Address("abc street 123")
+      )
+      val vcJwt2 = vc2.sign(issuerDid)
+
+      val presentationSubmission = PresentationExchange.createPresentationFromCredentials(listOf(vcJwt2, vcJwt1), pd)
+
+      assertEquals(1, presentationSubmission.descriptorMap.size)
+      assertEquals("$.verifiableCredential[1]", presentationSubmission.descriptorMap[0].path)
+    }
+
+    @Test
+    fun `throws when VC does not satisfy sanctions requirements`() {
+      val pd = jsonMapper.readValue(
+        readPd("src/test/resources/pd_sanctions.json"),
+        PresentationDefinitionV2::class.java
+      )
+      val vc = VerifiableCredential.create(
+        type = "StreetCred",
+        issuer = issuerDid.uri,
+        subject = holderDid.uri,
+        data = StreetCredibility(localRespect = "high", legit = true)
+      )
+      val vcJwt = vc.sign(issuerDid)
+
+      assertFailure {
+        PresentationExchange.createPresentationFromCredentials(listOf(vcJwt), pd)
+      }.messageContains("Missing input descriptors: The presentation definition requires")
+    }
+
+    @Test
+    fun `creates valid submission when VC two vcs satisfy the same input descriptor`() {
+      val pd = jsonMapper.readValue(
+        readPd("src/test/resources/pd_path_no_filter_dob.json"),
+        PresentationDefinitionV2::class.java
+      )
+
+      val vc1 = VerifiableCredential.create(
+        type = "DateOfBirth",
+        issuer = issuerDid.uri,
+        subject = holderDid.uri,
+        data = DateOfBirth(dateOfBirth = "11/11/2011")
+      )
+      val vcJwt1 = vc1.sign(issuerDid)
+
+      val vc2 = VerifiableCredential.create(
+        type = "DateOfBirth",
+        issuer = issuerDid.uri,
+        subject = holderDid.uri,
+        data = DateOfBirth(dateOfBirth = "12/12/2012")
+      )
+      val vcJwt2 = vc2.sign(issuerDid)
+
+      val presentationSubmission = PresentationExchange.createPresentationFromCredentials(listOf(vcJwt2, vcJwt1), pd)
+
+      assertEquals(1, presentationSubmission.descriptorMap.size)
+      assertEquals("$.verifiableCredential[0]", presentationSubmission.descriptorMap[0].path)
     }
   }
 }

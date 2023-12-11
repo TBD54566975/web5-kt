@@ -169,3 +169,7 @@ style:
     active: true
   UtilityClassWithPublicConstructor:
     active: true
+
+TbdRuleset:
+  JvmOverloadsAnnotationRule:
+    active: true

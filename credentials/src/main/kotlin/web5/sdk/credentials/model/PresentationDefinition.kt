@@ -1,4 +1,4 @@
-package web5.sdk.credentials
+package web5.sdk.credentials.model
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
