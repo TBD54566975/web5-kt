@@ -548,33 +548,36 @@ class PresentationExchangeTest {
       assertEquals( listOf(vcJwt1, vcJwt2), selectedCreds)
     }
   }
+}
 
-  @Nested
-  inner class SelectCredentialsSpec {
-    @org.junit.jupiter.api.Test
-    fun select_credentials_v1() {
-      val jsonString = File("../test-vectors/presentation-exchange/select_credentials_v1.json").readText()
-      val jsonNode = jsonMapper.readTree(jsonString)
 
-      val vectors = jsonNode.get("vectors")
+class Web5TestVectorsPresentationExchangeTest {
+  private val jsonMapper: ObjectMapper = ObjectMapper()
+    .registerKotlinModule()
+    .setSerializationInclusion(JsonInclude.Include.NON_NULL)
+  @Test
+  fun select_credentials() {
+    val jsonString = File("../test-vectors/presentation-exchange/select_credentials.json").readText()
+    val jsonNode = jsonMapper.readTree(jsonString)
 
-      for (i in 0 until vectors.size()) {
-        val input = vectors[i].get("input")
+    val vectors = jsonNode.get("vectors")
 
-        val inputPdJsonString = input.get("presentationDefinition").toString()
-        val inputVcJwts = input.get("credentialJwts").map { it.asText() }
+    for (i in 0 until vectors.size()) {
+      val input = vectors[i].get("input")
 
-        val expectedOutput = vectors[i].get("output").get("selectedCredentials").map { it.asText() }
+      val inputPdJsonString = input.get("presentationDefinition").toString()
+      val inputVcJwts = input.get("credentialJwts").map { it.asText() }
 
-        val inputPd = jsonMapper.readValue(
-          inputPdJsonString,
-          PresentationDefinitionV2::class.java
-        )
+      val expectedOutput = vectors[i].get("output").get("selectedCredentials").map { it.asText() }
 
-        val selectedCreds = PresentationExchange.selectCredentials(inputVcJwts, inputPd)
+      val inputPd = jsonMapper.readValue(
+        inputPdJsonString,
+        PresentationDefinitionV2::class.java
+      )
 
-        assertEquals(expectedOutput, selectedCreds)
-      }
+      val selectedCreds = PresentationExchange.selectCredentials(inputVcJwts, inputPd)
+
+      assertEquals(expectedOutput, selectedCreds)
     }
   }
 }

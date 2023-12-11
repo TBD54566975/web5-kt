@@ -27,7 +27,6 @@ jobs:
           path: ~/.gradle/caches
           key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle.kts') }}-${{ hashFiles('**/gradle/wrapper/gradle-wrapper.properties') }}-${{ hashFiles('**/versions.properties') }}
 
-
       - name: Run Gradle Tasks
         run: ./gradlew build koverXmlReport
 
