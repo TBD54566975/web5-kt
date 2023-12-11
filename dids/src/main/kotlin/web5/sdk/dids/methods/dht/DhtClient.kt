@@ -1,7 +1,6 @@
 package web5.sdk.dids.methods.dht
 
 import com.nimbusds.jose.jwk.JWK
-import com.turn.ttorrent.bcodec.BEncoder
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.okhttp.OkHttp
@@ -186,9 +185,7 @@ internal class DhtClient(
       }
 
       // encode v using bencode
-      val out = ByteArrayOutputStream()
-      BEncoder.bencode(v, out)
-      val vEncoded = out.toByteArray()
+      val vEncoded = bencode(v)
 
       require(vEncoded.size <= 1000) {
         "Value must be <= 1000 bytes compressed, current bytes {${vEncoded.size}}"
@@ -208,6 +205,15 @@ internal class DhtClient(
       }
     }
 
+    private fun bencode(bs: ByteArray): ByteArray {
+      val out = ByteArrayOutputStream()
+      val l = bs.size.toString()
+      out.write(l.toByteArray(charset("UTF-8")))
+      out.write(58)
+      out.write(bs)
+      return out.toByteArray()
+    }
+
     /**
      * Verifies a message according to the BEP44 Signature Verification specification.
      * https://www.bittorrent.org/beps/bep_0044.html
@@ -218,10 +224,7 @@ internal class DhtClient(
      * @throws SignatureException if the signature is invalid.
      */
     fun verifyBep44Message(message: Bep44Message) {
-      // encode v using bencode
-      val out = ByteArrayOutputStream()
-      BEncoder.bencode(message.v, out)
-      val vEncoded = out.toByteArray()
+      val vEncoded = bencode(message.v)
 
       // prepare buffer and verify
       val bytesToVerify = "3:seqi${message.seq}e1:v".toByteArray() + vEncoded

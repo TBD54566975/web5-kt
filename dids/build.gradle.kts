@@ -38,5 +38,4 @@ dependencies {
   testImplementation("commons-codec:commons-codec:1.16.0")
 
   implementation("dnsjava:dnsjava:3.5.2")
-  implementation("com.github.mpetazzoni.ttorrent:ttorrent-bencoding:ttorrent-2.0")
 }
