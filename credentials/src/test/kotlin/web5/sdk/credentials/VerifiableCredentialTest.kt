@@ -21,6 +21,7 @@ import web5.sdk.dids.methods.ion.CreateDidIonOptions
 import web5.sdk.dids.methods.ion.DidIon
 import web5.sdk.dids.methods.ion.JsonWebKey2020VerificationMethod
 import web5.sdk.dids.methods.key.DidKey
+import web5.sdk.testing.TestVectors
 import java.io.File
 import java.security.SignatureException
 import java.text.ParseException
@@ -224,18 +225,6 @@ class VerifiableCredentialTest {
     assertEquals(vc.subject, parsedVc.subject)
   }
 }
-
-data class TestVectors<T>(
-  val description: String,
-  val vectors: List<TestVector<T>>
-)
-
-data class TestVector<T>(
-  val description: String,
-  val input: T,
-  val output: String?,
-  val errors: Boolean?,
-)
 
 class TestVectorsCredentialsTest {
 
