@@ -13,7 +13,7 @@ This repo contains 4 jvm packages:
 
 # Quickstart
 
-You can add this library you your project using Gradle or Maven. There are two ways to do so. The first is pulling the
+You can add this library to your project using Gradle or Maven. There are two ways to do so. The first is pulling the
 package from Maven Central. The second is pulling the package from JitPack.
 
 ## Maven Central
