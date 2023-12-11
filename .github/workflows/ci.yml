@@ -35,14 +35,12 @@ jobs:
 
       - name: Run Gradle Tasks
         run: ./gradlew build koverXmlReport
-      
-      - run: find credentials/build/test-results
 
       - uses: actions/upload-artifact@v3
         with:
           name: test-results
           path: |
-            credentials/build/test-results/test*.xml
+            credentials/build/test-results/test/*.xml
             test-vector-hashes.txt
 
       - name: Upload coverage reports to Codecov
