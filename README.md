@@ -19,8 +19,8 @@ package from Maven Central. The second is pulling the package from JitPack.
 ## Maven Central
 
 When pulling from Maven Central, you can pull the entire library or just a single module. Examples of both are shown
-below. Please note that you need to add the repositories shows below to your `build.gradle.kts` file. This is because
-the libraries that we depend on are hosted in places
+below. Please note that you need to add the repositories shown below to your `build.gradle.kts` file. This is because
+the libraries that we depend on are hosted in separate places.
 
 ```kt
 repositories {
