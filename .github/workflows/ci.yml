@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - main
+      - '*'
   pull_request:
     branches:
       - '*'
@@ -22,14 +22,26 @@ jobs:
         with:
           distribution: 'corretto'
           java-version: 11
+
       - uses: actions/cache@v3
         with:
           path: ~/.gradle/caches
           key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle.kts') }}-${{ hashFiles('**/gradle/wrapper/gradle-wrapper.properties') }}-${{ hashFiles('**/versions.properties') }}
 
+      - name: hash test inputs
+        run: |
+          if ! which sha256sum; then brew install coreutils; fi
+          sha256sum $(find test-vectors -name '*.json') > test-vector-hashes.txt
 
       - name: Run Gradle Tasks
         run: ./gradlew build koverXmlReport
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: test-results
+          path: |
+            credentials/build/test-results/test*.xml
+            test-vector-hashes.txt
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3
