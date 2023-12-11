@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.assertDoesNotThrow
+import org.junit.jupiter.api.assertThrows
 import web5.sdk.credentials.model.PresentationDefinitionV2
 import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.dids.methods.key.DidKey
@@ -14,7 +15,6 @@ import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
-import kotlin.test.assertTrue
 
 data class DateOfBirth(val dateOfBirth: String)
 data class Address(val address: String)
@@ -225,6 +225,21 @@ class PresentationExchangeTest {
     }
 
     @Test
+    fun `throws when we fail to parse the VC`() {
+      val pd = jsonMapper.readValue(
+        readPd("src/test/resources/pd_sanctions.json"),
+        PresentationDefinitionV2::class.java
+      )
+
+      val vcJwt = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+
+      assertThrows<JsonPathParseException> {
+        PresentationExchange.satisfiesPresentationDefinition(listOf(vcJwt), pd)
+      }
+
+    }
+
+    @Test
     fun `throws when VC does not satisfy sanctions requirements`() {
       val pd = jsonMapper.readValue(
         readPd("src/test/resources/pd_sanctions.json"),
@@ -238,9 +253,14 @@ class PresentationExchangeTest {
       )
       val vcJwt = vc.sign(issuerDid)
 
+      assertThrows<IllegalArgumentException> {
+        PresentationExchange.satisfiesPresentationDefinition(listOf(vcJwt), pd)
+      }
+
       assertFailure {
         PresentationExchange.satisfiesPresentationDefinition(listOf(vcJwt), pd)
       }.messageContains("Missing input descriptors: The presentation definition requires")
+
     }
 
 
@@ -257,6 +277,10 @@ class PresentationExchangeTest {
         data = StreetCredibility(localRespect = "high", legit = true)
       )
       val vcJwt = vc.sign(issuerDid)
+
+      assertThrows<IllegalArgumentException> {
+        PresentationExchange.satisfiesPresentationDefinition(listOf(vcJwt), pd)
+      }
 
       assertFailure {
         PresentationExchange.satisfiesPresentationDefinition(listOf(vcJwt), pd)
@@ -276,6 +300,10 @@ class PresentationExchangeTest {
         data = DateOfBirth(dateOfBirth = "01-02-03")
       )
       val vcJwt = vc.sign(issuerDid)
+
+      assertThrows<IllegalArgumentException> {
+        PresentationExchange.satisfiesPresentationDefinition(listOf(vcJwt), pd)
+      }
 
       assertFailure {
         PresentationExchange.satisfiesPresentationDefinition(listOf(vcJwt), pd)
