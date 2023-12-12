@@ -24,6 +24,8 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.security.SignatureException
 
+private val colon = ":".toByteArray(charset("UTF-8"))
+
 /**
  * A utility class for working with the BEP44 DHT specification and Pkarr relays.
  */
@@ -205,11 +207,12 @@ internal class DhtClient(
       }
     }
 
+    /** Encodes a byte array according to https://en.wikipedia.org/wiki/Bencode. */
     private fun bencode(bs: ByteArray): ByteArray {
       val out = ByteArrayOutputStream()
       val l = bs.size.toString()
       out.write(l.toByteArray(charset("UTF-8")))
-      out.write(58)
+      out.write(colon)
       out.write(bs)
       return out.toByteArray()
     }
