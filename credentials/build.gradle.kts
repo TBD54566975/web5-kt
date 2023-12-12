@@ -8,6 +8,7 @@ repositories {
 
   maven("https://jitpack.io")
   maven("https://repo.danubetech.com/repository/maven-public/")
+  maven("https://repository.jboss.org/nexus/content/repositories/thirdparty-releases/")
 }
 
 val ktor_version = "2.3.4"
@@ -25,7 +26,7 @@ dependencies {
   implementation("com.networknt:json-schema-validator:1.0.87")
 
   implementation("io.ktor:ktor-client-core:$ktor_version")
-  implementation("io.ktor:ktor-client-cio:$ktor_version")
+  implementation("io.ktor:ktor-client-okhttp:$ktor_version")
   implementation("io.ktor:ktor-client-content-negotiation:$ktor_version")
   implementation("io.ktor:ktor-serialization-jackson:$ktor_version")
   implementation("io.ktor:ktor-serialization-kotlinx-json:$ktor_version")
@@ -35,4 +36,5 @@ dependencies {
 
   testImplementation(kotlin("test"))
   testImplementation("com.willowtreeapps.assertk:assertk:0.27.0")
+  testImplementation(project(":testing"))
 }

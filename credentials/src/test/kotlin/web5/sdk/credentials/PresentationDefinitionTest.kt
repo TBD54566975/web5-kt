@@ -11,11 +11,15 @@ import org.erdtman.jcs.JsonCanonicalizer
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
+import web5.sdk.credentials.model.ConstraintsV2
+import web5.sdk.credentials.model.FieldV2
+import web5.sdk.credentials.model.InputDescriptorV2
+import web5.sdk.credentials.model.PresentationDefinitionV2
+import java.io.File
 
 class PresentationDefinitionTest {
   val jsonMapper: ObjectMapper = ObjectMapper()
     .registerKotlinModule()
-    .findAndRegisterModules()
     .setSerializationInclusion(JsonInclude.Include.NON_NULL)
 
   @Test
@@ -54,19 +58,19 @@ class PresentationDefinitionTest {
 
   @Test
   fun `serialization is idempotent`(){
-    val pdString = PRESENTATION_DEFINITION.trimIndent()
+    val pdString = File("src/test/resources/pd_sanctions.json").readText().trimIndent()
     val parsedPd = jsonMapper.readValue(pdString, PresentationDefinitionV2::class.java)
     val parsedString = jsonMapper.writeValueAsString(parsedPd)
 
     assertEquals(
-      JsonCanonicalizer(PRESENTATION_DEFINITION).encodedString,
+      JsonCanonicalizer(pdString).encodedString,
       JsonCanonicalizer(parsedString).encodedString,
     )
   }
 
   @Test
   fun `can deserialize`() {
-    val pdString = PRESENTATION_DEFINITION.trimIndent()
+    val pdString = File("src/test/resources/pd_sanctions.json").readText().trimIndent()
 
     assertDoesNotThrow { jsonMapper.readValue(pdString, PresentationDefinitionV2::class.java) }
   }

@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import foundation.identity.did.DIDDocument
-import web5.sdk.dids.ion.model.MetadataMethod
+import web5.sdk.dids.methods.ion.models.MetadataMethod
 
 /**
  * Represents the result of DID resolution as per the W3C DID Core specification.
@@ -59,6 +59,7 @@ public class DidResolutionMetadata(
  * @property nextVersionId The version ID expected for the next version of the DID document.
  * @property equivalentId Alternative ID that can be used interchangeably with the canonical DID.
  * @property canonicalId The canonical ID of the DID as per method-specific rules.
+ * @property types Returns types for DIDs that support type indexing.
  */
 public class DidDocumentMetadata(
   public var created: String? = null,
@@ -70,5 +71,6 @@ public class DidDocumentMetadata(
   public var equivalentId: List<String>? = null,
   public var canonicalId: String? = null,
   public val method: MetadataMethod? = null,
+  public val types: List<Int>? = null
 )
 

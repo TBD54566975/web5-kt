@@ -1,6 +1,7 @@
 package web5.sdk.dids
 
 import foundation.identity.did.DID
+import web5.sdk.dids.extensions.supportedMethods
 
 /**
  * Type alias for a DID resolver function.
@@ -18,10 +19,9 @@ public typealias DidResolver = (String, ResolveDidOptions?) -> DidResolutionResu
 public object DidResolvers {
 
   // A mutable map to store method-specific DID resolvers.
-  private val methodResolvers = mutableMapOf<String, DidResolver>(
-    DidKey.methodName to DidKey.Companion::resolve,
-    DidIonManager.methodName to DidIonManager.Default::resolve
-  )
+  private val methodResolvers = supportedMethods.entries.associate {
+    it.key to it.value::resolve as DidResolver
+  }.toMutableMap()
 
   /**
    * Resolves a DID URL using an appropriate resolver based on the DID method.

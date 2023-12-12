@@ -80,14 +80,32 @@ public class InMemoryKeyManager : KeyManager {
    * @throws IllegalArgumentException if the key is not known to the [KeyManager]
    */
   override fun getDeterministicAlias(publicKey: JWK): String {
-    return publicKey.keyID
+    val kid = publicKey.keyID ?: publicKey.computeThumbprint().toString()
+    require(keyStore.containsKey(kid)) {
+      "key with alias $kid not found"
+    }
+    return kid
   }
 
   private fun getPrivateKey(keyAlias: String) =
     keyStore[keyAlias] ?: throw IllegalArgumentException("key with alias $keyAlias not found")
 
   /**
-   * Imports [jwk] and returns the alias that refers to it.
+   * Imports a list of keys represented as a list of maps and returns a list of key aliases referring to them.
+   *
+   * @param keySet A list of key representations in map format.
+   * @return A list of key aliases belonging to the imported keys.
+   */
+  public fun import(keySet: Iterable<Map<String, Any>>): List<String> = keySet.map {
+    val jwk = JWK.parse(it)
+    import(jwk)
+  }
+
+  /**
+   * Imports a single key and returns the alias that refers to it.
+   *
+   * @param jwk A JWK object representing the key to be imported.
+   * @return The alias belonging to the imported key.
    */
   public fun import(jwk: JWK): String {
     var kid = jwk.keyID
@@ -97,4 +115,11 @@ public class InMemoryKeyManager : KeyManager {
     keyStore.putIfAbsent(kid, jwk)
     return kid
   }
+
+  /**
+   * Exports all stored keys as a list of maps.
+   *
+   * @return A list of key representations in map format.
+   */
+  public fun export(): List<Map<String, Any>> = keyStore.map { it.value.toJSONObject() }
 }

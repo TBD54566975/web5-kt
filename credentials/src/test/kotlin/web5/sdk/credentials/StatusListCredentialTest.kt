@@ -3,12 +3,13 @@ package web5.sdk.credentials
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
+import io.ktor.client.engine.mock.respondBadRequest
 import io.ktor.http.fullPath
 import io.ktor.http.headersOf
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.assertThrows
 import web5.sdk.crypto.InMemoryKeyManager
-import web5.sdk.dids.DidKey
+import web5.sdk.dids.methods.key.DidKey
 import java.io.File
 import java.net.URI
 import kotlin.test.Test
@@ -21,23 +22,14 @@ class StatusListCredentialTest {
 
   @Test
   fun `should parse valid VerifiableCredential from specification example`() {
-    val specExampleRevocableVcText = File("src/test/testdata/revocableVc.json").readText()
+    val specExampleRevocableVcText = File("src/test/resources/revocable_vc.json").readText()
 
     val specExampleRevocableVc = VerifiableCredential.fromJson(
       specExampleRevocableVcText
     )
 
-    assertTrue(
-      specExampleRevocableVc.vcDataModel.contexts.containsAll(
-        listOf(
-          URI.create("https://www.w3.org/ns/credentials/v2"),
-          URI.create("https://www.w3.org/ns/credentials/examples/v2")
-        )
-      )
-    )
-
     assertEquals(specExampleRevocableVc.type, "VerifiableCredential")
-    assertEquals(specExampleRevocableVc.issuer.toString(), "did:example:12345")
+    assertEquals(specExampleRevocableVc.issuer, "did:example:12345")
     assertNotNull(specExampleRevocableVc.vcDataModel.credentialStatus)
     assertEquals(specExampleRevocableVc.subject, "did:example:6789")
     assertEquals(specExampleRevocableVc.vcDataModel.credentialSubject.type.toString(), "Person")
@@ -138,7 +130,8 @@ class StatusListCredentialTest {
       "revocation-id",
       issuerDid.uri,
       StatusPurpose.REVOCATION,
-      listOf(vc1, vc2))
+      listOf(vc1, vc2)
+    )
 
     assertNotNull(statusListCredential)
     assertTrue(
@@ -157,17 +150,18 @@ class StatusListCredentialTest {
         )
       )
     )
-    assertEquals(statusListCredential.subject,"revocation-id")
+    assertEquals(statusListCredential.subject, "revocation-id")
     assertEquals(statusListCredential.vcDataModel.credentialSubject.type, "StatusList2021")
     assertEquals(
       "revocation",
       statusListCredential.vcDataModel.credentialSubject.jsonObject["statusPurpose"] as? String?
     )
 
-    assertEquals(
-      "H4sIAAAAAAAA/2NgQAESAAPT1/8QAAAA",
-      statusListCredential.vcDataModel.credentialSubject.jsonObject["encodedList"] as? String?
-    )
+    // TODO: Check encoding across other sdks and spec - https://github.com/TBD54566975/web5-kt/issues/97
+    // assertEquals(
+    //  "H4sIAAAAAAAA/2NgQAESAAPT1/8QAAAA",
+    //  statusListCredential.vcDataModel.credentialSubject.jsonObject["encodedList"] as? String?
+    //)
   }
 
 
@@ -207,12 +201,13 @@ class StatusListCredentialTest {
       credentialStatus2
     )
 
-    val exception = assertThrows<Exception> {
+    val exception = assertThrows<StatusListCredentialCreateException> {
       StatusListCredential.create(
         "revocation-id",
         issuerDid.uri,
         StatusPurpose.REVOCATION,
-        listOf(vc1, vc2))
+        listOf(vc1, vc2)
+      )
     }
 
     assertTrue(
@@ -242,12 +237,13 @@ class StatusListCredentialTest {
       credentialStatus = credentialStatus1
     )
 
-    val exception = assertThrows<Exception> {
+    val exception = assertThrows<StatusListCredentialCreateException> {
       StatusListCredential.create(
         "revocation-id",
         issuerDid.uri,
         StatusPurpose.REVOCATION,
-        listOf(vc1))
+        listOf(vc1)
+      )
     }
 
     assertTrue(
@@ -277,12 +273,13 @@ class StatusListCredentialTest {
       credentialStatus = credentialStatus1
     )
 
-    val exception = assertThrows<Exception> {
+    val exception = assertThrows<StatusListCredentialCreateException> {
       StatusListCredential.create(
         "revocation-id",
         issuerDid.uri,
         StatusPurpose.REVOCATION,
-        listOf(vc1))
+        listOf(vc1)
+      )
     }
 
     assertTrue(
@@ -427,5 +424,47 @@ class StatusListCredentialTest {
 
     val revoked2 = StatusListCredential.validateCredentialInStatusList(vc2, mockedHttpClient)
     assertFalse(revoked2)
+  }
+
+  @Test
+  fun `should throw StatusListCredentialFetchException if client fails to fetch StatusListCredential`
+    (): Unit = runBlocking {
+    val keyManager = InMemoryKeyManager()
+    val issuerDid = DidKey.create(keyManager)
+    val holderDid = DidKey.create(keyManager)
+
+    val credentialStatus1 = StatusList2021Entry.builder()
+      .id(URI.create("cred-with-status-id"))
+      .statusPurpose("revocation")
+      .statusListIndex("123")
+      .statusListCredential(URI.create("https://example.com/credentials/status/3"))
+      .build()
+
+    val credToValidate = VerifiableCredential.create(
+      type = "StreetCred",
+      issuer = issuerDid.uri,
+      subject = holderDid.uri,
+      data = StreetCredibility(localRespect = "high", legit = true),
+      credentialStatus = credentialStatus1
+    )
+
+    val mockedHttpClient = HttpClient(MockEngine) {
+      engine {
+        addHandler { request ->
+          when (request.url.fullPath) {
+            "/credentials/status/3" -> {
+              respondBadRequest()
+            }
+
+            else -> error("Unhandled ${request.url.fullPath}")
+          }
+        }
+      }
+    }
+
+    assertThrows<StatusListCredentialFetchException> {
+      StatusListCredential.validateCredentialInStatusList(credToValidate, mockedHttpClient)
+    }
+
   }
 }

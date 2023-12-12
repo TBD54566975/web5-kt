@@ -152,6 +152,8 @@ style:
     excludeGuardClauses: true
   SpacingBetweenPackageAndImports:
     active: true
+  ThrowsCount:
+    active: false
   UnnecessaryAbstractClass:
     active: true
   UnnecessaryInheritance:
@@ -166,4 +168,8 @@ style:
   UselessCallOnNotNull:
     active: true
   UtilityClassWithPublicConstructor:
+    active: true
+
+TbdRuleset:
+  JvmOverloadsAnnotationRule:
     active: true
