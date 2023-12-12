@@ -80,6 +80,9 @@ subprojects {
     intTestImplementation(kotlin("test"))
     intTestImplementation("org.junit.jupiter:junit-jupiter:5.9.2")
     intTestRuntimeOnly("org.junit.platform:junit-platform-launcher")
+
+    // Pin the transitive dep to a version that's not vulnerable.
+    implementation("com.fasterxml.woodstox:woodstox-core:6.4.0")
   }
 
   idea {
