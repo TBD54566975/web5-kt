@@ -1,5 +1,6 @@
 package web5.sdk.credentials
 
+import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.JWSHeader
@@ -20,6 +21,7 @@ import web5.sdk.dids.methods.ion.CreateDidIonOptions
 import web5.sdk.dids.methods.ion.DidIon
 import web5.sdk.dids.methods.ion.JsonWebKey2020VerificationMethod
 import web5.sdk.dids.methods.key.DidKey
+import web5.sdk.testing.TestVectors
 import java.io.File
 import java.security.SignatureException
 import java.text.ParseException
@@ -224,40 +226,31 @@ class VerifiableCredentialTest {
   }
 }
 
-class TestVectorsCredentialsTest {
-  data class TestVectors(
-    val description: String,
-    val vectors: List<TestVector>
-  )
+class Web5TestVectorsCredentialsTest {
 
-  data class TestVector(
-    val description: String,
-    val input: TestInput,
-    val output: String?,
-    val errors: Boolean?,
-  )
-
-  data class TestInput(
+  data class CreateTestInput(
     val signerDidUri: String?,
     val signerPrivateJwk: Map<String, Any>?,
     val credential: Map<String, Any>?,
   )
 
+  data class VerifyTestInput(
+    val vcJwt: String,
+  )
+
+  private val mapper = jacksonObjectMapper()
+
   @Test
   fun create_success() {
-    // read a map from a json file
-    val mapper = jacksonObjectMapper()
-    val testVectors =
-      mapper.readValue(File("../test-vectors/credentials/create_success.json"), TestVectors::class.java)
+    val typeRef = object : TypeReference<TestVectors<CreateTestInput>>() {}
+    val testVectors = mapper.readValue(File("../test-vectors/credentials/create_success.json"), typeRef)
 
-    testVectors.vectors.filterNot { it.errors ?: false }.forEach { vector ->
-      val testInput = vector.input
-
-      val vc = VerifiableCredential.fromJson(mapper.writeValueAsString(testInput.credential))
+    testVectors.vectors.forEach { vector ->
+      val vc = VerifiableCredential.fromJson(mapper.writeValueAsString(vector.input.credential))
 
       val keyManager = InMemoryKeyManager()
-      keyManager.import(listOf(testInput.signerPrivateJwk!!))
-      val issuerDid = Did.load(testInput.signerDidUri!!, keyManager)
+      keyManager.import(listOf(vector.input.signerPrivateJwk!!))
+      val issuerDid = Did.load(vector.input.signerDidUri!!, keyManager)
       val vcJwt = vc.sign(issuerDid)
 
       assertEquals(vector.output, vcJwt, vector.description)
@@ -265,16 +258,37 @@ class TestVectorsCredentialsTest {
   }
 
   @Test
-  fun create_failure() {
-    // read a map from a json file
-    val mapper = jacksonObjectMapper()
-    val testVectors =
-      mapper.readValue(File("../test-vectors/credentials/create_failure.json"), TestVectors::class.java)
+  fun verify_success() {
+    val typeRef = object : TypeReference<TestVectors<VerifyTestInput>>() {}
+    val testVectors = mapper.readValue(File("../test-vectors/credentials/verify_success.json"), typeRef)
 
-    testVectors.vectors.filter { it.errors ?: false }.forEach { vector ->
-      val testInput = vector.input
+    testVectors.vectors.forEach { vector ->
+      assertDoesNotThrow {
+        VerifiableCredential.verify(vector.input.vcJwt)
+      }
+    }
+  }
+
+  @Test
+  fun verify_failure() {
+    val typeRef = object : TypeReference<TestVectors<VerifyTestInput>>() {}
+    val testVectors = mapper.readValue(File("../test-vectors/credentials/verify_failure.json"), typeRef)
+
+    testVectors.vectors.forEach { vector ->
+      assertFails {
+        VerifiableCredential.verify(vector.input.vcJwt)
+      }
+    }
+  }
+
+  @Test
+  fun create_failure() {
+    val typeRef = object : TypeReference<TestVectors<CreateTestInput>>() {}
+    val testVectors = mapper.readValue(File("../test-vectors/credentials/create_failure.json"), typeRef)
+
+    testVectors.vectors.forEach { vector ->
       assertFails(vector.description) {
-        VerifiableCredential.fromJson(mapper.writeValueAsString(testInput.credential))
+        VerifiableCredential.fromJson(mapper.writeValueAsString(vector.input.credential))
       }
     }
   }
