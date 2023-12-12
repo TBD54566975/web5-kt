@@ -188,7 +188,7 @@ public class Convert<T>(private val value: T, private val kind: EncodingFormat? 
    * - [NullPointerException] when the [value] is null.
    */
   private fun handleNotSupported(): Nothing {
-    value?.let {
+    this.value?.let {
       throw UnsupportedOperationException("converting from ${it::class} not supported")
     } ?: throw NullPointerException("value is null")
   }
