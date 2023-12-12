@@ -238,10 +238,6 @@ class Web5TestVectorsCredentialsTest {
     val vcJwt: String,
   )
 
-  data class VerifySuccessInput(
-    val vcJwt: LinkedHashMap<String,String>,
-  )
-
   private val mapper = jacksonObjectMapper()
 
   @Test
