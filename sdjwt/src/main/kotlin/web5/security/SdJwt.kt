@@ -61,6 +61,7 @@ public class SdJwt(
    * [issuerJwt] must have been previously signed.
    * [keyBindingJwt], if present, must have been previously signed.
    */
+  @JvmOverloads
   public fun serialize(mapper: ObjectMapper = defaultMapper): String {
     if (serializedSdJwt != null) {
       return serializedSdJwt
@@ -206,6 +207,7 @@ public class SdJwt(
   /**
    * Returns the digest for the disclosure that matches [name].
    */
+  @JvmOverloads
   public fun digestsOf(name: String, disclosedValue: Any? = null): String? {
     val hashAlg = issuerJwt.jwtClaimsSet.getHashAlg()
     val objectDisclosure = disclosures.map { it as? ObjectDisclosure }.firstOrNull { it?.claimName == name }

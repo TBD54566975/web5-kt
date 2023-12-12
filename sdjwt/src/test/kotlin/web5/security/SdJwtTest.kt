@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.crypto.KeyManager
-import web5.sdk.dids.DidKey
+import web5.sdk.dids.methods.key.DidKey
 import java.io.File
 import java.io.IOException
 
