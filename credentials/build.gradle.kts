@@ -36,4 +36,5 @@ dependencies {
 
   testImplementation(kotlin("test"))
   testImplementation("com.willowtreeapps.assertk:assertk:0.27.0")
+  testImplementation(project(":testing"))
 }
