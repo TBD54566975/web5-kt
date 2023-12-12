@@ -18,3 +18,5 @@ web5.sdk.dids.methods.ion.models
 web5.sdk.dids.methods.jwk
 web5.sdk.dids.methods.key
 web5.sdk.dids.methods.web
+module:testing
+web5.sdk.testing
