@@ -3,7 +3,9 @@ package web5.sdk.credentials
 import assertk.assertFailure
 import assertk.assertions.messageContains
 import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.assertDoesNotThrow
@@ -11,6 +13,7 @@ import org.junit.jupiter.api.assertThrows
 import web5.sdk.credentials.model.PresentationDefinitionV2
 import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.dids.methods.key.DidKey
+import web5.sdk.testing.TestVectors
 import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -552,32 +555,27 @@ class PresentationExchangeTest {
 
 
 class Web5TestVectorsPresentationExchangeTest {
-  private val jsonMapper: ObjectMapper = ObjectMapper()
-    .registerKotlinModule()
-    .setSerializationInclusion(JsonInclude.Include.NON_NULL)
+  data class SelectCredTestInput(
+    val presentationDefinition: PresentationDefinitionV2,
+    val credentialJwts: List<String>
+  )
+
+  data class SelectCredTestOutput(
+    val selectedCredentials: List<String>
+  )
+
+  private val mapper = jacksonObjectMapper()
   @Test
   fun select_credentials() {
-    val jsonString = File("../test-vectors/presentation-exchange/select_credentials.json").readText()
-    val jsonNode = jsonMapper.readTree(jsonString)
+    val typeRef = object : TypeReference<TestVectors<SelectCredTestInput, SelectCredTestOutput>>() {}
+    val testVectors = mapper.readValue(File("../test-vectors/presentation_exchange/select_credentials.json"), typeRef)
 
-    val vectors = jsonNode.get("vectors")
-
-    for (i in 0 until vectors.size()) {
-      val input = vectors[i].get("input")
-
-      val inputPdJsonString = input.get("presentationDefinition").toString()
-      val inputVcJwts = input.get("credentialJwts").map { it.asText() }
-
-      val expectedOutput = vectors[i].get("output").get("selectedCredentials").map { it.asText() }
-
-      val inputPd = jsonMapper.readValue(
-        inputPdJsonString,
-        PresentationDefinitionV2::class.java
+    testVectors.vectors.forEach { vector ->
+      val selectedCreds = PresentationExchange.selectCredentials(
+        vector.input.credentialJwts,
+        vector.input.presentationDefinition
       )
-
-      val selectedCreds = PresentationExchange.selectCredentials(inputVcJwts, inputPd)
-
-      assertEquals(expectedOutput, selectedCreds)
+      assertEquals(vector.output!!.selectedCredentials, selectedCreds)
     }
   }
 }
