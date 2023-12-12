@@ -208,7 +208,7 @@ internal class DhtClient(
     }
 
     /** Encodes a byte array according to https://en.wikipedia.org/wiki/Bencode. */
-    private fun bencode(bs: ByteArray): ByteArray {
+    internal fun bencode(bs: ByteArray): ByteArray {
       val out = ByteArrayOutputStream()
       val l = bs.size.toString()
       out.write(l.toByteArray(charset("UTF-8")))

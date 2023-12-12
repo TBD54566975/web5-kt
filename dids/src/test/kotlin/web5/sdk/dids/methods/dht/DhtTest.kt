@@ -3,11 +3,9 @@ package web5.sdk.dids.methods.dht
 import com.nimbusds.jose.jwk.Curve
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
-import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
-import io.ktor.http.headersOf
-import io.ktor.utils.io.ByteReadChannel
+import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
@@ -15,13 +13,54 @@ import org.junit.jupiter.api.assertThrows
 import web5.sdk.crypto.Ed25519
 import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.crypto.Secp256k1
-import java.io.File
+import web5.sdk.dids.methods.dht.DhtClient.Companion.bencode
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
-import kotlin.text.hexToByteArray
 
 class DhtTest {
+  @Nested
+  inner class BencodeTest {
+    @Test
+    fun `encode an empty byte array`() {
+      val input = ByteArray(0)
+      val expected = "0:".toByteArray()
+      val result = bencode(input)
+      assertArrayEquals(expected, result)
+    }
+
+    @Test
+    fun `encode a byte array with a single byte`() {
+      val input = byteArrayOf(65)
+      val expected = "1:A".toByteArray()
+      val result = bencode(input)
+      assertArrayEquals(expected, result)
+    }
+
+    @Test
+    fun `encode a byte array with multiple bytes`() {
+      val input = byteArrayOf(65, 66, 67)
+      val expected = "3:ABC".toByteArray()
+      val result = bencode(input)
+      assertArrayEquals(expected, result)
+    }
+
+    @Test
+    fun `encode a byte array with special characters`() {
+      val input = byteArrayOf(35, 36, 37)
+      val expected = "3:#$%".toByteArray()
+      val result = bencode(input)
+      assertArrayEquals(expected, result)
+    }
+
+    @Test
+    fun `encode a very large byte array`() {
+      val input = ByteArray(1_000_000) { 65 }
+      val expected = "1000000:${"A".repeat(1_000_000)}".toByteArray()
+      val result = bencode(input)
+      assertArrayEquals(expected, result)
+    }
+  }
 
   @Nested
   inner class Bep44Test {
