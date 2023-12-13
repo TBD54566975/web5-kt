@@ -71,7 +71,7 @@ public object PresentationExchange {
   }
 
   /**
-   * Creates a Presentation Submission in which the list of Verifiable Credentials JWTs (VCs) fulfills the given Presentation Definition. 
+   * Creates a Presentation Submission in which the list of Verifiable Credentials JWTs (VCs) fulfills the given Presentation Definition.
    * Presentation Definition.
    *
    *
@@ -106,7 +106,8 @@ public object PresentationExchange {
           id = inputDescriptor.id,
           path = "$.verifiableCredential[$vcIndex]",
           format = "jwt_vc"
-        ))
+        )
+      )
     }
 
     return PresentationSubmission(
@@ -120,11 +121,16 @@ public object PresentationExchange {
     vcJwtList: Iterable<String>,
     presentationDefinition: PresentationDefinitionV2
   ): Map<InputDescriptorV2, List<String>> {
+    val vcJwtListWithNodes = vcJwtList.zip(vcJwtList.map { vcJwt ->
+      val vc = JWTParser.parse(vcJwt) as SignedJWT
+
+      JsonPath.parse(vc.payload.toString())
+        ?: throw JsonPathParseException()
+    })
     return presentationDefinition.inputDescriptors.associateWith { inputDescriptor ->
-      val satisfyingVCs = vcJwtList.filter { vcJwt ->
-        vcSatisfiesInputDescriptor(vcJwt, inputDescriptor)
-      }
-      satisfyingVCs
+      vcJwtListWithNodes.filter { (_, node) ->
+        vcSatisfiesInputDescriptor(node, inputDescriptor)
+      }.map { (vcJwt, _) -> vcJwt }
     }.filterValues { it.isNotEmpty() }
   }
 
@@ -144,14 +150,9 @@ public object PresentationExchange {
    */
   @Throws(JsonPathParseException::class)
   private fun vcSatisfiesInputDescriptor(
-    vcJwt: String,
+    vcPayloadJson: JsonNode,
     inputDescriptor: InputDescriptorV2
   ): Boolean {
-    val vc = JWTParser.parse(vcJwt) as SignedJWT
-
-    val vcPayloadJson = JsonPath.parse(vc.payload.toString())
-      ?: throw JsonPathParseException()
-
     // If the Input Descriptor has constraints and fields defined, evaluate them.
     inputDescriptor.constraints.fields?.let { fields ->
       val requiredFields = fields.filter { field -> field.optional != true }
