@@ -22,7 +22,7 @@ jobs:
           path: ~/.gradle/caches
           key: gradle-ubuntu-latest-${{ hashFiles('**/*.gradle.kts') }}-${{ hashFiles('**/gradle/wrapper/gradle-wrapper.properties') }}-${{ hashFiles('**/versions.properties') }}
 
-      - name: Publish packages to sonatype staging
+      - name: Sonatype Publish Close And Release
         run: |
           if [ -n "${{ github.event.inputs.version }}" ]; then
             ./gradlew -Pversion=${{ github.event.inputs.version }} publishToSonatype closeAndReleaseSonatypeStagingRepository
