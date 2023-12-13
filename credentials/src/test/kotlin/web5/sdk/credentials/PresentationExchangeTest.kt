@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
 import web5.sdk.credentials.model.PresentationDefinitionV2
+import web5.sdk.credentials.model.PresentationSubmission
 import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.dids.methods.key.DidKey
 import web5.sdk.testing.TestVectors
@@ -576,6 +577,42 @@ class Web5TestVectorsPresentationExchangeTest {
         vector.input.presentationDefinition
       )
       assertEquals(vector.output!!.selectedCredentials, selectedCreds)
+    }
+  }
+
+  data class CreatePresFromCredTestInput(
+    val presentationDefinition: PresentationDefinitionV2,
+    val credentialJwts: List<String>
+  )
+
+  data class CreatePresFromCredTestOutput(
+    val presentationSubmission: PresentationSubmission
+  )
+
+  @Test
+  fun create_presentation_from_credentials() {
+    val typeRef = object : TypeReference<TestVectors<CreatePresFromCredTestInput, CreatePresFromCredTestOutput>>() {}
+    val testVectors = mapper.readValue(
+      File("../test-vectors/presentation_exchange/create_presentation_from_credentials.json"),
+      typeRef
+    )
+
+    testVectors.vectors.forEach { vector ->
+      val presSubmission = PresentationExchange.createPresentationFromCredentials(
+        vector.input.credentialJwts,
+        vector.input.presentationDefinition
+      )
+
+      val vectorOutputPresSubmission = vector.output!!.presentationSubmission
+
+      assertEquals(vectorOutputPresSubmission.definitionId, presSubmission.definitionId)
+      assertEquals(vectorOutputPresSubmission.descriptorMap.size, presSubmission.descriptorMap.size)
+
+      for (i in vectorOutputPresSubmission.descriptorMap.indices) {
+        assertEquals(vectorOutputPresSubmission.descriptorMap[i].id, presSubmission.descriptorMap[i].id)
+        assertEquals(vectorOutputPresSubmission.descriptorMap[i].format, presSubmission.descriptorMap[i].format)
+        assertEquals(vectorOutputPresSubmission.descriptorMap[i].path, presSubmission.descriptorMap[i].path)
+      }
     }
   }
 }
