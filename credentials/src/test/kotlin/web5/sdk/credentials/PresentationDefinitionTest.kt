@@ -11,6 +11,10 @@ import org.erdtman.jcs.JsonCanonicalizer
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
+import web5.sdk.credentials.model.ConstraintsV2
+import web5.sdk.credentials.model.FieldV2
+import web5.sdk.credentials.model.InputDescriptorV2
+import web5.sdk.credentials.model.PresentationDefinitionV2
 import java.io.File
 
 class PresentationDefinitionTest {

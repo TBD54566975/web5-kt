@@ -3,6 +3,7 @@ build/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
 !**/src/test/**/build/
+**/cacheDir/
 
 ### IntelliJ IDEA ###
 .idea
@@ -41,3 +42,6 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+
+### EnvFiles ###
+*.env

@@ -9,7 +9,7 @@ import foundation.identity.did.Service
 import foundation.identity.did.VerificationMethod
 import foundation.identity.did.parser.ParserException
 import io.ktor.client.engine.HttpClientEngine
-import io.ktor.client.engine.cio.CIO
+import io.ktor.client.engine.okhttp.OkHttp
 import org.xbill.DNS.DClass
 import org.xbill.DNS.Message
 import org.xbill.DNS.Name
@@ -38,11 +38,11 @@ import java.net.URI
  * Configuration for the [DidDhtApi].
  *
  * @property gateway The DID DHT gateway URL.
- * @property engine The engine to use. When absent, a new one will be created from the [CIO] factory.
+ * @property engine The engine to use. When absent, a new one will be created from the [OkHttp] factory.
  */
 public class DidDhtConfiguration internal constructor(
   public val gateway: String = "https://diddht.tbddev.org",
-  public var engine: HttpClientEngine = CIO.create {},
+  public var engine: HttpClientEngine = OkHttp.create {},
 )
 
 /**
@@ -240,6 +240,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
    * @throws IllegalArgumentException if the provided DID does not conform to the "did:dht" method.
    * @throws Exception if the message is not successfully put to the DHT.
    */
+  @JvmOverloads
   public fun publish(manager: KeyManager, didDocument: DIDDocument, types: List<DidDhtTypeIndexing>? = null) {
     validate(didDocument.id.toString())
     val publishId = DidDht.suffix(didDocument.id.toString())
@@ -326,6 +327,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
    * @param types A list of types to include in the packet.
    * @return A [Message] instance containing the DNS packet.
    */
+  @JvmOverloads
   internal fun toDnsPacket(didDocument: DIDDocument, types: List<DidDhtTypeIndexing>? = null): Message {
     val message = Message(0).apply { header.setFlag(5) } // Set authoritative answer flag
 
@@ -598,6 +600,7 @@ public class DidDht(
   /**
    * Calls [DidDht.suffix] with the provided [id] and returns the result.
    */
+  @JvmOverloads
   public fun suffix(id: String = this.uri): String {
     return DidDht.suffix(id)
   }
@@ -605,6 +608,7 @@ public class DidDht(
   /**
    * Calls [DidDht.validate] with the provided [did].
    */
+  @JvmOverloads
   public fun validate(did: String = this.uri) {
     DidDht.validate(did)
   }
@@ -612,6 +616,7 @@ public class DidDht(
   /**
    * Calls [DidDht.toDnsPacket] with the provided [didDocument] and [types] and returns the result.
    */
+  @JvmOverloads
   public fun toDnsPacket(didDocument: DIDDocument, types: List<DidDhtTypeIndexing>? = emptyList()): Message {
     return DidDht.toDnsPacket(didDocument, types)
   }
@@ -619,6 +624,7 @@ public class DidDht(
   /**
    * Calls [DidDht.fromDnsPacket] with the provided [did] and [msg] and returns the result.
    */
+  @JvmOverloads
   public fun fromDnsPacket(did: String = this.uri, msg: Message): Pair<DIDDocument, List<DidDhtTypeIndexing>> {
     return DidDht.fromDnsPacket(did, msg)
   }

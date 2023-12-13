@@ -4,7 +4,7 @@ import com.nimbusds.jose.jwk.JWK
 import com.turn.ttorrent.bcodec.BEncoder
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.HttpClientEngine
-import io.ktor.client.engine.cio.CIO
+import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.request.get
 import io.ktor.client.request.put
 import io.ktor.client.request.setBody
@@ -19,6 +19,7 @@ import org.xbill.DNS.Message
 import web5.sdk.common.ZBase32
 import web5.sdk.crypto.Ed25519
 import web5.sdk.crypto.KeyManager
+import web5.sdk.dids.exceptions.PkarrRecordResponseException
 import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -29,7 +30,7 @@ import java.security.SignatureException
  */
 internal class DhtClient(
   private val gateway: String = "https://diddht.tbddev.org",
-  engine: HttpClientEngine = CIO.create()
+  engine: HttpClientEngine = OkHttp.create()
 ) {
 
   private val client = HttpClient(engine)
@@ -65,7 +66,7 @@ internal class DhtClient(
 
     if (!response.status.isSuccess()) {
       val err = runBlocking { response.bodyAsText() }
-      throw RuntimeException("Error putting message to DHT: $err")
+      throw PkarrRecordResponseException("Error writing Pkarr Record Set for id $id. Error: $err")
     }
   }
 
@@ -76,8 +77,9 @@ internal class DhtClient(
    * @param id The z-base-32 encoded identifier of the message to get (e.g. a did:dht suffix value) [String].
    * @return A BEP44 message [Bep44Message].
    * @throws IllegalArgumentException if the identifier is not a z-base-32 encoded Ed25519 public key.
-   * @throws Exception if the message is not successfully retrieved from the DHT.
+   * @throws PkarrRecordResponseException if the response from the dht gateway is not successful.
    */
+  @Throws(PkarrRecordResponseException::class)
   fun pkarrGet(id: String): Bep44Message {
     val publicKey = ZBase32.decode(id)
     require(publicKey.size == 32) {
@@ -86,7 +88,8 @@ internal class DhtClient(
 
     val response = runBlocking { client.get("${gateway}/${id}") }
     if (!response.status.isSuccess()) {
-      throw RuntimeException("Error getting message from DHT")
+      val err = runBlocking { response.bodyAsText() }
+      throw PkarrRecordResponseException("Error reading Pkarr Record Set of id $id. Error: $err")
     }
 
     val responseBytes = runBlocking { response.readBytes() }

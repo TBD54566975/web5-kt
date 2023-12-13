@@ -5,7 +5,7 @@ import foundation.identity.did.DID
 import foundation.identity.did.DIDDocument
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.HttpClientEngine
-import io.ktor.client.engine.cio.CIO
+import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.get
 import io.ktor.client.statement.bodyAsText
@@ -13,7 +13,12 @@ import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import io.ktor.serialization.jackson.jackson
+import jdk.jshell.spi.ExecutionControl.NotImplementedException
 import kotlinx.coroutines.runBlocking
+import okhttp3.Cache
+import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.OkHttpClient
+import okhttp3.dnsoverhttps.DnsOverHttps
 import web5.sdk.crypto.KeyManager
 import web5.sdk.dids.CreateDidOptions
 import web5.sdk.dids.Did
@@ -22,6 +27,8 @@ import web5.sdk.dids.DidResolutionResult
 import web5.sdk.dids.ResolveDidOptions
 import web5.sdk.dids.methods.ion.InvalidStatusException
 import web5.sdk.dids.validateKeyMaterialInsideKeyManager
+import java.io.File
+import java.net.InetAddress
 import java.net.URL
 import java.net.URLDecoder
 import kotlin.text.Charsets.UTF_8
@@ -41,7 +48,7 @@ import kotlin.text.Charsets.UTF_8
  * val did = StatefulWebDid("did:web:tbd.website", keyManager)
  * ```
  */
-public class DidWeb internal constructor(
+public class DidWeb(
   uri: String,
   keyManager: KeyManager,
   private val didWebApi: DidWebApi
@@ -60,10 +67,10 @@ public class DidWeb internal constructor(
 /**
  * Configuration options for the [DidWebApi].
  *
- * - [engine] is used to override the default ktor engine, which is [CIO].
+ * - [engine] is used to override the default ktor engine, which is [OkHttp].
  */
 public class DidWebApiConfiguration internal constructor(
-  public var engine: HttpClientEngine? = CIO.create { },
+  public var engine: HttpClientEngine? = null,
 )
 
 /**
@@ -88,7 +95,18 @@ public sealed class DidWebApi(
 
   private val mapper = jacksonObjectMapper()
 
-  private val engine: HttpClientEngine = configuration.engine ?: CIO.create {}
+  private val engine: HttpClientEngine = configuration.engine ?: OkHttp.create {
+    val appCache = Cache(File("cacheDir", "okhttpcache"), 10 * 1024 * 1024)
+    val bootstrapClient = OkHttpClient.Builder().cache(appCache).build()
+
+    val dns = DnsOverHttps.Builder().client(bootstrapClient)
+      .url("https://dns.quad9.net/dns-query".toHttpUrl())
+      .bootstrapDnsHosts(InetAddress.getByName("9.9.9.9"), InetAddress.getByName("149.112.112.112"))
+      .build()
+
+    val client = bootstrapClient.newBuilder().dns(dns).build()
+    preconfigured = client
+  }
 
   private val client = HttpClient(engine) {
     install(ContentNegotiation) {
@@ -142,6 +160,6 @@ public sealed class DidWebApi(
   }
 
   public override fun create(keyManager: KeyManager, options: CreateDidOptions?): DidWeb {
-    throw RuntimeException("create operation not supported for did:web")
+    throw UnsupportedOperationException("Create operation is not supported for did:web")
   }
 }

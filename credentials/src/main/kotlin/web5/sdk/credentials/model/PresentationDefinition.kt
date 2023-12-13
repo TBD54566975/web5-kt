@@ -1,4 +1,4 @@
-package web5.sdk.credentials
+package web5.sdk.credentials.model
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
@@ -15,7 +15,7 @@ import com.networknt.schema.SpecVersion
  * proof requirements, and a Presentation Submission data format Holders can use to describe proofs submitted in
  * accordance with them.
  *
- * @see [Presentation Definition](https://identity.foundation/presentation-exchange/#presentation-definition)
+ * @see [Presentation Definition](https://identity.foundation/presentation-exchange/spec/v2.0.0/#presentation-definition)
  */
 
 public class PresentationDefinitionV2(
@@ -33,7 +33,7 @@ public class PresentationDefinitionV2(
 /**
  * Represents an input descriptor in a presentation definition.
  *
- * @see [Input Descriptor](https://identity.foundation/presentation-exchange/#input-descriptor-object)
+ * @see [Input Descriptor](https://identity.foundation/presentation-exchange/spec/v2.0.0/#input-descriptor-object)
  */
 public class InputDescriptorV2(
   public val id: String,
@@ -46,7 +46,7 @@ public class InputDescriptorV2(
 /**
  * Represents constraints for an input descriptor.
  *
- * @See 'contraints object' defined in [Input Descriptor](https://identity.foundation/presentation-exchange/#input-descriptor-object)
+ * @See 'contraints object' defined in [Input Descriptor](https://identity.foundation/presentation-exchange/spec/v2.0.0/#input-descriptor-object)
  */
 public class ConstraintsV2(
   public val fields: List<FieldV2>? = null,
@@ -57,7 +57,7 @@ public class ConstraintsV2(
 /**
  * Represents a field in a presentation input descriptor.
  *
- * @See 'fields object' as defined in [Input Descriptor](https://identity.foundation/presentation-exchange/#input-descriptor-object)
+ * @See 'fields object' as defined in [Input Descriptor](https://identity.foundation/presentation-exchange/spec/v2.0.0/#input-descriptor-object)
  */
 public class FieldV2(
   public val id: String? = null,
@@ -81,7 +81,7 @@ public class FieldV2(
 
 /**
  * Enumeration representing consumer disclosure options. Represents the possible values of `limit_disclosure' property
- * as defined in [Input Descriptor](https://identity.foundation/presentation-exchange/#input-descriptor-object)
+ * as defined in [Input Descriptor](https://identity.foundation/presentation-exchange/spec/v2.0.0/#input-descriptor-object)
  */
 public enum class ConformantConsumerDisclosure(public val str: String) {
   REQUIRED("required"),
@@ -92,7 +92,7 @@ public enum class ConformantConsumerDisclosure(public val str: String) {
 /**
  * Represents the format of a presentation definition.
  *
- * @See 'format' as defined in [Input Descriptor](https://identity.foundation/presentation-exchange/#input-descriptor-object) and [Registry](https://identity.foundation/claim-format-registry/#registry)
+ * @See 'format' as defined in [Input Descriptor](https://identity.foundation/presentation-exchange/spec/v2.0.0/#input-descriptor-object) and [Registry](https://identity.foundation/claim-format-registry/#registry)
  */
 public class Format(
   public val jwt: JwtObject? = null,

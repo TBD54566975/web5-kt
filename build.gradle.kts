@@ -12,6 +12,9 @@ plugins {
   `maven-publish`
   id("org.jetbrains.dokka") version "1.9.0"
   id("org.jetbrains.kotlinx.kover") version "0.7.3"
+  signing
+  idea
+  id("io.github.gradle-nexus.publish-plugin") version "1.3.0"
 }
 
 repositories {
@@ -19,15 +22,22 @@ repositories {
 }
 
 dependencies {
-  detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.23.1")
+  api(project(":common"))
+  api(project(":credentials"))
+  api(project(":crypto"))
+  api(project(":dids"))
 }
 
 allprojects {
-  version = "0.0.9"
-  group = "web5"
+  group = "xyz.block"
 }
 
 subprojects {
+  repositories {
+    mavenCentral()
+    maven("https://jitpack.io")
+  }
+
   apply {
     plugin("io.gitlab.arturbosch.detekt")
     plugin("org.jetbrains.kotlin.jvm")
@@ -35,18 +45,68 @@ subprojects {
     plugin("maven-publish")
     plugin("org.jetbrains.dokka")
     plugin("org.jetbrains.kotlinx.kover")
+    plugin("maven-publish")
+    plugin("signing")
+    plugin("idea")
   }
 
   tasks.withType<Detekt>().configureEach {
     jvmTarget = "1.8"
   }
 
+  sourceSets {
+    create("intTest") {
+      compileClasspath += sourceSets.main.get().output
+      runtimeClasspath += sourceSets.main.get().output
+    }
+  }
+
+  val intTestImplementation by configurations.getting {
+    extendsFrom(configurations.implementation.get())
+  }
+  val intTestRuntimeOnly by configurations.getting
+
+  configurations["intTestRuntimeOnly"].extendsFrom(configurations.runtimeOnly.get())
+
   dependencies {
     detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.23.1")
+    detektPlugins("com.github.TBD54566975:tbd-detekt-rules:v0.0.2")
 
     testImplementation("org.junit.jupiter:junit-jupiter:5.9.2")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+
+    intTestImplementation(kotlin("test"))
+    intTestImplementation("org.junit.jupiter:junit-jupiter:5.9.2")
+    intTestRuntimeOnly("org.junit.platform:junit-platform-launcher")
   }
+
+  idea {
+    module {
+      testSources.from(sourceSets["intTest"].java.srcDirs)
+      testSources.from(sourceSets["intTest"].kotlin.srcDirs)
+    }
+  }
+
+  val integrationTest = task<Test>("integrationTest") {
+    description = "Runs integration tests."
+    group = "verification"
+
+    testClassesDirs = sourceSets["intTest"].output.classesDirs
+    classpath = sourceSets["intTest"].runtimeClasspath
+    shouldRunAfter("test")
+
+    useJUnitPlatform()
+
+    testLogging {
+      events("passed", "skipped", "failed", "standardOut", "standardError")
+      exceptionFormat = TestExceptionFormat.FULL
+      showExceptions = true
+      showCauses = true
+      showStackTraces = true
+    }
+  }
+
+  tasks.check { dependsOn(integrationTest) }
 
   detekt {
     config.setFrom("$rootDir/config/detekt.yml")
@@ -69,14 +129,50 @@ subprojects {
     targetCompatibility = JavaVersion.VERSION_11
   }
 
+  val publicationName = "${rootProject.name}-${project.name}"
   publishing {
     publications {
-      create<MavenPublication>("web5") {
+      create<MavenPublication>(publicationName) {
         groupId = project.group.toString()
-        artifactId = project.name.toString()
-        version = project.version.toString()
+        artifactId = name
+        description = "Kotlin SDK for web5 functionality"
+        version = project.property("version").toString()
         from(components["java"])
       }
+      withType<MavenPublication> {
+        pom {
+          name = publicationName
+          packaging = "jar"
+          description.set("web5 kotlin SDK")
+          url.set("https://github.com/TBD54566975/web5-kt")
+          inceptionYear.set("2023")
+          licenses {
+            license {
+              name.set("The Apache License, Version 2.0")
+              url.set("https://github.com/TBD54566975/web5-kt/blob/main/LICENSE")
+            }
+          }
+          developers {
+            developer {
+              id.set("TBD54566975")
+              name.set("Block Inc.")
+              email.set("tbd-releases@tbd.email")
+            }
+          }
+          scm {
+            connection.set("scm:git:git@github.com:TBD54566975/web5-kt.git")
+            developerConnection.set("scm:git:ssh:git@github.com:TBD54566975/web5-kt.git")
+            url.set("https://github.com/TBD54566975/web5-kt")
+          }
+        }
+      }
+    }
+
+    signing {
+      val signingKey: String? by project
+      val signingPassword: String? by project
+      useInMemoryPgpKeys(signingKey, signingPassword)
+      sign(publishing.publications[publicationName])
     }
   }
 
@@ -103,6 +199,9 @@ subprojects {
 
   tasks.test {
     useJUnitPlatform()
+    reports {
+      junitXml
+    }
     testLogging {
       events("passed", "skipped", "failed", "standardOut", "standardError")
       exceptionFormat = TestExceptionFormat.FULL
@@ -117,4 +216,58 @@ subprojects {
 // this will not affect subprojects
 tasks.dokkaHtmlMultiModule {
   moduleName.set("Web5 SDK Documentation")
+}
+
+publishing {
+  publications {
+    create<MavenPublication>("web5") {
+      groupId = project.group.toString()
+      artifactId = name
+      description = "Kotlin SDK for web5 functionality"
+      version = project.property("version").toString()
+      from(components["java"])
+
+      pom {
+        packaging = "jar"
+        name = project.name
+        description.set("web5 kotlin SDK")
+        url.set("https://github.com/TBD54566975/web5-kt")
+        inceptionYear.set("2023")
+        licenses {
+          license {
+            name.set("The Apache License, Version 2.0")
+            url.set("https://github.com/TBD54566975/web5-kt/blob/main/LICENSE")
+          }
+        }
+        developers {
+          developer {
+            id.set("TBD54566975")
+            name.set("Block Inc.")
+            email.set("tbd-releases@tbd.email")
+          }
+        }
+        scm {
+          connection.set("scm:git:git@github.com:TBD54566975/web5-kt.git")
+          developerConnection.set("scm:git:ssh:git@github.com:TBD54566975/web5-kt.git")
+          url.set("https://github.com/TBD54566975/web5-kt")
+        }
+      }
+    }
+  }
+}
+
+signing {
+  val signingKey: String? by project
+  val signingPassword: String? by project
+  useInMemoryPgpKeys(signingKey, signingPassword)
+  sign(publishing.publications["web5"])
+}
+
+nexusPublishing {
+  repositories {
+    sonatype {  //only for users registered in Sonatype after 24 Feb 2021
+      nexusUrl.set(uri("https://s01.oss.sonatype.org/service/local/"))
+      snapshotRepositoryUrl.set(uri("https://s01.oss.sonatype.org/content/repositories/snapshots/"))
+    }
+  }
 }

@@ -74,6 +74,7 @@ public object Crypto {
    * @return The generated private key as a JWK object.
    * @throws IllegalArgumentException if the provided algorithm or curve is not supported.
    */
+  @JvmOverloads
   public fun generatePrivateKey(algorithm: Algorithm, curve: Curve? = null, options: KeyGenOptions? = null): JWK {
     val keyGenerator = getKeyGenerator(algorithm, curve)
     return keyGenerator.generatePrivateKey(options)
@@ -104,6 +105,7 @@ public object Crypto {
    * @param options Options for the signing operation, may include specific parameters relevant to the algorithm.
    * @return The digital signature as a byte array.
    */
+  @JvmOverloads
   public fun sign(privateKey: JWK, payload: ByteArray, options: SignOptions? = null): ByteArray {
     val rawCurve = privateKey.toJSONObject()["crv"]
     val curve = rawCurve?.let { Curve.parse(it.toString()) }
@@ -135,6 +137,7 @@ public object Crypto {
    *                                  provides an algorithm.
    *
    */
+  @JvmOverloads
   public fun verify(publicKey: JWK, signedPayload: ByteArray, signature: ByteArray, algorithm: Algorithm? = null) {
     val alg = publicKey.algorithm ?: algorithm
     ?: throw IllegalArgumentException("Algorithm must either be set on JWK or provided explicitly.")
@@ -183,6 +186,7 @@ public object Crypto {
    * @return The corresponding [KeyGenerator].
    * @throws IllegalArgumentException if the algorithm or curve is not supported.
    */
+  @JvmOverloads
   public fun getKeyGenerator(algorithm: Algorithm?, curve: Curve? = null): KeyGenerator {
     return keyGenerators.getOrElse(Pair(algorithm, curve)) {
       throw IllegalArgumentException("Algorithm $algorithm not supported")
@@ -216,6 +220,7 @@ public object Crypto {
    * @return The corresponding [Signer].
    * @throws IllegalArgumentException if the algorithm or curve is not supported.
    */
+  @JvmOverloads
   public fun getSigner(algorithm: Algorithm?, curve: Curve? = null): Signer {
     return signers.getOrElse(Pair(algorithm, curve)) {
       throw IllegalArgumentException("Algorithm $algorithm not supported")
@@ -233,6 +238,7 @@ public object Crypto {
    * @return The corresponding [Signer] capable of verification.
    * @throws IllegalArgumentException if the algorithm or curve is not supported.
    */
+  @JvmOverloads
   public fun getVerifier(algorithm: Algorithm, curve: Curve? = null): Signer {
     return getSigner(algorithm, curve)
   }

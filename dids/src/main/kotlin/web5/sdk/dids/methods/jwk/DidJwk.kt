@@ -53,7 +53,7 @@ public class CreateDidJwkOptions(
  *
  * @constructor Initializes a new instance of [DidJwk] with the provided [uri] and [keyManager].
  */
-public class DidJwk private constructor(uri: String, keyManager: KeyManager) : Did(uri, keyManager) {
+public class DidJwk(uri: String, keyManager: KeyManager) : Did(uri, keyManager) {
   /**
    * Resolves the current instance's [uri] to a [DidResolutionResult], which contains the DID Document
    * and possible related metadata.

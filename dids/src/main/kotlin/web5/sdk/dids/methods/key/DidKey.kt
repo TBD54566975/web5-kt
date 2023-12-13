@@ -53,7 +53,7 @@ public class CreateDidKeyOptions(
  *
  * @constructor Initializes a new instance of [DidKey] with the provided [uri] and [keyManager].
  */
-public class DidKey private constructor(uri: String, keyManager: KeyManager) : Did(uri, keyManager) {
+public class DidKey(uri: String, keyManager: KeyManager) : Did(uri, keyManager) {
   /**
    * Resolves the current instance's [uri] to a [DidResolutionResult], which contains the DID Document
    * and possible related metadata.

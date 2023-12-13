@@ -73,6 +73,7 @@ public class Convert<T>(private val value: T, private val kind: EncodingFormat? 
    *
    * Note: If the value type is unsupported for this conversion, the method will throw an exception.
    */
+  @JvmOverloads
   public fun toBase64Url(padding: Boolean = true): String {
     val encoder = if (padding) B64URL_ENCODER else B64URL_ENCODER.withoutPadding()
 
@@ -187,7 +188,7 @@ public class Convert<T>(private val value: T, private val kind: EncodingFormat? 
    * - [NullPointerException] when the [value] is null.
    */
   private fun handleNotSupported(): Nothing {
-    value?.let {
+    this.value?.let {
       throw UnsupportedOperationException("converting from ${it::class} not supported")
     } ?: throw NullPointerException("value is null")
   }
