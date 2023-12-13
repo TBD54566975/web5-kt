@@ -27,9 +27,9 @@ jobs:
         # TODO: Change to closeAndReleaseSonatypeStagingRepository once we are confident that the workflow works as expected.
         run: |
           if [ -n "${{ github.event.inputs.version }}" ]; then
-            ./gradlew -Pversion=${{ github.event.inputs.version }} :publishToSonatype :closeSonatypeStagingRepository
+            ./gradlew -Pversion=${{ github.event.inputs.version }} publishToSonatype closeSonatypeStagingRepository
           else
-            ./gradlew -Pversion=$(echo "${{ github.ref_name }}" | cut -c2-) :publishToSonatype :closeSonatypeStagingRepository
+            ./gradlew -Pversion=$(echo "${{ github.ref_name }}" | cut -c2-) publishToSonatype closeSonatypeStagingRepository
           fi
         env:
           ORG_GRADLE_PROJECT_signingKey: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGKEY }}
