@@ -17,7 +17,7 @@ plugins {
   id("io.github.gradle-nexus.publish-plugin") version "1.3.0"
 }
 
-configurations.all{
+configurations.all {
   resolutionStrategy {
     // Pin the transitive dep to a version that's not vulnerable.
     force("com.fasterxml.woodstox:woodstox-core:6.4.0")
@@ -57,6 +57,13 @@ subprojects {
     plugin("maven-publish")
     plugin("signing")
     plugin("idea")
+  }
+
+  configurations.all {
+    resolutionStrategy {
+      // Pin the transitive dep to a version that's not vulnerable.
+      force("com.fasterxml.woodstox:woodstox-core:6.4.0")
+    }
   }
 
   tasks.withType<Detekt>().configureEach {
