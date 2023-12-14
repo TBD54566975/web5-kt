@@ -17,6 +17,13 @@ plugins {
   id("io.github.gradle-nexus.publish-plugin") version "1.3.0"
 }
 
+configurations.all{
+  resolutionStrategy {
+    // Pin the transitive dep to a version that's not vulnerable.
+    force("com.fasterxml.woodstox:woodstox-core:6.4.0")
+  }
+}
+
 repositories {
   mavenCentral()
 }
@@ -80,9 +87,6 @@ subprojects {
     intTestImplementation(kotlin("test"))
     intTestImplementation("org.junit.jupiter:junit-jupiter:5.9.2")
     intTestRuntimeOnly("org.junit.platform:junit-platform-launcher")
-
-    // Pin the transitive dep to a version that's not vulnerable.
-    implementation("com.fasterxml.woodstox:woodstox-core:6.4.0")
   }
 
   idea {
