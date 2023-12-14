@@ -38,4 +38,5 @@ dependencies {
 
   implementation("dnsjava:dnsjava:3.5.2")
   implementation("com.github.mpetazzoni:ttorrent:ttorrent-2.0")
+  testImplementation(project(mapOf("path" to ":testing")))
 }

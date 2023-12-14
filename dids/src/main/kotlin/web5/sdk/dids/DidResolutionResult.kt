@@ -19,12 +19,27 @@ import web5.sdk.dids.methods.ion.models.MetadataMethod
 public class DidResolutionResult(
   @JsonProperty("@context")
   public var context: String? = null,
-  public var didDocument: DIDDocument,
-  public var didResolutionMetadata: DidResolutionMetadata? = null,
-  public var didDocumentMetadata: DidDocumentMetadata? = null
+  public var didDocument: DIDDocument = DIDDocument(),
+  public var didDocumentMetadata: DidDocumentMetadata = DidDocumentMetadata(),
+  public var didResolutionMetadata: DidResolutionMetadata = DidResolutionMetadata(),
 ) {
   override fun toString(): String {
     return objectMapper.writeValueAsString(this)
+  }
+
+  override fun equals(other: Any?): Boolean {
+    if (other is DidResolutionResult) {
+      return this.toString() == other.toString()
+    }
+    return false
+  }
+
+  override fun hashCode(): Int {
+    var result = context?.hashCode() ?: 0
+    result = 31 * result + didDocument.hashCode()
+    result = 31 * result + didDocumentMetadata.hashCode()
+    result = 31 * result + didResolutionMetadata.hashCode()
+    return result
   }
 
   private companion object {
@@ -45,7 +60,7 @@ public class DidResolutionResult(
 public class DidResolutionMetadata(
   public var contentType: String? = null,
   public var error: String? = null,
-  public var additionalProperties: MutableMap<String, Any> = mutableMapOf()
+  public var additionalProperties: MutableMap<String, Any>? = null,
 )
 
 /**

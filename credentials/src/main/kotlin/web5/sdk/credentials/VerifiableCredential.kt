@@ -232,11 +232,11 @@ public class VerifiableCredential internal constructor(public val vcDataModel: V
       val parsedDidUrl = DIDURL.fromString(verificationMethodId) // validates vm id which is a DID URL
 
       val didResolutionResult = DidResolvers.resolve(parsedDidUrl.did.didString)
-      if (didResolutionResult.didResolutionMetadata?.error != null) {
+      if (didResolutionResult.didResolutionMetadata.error != null) {
         throw SignatureException(
           "Signature verification failed: " +
             "Failed to resolve DID ${parsedDidUrl.did.didString}. " +
-            "Error: ${didResolutionResult.didResolutionMetadata?.error}"
+            "Error: ${didResolutionResult.didResolutionMetadata.error}"
         )
       }
 
