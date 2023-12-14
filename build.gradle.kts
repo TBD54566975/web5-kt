@@ -130,9 +130,9 @@ subprojects {
 
   kotlin {
     explicitApi()
-    jvmToolchain(17)
+    jvmToolchain(11)
     compilerOptions {
-      jvmTarget.set(JvmTarget.JVM_17)
+      jvmTarget.set(JvmTarget.JVM_11)
       apiVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_1_9)
       languageVersion.set(org.jetbrains.kotlin.gradle.dsl.KotlinVersion.KOTLIN_1_9)
     }
@@ -141,8 +141,8 @@ subprojects {
   java {
     withJavadocJar()
     withSourcesJar()
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
   }
 
   val publicationName = "${rootProject.name}-${project.name}"
