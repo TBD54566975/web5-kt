@@ -1,5 +1,7 @@
 package web5.sdk.dids.methods.jwk
 
+import com.fasterxml.jackson.core.type.TypeReference
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.jwk.JWK
 import org.erdtman.jcs.JsonCanonicalizer
@@ -8,7 +10,9 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import web5.sdk.common.Convert
 import web5.sdk.crypto.InMemoryKeyManager
+import web5.sdk.dids.DidResolutionResult
 import web5.sdk.dids.DidResolvers
+import web5.sdk.testing.TestVectors
 import java.io.File
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -112,6 +116,21 @@ class DidJwkTest {
 
       val expectedJson = File("src/test/resources/did_jwk_x25519_document.json").readText()
       assertEquals(JsonCanonicalizer(expectedJson).encodedString, JsonCanonicalizer(didDocument.toJson()).encodedString)
+    }
+  }
+}
+
+class Web5TestVectorsDidJwkTest {
+  private val mapper = jacksonObjectMapper()
+
+  @Test
+  fun resolve() {
+    val typeRef = object : TypeReference<TestVectors<String, DidResolutionResult>>() {}
+    val testVectors = mapper.readValue(File("../test-vectors/did_jwk/resolve.json"), typeRef)
+
+    testVectors.vectors.forEach { vector ->
+      val resolutionResult = DidJwk.resolve(vector.input)
+      assertEquals(vector.output, resolutionResult, vector.description)
     }
   }
 }
