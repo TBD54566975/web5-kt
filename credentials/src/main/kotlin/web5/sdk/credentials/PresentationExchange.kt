@@ -10,6 +10,7 @@ import com.nimbusds.jwt.SignedJWT
 import web5.sdk.credentials.model.DescriptorMap
 import web5.sdk.credentials.model.InputDescriptorV2
 import web5.sdk.credentials.model.PresentationDefinitionV2
+import web5.sdk.credentials.model.PresentationDefinitionV2Validator
 import web5.sdk.credentials.model.PresentationSubmission
 import java.util.UUID
 
@@ -71,7 +72,7 @@ public object PresentationExchange {
   }
 
   /**
-   * Creates a Presentation Submission in which the list of Verifiable Credentials JWTs (VCs) fulfills the given Presentation Definition. 
+   * Creates a Presentation Submission in which the list of Verifiable Credentials JWTs (VCs) fulfills the given Presentation Definition.
    * Presentation Definition.
    *
    *
@@ -114,6 +115,16 @@ public object PresentationExchange {
       definitionId = presentationDefinition.id,
       descriptorMap = descriptorMapList
     )
+  }
+
+  /**
+   * Validates whether an object is usable as a presentation definition or not.
+   *
+   * Throws an [IllegalArgumentException] if the provided object does not conform to the Presentation Definition
+   * Model as specified in https://identity.foundation/presentation-exchange/#presentation-definition.
+   */
+  public fun validateDefinition(presentationDefinition: PresentationDefinitionV2) {
+    PresentationDefinitionV2Validator.validate(presentationDefinition)
   }
 
   private fun mapInputDescriptorsToVCs(
