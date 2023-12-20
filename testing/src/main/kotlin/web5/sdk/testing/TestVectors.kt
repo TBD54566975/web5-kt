@@ -5,9 +5,9 @@ package web5.sdk.testing
  *
  * See https://github.com/TBD54566975/sdk-development/blob/main/web5-test-vectors/README.md for more details.
  */
-public class TestVectors<T>(
+public class TestVectors<I,O>(
   public val description: String,
-  public val vectors: List<TestVector<T>>
+  public val vectors: List<TestVector<I,O>>
 )
 
 /**
@@ -15,9 +15,9 @@ public class TestVectors<T>(
  *
  * See https://github.com/TBD54566975/sdk-development/blob/main/web5-test-vectors/README.md for more details.
  */
-public class TestVector<T>(
+public class TestVector<I,O>(
   public val description: String,
-  public val input: T,
-  public val output: String?,
+  public val input: I,
+  public val output: O?,
   public val errors: Boolean?,
 )

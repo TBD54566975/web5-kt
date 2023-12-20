@@ -7,7 +7,7 @@ import com.nfeld.jsonpathkt.JsonPath
 import com.nfeld.jsonpathkt.extension.read
 import com.nimbusds.jwt.JWTParser
 import com.nimbusds.jwt.SignedJWT
-import web5.sdk.credentials.model.DescriptorMap
+import web5.sdk.credentials.model.InputDescriptorMapping
 import web5.sdk.credentials.model.InputDescriptorV2
 import web5.sdk.credentials.model.PresentationDefinitionV2
 import web5.sdk.credentials.model.PresentationSubmission
@@ -21,19 +21,17 @@ public object PresentationExchange {
   /**
    * Selects credentials that satisfy a given presentation definition.
    *
-   * @param credentials The list of Verifiable Credentials to select from.
+   * @param vcJwts Iterable of VCs in JWT format to select from.
    * @param presentationDefinition The Presentation Definition to match against.
    * @return A list of Verifiable Credentials that satisfy the Presentation Definition.
-   * @throws UnsupportedOperationException If the method is untested and not recommended for use.
    */
   @Throws(UnsupportedOperationException::class)
   public fun selectCredentials(
-    credentials: List<VerifiableCredential>,
+    vcJwts: Iterable<String>,
     presentationDefinition: PresentationDefinitionV2
-  ): List<VerifiableCredential> {
-    throw UnsupportedOperationException("pex is untested")
-    // Uncomment the following line to filter credentials based on the Presentation Definition
-    // return credentials.filter { satisfiesPresentationDefinition(it, presentationDefinition) }
+  ): List<String> {
+    val inputDescriptorToVcMap = mapInputDescriptorsToVCs(vcJwts, presentationDefinition)
+    return inputDescriptorToVcMap.flatMap { it.value }.toSet().toList()
   }
 
   /**
@@ -71,7 +69,7 @@ public object PresentationExchange {
   }
 
   /**
-   * Creates a Presentation Submission in which the list of Verifiable Credentials JWTs (VCs) fulfills the given Presentation Definition. 
+   * Creates a Presentation Submission in which the list of Verifiable Credentials JWTs (VCs) fulfills the given Presentation Definition.
    * Presentation Definition.
    *
    *
@@ -92,7 +90,7 @@ public object PresentationExchange {
     val inputDescriptorToVcMap = mapInputDescriptorsToVCs(vcJwts, presentationDefinition)
     val vcJwtToIndexMap = vcJwts.withIndex().associate { (index, vcJwt) -> vcJwt to index }
 
-    val descriptorMapList = mutableListOf<DescriptorMap>()
+    val descriptorMapList = mutableListOf<InputDescriptorMapping>()
     for ((inputDescriptor, vcList) in inputDescriptorToVcMap) {
       // Even if multiple VCs satisfy the input descriptor we use the first
       val vcJwt = vcList.firstOrNull()
@@ -102,7 +100,7 @@ public object PresentationExchange {
       checkNotNull(vcIndex) { "Illegal state: vcJwt index not found" }
 
       descriptorMapList.add(
-        DescriptorMap(
+        InputDescriptorMapping(
           id = inputDescriptor.id,
           path = "$.verifiableCredential[$vcIndex]",
           format = "jwt_vc"
