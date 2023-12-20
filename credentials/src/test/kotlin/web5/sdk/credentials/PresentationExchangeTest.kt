@@ -554,6 +554,32 @@ class PresentationExchangeTest {
 }
 
 
+class Web5TestVectorsPresentationExchange {
+  data class SelectCredTestInput(
+    val presentationDefinition: PresentationDefinitionV2,
+    val credentialJwts: List<String>
+  )
+
+  data class SelectCredTestOutput(
+    val selectedCredentials: List<String>
+  )
+
+  private val mapper = jacksonObjectMapper()
+  @Test
+  fun select_credentials() {
+    val typeRef = object : TypeReference<TestVectors<SelectCredTestInput, SelectCredTestOutput>>() {}
+    val testVectors = mapper.readValue(File("../test-vectors/presentation_exchange/select_credentials.json"), typeRef)
+
+    testVectors.vectors.forEach { vector ->
+      val selectedCreds = PresentationExchange.selectCredentials(
+        vector.input.credentialJwts,
+        vector.input.presentationDefinition
+      )
+      assertEquals(vector.output!!.selectedCredentials, selectedCreds)
+    }
+  }
+}
+
 class Web5TestVectorsPresentationExchangeTest {
   data class SelectCredTestInput(
     val presentationDefinition: PresentationDefinitionV2,
