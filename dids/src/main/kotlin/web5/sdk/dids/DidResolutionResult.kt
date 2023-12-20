@@ -18,10 +18,10 @@ import web5.sdk.dids.methods.ion.models.MetadataMethod
  */
 public class DidResolutionResult(
   @JsonProperty("@context")
-  public var context: String? = null,
-  public var didDocument: DIDDocument = DIDDocument(),
-  public var didDocumentMetadata: DidDocumentMetadata = DidDocumentMetadata(),
-  public var didResolutionMetadata: DidResolutionMetadata = DidResolutionMetadata(),
+  public val context: String? = null,
+  public val didDocument: DIDDocument = DIDDocument(),
+  public val didDocumentMetadata: DidDocumentMetadata = DidDocumentMetadata(),
+  public val didResolutionMetadata: DidResolutionMetadata = DidResolutionMetadata(),
 ) {
   override fun toString(): String {
     return objectMapper.writeValueAsString(this)
@@ -42,10 +42,23 @@ public class DidResolutionResult(
     return result
   }
 
-  private companion object {
+  public companion object {
     private val objectMapper: ObjectMapper = ObjectMapper().apply {
       registerModule(KotlinModule.Builder().build())
       setSerializationInclusion(JsonInclude.Include.NON_NULL)
+    }
+
+
+    /**
+     * Convenience function that creates a [DidResolutionResult] with [DidResolutionMetadata.error] populated from
+     * [error].
+     */
+    public fun fromResolutionError(error: ResolutionErrors): DidResolutionResult {
+      return DidResolutionResult(
+        didResolutionMetadata = DidResolutionMetadata(
+          error = error.value
+        )
+      )
     }
   }
 }
