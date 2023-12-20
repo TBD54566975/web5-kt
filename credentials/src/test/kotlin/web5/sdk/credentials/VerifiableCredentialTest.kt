@@ -270,10 +270,8 @@ class Web5TestVectorsCredentials {
 
     testVectors.vectors.filterNot { it.errors ?: false }.forEach { vector ->
 
-      val inputMap = vector.input as Map<String, String>
-      val vcJwt = inputMap["vcJwt"] as String
       assertDoesNotThrow {
-        VerifiableCredential.verify(vcJwt)
+        VerifiableCredential.verify(vector.input.vcJwt)
       }
     }
 
