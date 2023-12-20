@@ -53,7 +53,7 @@ public class DidResolutionResult(
      * Convenience function that creates a [DidResolutionResult] with [DidResolutionMetadata.error] populated from
      * [error].
      */
-    public fun fromResolutionError(error: ResolutionErrors): DidResolutionResult {
+    public fun fromResolutionError(error: ResolutionError): DidResolutionResult {
       return DidResolutionResult(
         didResolutionMetadata = DidResolutionMetadata(
           error = error.value
