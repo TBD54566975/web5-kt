@@ -555,7 +555,7 @@ class PresentationExchangeTest {
 }
 
 
-class Web5TestVectorsPresentationExchangeTest {
+class Web5TestVectorsPresentationExchange {
   data class SelectCredTestInput(
     val presentationDefinition: PresentationDefinitionV2,
     val credentialJwts: List<String>
@@ -579,7 +579,6 @@ class Web5TestVectorsPresentationExchangeTest {
       assertEquals(vector.output!!.selectedCredentials, selectedCreds)
     }
   }
-
   data class CreatePresFromCredTestInput(
     val presentationDefinition: PresentationDefinitionV2,
     val credentialJwts: List<String>

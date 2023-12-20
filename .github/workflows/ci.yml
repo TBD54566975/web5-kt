@@ -40,7 +40,7 @@ jobs:
         with:
           name: test-results
           path: |
-            credentials/build/test-results/test/*.xml
+            **/build/test-results/test/*Web5TestVectors*.xml
             test-vector-hashes.txt
 
       - name: Upload coverage reports to Codecov
