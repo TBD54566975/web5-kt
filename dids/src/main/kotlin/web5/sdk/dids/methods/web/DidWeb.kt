@@ -24,7 +24,6 @@ import web5.sdk.crypto.KeyManager
 import web5.sdk.dids.CreateDidOptions
 import web5.sdk.dids.Did
 import web5.sdk.dids.DidMethod
-import web5.sdk.dids.DidResolutionMetadata
 import web5.sdk.dids.DidResolutionResult
 import web5.sdk.dids.ResolutionErrors
 import web5.sdk.dids.ResolveDidOptions
@@ -124,19 +123,11 @@ public sealed class DidWebApi(
     val parsedDid = try {
       DID.fromString(did)
     } catch (_: ParserException) {
-      return DidResolutionResult(
-        didResolutionMetadata = DidResolutionMetadata(
-          error = ResolutionErrors.INVALID_DID.value,
-        ),
-      )
+      return DidResolutionResult.fromResolutionError(ResolutionErrors.INVALID_DID)
     }
 
     if (parsedDid.methodName != methodName) {
-      return DidResolutionResult(
-        didResolutionMetadata = DidResolutionMetadata(
-          error = ResolutionErrors.METHOD_NOT_SUPPORTED.value,
-        ),
-      )
+      return DidResolutionResult.fromResolutionError(ResolutionErrors.METHOD_NOT_SUPPORTED)
     }
     val docURL = getDocURL(parsedDid)
 
@@ -147,11 +138,7 @@ public sealed class DidWebApi(
         }
       }
     } catch (_: UnknownHostException) {
-      return DidResolutionResult(
-        didResolutionMetadata = DidResolutionMetadata(
-          error = ResolutionErrors.NOT_FOUND.value,
-        ),
-      )
+      return DidResolutionResult.fromResolutionError(ResolutionErrors.NOT_FOUND)
     }
 
     val body = runBlocking { resp.bodyAsText() }
