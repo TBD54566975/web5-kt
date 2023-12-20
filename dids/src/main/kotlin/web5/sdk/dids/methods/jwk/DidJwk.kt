@@ -17,7 +17,7 @@ import web5.sdk.dids.Did
 import web5.sdk.dids.DidMethod
 import web5.sdk.dids.DidResolutionMetadata
 import web5.sdk.dids.DidResolutionResult
-import web5.sdk.dids.ResolutionErrors
+import web5.sdk.dids.ResolutionError
 import web5.sdk.dids.ResolveDidOptions
 import web5.sdk.dids.validateKeyMaterialInsideKeyManager
 import java.net.URI
@@ -119,7 +119,7 @@ public class DidJwk(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
         return DidResolutionResult(
           context = "https://w3id.org/did-resolution/v1",
           didResolutionMetadata = DidResolutionMetadata(
-            error = ResolutionErrors.INVALID_DID.value,
+            error = ResolutionError.INVALID_DID.value,
           ),
         )
       }
@@ -128,7 +128,7 @@ public class DidJwk(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
         return DidResolutionResult(
           context = "https://w3id.org/did-resolution/v1",
           didResolutionMetadata = DidResolutionMetadata(
-            error = ResolutionErrors.METHOD_NOT_SUPPORTED.value,
+            error = ResolutionError.METHOD_NOT_SUPPORTED.value,
           ),
         )
       }
@@ -141,7 +141,7 @@ public class DidJwk(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
         return DidResolutionResult(
           context = "https://w3id.org/did-resolution/v1",
           didResolutionMetadata = DidResolutionMetadata(
-            error = ResolutionErrors.INVALID_DID.value
+            error = ResolutionError.INVALID_DID.value
           )
         )
       }
