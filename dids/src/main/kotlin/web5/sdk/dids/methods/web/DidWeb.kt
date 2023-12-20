@@ -25,7 +25,7 @@ import web5.sdk.dids.CreateDidOptions
 import web5.sdk.dids.Did
 import web5.sdk.dids.DidMethod
 import web5.sdk.dids.DidResolutionResult
-import web5.sdk.dids.ResolutionErrors
+import web5.sdk.dids.ResolutionError
 import web5.sdk.dids.ResolveDidOptions
 import web5.sdk.dids.methods.ion.InvalidStatusException
 import web5.sdk.dids.validateKeyMaterialInsideKeyManager
@@ -123,11 +123,11 @@ public sealed class DidWebApi(
     val parsedDid = try {
       DID.fromString(did)
     } catch (_: ParserException) {
-      return DidResolutionResult.fromResolutionError(ResolutionErrors.INVALID_DID)
+      return DidResolutionResult.fromResolutionError(ResolutionError.INVALID_DID)
     }
 
     if (parsedDid.methodName != methodName) {
-      return DidResolutionResult.fromResolutionError(ResolutionErrors.METHOD_NOT_SUPPORTED)
+      return DidResolutionResult.fromResolutionError(ResolutionError.METHOD_NOT_SUPPORTED)
     }
     val docURL = getDocURL(parsedDid)
 
@@ -138,7 +138,7 @@ public sealed class DidWebApi(
         }
       }
     } catch (_: UnknownHostException) {
-      return DidResolutionResult.fromResolutionError(ResolutionErrors.NOT_FOUND)
+      return DidResolutionResult.fromResolutionError(ResolutionError.NOT_FOUND)
     }
 
     val body = runBlocking { resp.bodyAsText() }
