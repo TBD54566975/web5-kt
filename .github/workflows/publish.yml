@@ -1,0 +1,36 @@
+name: Publish package to the Maven Central Repository
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish. For example "0.0.1"'
+        required: true
+        default: '0.0.0'
+  release:
+    types: [ published ]
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'corretto'
+          java-version: '11'
+      - uses: actions/cache@v3
+        with:
+          path: ~/.gradle/caches
+          key: gradle-ubuntu-latest-${{ hashFiles('**/*.gradle.kts') }}-${{ hashFiles('**/gradle/wrapper/gradle-wrapper.properties') }}-${{ hashFiles('**/versions.properties') }}
+
+      - name: Sonatype Publish Close And Release
+        run: |
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            ./gradlew -Pversion=${{ github.event.inputs.version }} publishToSonatype closeAndReleaseSonatypeStagingRepository
+          else
+            ./gradlew -Pversion=$(echo "${{ github.ref_name }}" | cut -c2-) publishToSonatype closeAndReleaseSonatypeStagingRepository
+          fi
+        env:
+          ORG_GRADLE_PROJECT_signingKey: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGKEY }}
+          ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGPASSWORD }}
+          ORG_GRADLE_PROJECT_sonatypeUsername: ${{ secrets.ORG_GRADLE_PROJECT_SONATYPEUSERNAME }}
+          ORG_GRADLE_PROJECT_sonatypePassword: ${{ secrets.ORG_GRADLE_PROJECT_SONATYPEPASSWORD }}
