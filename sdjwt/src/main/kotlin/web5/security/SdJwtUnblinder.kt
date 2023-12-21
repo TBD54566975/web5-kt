@@ -81,7 +81,6 @@ public class SdJwtUnblinder {
     val disclosuresByDigest = sdJwt.disclosures.associateBy { it.digest(hashAlg) }
 
     // Process the Disclosures and _sd keys in the SD-JWT as follows:
-    //
     // Create a copy of the SD-JWT payload, if required for further processing.
     val tokenClaims = sdJwt.issuerJwt.jwtClaimsSet.toJSONObject().toMutableMap()
     processPayload(tokenClaims, disclosuresByDigest)

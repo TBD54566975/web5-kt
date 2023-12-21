@@ -1,4 +1,7 @@
 rootProject.name = "web5"
-include("common", "crypto", "dids", "credentials")
+include("common")
+include("credentials")
+include("crypto")
+include("dids")
 include("testing")
 include("sdjwt")

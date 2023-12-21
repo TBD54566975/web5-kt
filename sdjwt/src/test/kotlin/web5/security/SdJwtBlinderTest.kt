@@ -6,8 +6,6 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.erdtman.jcs.JsonCanonicalizer
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
-import web5.sdk.crypto.InMemoryKeyManager
-import web5.sdk.dids.methods.key.DidKey
 
 class SdJwtBlinderTest {
 
@@ -18,7 +16,7 @@ class SdJwtBlinderTest {
   }
 
   @Test
-  fun testExample1() {
+  fun `blinding a set of claims returns the expected sd-jwt`() {
     val claims = """{
       "iss": "https://example.com/issuer",
       "iat": 1683000000,
@@ -52,9 +50,6 @@ class SdJwtBlinderTest {
         "DE"
       ]
     }""".trimIndent()
-
-    val keyManager = InMemoryKeyManager()
-    DidKey.create(keyManager)
 
     val signer = SdJwtBlinder(
       saltGenerator = MockMapGenerator(
@@ -140,7 +135,8 @@ class SdJwtBlinderTest {
   }
 
   @Test
-  fun `test option 1`() {
+  // Test comes from https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-05.html#name-option-1-flat-sd-jwt
+  fun `blinding address with flat option returns the expected claimset`() {
     val signer = SdJwtBlinder(
       saltGenerator = MockMapGenerator(
         mapOf(
@@ -190,7 +186,8 @@ class SdJwtBlinderTest {
   }
 
   @Test
-  fun `test option 2`() {
+  // Test comes from https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-05.html#name-option-2-structured-sd-jwt
+  fun `blinding nested objects with flat option returns the expected claimset`() {
     val signer = SdJwtBlinder(
       saltGenerator = MockMapGenerator(
         mapOf(
@@ -256,8 +253,8 @@ class SdJwtBlinderTest {
   }
 
   @Test
-  // https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-05.html#name-option-3-sd-jwt-with-recurs
-  fun `test option 3`() {
+  // Test comes from https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-05.html#name-option-3-sd-jwt-with-recurs
+  fun `blinding address recursively return the expected claimset`() {
     val signer = SdJwtBlinder(
       saltGenerator = MockMapGenerator(
         mapOf(
