@@ -263,9 +263,9 @@ public sealed class DidIonApi(
       val longFormDid = "$shortFormDid:$longFormDidSegment"
       val resolutionResult = resolve(longFormDid)
 
-      if (!resolutionResult.didResolutionMetadata?.error.isNullOrEmpty()) {
+      if (!resolutionResult.didResolutionMetadata.error.isNullOrEmpty()) {
         throw ResolutionException(
-          "error when resolving after creation: ${resolutionResult.didResolutionMetadata?.error}"
+          "error when resolving after creation: ${resolutionResult.didResolutionMetadata.error}"
         )
       }
 

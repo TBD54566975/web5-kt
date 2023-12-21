@@ -8,16 +8,20 @@ import com.nimbusds.jose.jwk.KeyUse
 import foundation.identity.did.DID
 import foundation.identity.did.DIDDocument
 import foundation.identity.did.VerificationMethod
+import foundation.identity.did.parser.ParserException
 import web5.sdk.common.Convert
 import web5.sdk.common.EncodingFormat
 import web5.sdk.crypto.KeyManager
 import web5.sdk.dids.CreateDidOptions
 import web5.sdk.dids.Did
 import web5.sdk.dids.DidMethod
+import web5.sdk.dids.DidResolutionMetadata
 import web5.sdk.dids.DidResolutionResult
+import web5.sdk.dids.ResolutionError
 import web5.sdk.dids.ResolveDidOptions
 import web5.sdk.dids.validateKeyMaterialInsideKeyManager
 import java.net.URI
+import java.text.ParseException
 
 /**
  * Specifies options for creating a new "did:jwk" Decentralized Identifier (DID).
@@ -109,13 +113,38 @@ public class DidJwk(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
      * @throws IllegalArgumentException if the provided DID does not conform to the "did:jwk" method.
      */
     override fun resolve(did: String, options: ResolveDidOptions?): DidResolutionResult {
-      val parsedDid = DID.fromString(did)
+      val parsedDid = try {
+        DID.fromString(did)
+      } catch (_: ParserException) {
+        return DidResolutionResult(
+          context = "https://w3id.org/did-resolution/v1",
+          didResolutionMetadata = DidResolutionMetadata(
+            error = ResolutionError.INVALID_DID.value,
+          ),
+        )
+      }
 
-      require(parsedDid.methodName == methodName) { throw IllegalArgumentException("expected did:jwk") }
+      if (parsedDid.methodName != methodName) {
+        return DidResolutionResult(
+          context = "https://w3id.org/did-resolution/v1",
+          didResolutionMetadata = DidResolutionMetadata(
+            error = ResolutionError.METHOD_NOT_SUPPORTED.value,
+          ),
+        )
+      }
 
       val id = parsedDid.methodSpecificId
       val decodedKey = Convert(id, EncodingFormat.Base64Url).toStr()
-      val publicKeyJwk = JWK.parse(decodedKey)
+      val publicKeyJwk = try {
+        JWK.parse(decodedKey)
+      } catch (_: ParseException) {
+        return DidResolutionResult(
+          context = "https://w3id.org/did-resolution/v1",
+          didResolutionMetadata = DidResolutionMetadata(
+            error = ResolutionError.INVALID_DID.value
+          )
+        )
+      }
 
       require(!publicKeyJwk.isPrivate) {
         throw IllegalArgumentException("decoded jwk value cannot be a private key")
