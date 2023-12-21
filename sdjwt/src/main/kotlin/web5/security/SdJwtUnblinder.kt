@@ -8,11 +8,14 @@ import java.util.Stack
 /**
  * Options for verification of an [SdJwt].
  *
- * [holderBindingOption] is used to tell whether holder binding should be checked. When [HolderBindingOption.VerifyHolderBinding]
- * is selected, then [desiredNonce], [desiredAudience], and [keyBindingPublicJwk] are required.
+ * [issuerPublicJwk] is the public key of the issuer of the SD-JWT. Discovery of this key is out of scope for this
+ * library. It must be provided by the caller.
  *
  * Callers MUST set the [supportedAlgorithms] to declare which set of algorithms they explicitly support. This follows
  * the guidance from https://www.rfc-editor.org/rfc/rfc8725.html#name-use-appropriate-algorithms
+ *
+ * [holderBindingOption] is used to tell whether holder binding should be checked. When [HolderBindingOption.VerifyHolderBinding]
+ * is selected, then [desiredNonce], [desiredAudience], and [keyBindingPublicJwk] are required.
  */
 public class VerificationOptions(
   public val issuerPublicJwk: JWK,

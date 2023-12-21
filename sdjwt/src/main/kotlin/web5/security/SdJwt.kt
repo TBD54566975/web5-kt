@@ -97,14 +97,31 @@ public class SdJwt(
 
   /**
    * TODO: only accept a subset of algos for verification.
-   * Verifies this SD-JWT according to [verificationOptions].
+   *
+   * Verifies this SD-JWT according to https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-05.html#name-verification
+   * Options for verification are provided via [verificationOptions].
+   *
+   * Any issues found during verification will throw an [Exception], with a message describing the issue
+   * encountered.
+   *
+   * ## Example
+   * ```kt
+   * val issuerPublicJwk = JWK.parse("""{"kty":"EC","use":"sig","crv":"secp256k1","kid":"IgOoELyADeleZ2aRFpbGSujatncrPgK1NtTeTJGjhJQ","x":"br1bYYLXTV-FpxnORwLOP80i_5ewwhZcIL6B5-fYL34","y":"CYiM_DhgdXsZQZXMHtt2o9LgPUPuZZz8EcPmCTZb7-U","alg":"ES256K"}""")
+   * val sdJwt = "eyJraWQiOiJJZ09vRUx5QURlbGVaMmFSRnBiR1N1amF0bmNyUGdLMU50VGVUSkdqaEpRIiwidHlwIjoiSldUIiwiYWxnIjoiRVMyNTZLIn0.eyJfc2QiOlsiUXpZeE9GeUUxQmpaQjZfTGJINjlyZHVOSzAybk5lRzNNcnh0em9lWkltcyIsIjE2QlBXeHVGdEZ1cFBKTzdMWENKMmlhOW80U0RHanJ4SU81R0N5NThRbjQiLCJiT1M5TGgyNVlOaEQxelhON3lxeVdVNy1ScUdBQ2ZnazMxYlVZLUlYNGk0IiwicjNPNE13MXNwT0g5UWpFcDFtNURTcGxTTWtKVHJMR3FuZms3c3RQd2xOVSJdLCJuYXRpb25hbGl0aWVzIjpbeyIuLi4iOiJ5UDNWNXQ5SjdPTDR3WExYNzVPbWVPMTB3VEJ4WDg5cDh0OGxfeUFPNUxjIn0seyIuLi4iOiJyXzF4aXliWUJPUldCU0hUTGdVR2ZPNjV4SUl3TF9uUzQ4aGJidU9TaV80In0seyIuLi4iOiIyaWV6NERiSkxBZUQzT1QwNmc1bGJvQmh0QlNwUm5GSEg4V1kzbklROFNzIn0seyIuLi4iOiJZLUJKV2pScjRhamNFZlRoazNQOVFOOTNfTGZYOVlhRDYycGdYcUFUUXM0In1dLCJhZGRyZXNzIjp7Il9zZCI6WyJwVFJKM0hxcEZOODdZX3hScTBfMENwNVpHOHlnOGJqZHM3ZXhSS0lWekNZIiwidFoxZXFkcXNjVHBjeVNhVmd5OFF3MzBVaTZZXzJPSW10QzJNVm5fenJ5YyIsInM2UThiXy1XaC1kNGp5cm5meDlrazlZMTBoY05XaXRjWFpoWnMtallOWmciLCJmcjloN3RNX0RoWGI3MWplMlYtc0NBWG11dFVlb0ZxZ3l6UnljaVFycVVrIl19LCJfc2RfYWxnIjoic2hhLTI1NiJ9.efUzQxOAZT5x5PzPmehMoRrR7quxfa6pgqQc1r6kDjwhuC8sFX3zgsZJOC_4zbQONURpPnwFHYdtTC9IRsJyTw~WyJfUjlmMTBVOGVkaVR6ejZZZ2pNeXpBIiwgImdpdmVuX25hbWUiLCAiTWlzdGVyIl0~WyJKSURWXzV2dHBtbzB5UkUtN1lUZGtBIiwgImZhbWlseV9uYW1lIiwgIlRlZSJd~WyJVY09Icnp5SGpsWVdXUlFWQlNiVDN3IiwgImJpcnRoZGF0ZSIsICIxOTQwLTEwLTMxIl0~WyJLdnJuTlpXVUVUWDF1dEY5NDgwX2lRIiwgIlVTIl0~WyJkU0hJVVhuRDJSUTF2Mi1SZnA5REt3IiwgIkRFIl0~WyJBeFhsNW5kN1BhZ2lqQkxSdUZmTXNRIiwgIlBPIl0~WyJReGFDTVNaX1IzM0o4aWJNNGpybGNRIiwgInN0cmVldCIsICJoYXBweSBzdHJlZXQgMTIzIl0~WyJaS0loU0dGcUF3Nm9mWm81cHI5NDd3IiwgInppcF9jb2RlIiwgIjEyMzQ1Il0~"
+   * sdJwt.verify(
+   *   VerificationOptions(
+   *     issuerPublicJwk = issuerPublicJwk,
+   *     supportedAlgorithms = setOf(JWSAlgorithm.ES256K),
+   *     holderBindingOption = HolderBindingOption.SkipVerifyHolderBinding,
+   *   )
+   * )
+   * ```
    */
   @Throws(Exception::class)
   public fun verify(
     verificationOptions: VerificationOptions
   ) {
     // Validate the SD-JWT:
-
     require(verificationOptions.supportedAlgorithms.contains(issuerJwt.header.algorithm)) {
       "the algorithm of issuerJwt (${issuerJwt.header.algorithm}) is not part of the declared list of supported " +
         "algorithms (${verificationOptions.supportedAlgorithms})"
