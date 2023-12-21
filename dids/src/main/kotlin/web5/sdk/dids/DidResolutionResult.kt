@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import foundation.identity.did.DIDDocument
 import web5.sdk.dids.methods.ion.models.MetadataMethod
+import java.util.Objects.hash
 
 /**
  * Represents the result of DID resolution as per the W3C DID Core specification.
@@ -34,13 +35,7 @@ public class DidResolutionResult(
     return false
   }
 
-  override fun hashCode(): Int {
-    var result = context?.hashCode() ?: 0
-    result = 31 * result + didDocument.hashCode()
-    result = 31 * result + didDocumentMetadata.hashCode()
-    result = 31 * result + didResolutionMetadata.hashCode()
-    return result
-  }
+  override fun hashCode(): Int = hash(context, didDocument, didDocumentMetadata, didResolutionMetadata)
 
   public companion object {
     private val objectMapper: ObjectMapper = ObjectMapper().apply {
