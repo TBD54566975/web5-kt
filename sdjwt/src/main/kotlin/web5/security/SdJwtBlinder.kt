@@ -104,6 +104,10 @@ private class ClaimSetBlinder(
     return Pair(blinded, allDisclosures)
   }
 
+  @Throws(
+    BlindOptionNotValidException::class,
+    ClaimValueIsNotArrayException::class,
+  )
   fun toBlindedClaimsAndDisclosures(
     claims: Map<String, Any>,
     claimsToBlind: Map<String, BlindOption>
@@ -139,7 +143,7 @@ private class ClaimSetBlinder(
               allDisclosures.addAll(subClaimDisclosures)
             }
 
-            else -> throw IllegalArgumentException("blind option not applicable to non-object types")
+            else -> throw BlindOptionNotValidException("blind option not applicable to non-object types")
           }
         }
 
@@ -172,7 +176,7 @@ private class ClaimSetBlinder(
               blindedClaims[claimName] = arrayDisclosures
             }
 
-            else -> throw IllegalArgumentException("$claimValue must be an array")
+            else -> throw ClaimValueIsNotArrayException("When choosing ArrayBlindOption, $claimValue must be an array")
           }
         }
       }

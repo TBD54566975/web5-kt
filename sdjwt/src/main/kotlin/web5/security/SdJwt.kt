@@ -199,7 +199,7 @@ public class SdJwt(
     return when (jwk) {
       is ECKey -> jwk.toPublicKey()
       is OctetKeyPair -> jwk.toPublicKey()
-      else -> throw IllegalArgumentException("jwk not supported for value: $jwk")
+      else -> throw InvalidJwkException("jwk not supported for value: $jwk")
     }
   }
 
@@ -320,7 +320,14 @@ public sealed class Disclosure {
     /**
      * Returns a [Disclosure] given the base64url encoding of the json encoded byte representation. This operation
      * is the reverse of [serialize].
+     *
+     * @throws DisclosureClaimNameNotStringException if the second element of the 3-element disclosure is not a string.
+     * @throws DisclosureSizeNotValidException if the disclosure does not have exactly 2 or 3 elements.
      */
+    @Throws(
+      DisclosureClaimNameNotStringException::class,
+      DisclosureSizeNotValidException::class,
+    )
     @JvmStatic
     public fun parse(encodedDisclosure: String): Disclosure {
       // Decode the base64-encoded disclosure
@@ -343,7 +350,7 @@ public sealed class Disclosure {
         3 -> {
           // Extract the elements
           val disclosureClaimName = disclosureElems[1] as? String
-            ?: throw IllegalArgumentException("Second element of disclosure must be a string")
+            ?: throw DisclosureClaimNameNotStringException("Second element of disclosure must be a string")
 
           // Create a Disclosure instance
           return ObjectDisclosure(
@@ -354,7 +361,8 @@ public sealed class Disclosure {
           )
         }
 
-        else -> throw IllegalArgumentException("Disclosure \"$encodedDisclosure\" must have exactly 2 or 3 elements")
+        else -> throw DisclosureSizeNotValidException(
+          "Disclosure \"$encodedDisclosure\" must have exactly 2 or 3 elements")
       }
     }
   }

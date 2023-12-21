@@ -48,14 +48,14 @@ internal fun JWTClaimsSet.getHashAlg(): HashFunc {
     }
 
     else -> {
-      throw IllegalArgumentException("Converting _sd_alg claim value to string")
+      throw SdAlgValueNotStringException("Converting _sd_alg claim value to string")
     }
   }
 
   return when (hashName) {
     Hash.SHA_256.ianaName -> Hash.SHA_256.hashFunc
     Hash.SHA_512.ianaName -> Hash.SHA_512.hashFunc
-    else -> throw IllegalArgumentException("Unsupported hash name $hashName")
+    else -> throw HashNameNotSupportedException("Unsupported hash name $hashName")
   }
 }
 
@@ -66,8 +66,30 @@ public class SdJwtUnblinder {
    *
    * An unblinded [JWTClaimsSet], where the hidden values in the `issuerJwt` are replaced with values from the
    * `disclosures` presented.
+   *
+   * @throws SdKeyNotArrayException if the `_sd` key does not refer to an array as required.
+   * @throws SdValueNotStringException if a value in `_sd` is not a string as required.
+   * @throws EllipsisValueNotStringException if the value of `...` is not a string as required.
+   * @throws ParentNotArrayException if the parent of an array element digest is not an array as required.
+   * @throws DuplicateDigestException if a digest is found more than once, which is not allowed.
+   * @throws InvalidObjectDisclosureInsertionPointException if the insertion point for an object disclosure is not a map as required.
+   * @throws InvalidArrayDisclosureInsertionPointException if the insertion point for an array disclosure is not an array as required.
+   * @throws ClaimNameAlreadyExistsException if a claim name already exists in the claims set.
+   * @throws SdAlgValueNotStringException if the `_sd_alg` claim value is not a string as required.
+   * @throws HashNameNotSupportedException if the `_sd_alg` claim value represents a hash algorithm name that's not supported.
    */
-  @Throws(Exception::class)
+  @Throws(
+    SdKeyNotArrayException::class,
+    SdValueNotStringException::class,
+    EllipsisValueNotStringException::class,
+    ParentNotArrayException::class,
+    DuplicateDigestException::class,
+    InvalidObjectDisclosureInsertionPointException::class,
+    InvalidArrayDisclosureInsertionPointException::class,
+    ClaimNameAlreadyExistsException::class,
+    SdAlgValueNotStringException::class,
+    HashNameNotSupportedException::class,
+  )
   public fun unblind(
     serializedSdJwt: String
   ): JWTClaimsSet {
@@ -115,13 +137,12 @@ public class SdJwtUnblinder {
       is Map<*, *> -> {
         val sdClaimValue = claims[sdClaimName]
         if (sdClaimValue != null) {
-          // If the key does not refer to an array, the Verifier MUST reject the Presentation.
-          require(sdClaimValue is List<*>) {
-            "\"_sd\" key MUST refer to an array"
+          if (sdClaimValue !is List<*>) {
+            throw SdKeyNotArrayException("\"_sd\" key MUST refer to an array")
           }
           for (digest in sdClaimValue) {
-            require(digest is String) {
-              "all values in \"_sd\" MUST be strings"
+            if (digest !is String) {
+              throw SdValueNotStringException("all values in \"_sd\" MUST be strings")
             }
             result.add(Work(claims, digest))
           }
@@ -131,12 +152,11 @@ public class SdJwtUnblinder {
 
         val arrayElementDigest = claims[blindedArrayKey]
         if (arrayElementDigest != null) {
-          require(arrayElementDigest is String) {
-            "Value of \"...\" MUST be a string"
+          if (arrayElementDigest !is String) {
+            throw EllipsisValueNotStringException("Value of \"...\" MUST be a string")
           }
-          require(parent != null && parent is List<*>) {
-            "Parent must be an array"
-
+          if (parent == null || parent !is List<*>) {
+            throw ParentNotArrayException("Parent must be an array")
           }
           result.add(Work(parent, arrayElementDigest))
         }
@@ -172,19 +192,19 @@ public class SdJwtUnblinder {
       val disclosure = disclosuresByDigest[digestValue] ?: continue
 
       // If any digests were found more than once, the Verifier MUST reject the Presentation.
-      require(!digestsFound.contains(digestValue)) {
-        "Digest \"$digestValue\" found more than once"
+      if (!digestsFound.add(digestValue)) {
+        throw DuplicateDigestException("Digest \"$digestValue\" found more than once")
       }
       digestsFound.add(digestValue)
 
       when (disclosure) {
         is ObjectDisclosure -> {
-          require(insertionPoint is MutableMap<*, *>) {
-            "Insertion point for object disclosure must be a map"
+          if (insertionPoint !is MutableMap<*, *>) {
+            throw InvalidObjectDisclosureInsertionPointException("Insertion point for object disclosure must be a map")
           }
 
           if (insertionPoint.containsKey(disclosure.claimName) || claims.containsKey(disclosure.claimName)) {
-            throw Exception("Claim name \"${disclosure.claimName}\" already exists")
+            throw ClaimNameAlreadyExistsException("Claim name \"${disclosure.claimName}\" already exists")
           }
           fun insert(m: MutableMap<String, Any>) {
             m.put(disclosure.claimName, disclosure.claimValue)
@@ -199,8 +219,8 @@ public class SdJwtUnblinder {
         }
 
         is ArrayDisclosure -> {
-          require(insertionPoint is MutableList<*>) {
-            "Insertion point for array disclosure must be an array"
+          if (insertionPoint !is MutableList<*>) {
+            throw InvalidArrayDisclosureInsertionPointException("Insertion point for array disclosure must be an array")
           }
 
           // find and then replace insertion point
