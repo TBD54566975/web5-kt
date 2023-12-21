@@ -12,7 +12,6 @@ import com.nimbusds.jose.crypto.factories.DefaultJWSVerifierFactory
 import com.nimbusds.jose.jwk.ECKey
 import com.nimbusds.jose.jwk.JWK
 import com.nimbusds.jose.jwk.OctetKeyPair
-import com.nimbusds.jose.jwk.OctetSequenceKey
 import com.nimbusds.jose.proc.SecurityContext
 import com.nimbusds.jose.util.Base64URL
 import com.nimbusds.jwt.JWTClaimsSet
@@ -200,7 +199,6 @@ public class SdJwt(
     return when (jwk) {
       is ECKey -> jwk.toPublicKey()
       is OctetKeyPair -> jwk.toPublicKey()
-      is OctetSequenceKey -> jwk.toSecretKey()
       else -> throw IllegalArgumentException("jwk not supported for value: $jwk")
     }
   }
@@ -333,6 +331,15 @@ public sealed class Disclosure {
 
       // Ensure that the disclosure is object or array disclosure
       when (disclosureElems.size) {
+        2 -> {
+          // Create a Disclosure instance
+          return ArrayDisclosure(
+            salt = disclosureElems[0] as String,
+            claimValue = disclosureElems[1] as Any,
+            raw = encodedDisclosure
+          )
+        }
+
         3 -> {
           // Extract the elements
           val disclosureClaimName = disclosureElems[1] as? String
@@ -343,15 +350,6 @@ public sealed class Disclosure {
             salt = disclosureElems[0] as String,
             claimName = disclosureClaimName,
             claimValue = disclosureElems[2] as Any,
-            raw = encodedDisclosure
-          )
-        }
-
-        2 -> {
-          // Create a Disclosure instance
-          return ArrayDisclosure(
-            salt = disclosureElems[0] as String,
-            claimValue = disclosureElems[1] as Any,
             raw = encodedDisclosure
           )
         }

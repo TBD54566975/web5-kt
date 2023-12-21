@@ -71,7 +71,7 @@ public class SdJwtUnblinder {
   public fun unblind(
     serializedSdJwt: String
   ): JWTClaimsSet {
-    // 2. Separate the Presentation into the SD-JWT, the Disclosures (if any), and the Holder Binding JWT (if provided).
+    // Separate the Presentation into the SD-JWT, the Disclosures (if any), and the Holder Binding JWT (if provided).
     val sdJwt = SdJwt.parse(serializedSdJwt)
 
     // Check that the _sd_alg claim value is understood and the hash algorithm is deemed secure.
