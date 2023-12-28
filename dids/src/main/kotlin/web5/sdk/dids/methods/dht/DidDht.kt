@@ -28,7 +28,12 @@ import web5.sdk.dids.DidDocumentMetadata
 import web5.sdk.dids.DidMethod
 import web5.sdk.dids.DidResolutionResult
 import web5.sdk.dids.PublicKeyPurpose
+import web5.sdk.dids.ResolutionError
 import web5.sdk.dids.ResolveDidOptions
+import web5.sdk.dids.exceptions.InvalidIdentifierException
+import web5.sdk.dids.exceptions.InvalidIdentifierSizeException
+import web5.sdk.dids.exceptions.InvalidMethodNameException
+import web5.sdk.dids.exceptions.PkarrRecordNotFoundException
 import web5.sdk.dids.validateKeyMaterialInsideKeyManager
 import java.net.URI
 
@@ -127,7 +132,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
     val identityVerificationMethod =
       VerificationMethod.builder()
         .id(URI.create("$id#0"))
-        .type("JsonWebKey2020")
+        .type("JsonWebKey")
         .controller(URI.create(id))
         .publicKeyJwk(publicKey.toPublicJWK().toJSONObject())
         .build()
@@ -146,11 +151,11 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
     }
 
     // map to the DID object model's verification methods
-    val verificationMethods = (opts.verificationMethods?.map { (key, purposes) ->
+    val verificationMethods = listOf(identityVerificationMethod) + (opts.verificationMethods?.map { (key, purposes) ->
       VerificationMethod.builder()
         .id(URI.create("$id#${key.keyID}"))
-        .type("JsonWebKey2020")
-        .controller(URI.create(id))
+        .type("JsonWebKey")
+        .controller(URI.create(""))
         .publicKeyJwk(key.toPublicJWK().toJSONObject())
         .build().also { verificationMethod ->
           purposes.forEach { relationship ->
@@ -159,7 +164,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
             )
           }
         }
-    } ?: emptyList()) + identityVerificationMethod
+    } ?: emptyList())
     opts.services?.forEach { service ->
       requireNotNull(service.id) { "Service id cannot be null" }
       requireNotNull(service.type) { "Service type cannot be null" }
@@ -206,12 +211,32 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
    * @param did The "did:dht" DID that needs to be resolved.
    * @return A [DidResolutionResult] instance containing the DID Document and related context, including types
    * as part of the [DidDocumentMetadata], if available.
-   * @throws IllegalArgumentException if the provided DID does not conform to the "did:dht" method.
    */
   override fun resolve(did: String, options: ResolveDidOptions?): DidResolutionResult {
-    validate(did)
+    return try {
+      resolveInternal(did)
+    } catch (e: Exception) {
+      println(e)
+      DidResolutionResult.fromResolutionError(ResolutionError.INTERNAL_ERROR)
+    }
+  }
+
+  private fun resolveInternal(did: String): DidResolutionResult {
+    try {
+      validate(did)
+    } catch (_: InvalidMethodNameException) {
+      return DidResolutionResult.fromResolutionError(ResolutionError.METHOD_NOT_SUPPORTED)
+    } catch (_: InvalidIdentifierSizeException) {
+      return DidResolutionResult.fromResolutionError(ResolutionError.INVALID_DID)
+    } catch (_: InvalidIdentifierException) {
+      return DidResolutionResult.fromResolutionError(ResolutionError.INVALID_DID)
+    }
     val getId = DidDht.suffix(did)
-    val bep44Message = dht.pkarrGet(getId)
+    val bep44Message = try {
+      dht.pkarrGet(getId)
+    } catch (_: PkarrRecordNotFoundException) {
+      return DidResolutionResult.fromResolutionError(ResolutionError.NOT_FOUND)
+    }
     val dnsPacket = DhtClient.parseBep44GetResponse(bep44Message)
     fromDnsPacket(did, dnsPacket).let { (didDocument, types) ->
       return DidResolutionResult(
@@ -264,22 +289,24 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
   }
 
   override fun load(uri: String, keyManager: KeyManager): DidDht {
-      validateKeyMaterialInsideKeyManager(uri, keyManager)
-      validateIdentityKey(uri, keyManager)
-      return DidDht(uri, keyManager, null, this)
+    validateKeyMaterialInsideKeyManager(uri, keyManager)
+    validateIdentityKey(uri, keyManager)
+    return DidDht(uri, keyManager, null, this)
+  }
+
+  internal fun validateIdentityKey(did: String, keyManager: KeyManager) {
+    val parsedDid = DID.fromString(did)
+    val decodedId = ZBase32.decode(parsedDid.methodSpecificId)
+    require(decodedId.size == 32) {
+      "expected size of decoded identifier \"${parsedDid.methodSpecificId}\" to be 32"
     }
 
-    internal fun validateIdentityKey(did: String, keyManager: KeyManager) {
-      val parsedDid = DID.fromString(did)
-      val decodedId = ZBase32.decode(parsedDid.methodSpecificId)
-      require(decodedId.size == 32) {
-        "expected size of decoded identifier \"${parsedDid.methodSpecificId}\" to be 32"
-      }
+    val publicKeyJwk = Ed25519.bytesToPublicKey(decodedId)
+    val identityKeyAlias = keyManager.getDeterministicAlias(publicKeyJwk)
+    keyManager.getPublicKey(identityKeyAlias)
+  }
 
-      val publicKeyJwk = Ed25519.bytesToPublicKey(decodedId)
-      val identityKeyAlias = keyManager.getDeterministicAlias(publicKeyJwk)
-      keyManager.getPublicKey(identityKeyAlias)
-    }/**
+  /**
    * Generates the identifier for a did:dht DID given its identity key.
    *
    * @param identityKey the key used to generate the DID's identifier
@@ -301,10 +328,19 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
    */
   internal fun validate(did: String) {
     val parsedDid = DID.fromString(did)
-    require(parsedDid.methodName == DidDht.methodName) { "expected method to be dht" }
+    require(parsedDid.methodName == DidDht.methodName) {
+      throw InvalidMethodNameException("expected method to be dht")
+    }
 
-    val decodedId = ZBase32.decode(parsedDid.methodSpecificId)
-    require(decodedId.size == 32) { "expected size of decoded identifier to be 32" }
+    val decodedId = try {
+      ZBase32.decode(parsedDid.methodSpecificId)
+    } catch (e: IllegalArgumentException) {
+      throw InvalidIdentifierException("expected method-specific identifier to be z-base-32 encoded", e)
+    }
+
+    require(decodedId.size == 32) {
+      throw InvalidIdentifierSizeException("expected size of decoded identifier to be 32")
+    }
   }
 
   /**
@@ -494,8 +530,15 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
 
     verificationMethods += VerificationMethod.builder()
       .id(URI.create("$did#$verificationMethodId"))
-      .type("JsonWebKey2020")
-      .controller(URI.create(did))
+      .type("JsonWebKey")
+      .controller(
+        URI.create(
+          when (verificationMethodId) {
+            "0" -> did
+            else -> ""
+          }
+        )
+      )
       .publicKeyJwk(publicKeyJwk.toJSONObject())
       .build()
 

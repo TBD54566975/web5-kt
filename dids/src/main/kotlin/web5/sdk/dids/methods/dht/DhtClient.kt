@@ -19,6 +19,7 @@ import org.xbill.DNS.Message
 import web5.sdk.common.ZBase32
 import web5.sdk.crypto.Ed25519
 import web5.sdk.crypto.KeyManager
+import web5.sdk.dids.exceptions.PkarrRecordNotFoundException
 import web5.sdk.dids.exceptions.PkarrRecordResponseException
 import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
@@ -77,9 +78,10 @@ internal class DhtClient(
    * @param id The z-base-32 encoded identifier of the message to get (e.g. a did:dht suffix value) [String].
    * @return A BEP44 message [Bep44Message].
    * @throws IllegalArgumentException if the identifier is not a z-base-32 encoded Ed25519 public key.
+   * @throws PkarrRecordNotFoundException if the record is not found.
    * @throws PkarrRecordResponseException if the response from the dht gateway is not successful.
    */
-  @Throws(PkarrRecordResponseException::class)
+  @Throws(PkarrRecordResponseException::class, PkarrRecordNotFoundException::class)
   fun pkarrGet(id: String): Bep44Message {
     val publicKey = ZBase32.decode(id)
     require(publicKey.size == 32) {
@@ -89,6 +91,9 @@ internal class DhtClient(
     val response = runBlocking { client.get("${gateway}/${id}") }
     if (!response.status.isSuccess()) {
       val err = runBlocking { response.bodyAsText() }
+      if (err.contains("pkarr record not found")) {
+        throw PkarrRecordNotFoundException()
+      }
       throw PkarrRecordResponseException("Error reading Pkarr Record Set of id $id. Error: $err")
     }
 
