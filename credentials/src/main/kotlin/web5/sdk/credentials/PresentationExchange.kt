@@ -119,9 +119,20 @@ public object PresentationExchange {
   /**
    * Validates whether an object is usable as a presentation definition or not.
    *
-   * Throws an [IllegalArgumentException] if the provided object does not conform to the Presentation Definition
    * Model as specified in https://identity.foundation/presentation-exchange/#presentation-definition.
+   *
+   * The checks are as follows:
+   * 1. Ensures that the presentation definition's ID is not empty.
+   * 2. Validates that the name, if present, is not empty.
+   * 3. Checks that the purpose, if provided, is not empty.
+   * 4. Verifies the uniqueness of all inputDescriptor IDs within the presentation.
+   * 5. Ensures that FieldV2 ids are unique across all input descriptors.
+   * 6. For each input descriptor, it validates the descriptor using InputDescriptorV2Validator.
+   * 7. If a frame is present, it validates the frame using FrameValidator.
+   *
+   * Throws an [PexValidationException] if the provided object does not conform to the Presentation Definition
    */
+  @Throws(PexValidationException::class)
   public fun validateDefinition(presentationDefinition: PresentationDefinitionV2) {
     PresentationDefinitionV2Validator.validate(presentationDefinition)
   }
