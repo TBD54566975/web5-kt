@@ -13,17 +13,17 @@ public class PresentationSubmission(
   @JsonProperty("definition_id")
   public val definitionId: String,
   @JsonProperty("descriptor_map")
-  public val descriptorMap: List<DescriptorMap>
+  public val descriptorMap: List<InputDescriptorMapping>
 )
 
 /**
  * Represents descriptor map for a presentation submission.
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class DescriptorMap(
+public class InputDescriptorMapping(
   public val id: String,
   public val format: String,
   public val path: String,
   @JsonProperty("path_nested")
-  public val pathNested: DescriptorMap? = null
+  public val pathNested: InputDescriptorMapping? = null
 )
