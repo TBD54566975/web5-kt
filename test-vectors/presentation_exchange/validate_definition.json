@@ -1,0 +1,295 @@
+{
+  "description":"Validate definition",
+  "vectors":[
+    {
+      "description":"valid presentation definition 1",
+      "input":{
+        "presentationDefinition":{
+          "id":"test-pd-id",
+          "name":"simple PD",
+          "purpose":"pd for testing",
+          "input_descriptors":[
+            {
+              "id":"whatever",
+              "purpose":"id for testing",
+              "constraints":{
+                "fields":[
+                  {
+                    "path":[
+                      "$.vc.credentialSubject.btcAddress",
+                      "$.credentialSubject.btcAddress",
+                      "$.btcAddress"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "id":"whatever2",
+              "purpose":"id for testing2",
+              "constraints":{
+                "fields":[
+                  {
+                    "path":[
+                      "$.vc.credentialSubject.dogeAddress",
+                      "$.credentialSubject.dogeAddress",
+                      "$.dogeAddress"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "errors":false
+    },
+    {
+      "description":"valid presentation definition 2",
+      "input":{
+        "presentationDefinition":{
+          "id":"presDefIdloanAppVerification123",
+          "name":"Loan Application Employment Verification",
+          "purpose":"To verify applicant’s employment, date of birth, and name",
+          "input_descriptors":[
+            {
+              "id":"employmentVerification",
+              "purpose":"Confirm current employment status",
+              "constraints":{
+                "fields":[
+                  {
+                    "path":[
+                      "$.credentialSubject.employmentStatus"
+                    ],
+                    "filter":{
+                      "type":"string",
+                      "pattern":"employed"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "id":"dobVerification",
+              "purpose":"Confirm the applicant’s date of birth",
+              "constraints":{
+                "fields":[
+                  {
+                    "path":[
+                      "$.credentialSubject.dateOfBirth"
+                    ],
+                    "filter":{
+                      "type":"string",
+                      "format":"date"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "id":"nameVerification",
+              "purpose":"Confirm the applicant’s legal name",
+              "constraints":{
+                "fields":[
+                  {
+                    "path":[
+                      "$.credentialSubject.name"
+                    ],
+                    "filter":{
+                      "type":"string"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "errors":false
+    },
+    {
+      "description":"presentation definition with no id value",
+      "input":{
+        "presentationDefinition":{
+          "id":"",
+          "name":"simple PD",
+          "purpose":"purpose",
+          "input_descriptors":[
+
+          ]
+        }
+      },
+      "errors":true
+    },
+    {
+      "description":"presentation definition with no name value",
+      "input":{
+        "presentationDefinition":{
+          "id":"test-pd-id",
+          "name":"",
+          "purpose":"purpose",
+          "input_descriptors":[
+
+          ]
+        }
+      },
+      "errors":true
+    },
+    {
+      "description":"presentation definition with no purpose value",
+      "input":{
+        "presentationDefinition":{
+          "id":"test-pd-id",
+          "name":"simple PD",
+          "purpose":"",
+          "input_descriptors":[
+
+          ]
+        }
+      },
+      "errors":true
+    },
+    {
+      "description":"duplicate input descriptor ids",
+      "input":{
+        "presentationDefinition":{
+          "id":"test-pd-id",
+          "name":"simple PD",
+          "purpose":"pd for testing",
+          "input_descriptors":[
+            {
+              "id":"dupe",
+              "purpose":"id for testing",
+              "constraints":{
+                "fields":[
+                  {
+                    "path":[
+                      "$.vc.credentialSubject.btcAddress",
+                      "$.credentialSubject.btcAddress",
+                      "$.btcAddress"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "id":"dupe",
+              "purpose":"id for testing2",
+              "constraints":{
+                "fields":[
+                  {
+                    "path":[
+                      "$.vc.credentialSubject.dogeAddress",
+                      "$.credentialSubject.dogeAddress",
+                      "$.dogeAddress"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "errors":true
+    },
+    {
+      "description":"fields have duplicate ids",
+      "input":{
+        "presentationDefinition":{
+          "id":"test-pd-id",
+          "name":"simple PD",
+          "purpose":"pd for testing",
+          "input_descriptors":[
+            {
+              "id":"whatever",
+              "purpose":"id for testing",
+              "constraints":{
+                "fields":[
+                  {
+                    "id":"dupe",
+                    "path":[
+                      "$.vc.credentialSubject.btcAddress",
+                      "$.credentialSubject.btcAddress",
+                      "$.btcAddress"
+                    ]
+                  }
+                ]
+              }
+            },
+            {
+              "id":"whatever2",
+              "purpose":"id for testing2",
+              "constraints":{
+                "fields":[
+                  {
+                    "id":"dupe",
+                    "path":[
+                      "$.vc.credentialSubject.dogeAddress",
+                      "$.credentialSubject.dogeAddress",
+                      "$.dogeAddress"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "errors":true
+    },
+    {
+      "description":"empty path in input descriptor",
+      "input":{
+        "presentationDefinition":{
+          "id":"test-pd-id",
+          "name":"simple PD",
+          "purpose":"pd for testing",
+          "input_descriptors":[
+            {
+              "id":"whatever",
+              "purpose":"id for testing",
+              "constraints":{
+                "fields":[
+                  {
+                    "id":"id1",
+                    "path":[
+
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "errors":true
+    },
+    {
+      "description":"invalid path in input descriptor",
+      "input":{
+        "presentationDefinition":{
+          "id":"test-pd-id",
+          "name":"simple PD",
+          "purpose":"pd for testing",
+          "input_descriptors":[
+            {
+              "id":"whatever",
+              "purpose":"id for testing",
+              "constraints":{
+                "fields":[
+                  {
+                    "id":"id1",
+                    "path":[
+                      "$.store.book[(@.price == 10]"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "errors":true
+    }
+  ]
+}

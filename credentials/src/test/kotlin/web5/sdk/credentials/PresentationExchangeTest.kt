@@ -17,6 +17,7 @@ import web5.sdk.testing.TestVectors
 import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFails
 import kotlin.test.assertNotNull
 
 data class DateOfBirth(val dateOfBirth: String)
@@ -576,6 +577,29 @@ class Web5TestVectorsPresentationExchange {
         vector.input.presentationDefinition
       )
       assertEquals(vector.output!!.selectedCredentials, selectedCreds)
+    }
+  }
+
+  data class ValidateDefinitionTestInput(
+    val presentationDefinition: PresentationDefinitionV2,
+    val errors: Boolean
+  )
+
+  @Test
+  fun validate_definition() {
+    val typeRef = object : TypeReference<TestVectors<ValidateDefinitionTestInput, Unit>>() {}
+    val testVectors = mapper.readValue(File("../test-vectors/presentation_exchange/validate_definition.json"), typeRef)
+
+    testVectors.vectors.filterNot { it.errors ?: false }.forEach { vector ->
+      assertDoesNotThrow {
+        PresentationExchange.validateDefinition(vector.input.presentationDefinition)
+      }
+    }
+
+    testVectors.vectors.filter { it.errors ?: false }.forEach { vector ->
+      assertFails {
+          PresentationExchange.validateDefinition(vector.input.presentationDefinition)
+      }
     }
   }
 }
