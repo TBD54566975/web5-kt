@@ -128,7 +128,6 @@ public object PresentationExchange {
    * 4. Verifies the uniqueness of all inputDescriptor IDs within the presentation.
    * 5. Ensures that FieldV2 ids are unique across all input descriptors.
    * 6. For each input descriptor, it validates the descriptor using InputDescriptorV2Validator.
-   * 7. If a frame is present, it validates the frame using FrameValidator.
    *
    * Throws an [PexValidationException] if the provided object does not conform to the Presentation Definition
    */

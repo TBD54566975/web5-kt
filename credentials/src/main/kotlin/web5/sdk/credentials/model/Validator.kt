@@ -21,7 +21,6 @@ public object PresentationDefinitionV2Validator {
    * 4. Verifies the uniqueness of all inputDescriptor IDs within the presentation.
    * 5. Ensures that FieldV2 ids are unique across all input descriptors.
    * 6. For each input descriptor, it validates the descriptor using InputDescriptorV2Validator.
-   * 7. If a frame is present, it validates the frame using FrameValidator.
    * @throws PexValidationException if the PresentationDefinitionV2 is not valid.
    */
   @Throws(PexValidationException::class)
@@ -59,12 +58,7 @@ public object PresentationDefinitionV2Validator {
     presentationDefinition.inputDescriptors.forEach { descriptor ->
       InputDescriptorV2Validator.validate(descriptor)
     }
-
-    presentationDefinition.frame?.let {
-      FrameValidator.validate(presentationDefinition.frame)
-    }
   }
-
 }
 
 /**
@@ -153,58 +147,5 @@ public object FieldV2Validator {
       }
     }
   }
-
 }
 
-/**
- * FrameValidator Validator.
- **/
-public object FrameValidator {
-
-  /**
-   * Validates a FieldV2.
-   *
-   * This method performs a series of checks to ensure the integrity of the field:
-   * 1. Ensures that the field's ID, if present, is not empty.
-   * 2. Validates that the purpose, if provided, is not empty.
-   * 3. Checks that the name, if present, is not empty.
-   * 4. Confirms that the path for the field is not empty.
-   * 5. For each path in the field, it verifies the path's validity using JsonPath, and checks for any parsing errors.
-   * @throws PexValidationException if the FieldV2 is not valid.
-   */
-  @Throws(PexValidationException::class)
-  public fun validate(frame: Map<String, Any>) {
-    if (frame.isEmpty()) {
-      throw PexValidationException("Frame cannot be empty")
-    }
-
-    frame["@id"]?.let {
-      if (!validateFrameProperty(it, "Frame @id must be a wildcard or an IRI")) {
-        throw PexValidationException("Frame @id must be a wildcard or an IRI")
-      }
-    }
-
-    frame["@types"]?.let {
-      if (!validateFrameProperty(it, "Frame @types must be a wildcard or an IRI")) {
-        throw PexValidationException("Frame @types must be a wildcard or an IRI")
-      }
-    }
-  }
-
-  private fun validateFrameProperty(property: Any, errorMessage: String): Boolean {
-    val values = asArray(property)
-    values.forEach { value ->
-      require(isValidFrameValue(value)) { errorMessage }
-    }
-    return true
-  }
-
-  private fun asArray(value: Any): List<Any?> = if (value is Collection<*>) value.toList() else listOf(value)
-
-  private fun isValidFrameValue(value: Any?): Boolean =
-    when (value) {
-      is Map<*, *> -> true
-      is String -> !value.startsWith("_:")
-      else -> false
-    }
-}

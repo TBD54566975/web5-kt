@@ -19,6 +19,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
 import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 data class DateOfBirth(val dateOfBirth: String)
 data class Address(val address: String)
@@ -550,6 +551,21 @@ class PresentationExchangeTest {
 
       assertEquals( 2, selectedCreds.size)
       assertEquals( listOf(vcJwt1, vcJwt2), selectedCreds)
+    }
+
+    @Test
+    fun `catches invalid presentation definition`() {
+    val pdString = File("src/test/resources/pd_invalid.json").readText().trimIndent()
+    val pd = jsonMapper.readValue(pdString, PresentationDefinitionV2::class.java)
+
+      val exception = assertThrows<PexValidationException> {
+        PresentationExchange.validateDefinition(pd)
+      }
+
+      assertTrue(
+        exception
+          .message!!.contains("PresentationDefinition id must not be empty")
+      )
     }
   }
 }

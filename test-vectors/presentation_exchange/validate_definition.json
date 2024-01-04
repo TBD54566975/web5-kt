@@ -136,6 +136,62 @@
       "errors":true
     },
     {
+      "description":"input descriptor with empty id",
+      "input":{
+        "presentationDefinition":{
+          "id":"test-pd-id",
+          "name":"name",
+          "purpose":"purpose",
+          "input_descriptors":[
+            {
+              "id":"",
+              "purpose":"Confirm current employment status",
+              "constraints":{ }
+            }
+          ]
+        }
+      },
+      "errors":true
+    },
+    {
+      "description":"input descriptor with empty name",
+      "input":{
+        "presentationDefinition":{
+          "id":"test-pd-id",
+          "name":"name",
+          "purpose":"purpose",
+          "input_descriptors":[
+            {
+              "id":"id",
+              "name": "",
+              "purpose":"purpose",
+              "constraints":{ }
+            }
+          ]
+        }
+      },
+      "errors":true
+    },
+    {
+      "description":"input descriptor with empty purpose",
+      "input":{
+        "presentationDefinition":{
+          "id":"test-pd-id",
+          "name":"name",
+          "purpose":"purpose",
+          "input_descriptors":[
+            {
+              "id":"id",
+              "name": "name",
+              "purpose":"",
+              "constraints":{ }
+            }
+          ]
+        }
+      },
+      "errors":true
+    },
+    {
       "description":"presentation definition with no purpose value",
       "input":{
         "presentationDefinition":{
@@ -281,6 +337,117 @@
                     "id":"id1",
                     "path":[
                       "$.store.book[(@.price == 10]"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "errors":true
+    },
+    {
+      "description":"field id is empty",
+      "input":{
+        "presentationDefinition":{
+          "id":"test-pd-id",
+          "name":"simple PD",
+          "purpose":"pd for testing",
+          "input_descriptors":[
+            {
+              "id":"whatever",
+              "purpose":"id for testing",
+              "constraints":{
+                "fields":[
+                  {
+                    "id":"",
+                    "path":[
+                      "$.vc.dob"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "errors":true
+    },
+    {
+      "description":"field purpose is empty",
+      "input":{
+        "presentationDefinition":{
+          "id":"test-pd-id",
+          "name":"simple PD",
+          "purpose":"pd for testing",
+          "input_descriptors":[
+            {
+              "id":"whatever",
+              "purpose":"id for testing",
+              "constraints":{
+                "fields":[
+                  {
+                    "id":"id",
+                    "purpose": "",
+                    "path":[
+                      "$.vc.dob"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "errors":true
+    },
+    {
+      "description":"field name is empty",
+      "input":{
+        "presentationDefinition":{
+          "id":"test-pd-id",
+          "name":"simple PD",
+          "purpose":"pd for testing",
+          "input_descriptors":[
+            {
+              "id":"whatever",
+              "purpose":"id for testing",
+              "constraints":{
+                "fields":[
+                  {
+                    "id":"id",
+                    "name": "",
+                    "path":[
+                      "$.vc.dob"
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "errors":true
+    },
+    {
+      "description":"field name is empty",
+      "input":{
+        "presentationDefinition":{
+          "id":"test-pd-id",
+          "name":"simple PD",
+          "purpose":"pd for testing",
+          "input_descriptors":[
+            {
+              "id":"whatever",
+              "purpose":"id for testing",
+              "constraints":{
+                "fields":[
+                  {
+                    "id":"id",
+                    "name": "",
+                    "path":[
+                      "$.vc.dob"
                     ]
                   }
                 ]
