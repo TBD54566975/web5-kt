@@ -22,12 +22,16 @@ import org.mockito.kotlin.spy
 import org.mockito.kotlin.whenever
 import web5.sdk.crypto.AwsKeyManager
 import web5.sdk.crypto.InMemoryKeyManager
+import web5.sdk.dids.PublicKey
 import web5.sdk.dids.PublicKeyPurpose
-import web5.sdk.dids.methods.ion.models.PublicKey
 import web5.sdk.dids.methods.ion.models.Service
 import web5.sdk.dids.methods.ion.models.SidetreeCreateOperation
 import web5.sdk.dids.methods.ion.models.SidetreeUpdateOperation
 import web5.sdk.dids.methods.util.readKey
+import web5.sdk.dids.verificationmethods.EcdsaSecp256k1VerificationKey2019VerificationMethod
+import web5.sdk.dids.verificationmethods.JsonWebKey2020VerificationMethod
+import web5.sdk.dids.verificationmethods.VerificationMethodCreationParams
+import web5.sdk.dids.verificationmethods.VerificationMethodSpec
 import java.io.File
 import kotlin.test.Ignore
 import kotlin.test.Test
@@ -82,7 +86,7 @@ class DidIonTest {
       DidIon.create(
         InMemoryKeyManager(),
         CreateDidIonOptions(
-          verificationMethodsToAdd = listOf(
+          verificationMethods = listOf(
             JsonWebKey2020VerificationMethod(
               id = "space is not part of the base64 url chars",
               publicKeyJwk = verificationKey
@@ -133,7 +137,7 @@ class DidIonTest {
         DidIon.create(
           InMemoryKeyManager(),
           CreateDidIonOptions(
-            servicesToAdd = listOf(testCase.service)
+            services = listOf(testCase.service)
           )
         )
       }
@@ -149,7 +153,7 @@ class DidIonTest {
       DidIon.create(
         InMemoryKeyManager(),
         CreateDidIonOptions(
-          verificationMethodsToAdd = listOf(
+          verificationMethods = listOf(
             JsonWebKey2020VerificationMethod(
               id = "something_thats_really_really_really_really_really_really_long",
               publicKeyJwk = verificationKey
@@ -178,14 +182,14 @@ class DidIonTest {
       engine = mockEngine()
     }
     val opts = CreateDidIonOptions(
-      verificationMethodsToAdd = listOf(
+      verificationMethods = listOf(
         JsonWebKey2020VerificationMethod(
           id = verificationKey.keyID,
           publicKeyJwk = verificationKey,
           relationships = listOf(PublicKeyPurpose.AUTHENTICATION),
         )
       ),
-      servicesToAdd = listOf(
+      services = listOf(
         Service(
           id = "dwn",
           type = "DWN",
@@ -222,7 +226,7 @@ class DidIonTest {
       engine = mockEngine()
     }.create(
       keyManager, CreateDidIonOptions(
-      verificationMethodsToAdd = listOf(
+      verificationMethods = listOf(
         VerificationMethodCreationParams(
           JWSAlgorithm.ES256K,
           relationships = listOf(PublicKeyPurpose.AUTHENTICATION, PublicKeyPurpose.ASSERTION_METHOD)
@@ -312,8 +316,8 @@ class DidIonTest {
           "did:ion:123",
           UpdateDidIonOptions(
             updateKeyAlias = updateKeyAlias,
-            servicesToAdd = testCase.services,
-            verificationMethodsToAdd = testCase.publicKeys,
+            services = testCase.services,
+            verificationMethods = testCase.publicKeys,
           )
         )
       }
@@ -355,8 +359,8 @@ class DidIonTest {
     val (result, _) = DidIon.createOperation(
       keyManager,
       CreateDidIonOptions(
-        verificationMethodsToAdd = listOf(verificationMethod1),
-        servicesToAdd = listOf(service),
+        verificationMethods = listOf(verificationMethod1),
+        services = listOf(service),
       )
     )
 
@@ -422,9 +426,9 @@ class DidIonTest {
       "did:ion:EiDyOQbbZAa3aiRzeCkV7LOx3SERjjH93EXoIM3UoN4oWg",
       UpdateDidIonOptions(
         updateKeyAlias = updateKeyId,
-        servicesToAdd = listOf(service),
+        services = listOf(service),
         idsOfServicesToRemove = setOf("someId1"),
-        verificationMethodsToAdd = listOf(publicKey1),
+        verificationMethods = listOf(publicKey1),
         idsOfPublicKeysToRemove = setOf("someId2"),
       ),
     )
@@ -457,8 +461,8 @@ class DidIonTest {
       "did:ion:EiDyOQbbZAa3aiRzeCkV7LOx3SERjjH93EXoIM3UoN4oWg",
       RecoverDidIonOptions(
         recoveryKeyAlias = recoveryKeyAlias,
-        verificationMethodsToAdd = listOf(publicKey1),
-        servicesToAdd = listOf(service),
+        verificationMethods = listOf(publicKey1),
+        services = listOf(service),
       )
     )
 

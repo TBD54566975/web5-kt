@@ -19,8 +19,8 @@ import web5.sdk.dids.Did
 import web5.sdk.dids.extensions.load
 import web5.sdk.dids.methods.ion.CreateDidIonOptions
 import web5.sdk.dids.methods.ion.DidIon
-import web5.sdk.dids.methods.ion.JsonWebKey2020VerificationMethod
 import web5.sdk.dids.methods.key.DidKey
+import web5.sdk.dids.verificationmethods.JsonWebKey2020VerificationMethod
 import web5.sdk.testing.TestVectors
 import java.io.File
 import java.security.SignatureException
@@ -129,7 +129,7 @@ class VerifiableCredentialTest {
     )
     val issuerDid = DidIon.create(
       InMemoryKeyManager(),
-      CreateDidIonOptions(verificationMethodsToAdd = listOf(key))
+      CreateDidIonOptions(verificationMethods = listOf(key))
     )
 
     val header = JWSHeader.Builder(JWSAlgorithm.ES256K)

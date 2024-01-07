@@ -1,12 +1,10 @@
 package web5.sdk.dids.methods.ion
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.nimbusds.jose.Algorithm
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.JWSHeader
 import com.nimbusds.jose.JWSObject
 import com.nimbusds.jose.Payload
-import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.JWK
 import com.nimbusds.jose.util.Base64URL
 import foundation.identity.did.DID
@@ -27,7 +25,6 @@ import kotlinx.coroutines.runBlocking
 import org.erdtman.jcs.JsonCanonicalizer
 import web5.sdk.common.Convert
 import web5.sdk.common.Varint
-import web5.sdk.crypto.KeyGenOptions
 import web5.sdk.crypto.KeyManager
 import web5.sdk.dids.CreateDidOptions
 import web5.sdk.dids.CreationMetadata
@@ -35,6 +32,7 @@ import web5.sdk.dids.Did
 import web5.sdk.dids.DidMethod
 import web5.sdk.dids.DidResolutionMetadata
 import web5.sdk.dids.DidResolutionResult
+import web5.sdk.dids.PublicKey
 import web5.sdk.dids.PublicKeyPurpose
 import web5.sdk.dids.ResolveDidOptions
 import web5.sdk.dids.methods.ion.models.AddPublicKeysAction
@@ -46,7 +44,6 @@ import web5.sdk.dids.methods.ion.models.Document
 import web5.sdk.dids.methods.ion.models.InitialState
 import web5.sdk.dids.methods.ion.models.OperationSuffixDataObject
 import web5.sdk.dids.methods.ion.models.PatchAction
-import web5.sdk.dids.methods.ion.models.PublicKey
 import web5.sdk.dids.methods.ion.models.RecoveryUpdateSignedData
 import web5.sdk.dids.methods.ion.models.RemovePublicKeysAction
 import web5.sdk.dids.methods.ion.models.RemoveServicesAction
@@ -59,9 +56,11 @@ import web5.sdk.dids.methods.ion.models.SidetreeRecoverOperation
 import web5.sdk.dids.methods.ion.models.SidetreeUpdateOperation
 import web5.sdk.dids.methods.ion.models.UpdateOperationSignedData
 import web5.sdk.dids.validateKeyMaterialInsideKeyManager
+import web5.sdk.dids.verificationmethods.VerificationMethodCreationParams
+import web5.sdk.dids.verificationmethods.VerificationMethodSpec
+import web5.sdk.dids.verificationmethods.toPublicKeys
 import java.net.URI
 import java.security.MessageDigest
-import java.util.UUID
 
 private const val operationsPath = "/operations"
 private const val identifiersPath = "/identifiers"
@@ -95,16 +94,16 @@ private class DidIonApiImpl(configuration: DidIonConfiguration) : DidIonApi(conf
  * The options when updating an ION did.
  *
  * @param updateKeyAlias The alias within the key manager that refers to the last update key.
- * @param servicesToAdd The services to add in the did document.
+ * @param services The services to add in the did document.
  * @param idsOfServicesToRemove Ids of the services to remove from the did document.
- * @param verificationMethodsToAdd List of specs that will be added to the DID ION document.
+ * @param verificationMethods List of specs that will be added to the DID ION document.
  * @param idsOfPublicKeysToRemove Keys to remove from the DID document.
  */
 public data class UpdateDidIonOptions(
   val updateKeyAlias: String,
-  override val servicesToAdd: Iterable<Service> = emptyList(),
+  override val services: Iterable<Service> = emptyList(),
   val idsOfServicesToRemove: Iterable<String> = emptyList(),
-  override val verificationMethodsToAdd: Iterable<VerificationMethodSpec> = emptyList(),
+  override val verificationMethods: Iterable<VerificationMethodSpec> = emptyList(),
   val idsOfPublicKeysToRemove: Iterable<String> = emptyList(),
 ) : CommonOptions {
   internal fun toPatches(publicKeys: Iterable<PublicKey>): List<PatchAction> {
@@ -113,7 +112,7 @@ public data class UpdateDidIonOptions(
     }
 
     return buildList {
-      addIfNotEmpty(servicesToAdd, ::AddServicesAction)
+      addIfNotEmpty(services, ::AddServicesAction)
       addIfNotEmpty(idsOfServicesToRemove, ::RemoveServicesAction)
       addIfNotEmpty(publicKeys, ::AddPublicKeysAction)
       addIfNotEmpty(idsOfPublicKeysToRemove, ::RemovePublicKeysAction)
@@ -126,8 +125,8 @@ public data class UpdateDidIonOptions(
  *
  * @param recoveryKeyAlias is the alias within the keyManager to use when signing. It must match the recovery used with
  *   the last recovery operation.
- * @param verificationMethodsToAdd List of specs that will be added to the DID ION document.
- * @param servicesToAdd When provided, the services will be added to the DID document. Note that for each of the
+ * @param verificationMethods List of specs that will be added to the DID ION document.
+ * @param services When provided, the services will be added to the DID document. Note that for each of the
  * services that should be added, the following must hold:
  *   - The `id` field cannot be over 50 chars and must only use characters from the Base64URL character set.
  *   - The `type` field cannot be over 30 characters.
@@ -135,8 +134,8 @@ public data class UpdateDidIonOptions(
  */
 public class RecoverDidIonOptions(
   public val recoveryKeyAlias: String,
-  public override val verificationMethodsToAdd: Iterable<VerificationMethodSpec> = emptyList(),
-  public override val servicesToAdd: Iterable<Service> = emptyList(),
+  public override val verificationMethods: Iterable<VerificationMethodSpec> = emptyList(),
+  public override val services: Iterable<Service> = emptyList(),
 ) : CommonOptions
 
 /**
@@ -363,9 +362,9 @@ public sealed class DidIonApi(
     val reveal = updatePublicKey.reveal()
     val commitment = newUpdatePublicKey.commitment()
 
-    validateServices(options.servicesToAdd)
+    validateServices(options.services)
 
-    val publicKeysWithAliases = options.verificationMethodsToAdd.toPublicKeys(keyManager)
+    val publicKeysWithAliases = options.verificationMethods.toPublicKeys(keyManager)
     val publicKeys = publicKeysWithAliases.map { it.second }
     validateDidDocumentKeys(publicKeys)
 
@@ -453,7 +452,7 @@ public sealed class DidIonApi(
     val publicKeysToAdd = publicKeysWithAlias.map { it.second }
     validateDidDocumentKeys(publicKeysToAdd)
 
-    validateServices(options?.servicesToAdd ?: emptyList())
+    validateServices(options?.services ?: emptyList())
 
     val createOperationDelta = Delta(
       patches = options.toPatches(publicKeysToAdd),
@@ -482,7 +481,7 @@ public sealed class DidIonApi(
   }
 
   private fun publicKeysWithAliasesToAdd(options: CommonOptions?, keyManager: KeyManager) =
-    if (options == null || options.verificationMethodsToAdd.count() == 0) {
+    if (options == null || options.verificationMethods.count() == 0) {
       listOf<VerificationMethodSpec>(
         VerificationMethodCreationParams(
           JWSAlgorithm.ES256K,
@@ -490,7 +489,7 @@ public sealed class DidIonApi(
         )
       ).toPublicKeys(keyManager)
     } else {
-      options.verificationMethodsToAdd.toPublicKeys(keyManager)
+      options.verificationMethods.toPublicKeys(keyManager)
     }
 
   private fun validateServices(services: Iterable<Service>) = services.forEach {
@@ -558,7 +557,7 @@ public sealed class DidIonApi(
     val publicKeysToAdd = publicKeyWithAliases.map { it.second }
     validateDidDocumentKeys(publicKeysToAdd)
 
-    validateServices(options.servicesToAdd)
+    validateServices(options.services)
 
     val delta = Delta(
       patches = options.toPatches(publicKeysToAdd),
@@ -671,7 +670,7 @@ private fun CommonOptions?.toPatches(publicKeysToAdd: Iterable<PublicKey>): Iter
     ReplaceAction(
       Document(
         publicKeys = publicKeysToAdd,
-        services = this?.servicesToAdd ?: emptyList()
+        services = this?.services ?: emptyList()
       )
     )
   )
@@ -693,8 +692,8 @@ public class IonRecoverResult(
   public val operationsResponse: String)
 
 private interface CommonOptions {
-  val verificationMethodsToAdd: Iterable<VerificationMethodSpec>
-  val servicesToAdd: Iterable<Service>
+  val verificationMethods: Iterable<VerificationMethodSpec>
+  val services: Iterable<Service>
 }
 
 private fun JWK.commitment(): Commitment {
@@ -778,115 +777,18 @@ public data class KeyAliases(
  * Options available when creating an ion did.
  *
  *
- * @param verificationMethodsToAdd List of specs that will be added to the DID ION document.
- * @param servicesToAdd When provided, the services will be added to the DID document. Note that for each of the
+ * @param verificationMethods List of specs that will be added to the DID ION document.
+ * @param services When provided, the services will be added to the DID document. Note that for each of the
  * services that should be added, the following must hold:
  *   - The `id` field cannot be over 50 chars and must only use characters from the Base64URL character set.
  *   - The `type` field cannot be over 30 characters.
  *   - The `serviceEndpoint` must be a valid URI.
  */
 public class CreateDidIonOptions(
-  override val verificationMethodsToAdd: Iterable<VerificationMethodSpec> = emptyList(),
-  override val servicesToAdd: Iterable<Service> = emptyList(),
+  override val verificationMethods: Iterable<VerificationMethodSpec> = emptyList(),
+  override val services: Iterable<Service> = emptyList(),
 ) : CreateDidOptions, CommonOptions
 
-/** Common interface for options available when adding a VerificationMethod. */
-public interface VerificationMethodSpec
-
-private interface VerificationMethodGenerator {
-  fun generate(): Pair<String?, PublicKey>
-}
-
-/**
- * A [VerificationMethodSpec] where a [KeyManager] will be used to generate the underlying verification method keys.
- * The parameters [algorithm], [curve], and [options] will be forwarded to the keyManager.
- *
- * [relationships] will be used to determine the verification relationships in the DID Document being created.
- * */
-public class VerificationMethodCreationParams(
-  public val algorithm: Algorithm,
-  public val curve: Curve? = null,
-  public val options: KeyGenOptions? = null,
-  public val relationships: Iterable<PublicKeyPurpose>
-) : VerificationMethodSpec {
-  internal fun toGenerator(keyManager: KeyManager): VerificationMethodKeyManagerGenerator {
-    return VerificationMethodKeyManagerGenerator(keyManager, this)
-  }
-}
-
-/**
- * A [VerificationMethodSpec] according to https://w3c-ccg.github.io/lds-jws2020/.
- *
- * The [id] property cannot be over 50 chars and must only use characters from the Base64URL character set.
- */
-public class JsonWebKey2020VerificationMethod(
-  public val id: String,
-  public val controller: String? = null,
-  public val publicKeyJwk: JWK,
-  public val relationships: Iterable<PublicKeyPurpose> = emptySet()
-) : VerificationMethodSpec, VerificationMethodGenerator {
-  override fun generate(): Pair<String?, PublicKey> {
-    return Pair(null, PublicKey(id, "JsonWebKey2020", controller, publicKeyJwk, relationships))
-  }
-}
-
-/**
- * A [VerificationMethodSpec] according to https://w3c-ccg.github.io/lds-ecdsa-secp256k1-2019/.
- *
- * The [id] property cannot be over 50 chars and must only use characters from the Base64URL character set.
- */
-public class EcdsaSecp256k1VerificationKey2019VerificationMethod(
-  public val id: String,
-  public val controller: String? = null,
-  public val publicKeyJwk: JWK,
-  public val relationships: Iterable<PublicKeyPurpose> = emptySet()
-) : VerificationMethodSpec, VerificationMethodGenerator {
-  override fun generate(): Pair<String, PublicKey> {
-    return Pair(id, PublicKey(id, "EcdsaSecp256k1VerificationKey2019", controller, publicKeyJwk, relationships))
-  }
-}
-
-internal class VerificationMethodKeyManagerGenerator(
-  val keyManager: KeyManager,
-  val params: VerificationMethodCreationParams,
-) : VerificationMethodGenerator {
-
-  override fun generate(): Pair<String, PublicKey> {
-    val alias = keyManager.generatePrivateKey(
-      algorithm = params.algorithm,
-      curve = params.curve,
-      options = params.options
-    )
-    val publicKeyJwk = keyManager.getPublicKey(alias)
-    return Pair(
-      alias,
-      PublicKey(
-        id = UUID.randomUUID().toString(),
-        type = "JsonWebKey2020",
-        publicKeyJwk = publicKeyJwk,
-        purposes = params.relationships,
-      )
-    )
-  }
-}
-
-
-private fun Iterable<VerificationMethodSpec>.toGenerators(keyManager: KeyManager): List<VerificationMethodGenerator> {
-  return buildList {
-    for (verificationMethodSpec in this@toGenerators) {
-      when (verificationMethodSpec) {
-        is VerificationMethodCreationParams -> add(verificationMethodSpec.toGenerator(keyManager))
-
-        is VerificationMethodGenerator -> add(verificationMethodSpec)
-      }
-    }
-  }
-
-}
-
-private fun Iterable<VerificationMethodSpec>.toPublicKeys(keyManager: KeyManager) = toGenerators(
-  keyManager
-).map { it.generate() }
 
 /**
  * Metadata related to the creation of a DID (Decentralized Identifier) on the Sidetree protocol.

@@ -2,14 +2,12 @@ package web5.sdk.dids.methods.dht
 
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.jwk.Curve
-import com.nimbusds.jose.jwk.JWK
 import foundation.identity.did.Service
 import foundation.identity.did.parser.ParserException
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
-import io.ktor.util.hex
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
@@ -17,6 +15,8 @@ import org.junit.jupiter.api.assertThrows
 import web5.sdk.common.ZBase32
 import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.dids.PublicKeyPurpose
+import web5.sdk.dids.verificationmethods.JsonWebKey2020VerificationMethod
+import web5.sdk.dids.verificationmethods.VerificationMethodCreationParams
 import java.net.URI
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
@@ -43,6 +43,7 @@ class DidDhtTest {
     @Test
     fun `validate identity key`() {
       val manager = InMemoryKeyManager()
+      DidDht.create(manager, CreateDidDhtOptions(publish = false))
       val keyAlias = manager.generatePrivateKey(JWSAlgorithm.EdDSA, Curve.Ed25519)
       val publicKey = manager.getPublicKey(keyAlias)
       val identifier = DidDht.getDidIdentifier(publicKey)
@@ -98,13 +99,50 @@ class DidDhtTest {
     }
 
     @Test
+    fun `create with bad verification method id throws error`() {
+      val manager = InMemoryKeyManager()
+
+      val exception = assertThrows<IllegalArgumentException> {
+        DidDht.create(
+          manager,
+          CreateDidDhtOptions(
+            verificationMethods = listOf(
+              JsonWebKey2020VerificationMethod(
+                id = "0",
+                publicKeyJwk = manager.getPublicKey(
+                  manager.generatePrivateKey(
+                    JWSAlgorithm.EdDSA,
+                    Curve.Ed25519
+                  )
+                ).toPublicJWK(),
+                relationships = listOf(PublicKeyPurpose.AUTHENTICATION)
+              )
+            ),
+            publish = false
+          )
+        )
+      }
+
+      assertEquals("id for verification method cannot be \"0\"", exception.message)
+    }
+
+    @Test
     fun `create with another key and service`() {
       val manager = InMemoryKeyManager()
 
       val otherKey = manager.generatePrivateKey(JWSAlgorithm.ES256K, Curve.SECP256K1)
       val publicKeyJwk = manager.getPublicKey(otherKey).toPublicJWK()
-      val verificationMethodsToAdd: Iterable<Pair<JWK, Array<PublicKeyPurpose>>> = listOf(
-        Pair(publicKeyJwk, arrayOf(PublicKeyPurpose.AUTHENTICATION, PublicKeyPurpose.ASSERTION_METHOD))
+      val verificationMethodsToAdd = listOf(
+        JsonWebKey2020VerificationMethod(
+          id = publicKeyJwk.keyID,
+          publicKeyJwk = publicKeyJwk,
+          relationships = listOf(PublicKeyPurpose.AUTHENTICATION, PublicKeyPurpose.ASSERTION_METHOD)
+        ),
+        VerificationMethodCreationParams(
+          algorithm = JWSAlgorithm.EdDSA,
+          curve = Curve.Ed25519,
+          relationships = listOf(PublicKeyPurpose.ASSERTION_METHOD, PublicKeyPurpose.CAPABILITY_INVOCATION)
+        ),
       )
 
       val serviceToAdd =
@@ -121,11 +159,11 @@ class DidDhtTest {
 
       assertNotNull(did)
       assertNotNull(did.didDocument)
-      assertEquals(2, did.didDocument!!.verificationMethods.size)
-      assertEquals(2, did.didDocument!!.assertionMethodVerificationMethods.size)
+      assertEquals(3, did.didDocument!!.verificationMethods.size)
+      assertEquals(3, did.didDocument!!.assertionMethodVerificationMethods.size)
       assertEquals(2, did.didDocument!!.authenticationVerificationMethods.size)
       assertEquals(1, did.didDocument!!.capabilityDelegationVerificationMethods.size)
-      assertEquals(1, did.didDocument!!.capabilityInvocationVerificationMethods.size)
+      assertEquals(2, did.didDocument!!.capabilityInvocationVerificationMethods.size)
       assertNull(did.didDocument!!.keyAgreementVerificationMethods)
       assertNotNull(did.didDocument!!.services)
       assertEquals(1, did.didDocument!!.services.size)
@@ -252,8 +290,12 @@ class DidDhtTest {
 
       val otherKey = manager.generatePrivateKey(JWSAlgorithm.ES256K, Curve.SECP256K1)
       val publicKeyJwk = manager.getPublicKey(otherKey).toPublicJWK()
-      val verificationMethodsToAdd: Iterable<Pair<JWK, Array<PublicKeyPurpose>>> = listOf(
-        Pair(publicKeyJwk, arrayOf(PublicKeyPurpose.AUTHENTICATION, PublicKeyPurpose.ASSERTION_METHOD))
+      val verificationMethodsToAdd = listOf(
+        JsonWebKey2020VerificationMethod(
+          id = publicKeyJwk.keyID,
+          publicKeyJwk = publicKeyJwk,
+          relationships = listOf(PublicKeyPurpose.AUTHENTICATION, PublicKeyPurpose.ASSERTION_METHOD)
+        )
       )
 
       val serviceToAdd = Service.builder()
