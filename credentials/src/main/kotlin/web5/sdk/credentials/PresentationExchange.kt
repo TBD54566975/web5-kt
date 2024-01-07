@@ -10,6 +10,7 @@ import com.nimbusds.jwt.SignedJWT
 import web5.sdk.credentials.model.InputDescriptorMapping
 import web5.sdk.credentials.model.InputDescriptorV2
 import web5.sdk.credentials.model.PresentationDefinitionV2
+import web5.sdk.credentials.model.PresentationDefinitionV2Validator
 import web5.sdk.credentials.model.PresentationSubmission
 import java.util.UUID
 
@@ -113,6 +114,26 @@ public object PresentationExchange {
       definitionId = presentationDefinition.id,
       descriptorMap = descriptorMapList
     )
+  }
+
+  /**
+   * Validates whether an object is usable as a presentation definition or not.
+   *
+   * Model as specified in https://identity.foundation/presentation-exchange/#presentation-definition.
+   *
+   * The checks are as follows:
+   * 1. Ensures that the presentation definition's ID is not empty.
+   * 2. Validates that the name, if present, is not empty.
+   * 3. Checks that the purpose, if provided, is not empty.
+   * 4. Verifies the uniqueness of all inputDescriptor IDs within the presentation.
+   * 5. Ensures that FieldV2 ids are unique across all input descriptors.
+   * 6. For each input descriptor, it validates the descriptor using InputDescriptorV2Validator.
+   *
+   * Throws an [PexValidationException] if the provided object does not conform to the Presentation Definition
+   */
+  @Throws(PexValidationException::class)
+  public fun validateDefinition(presentationDefinition: PresentationDefinitionV2) {
+    PresentationDefinitionV2Validator.validate(presentationDefinition)
   }
 
   private fun mapInputDescriptorsToVCs(

@@ -26,8 +26,7 @@ public class PresentationDefinitionV2(
   @JsonProperty("submission_requirements")
   public val submissionRequirements: List<SubmissionRequirement>? = null,
   @JsonProperty("input_descriptors")
-  public val inputDescriptors: List<InputDescriptorV2>,
-  public val frame: Map<String, Any>? = null
+  public val inputDescriptors: List<InputDescriptorV2>
 )
 
 /**
