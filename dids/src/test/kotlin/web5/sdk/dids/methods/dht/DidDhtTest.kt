@@ -1,22 +1,34 @@
 package web5.sdk.dids.methods.dht
 
+import com.fasterxml.jackson.core.type.TypeReference
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.JWK
+import foundation.identity.did.DIDDocument
 import foundation.identity.did.Service
 import foundation.identity.did.parser.ParserException
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
-import io.ktor.util.hex
+import org.erdtman.jcs.JsonCanonicalizer
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
+import org.mockito.kotlin.doReturn
+import org.mockito.kotlin.spy
+import org.mockito.kotlin.whenever
 import web5.sdk.common.ZBase32
 import web5.sdk.crypto.InMemoryKeyManager
+import web5.sdk.dids.DidResolutionResult
 import web5.sdk.dids.PublicKeyPurpose
+import web5.sdk.dids.exceptions.InvalidIdentifierException
+import web5.sdk.dids.exceptions.InvalidIdentifierSizeException
+import web5.sdk.dids.exceptions.InvalidMethodNameException
+import web5.sdk.testing.TestVectors
+import java.io.File
 import java.net.URI
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
@@ -289,24 +301,81 @@ class DidDhtTest {
 
     @Test
     fun `throws exception if did method isnt dht`() {
-      assertThrows<IllegalArgumentException> { DidDht.validate("did:key:abcd123") }
+      assertThrows<InvalidMethodNameException> { DidDht.validate("did:key:abcd123") }
     }
 
     @Test
     fun `throws exception if identifier cannot be zbase32 decoded`() {
-      assertThrows<java.lang.IllegalArgumentException> { DidDht.validate("did:dht:abcd123") }
+      assertThrows<InvalidIdentifierException> { DidDht.validate("did:dht:abcd123") }
     }
 
     @Test
     fun `throws exception if decoded identifier is larger than 32 bytes`() {
       val kakaId = ZBase32.encode("Hakuna matata Hakuna Matata Hakuna Matata".toByteArray())
-      assertThrows<java.lang.IllegalArgumentException> { DidDht.validate("did:dht:$kakaId") }
+      assertThrows<InvalidIdentifierSizeException> { DidDht.validate("did:dht:$kakaId") }
     }
 
     @Test
     fun `throws exception if decoded identifier is smaller than 32 bytes`() {
       val kakaId = ZBase32.encode("a".toByteArray())
-      assertThrows<java.lang.IllegalArgumentException> { DidDht.validate("did:dht:$kakaId") }
+      assertThrows<InvalidIdentifierSizeException> { DidDht.validate("did:dht:$kakaId") }
+    }
+  }
+}
+
+class Web5TestVectorsDidDhtTest {
+  data class CreateTestInput(
+    val identityPublicJwk: Map<String, Any>?,
+    val additionalVerificationMethods: List<VerificationMethodInput>?,
+    val services: List<Service>?,
+  )
+
+  data class ResolveTestInput(
+    val didUri: String,
+  )
+
+  data class VerificationMethodInput(
+    val jwk: Map<String, Any>,
+    val purposes: List<PublicKeyPurpose>
+  )
+
+  private val mapper = jacksonObjectMapper()
+
+  @Test
+  fun create() {
+    val typeRef = object : TypeReference<TestVectors<CreateTestInput, DIDDocument>>() {}
+    val testVectors = mapper.readValue(File("../test-vectors/did_dht/create.json"), typeRef)
+
+    testVectors.vectors.forEach { vector ->
+      val keyManager = spy(InMemoryKeyManager())
+      val identityKeyId = keyManager.import(listOf(vector.input.identityPublicJwk!!)).first()
+      doReturn(identityKeyId).whenever(keyManager).generatePrivateKey(JWSAlgorithm.EdDSA, Curve.Ed25519)
+
+      val verificationMethods = vector.input.additionalVerificationMethods?.map { verificationMethodInput ->
+        val jwk = JWK.parse(verificationMethodInput.jwk)
+        Pair(jwk, verificationMethodInput.purposes.toTypedArray())
+      }
+      val options = CreateDidDhtOptions(
+        verificationMethods = verificationMethods,
+        publish = false,
+        services = vector.input.services
+      )
+      val didDht = DidDht.create(keyManager, options)
+      assertEquals(
+        JsonCanonicalizer(vector.output?.toJson()).encodedString,
+        JsonCanonicalizer(didDht.didDocument?.toJson()).encodedString,
+        vector.description
+      )
+    }
+  }
+
+  @Test
+  fun resolve() {
+    val typeRef = object : TypeReference<TestVectors<ResolveTestInput, DidResolutionResult>>() {}
+    val testVectors = mapper.readValue(File("../test-vectors/did_dht/resolve.json"), typeRef)
+    testVectors.vectors.forEach { vector ->
+      val result = DidDht.resolve(vector.input.didUri)
+      assertEquals(vector.output, result, vector.description)
     }
   }
 }
