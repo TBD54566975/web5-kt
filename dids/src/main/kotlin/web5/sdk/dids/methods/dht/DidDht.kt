@@ -182,6 +182,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
     // build DID Document
     val didDocument =
       DIDDocument.builder()
+        .defaultContexts(false)
         .id(URI(id))
         .verificationMethods(verificationMethods)
         .services(services)

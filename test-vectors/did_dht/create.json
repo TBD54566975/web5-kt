@@ -13,9 +13,6 @@
         }
       },
       "output": {
-        "@context": [
-          "https://www.w3.org/ns/did/v1"
-        ],
         "id": "did:dht:cyuoqaf7itop8ohww4yn5ojg13qaq83r9zihgqntc5i9zwrfdfoo",
         "verificationMethod": [
           {
@@ -80,9 +77,6 @@
         ]
       },
       "output": {
-        "@context": [
-          "https://www.w3.org/ns/did/v1"
-        ],
         "id": "did:dht:cyuoqaf7itop8ohww4yn5ojg13qaq83r9zihgqntc5i9zwrfdfoo",
         "verificationMethod": [
           {
