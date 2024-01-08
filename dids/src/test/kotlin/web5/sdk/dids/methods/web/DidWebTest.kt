@@ -1,5 +1,8 @@
 package web5.sdk.dids.methods.web
 
+import com.fasterxml.jackson.core.type.TypeReference
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
 import io.ktor.http.HttpHeaders
@@ -9,35 +12,35 @@ import io.ktor.utils.io.ByteReadChannel
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import web5.sdk.crypto.InMemoryKeyManager
+import web5.sdk.dids.DidResolutionResult
 import web5.sdk.dids.methods.util.readKey
+import web5.sdk.testing.TestVectors
 import java.io.File
 import kotlin.test.assertEquals
 
 class DidWebTest {
 
   @Test
-  fun `badly formed dids throw exceptions`() {
+  fun `badly formed dids return resolution errors`() {
     class TestCase(
       val did: String,
-      val expectedExceptionMessage: String,
+      val expectedError: String,
     )
 
     val testCases = listOf(
       TestCase(
         did = "did:ion:wrongprefix",
-        expectedExceptionMessage = "did:ion:wrongprefix is missing prefix \"did:web\""
+        expectedError = "methodNotSupported"
       ),
       TestCase(
         did = "did:web:",
-        expectedExceptionMessage = "Cannot parse DID: did:web:"
+        expectedError = "invalidDid"
       ),
     )
     for (testCase in testCases) {
-      val exception = assertThrows<Exception> {
-        DidWeb.resolve(testCase.did)
-      }
+      val resolutionResult = DidWeb.resolve(testCase.did)
 
-      assertEquals(testCase.expectedExceptionMessage, exception.message)
+      assertEquals(testCase.expectedError, resolutionResult.didResolutionMetadata.error)
     }
   }
 
@@ -126,5 +129,42 @@ class DidWebTest {
 
       else -> throw Exception("")
     }
+  }
+}
+
+class Web5TestVectorsDidWebTest {
+  data class ResolveTestInput(
+    val didUri: String,
+    val mockServer: Map<String, JsonNode>?,
+  )
+
+  private val mapper = jacksonObjectMapper()
+
+  @Test
+  fun resolve() {
+    val typeRef = object : TypeReference<TestVectors<ResolveTestInput, DidResolutionResult>>() {}
+    val testVectors = mapper.readValue(File("../test-vectors/did_web/resolve.json"), typeRef)
+
+    testVectors.vectors.forEach { vector ->
+      val resolutionResult = DidWebApi {
+        engine = vector.input.mockServer?.let {
+          mockEngine(it)
+        }
+      }.resolve(vector.input.didUri)
+      assertEquals(vector.output, resolutionResult, vector.description)
+    }
+  }
+
+  private fun mockEngine(mockServer: Map<String, JsonNode>): MockEngine {
+    return MockEngine { request ->
+      if (mockServer.containsKey(request.url.toString())) {
+        respond(
+          content = ByteReadChannel(mockServer[request.url.toString()]!!.toString()),
+          status = HttpStatusCode.OK,
+          headers = headersOf(HttpHeaders.ContentType, "application/json")
+        )
+      } else throw Exception("Mock server does not contain ${request.url}")
+    }
+
   }
 }
