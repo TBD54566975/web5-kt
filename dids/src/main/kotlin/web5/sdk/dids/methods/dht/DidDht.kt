@@ -81,11 +81,15 @@ private class DidDhtApiImpl(configuration: DidDhtConfiguration) : DidDhtApi(conf
  * as verification methods.
  * @property services A list of [Service]s to add to the DID Document.
  * @property publish Whether to publish the DID Document to the DHT after creation.
+ * @property controllers A list of controller DIDs to add to the DID Document.
+ * @property alsoKnownAses A list of also known as identifiers to add to the DID Document.
  */
 public class CreateDidDhtOptions(
   public val verificationMethods: Iterable<Pair<JWK, Array<PublicKeyPurpose>>>? = null,
   public val services: Iterable<Service>? = null,
   public val publish: Boolean = true,
+  public val controllers: Iterable<String>? = null,
+  public val alsoKnownAses: Iterable<String>? = null,
 ) : CreateDidOptions
 
 private const val PROPERTY_SEPARATOR = ";"
@@ -179,7 +183,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
     }
 
     // build DID Document
-    val didDocument =
+    val didDocumentBuilder =
       DIDDocument.builder()
         .id(URI(id))
         .verificationMethods(verificationMethods)
@@ -189,7 +193,11 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
         .keyAgreementVerificationMethods(relationshipsMap[PublicKeyPurpose.KEY_AGREEMENT])
         .capabilityDelegationVerificationMethods(relationshipsMap[PublicKeyPurpose.CAPABILITY_DELEGATION])
         .capabilityInvocationVerificationMethods(relationshipsMap[PublicKeyPurpose.CAPABILITY_INVOCATION])
-        .build()
+
+    opts.controllers?.let { didDocumentBuilder.controllers(it.map(URI::create)) }
+    opts.alsoKnownAses?.let { didDocumentBuilder.alsoKnownAses(it.map(URI::create)) }
+
+    val didDocument = didDocumentBuilder.build()
 
     // publish to DHT if requested
     if (opts.publish) {
@@ -381,6 +389,9 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
       serviceIds += sId
     }
 
+    addControllerRecord(didDocument, message)
+    addAlsoKnownAsRecord(didDocument, message)
+
     // Construct top-level Resource Record
     val rootRecordText = mutableListOf<String>().apply {
       if (verificationMethodIds.isNotEmpty()) add("vm=${verificationMethodIds.joinToString(ARRAY_SEPARATOR)}")
@@ -425,6 +436,34 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
     }
 
     return message
+  }
+
+  private fun addAlsoKnownAsRecord(didDocument: DIDDocument, message: Message) {
+    if (didDocument.alsoKnownAses.isNullOrEmpty()) {
+      return
+    }
+    message.addRecord(
+      TXTRecord(
+        Name("_aka._did."),
+        DClass.IN,
+        ttl,
+        didDocument.alsoKnownAses.joinToString(PROPERTY_SEPARATOR)
+      ), Section.ANSWER
+    )
+  }
+
+  private fun addControllerRecord(didDocument: DIDDocument, message: Message) {
+    if (didDocument.controllers.isNullOrEmpty()) {
+      return
+    }
+    message.addRecord(
+      TXTRecord(
+        Name("_cnt._did."),
+        DClass.IN,
+        ttl,
+        didDocument.controllers.joinToString(PROPERTY_SEPARATOR)
+      ), Section.ANSWER
+    )
   }
 
   private fun serviceRecordValue(service: Service): String {
@@ -486,6 +525,14 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
             name == "_did." -> {
               handleRootRecord(rr, keyLookup, doc)
             }
+            // handle controller record
+            name == "_cnt._did." -> {
+              handleControllerRecord(rr, doc)
+            }
+            // handle alsoKnownAs record
+            name == "_aka._did." -> {
+              handleAlsoKnownAsRecord(rr, doc)
+            }
           }
         }
       }
@@ -496,6 +543,16 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
     doc.services(services)
 
     return doc.build() to types
+  }
+
+  private fun handleAlsoKnownAsRecord(rr: TXTRecord, doc: DIDDocument.Builder<*>) {
+    val data = rr.strings.joinToString("")
+    doc.alsoKnownAses(data.split(ARRAY_SEPARATOR).map { URI.create(it) })
+  }
+
+  private fun handleControllerRecord(rr: TXTRecord, doc: DIDDocument.Builder<*>) {
+    val data = rr.strings.joinToString("")
+    doc.controllers(data.split(ARRAY_SEPARATOR).map { URI.create(it) })
   }
 
   private fun handleVerificationMethods(

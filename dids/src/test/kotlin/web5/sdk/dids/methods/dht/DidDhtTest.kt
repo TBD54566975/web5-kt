@@ -257,11 +257,15 @@ class DidDhtTest {
       val serviceToAdd = Service.builder()
         .id(URI("test-service"))
         .type("HubService")
-        .serviceEndpoint("https://example.com/service)")
+        .serviceEndpoint(listOf("https://example.com/service", "https://example.com/service2"))
         .build()
 
       val opts = CreateDidDhtOptions(
-        verificationMethods = verificationMethodsToAdd, services = listOf(serviceToAdd), publish = false
+        verificationMethods = verificationMethodsToAdd,
+        services = listOf(serviceToAdd),
+        controllers = listOf("did:dht:1bxdi3tbf1ud6cpk3ef9pz83erk9c6mmh877qfhfcd7ppzbgh7co"),
+        alsoKnownAses = listOf("did:web:tbd.website"),
+        publish = false
       )
       val did = DidDht.create(manager, opts)
 
