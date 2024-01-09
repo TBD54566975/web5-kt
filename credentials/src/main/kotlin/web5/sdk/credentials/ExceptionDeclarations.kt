@@ -41,3 +41,11 @@ public class StatusListCredentialFetchException(cause: Throwable, message: Strin
  */
 public class StatusListCredentialParseException(cause: Throwable, message: String? = null)
   : RuntimeException(message, cause)
+
+/**
+ * Presentation exchange validation exception.
+ *
+ * @param message the exception message detailing the error
+ */
+public class PexValidationException(message: String? = null)
+  : RuntimeException(message)
