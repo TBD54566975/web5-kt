@@ -361,7 +361,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
           DClass.IN,
           ttl,
           listOf(
-            "id=#${verificationMethod.id.rawFragment}",
+            "id=${verificationMethod.id.rawFragment}",
             "t=$keyType",
             "k=$base64UrlEncodedKey"
           ).joinToString(PROPERTY_SEPARATOR)
@@ -380,7 +380,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
           DClass.IN,
           ttl,
           listOf(
-            "id=#${service.id.rawFragment}",
+            "id=${service.id.rawFragment}",
             "t=${service.type}",
             "se=${serviceRecordValue(service)}"
           ).joinToString(PROPERTY_SEPARATOR)
@@ -506,7 +506,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
             name.startsWith("_s") -> {
               val data = parseTxtData(rr.strings.joinToString(ARRAY_SEPARATOR))
               services += Service.builder()
-                .id(URI.create("$did${data["id"]!!}"))
+                .id(URI.create("$did#${data["id"]!!}"))
                 .type(data["t"]!!)
                 .serviceEndpoint(data["se"]!!.split(ARRAY_SEPARATOR))
                 .build()
@@ -574,13 +574,13 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
     }
 
     verificationMethods += VerificationMethod.builder()
-      .id(URI.create("$did$verificationMethodId"))
+      .id(URI.create("$did#$verificationMethodId"))
       .type("JsonWebKey2020")
       .controller(URI.create(did))
       .publicKeyJwk(publicKeyJwk.toJSONObject())
       .build()
 
-    keyLookup[name.split(".")[0].drop(1)] = "$did$verificationMethodId"
+    keyLookup[name.split(".")[0].drop(1)] = "$did#$verificationMethodId"
   }
 
   private fun handleRootRecord(

@@ -174,7 +174,7 @@ class DidDhtTest {
     fun `resolves a did dht value`() {
       val api = DidDhtApi { engine = mockEngine() }
       // known DID associated with our mock response, needed to verify the payload's signature
-      val knownDid = "did:dht:yufwj8bez1tgma35ei3rsu5xzo4936hpz18njtjxao11c1danoeo"
+      val knownDid = "did:dht:qd5pz3sfsmhwhts9auy1qe6cwniemss4bpm3qxm8modtr148z17y"
 
       assertDoesNotThrow {
         val result = api.resolve(knownDid)
@@ -186,10 +186,10 @@ class DidDhtTest {
 
     @OptIn(ExperimentalStdlibApi::class)
     private fun mockEngine() = MockEngine { request ->
-      val hexResponse = "26a2d522395f6ed4218724add94c8bf1577be09b5055d8f43b74d7167c3e8294e7e360821967a84134e90863812c" +
-        "21393f7f23f1c4f047b97ef6f22c8c34eb0f00000000659da364000004000000000200000000035f6b30045f64696400001000010000" +
-        "1c2000383769643d23303b743d303b6b3d424d74456e4369386f6d586a4f30567953303976764458382d3432386a6954464c38516c4a" +
-        "6b6834464245c0100010000100001c20002322766d3d6b303b617574683d6b303b61736d3d6b303b696e763d6b303b64656c3d6b30"
+      val hexResponse = "1ad37b5b8ed6c5fc87b64fe4849d81e7446c31b36138d03b9f6d68837123d6ae6aedf91e0340a7c83cd53b95a600" +
+        "ffe4a2264c3c677d7d16ca6bd30e05fa820c00000000659dd40e000004000000000200000000035f6b30045f64696400001000010000" +
+        "1c2000373669643d303b743d303b6b3d63506262357357792d553547333854424a79504d6f4b714632746f4c563563395a317748456b" +
+        "7448764c6fc0100010000100001c20002322766d3d6b303b617574683d6b303b61736d3d6b303b696e763d6b303b64656c3d6b30"
 
       when {
         request.url.encodedPath == "/" && request.method == HttpMethod.Put -> {
