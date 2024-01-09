@@ -9,7 +9,6 @@ import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
-import io.ktor.util.hex
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
@@ -175,7 +174,7 @@ class DidDhtTest {
     fun `resolves a did dht value`() {
       val api = DidDhtApi { engine = mockEngine() }
       // known DID associated with our mock response, needed to verify the payload's signature
-      val knownDid = "did:dht:3b7tm6qtte51dktb4nf4uc59hr17dn7xnrowibcj1jek9krfxsgo"
+      val knownDid = "did:dht:yufwj8bez1tgma35ei3rsu5xzo4936hpz18njtjxao11c1danoeo"
 
       assertDoesNotThrow {
         val result = api.resolve(knownDid)
@@ -187,11 +186,10 @@ class DidDhtTest {
 
     @OptIn(ExperimentalStdlibApi::class)
     private fun mockEngine() = MockEngine { request ->
-      val hexResponse = "2099f1ddf2e14c3fa693e89070cceb34d597d456e34ca32a07171badd734d62bfabac20b70e2751" +
-        "d31acd65d76e22ec0b66a0a7029064adccaf533ddd81e930a00000000655e4531000004000000000200000000035f6b3" +
-        "0045f646964000010000100001c2000373669643d302c743d302c6b3d794873562d64474b4e7947714964434c71624e5f" +
-        "345358526936385249557146695a4a5172366946665930c0100010000100001c20002322766d3d6b303b617574683d6b303" +
-        "b61736d3d6b303b696e763d6b303b64656c3d6b30"
+      val hexResponse = "26a2d522395f6ed4218724add94c8bf1577be09b5055d8f43b74d7167c3e8294e7e360821967a84134e90863812c" +
+        "21393f7f23f1c4f047b97ef6f22c8c34eb0f00000000659da364000004000000000200000000035f6b30045f64696400001000010000" +
+        "1c2000383769643d23303b743d303b6b3d424d74456e4369386f6d586a4f30567953303976764458382d3432386a6954464c38516c4a" +
+        "6b6834464245c0100010000100001c20002322766d3d6b303b617574683d6b303b61736d3d6b303b696e763d6b303b64656c3d6b30"
 
       when {
         request.url.encodedPath == "/" && request.method == HttpMethod.Put -> {
