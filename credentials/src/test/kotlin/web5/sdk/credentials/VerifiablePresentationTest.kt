@@ -26,6 +26,17 @@ import kotlin.test.assertNotNull
 
 class VerifiablePresentationTest {
 
+  @Suppress("LongLine")
+  val validVcJwt = "eyJraWQiOiJkaWQ6a2V5OnpRM3NoZ0NqVmZucldxOUw3cjFRc3oxcmlRUldvb3pid2dKYkptTGdxRFB2OXNnNGIjelEzc" +
+    "2hnQ2pWZm5yV3E5TDdyMVFzejFyaVFSV29vemJ3Z0piSm1MZ3FEUHY5c2c0YiIsInR5cCI6IkpXVCIsImFsZyI6IkVTMjU2SyJ9.eyJpc3Mi" +
+    "OiJkaWQ6a2V5OnpRM3NoZ0NqVmZucldxOUw3cjFRc3oxcmlRUldvb3pid2dKYkptTGdxRFB2OXNnNGIiLCJzdWIiOiJkaWQ6a2V5OnpRM3No" +
+    "d2Q0eVVBZldnZkdFUnFVazQ3eEc5NXFOVXNpc0Q3NzZKTHVaN3l6OW5RaWoiLCJpYXQiOjE3MDQ5MTgwODMsInZjIjp7IkBjb250ZXh0Ijpb" +
+    "Imh0dHBzOi8vd3d3LnczLm9yZy8yMDE4L2NyZWRlbnRpYWxzL3YxIl0sInR5cGUiOlsiVmVyaWZpYWJsZUNyZWRlbnRpYWwiLCJTdHJlZXRD" +
+    "cmVkIl0sImlkIjoidXJuOnV1aWQ6NTU2OGQyZTEtYjA0NS00MTQ3LTkxNjUtZTU3YTIxMGM2ZGVlIiwiaXNzdWVyIjoiZGlkOmtleTp6UTNz" +
+    "aGdDalZmbnJXcTlMN3IxUXN6MXJpUVJXb296YndnSmJKbUxncURQdjlzZzRiIiwiaXNzdWFuY2VEYXRlIjoiMjAyNC0wMS0xMFQyMDoyMToy" +
+    "M1oiLCJjcmVkZW50aWFsU3ViamVjdCI6eyJpZCI6ImRpZDprZXk6elEzc2h3ZDR5VUFmV2dmR0VScVVrNDd4Rzk1cU5Vc2lzRDc3NkpMdVo3" +
+    "eXo5blFpaiIsImxvY2FsUmVzcGVjdCI6ImhpZ2giLCJsZWdpdCI6dHJ1ZX19fQ.Bx0JrQERWRLpYeg3TnfrOIo4zexo3q1exPZ-Ej6j0T0YO" +
+    "BVZaZ9-RqpiAM-fHKrdGUzVyXr77pOl7yGgwIO90g"
   @Test
   fun `create simple vp`() {
     val vcJwts: Iterable<String> = listOf("vcjwt1")
@@ -77,7 +88,7 @@ class VerifiablePresentationTest {
 
 
   @Test
-  fun `simple sign works`() {
+  fun `creates simple signed vp`() {
     val keyManager = InMemoryKeyManager()
     val holderDid = DidKey.create(keyManager)
 
@@ -91,7 +102,7 @@ class VerifiablePresentationTest {
   }
 
   @Test
-  fun `presentationSubmission sign works`() {
+  fun `creates signed vp with presentationSubmission`() {
     val keyManager = InMemoryKeyManager()
     val holderDid = DidKey.create(keyManager)
 
@@ -125,7 +136,7 @@ class VerifiablePresentationTest {
 
   @Test
   fun `verify does not throw an exception if vp is valid`() {
-    val vcJwts: Iterable<String> = listOf("vcjwt1")
+    val vcJwts: Iterable<String> = listOf(validVcJwt)
 
     val keyManager = InMemoryKeyManager()
     val holderDid = DidKey.create(keyManager)

@@ -3,21 +3,11 @@ package web5.sdk.credentials
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
-import com.nimbusds.jose.JOSEObjectType
-import com.nimbusds.jose.JWSAlgorithm
-import com.nimbusds.jose.JWSHeader
-import com.nimbusds.jose.jwk.JWK
-import com.nimbusds.jose.util.Base64URL
 import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jwt.JWTParser
 import com.nimbusds.jwt.SignedJWT
-import foundation.identity.did.DIDURL
-import foundation.identity.did.VerificationMethod
-import web5.sdk.common.Convert
-import web5.sdk.crypto.Crypto
+import web5.sdk.credentials.util.JwtUtil
 import web5.sdk.dids.Did
-import web5.sdk.dids.DidResolvers
-import web5.sdk.dids.findAssertionMethodById
 import java.net.URI
 import java.security.SignatureException
 import java.util.Date
@@ -68,42 +58,13 @@ public class VerifiablePresentation internal constructor(public val vpDataModel:
    */
   @JvmOverloads
   public fun sign(did: Did, assertionMethodId: String? = null): String {
-    val didResolutionResult = DidResolvers.resolve(did.uri)
-    val assertionMethod: VerificationMethod = didResolutionResult.didDocument.findAssertionMethodById(assertionMethodId)
-
-    // TODO: ensure that publicKeyJwk is not null
-    val publicKeyJwk = JWK.parse(assertionMethod.publicKeyJwk)
-    val keyAlias = did.keyManager.getDeterministicAlias(publicKeyJwk)
-
-    // TODO: figure out how to make more reliable since algorithm is technically not a required property of a JWK
-    val algorithm = publicKeyJwk.algorithm
-    val jwsAlgorithm = JWSAlgorithm.parse(algorithm.toString())
-
-    val kid = when (assertionMethod.id.isAbsolute) {
-      true -> assertionMethod.id.toString()
-      false -> "${did.uri}${assertionMethod.id}"
-    }
-
-    val jwtHeader = JWSHeader.Builder(jwsAlgorithm)
-      .type(JOSEObjectType.JWT)
-      .keyID(kid)
-      .build()
-
-    val jwtPayload = JWTClaimsSet.Builder()
+    val payload = JWTClaimsSet.Builder()
       .issuer(did.uri)
       .issueTime(Date())
       .claim("vp", vpDataModel.toMap())
       .build()
 
-    val jwtObject = SignedJWT(jwtHeader, jwtPayload)
-    val toSign = jwtObject.signingInput
-    val signatureBytes = did.keyManager.sign(keyAlias, toSign)
-
-    val base64UrlEncodedHeader = jwtHeader.toBase64URL()
-    val base64UrlEncodedPayload = jwtPayload.toPayload().toBase64URL()
-    val base64UrlEncodedSignature = Base64URL(Convert(signatureBytes).toBase64Url(padding = false))
-
-    return "$base64UrlEncodedHeader.$base64UrlEncodedPayload.$base64UrlEncodedSignature"
+    return JwtUtil.sign(did, assertionMethodId, payload)
   }
 
   /**
@@ -166,6 +127,7 @@ public class VerifiablePresentation internal constructor(public val vpDataModel:
      * Verifies the integrity and authenticity of a Verifiable Presentation (VP) encoded as a JSON Web Token (JWT).
      *
      * This function performs several crucial validation steps to ensure the trustworthiness of the provided VP:
+     * - Verifies that the vcJwts inside the VP are valid
      * - Parses and validates the structure of the JWT.
      * - Ensures the presence of critical header elements `alg` and `kid` in the JWT header.
      * - Resolves the Decentralized Identifier (DID) and retrieves the associated DID Document.
@@ -190,55 +152,16 @@ public class VerifiablePresentation internal constructor(public val vpDataModel:
      * ```
      */
     public fun verify(vpJwt: String) {
-      val jwt = JWTParser.parse(vpJwt) as SignedJWT // validates JWT
+      JwtUtil.verify(vpJwt)
 
-      require(jwt.header.algorithm != null && jwt.header.keyID != null) {
-        "Signature verification failed: Expected JWS header to contain alg and kid"
+      val vp = this.parseJwt(vpJwt)
+      vp.verifiableCredential.forEach {
+        try {
+          VerifiableCredential.verify(it)
+        } catch (e: Exception) {
+          throw SignatureException("Failed to verify a credential inside of the vp: ${e.message}", e)
+        }
       }
-
-      val verificationMethodId = jwt.header.keyID
-      val parsedDidUrl = DIDURL.fromString(verificationMethodId) // validates vm id which is a DID URL
-
-      val didResolutionResult = DidResolvers.resolve(parsedDidUrl.did.didString)
-      if (didResolutionResult.didResolutionMetadata?.error != null) {
-        throw SignatureException(
-          "Signature verification failed: " +
-            "Failed to resolve DID ${parsedDidUrl.did.didString}. " +
-            "Error: ${didResolutionResult.didResolutionMetadata?.error}"
-        )
-      }
-
-      // create a set of possible id matches. the DID spec allows for an id to be the entire `did#fragment`
-      // or just `#fragment`. See: https://www.w3.org/TR/did-core/#relative-did-urls.
-      // using a set for fast string comparison. DIDs can be lonnng.
-      val verificationMethodIds = setOf(parsedDidUrl.didUrlString, "#${parsedDidUrl.fragment}")
-      val assertionMethods = didResolutionResult.didDocument.assertionMethodVerificationMethodsDereferenced
-      val assertionMethod = assertionMethods?.firstOrNull {
-        val id = it.id.toString()
-        verificationMethodIds.contains(id)
-      }
-
-      if (assertionMethod == null) {
-        throw SignatureException(
-          "Signature verification failed: Expected kid in JWS header to dereference " +
-            "a DID Document Verification Method with an Assertion verification relationship"
-        )
-      }
-
-      require(assertionMethod.isType("JsonWebKey2020") && assertionMethod.publicKeyJwk != null) {
-        throw SignatureException(
-          "Signature verification failed: Expected kid in JWS header to dereference " +
-            "a DID Document Verification Method of type JsonWebKey2020 with a publicKeyJwk"
-        )
-      }
-
-      val publicKeyMap = assertionMethod.publicKeyJwk
-      val publicKeyJwk = JWK.parse(publicKeyMap)
-
-      val toVerifyBytes = jwt.signingInput
-      val signatureBytes = jwt.signature.decode()
-
-      Crypto.verify(publicKeyJwk, toVerifyBytes, signatureBytes, jwt.header.algorithm)
     }
 
     /**
