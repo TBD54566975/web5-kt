@@ -158,13 +158,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
       VerificationMethod.builder()
         .id(URI.create("$id#${key.keyID}"))
         .type("JsonWebKey2020")
-        .controller(
-          if (controller != null) {
-            URI.create(controller)
-          } else {
-            URI.create(id)
-          }
-        )
+        .controller(URI.create(controller ?: id))
         .publicKeyJwk(key.toPublicJWK().toJSONObject())
         .build().also { verificationMethod ->
           purposes.forEach { relationship ->
