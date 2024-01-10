@@ -213,7 +213,7 @@ class VerifiablePresentationTest {
   }
 
   @Test
-  fun `verify handles DIDs without an assertionMethod`() {
+  fun `verify throws exception for DIDs without an assertionMethod`() {
     val keyManager = InMemoryKeyManager()
 
     //Create an ION DID without an assertionMethod
