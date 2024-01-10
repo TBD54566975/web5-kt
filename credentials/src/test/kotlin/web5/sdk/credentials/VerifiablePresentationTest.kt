@@ -2,15 +2,25 @@ package web5.sdk.credentials
 
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.JWSHeader
+import com.nimbusds.jose.JWSSigner
+import com.nimbusds.jose.crypto.Ed25519Signer
+import com.nimbusds.jose.jwk.Curve
+import com.nimbusds.jose.jwk.gen.OctetKeyPairGenerator
+import com.nimbusds.jwt.JWTClaimsSet
+import com.nimbusds.jwt.SignedJWT
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import web5.sdk.credentials.model.InputDescriptorMapping
 import web5.sdk.credentials.model.PresentationSubmission
 import web5.sdk.crypto.InMemoryKeyManager
+import web5.sdk.dids.methods.ion.CreateDidIonOptions
+import web5.sdk.dids.methods.ion.DidIon
+import web5.sdk.dids.methods.ion.JsonWebKey2020VerificationMethod
 import web5.sdk.dids.methods.key.DidKey
 import java.security.SignatureException
 import java.text.ParseException
+import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 
@@ -128,7 +138,6 @@ class VerifiablePresentationTest {
     val vpJwt = vp.sign(holderDid)
 
     assertDoesNotThrow { VerifiablePresentation.verify(vpJwt) }
-
   }
 
   @Test
@@ -178,5 +187,60 @@ class VerifiablePresentationTest {
     assertThrows(ParseException::class.java) {
       VerifiablePresentation.parseJwt("hi")
     }
+  }
+
+  @Test
+  fun `parseJwt throws if vp property is missing in JWT`() {
+    val jwk = OctetKeyPairGenerator(Curve.Ed25519).generate()
+    val signer: JWSSigner = Ed25519Signer(jwk)
+
+    val claimsSet = JWTClaimsSet.Builder()
+      .subject("alice")
+      .build()
+
+    val signedJWT = SignedJWT(
+      JWSHeader.Builder(JWSAlgorithm.EdDSA).keyID(jwk.keyID).build(),
+      claimsSet
+    )
+
+    signedJWT.sign(signer)
+    val randomJwt = signedJWT.serialize()
+    val exception = assertThrows(IllegalArgumentException::class.java) {
+      VerifiablePresentation.parseJwt(randomJwt)
+    }
+
+    assertEquals("jwt payload missing vp property", exception.message)
+  }
+
+  @Test
+  fun `verify handles DIDs without an assertionMethod`() {
+    val keyManager = InMemoryKeyManager()
+
+    //Create an ION DID without an assertionMethod
+    val alias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K)
+    val verificationJwk = keyManager.getPublicKey(alias)
+    val key = JsonWebKey2020VerificationMethod(
+      id = UUID.randomUUID().toString(),
+      publicKeyJwk = verificationJwk,
+      relationships = emptyList() //No assertionMethod
+    )
+    val issuerDid = DidIon.create(
+      InMemoryKeyManager(),
+      CreateDidIonOptions(verificationMethodsToAdd = listOf(key))
+    )
+
+    val header = JWSHeader.Builder(JWSAlgorithm.ES256K)
+      .keyID(issuerDid.uri)
+      .build()
+    //A detached payload JWT
+    val vpJwt = "${header.toBase64URL()}..fakeSig"
+
+    val exception = assertThrows(SignatureException::class.java) {
+      VerifiablePresentation.verify(vpJwt)
+    }
+    assertEquals(
+      "Signature verification failed: Expected kid in JWS header to dereference a DID Document " +
+        "Verification Method with an Assertion verification relationship", exception.message
+    )
   }
 }
