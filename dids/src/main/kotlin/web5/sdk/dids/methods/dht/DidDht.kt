@@ -78,14 +78,14 @@ private class DidDhtApiImpl(configuration: DidDhtConfiguration) : DidDhtApi(conf
 /**
  * Specifies options for creating a new "did:dht" Decentralized Identifier (DID).
  * @property verificationMethods A list of [JWK]s to add to the DID Document mapped to their purposes
- * as verification methods.
+ * as verification methods, and an optional controller for the verification method.
  * @property services A list of [Service]s to add to the DID Document.
  * @property publish Whether to publish the DID Document to the DHT after creation.
  * @property controllers A list of controller DIDs to add to the DID Document.
  * @property alsoKnownAses A list of also known as identifiers to add to the DID Document.
  */
 public class CreateDidDhtOptions(
-  public val verificationMethods: Iterable<Pair<JWK, Array<PublicKeyPurpose>>>? = null,
+  public val verificationMethods: Iterable<Triple<JWK, Array<PublicKeyPurpose>, String?>>? = null,
   public val services: Iterable<Service>? = null,
   public val publish: Boolean = true,
   public val controllers: Iterable<String>? = null,
@@ -154,11 +154,17 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
     }
 
     // map to the DID object model's verification methods
-    val verificationMethods = (opts.verificationMethods?.map { (key, purposes) ->
+    val verificationMethods = (opts.verificationMethods?.map { (key, purposes, controller) ->
       VerificationMethod.builder()
         .id(URI.create("$id#${key.keyID}"))
         .type("JsonWebKey2020")
-        .controller(URI.create(id))
+        .controller(
+          if (controller != null) {
+            URI.create(controller)
+          } else {
+            URI.create(id)
+          }
+        )
         .publicKeyJwk(key.toPublicJWK().toJSONObject())
         .build().also { verificationMethod ->
           purposes.forEach { relationship ->
