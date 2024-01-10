@@ -333,44 +333,10 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
   internal fun toDnsPacket(didDocument: DIDDocument, types: List<DidDhtTypeIndexing>? = null): Message {
     val message = Message(0).apply { header.setFlag(5) } // Set authoritative answer flag
 
-    // map key ids to their verification method ids
-    val verificationMethodsById = mutableMapOf<String, String>()
-
-    // track all verification methods and services by their ids
-    val verificationMethodIds = mutableListOf<String>()
-    val serviceIds = mutableListOf<String>()
-
     // Add Resource Records for each Verification Method
-    didDocument.verificationMethods?.forEachIndexed { i, verificationMethod ->
-      val publicKeyJwk = JWK.parse(verificationMethod.publicKeyJwk)
-      val publicKeyBytes = Crypto.publicKeyToBytes(publicKeyJwk)
-      val base64UrlEncodedKey = Convert(publicKeyBytes).toBase64Url(padding = false)
-      val verificationMethodId = "k$i"
+    val (verificationMethodIds, verificationMethodsById) = addVerificationMethodRecords(didDocument, message)
 
-      verificationMethodsById[verificationMethod.id.toString()] = verificationMethodId
-
-      val keyType = when (publicKeyJwk.algorithm) {
-        JWSAlgorithm.EdDSA -> 0
-        JWSAlgorithm.ES256K -> 1
-        else -> throw IllegalArgumentException("unsupported algorithm: ${publicKeyJwk.algorithm}")
-      }
-
-      message.addRecord(
-        TXTRecord(
-          Name("_$verificationMethodId._did."),
-          DClass.IN,
-          ttl,
-          listOf(
-            "id=${verificationMethod.id.rawFragment}",
-            "t=$keyType",
-            "k=$base64UrlEncodedKey"
-          ).joinToString(PROPERTY_SEPARATOR)
-        ), Section.ANSWER
-      )
-
-      verificationMethodIds += verificationMethodId
-    }
-
+    val serviceIds = mutableListOf<String>()
     // Add Resource Records for each Service
     didDocument.services?.forEachIndexed { i, service ->
       val sId = "s$i"
@@ -436,6 +402,46 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
     }
 
     return message
+  }
+
+  private fun addVerificationMethodRecords(didDocument: DIDDocument, message: Message):
+    Pair<List<String>, Map<String, String>> {
+    val verificationMethodsById = mutableMapOf<String, String>()
+    val verificationMethods = buildList {
+      didDocument.verificationMethods?.forEachIndexed { i, verificationMethod ->
+        val publicKeyJwk = JWK.parse(verificationMethod.publicKeyJwk)
+        val publicKeyBytes = Crypto.publicKeyToBytes(publicKeyJwk)
+        val base64UrlEncodedKey = Convert(publicKeyBytes).toBase64Url(padding = false)
+        val verificationMethodId = "k$i"
+
+        verificationMethodsById[verificationMethod.id.toString()] = verificationMethodId
+
+        val keyType = when (publicKeyJwk.algorithm) {
+          JWSAlgorithm.EdDSA -> 0
+          JWSAlgorithm.ES256K -> 1
+          else -> throw IllegalArgumentException("unsupported algorithm: ${publicKeyJwk.algorithm}")
+        }
+
+        message.addRecord(
+          TXTRecord(
+            Name("_$verificationMethodId._did."),
+            DClass.IN,
+            ttl,
+            buildList {
+              add("id=${verificationMethod.id.rawFragment}")
+              add("t=$keyType")
+              add("k=$base64UrlEncodedKey")
+              if (verificationMethod.jsonObject.containsKey("controller")) {
+                add("c=${verificationMethod.jsonObject["controller"]}")
+              }
+            }.joinToString(PROPERTY_SEPARATOR)
+          ), Section.ANSWER
+        )
+
+        add(verificationMethodId)
+      }
+    }
+    return Pair(verificationMethods, verificationMethodsById)
   }
 
   private fun addAlsoKnownAsRecord(didDocument: DIDDocument, message: Message) {
@@ -573,12 +579,18 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
       else -> throw IllegalArgumentException("Unknown key type: ${data["t"]}")
     }
 
-    verificationMethods += VerificationMethod.builder()
+    val builder = VerificationMethod.builder()
       .id(URI.create("$did#$verificationMethodId"))
       .type("JsonWebKey2020")
-      .controller(URI.create(did))
-      .publicKeyJwk(publicKeyJwk.toJSONObject())
-      .build()
+      .publicKeyJwk(publicKeyJwk.toPublicJWK().toJSONObject())
+
+    if (data.containsKey("c")) {
+      builder.controller(URI.create(data["c"]!!))
+    } else {
+      builder.controller(URI.create(did))
+    }
+
+    verificationMethods += builder.build()
 
     keyLookup[name.split(".")[0].drop(1)] = "$did#$verificationMethodId"
   }
