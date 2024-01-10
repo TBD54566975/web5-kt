@@ -3,6 +3,7 @@ package web5.sdk.dids.methods.dht
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.JWK
+import com.nimbusds.jose.jwk.gen.ECKeyGenerator
 import foundation.identity.did.Service
 import foundation.identity.did.parser.ParserException
 import io.ktor.client.engine.mock.MockEngine
@@ -102,9 +103,15 @@ class DidDhtTest {
 
       val otherKey = manager.generatePrivateKey(JWSAlgorithm.ES256K, Curve.SECP256K1)
       val publicKeyJwk = manager.getPublicKey(otherKey).toPublicJWK()
+      val publicKeyJwk2 = ECKeyGenerator(Curve.P_256).generate().toPublicJWK()
       val verificationMethodsToAdd: Iterable<Triple<JWK, Array<PublicKeyPurpose>, String?>> = listOf(
         Triple(
           publicKeyJwk,
+          arrayOf(PublicKeyPurpose.AUTHENTICATION, PublicKeyPurpose.ASSERTION_METHOD),
+          "did:web:tbd.website"
+        ),
+        Triple(
+          publicKeyJwk2,
           arrayOf(PublicKeyPurpose.AUTHENTICATION, PublicKeyPurpose.ASSERTION_METHOD),
           "did:web:tbd.website"
         )
@@ -124,9 +131,9 @@ class DidDhtTest {
 
       assertNotNull(did)
       assertNotNull(did.didDocument)
-      assertEquals(2, did.didDocument!!.verificationMethods.size)
-      assertEquals(2, did.didDocument!!.assertionMethodVerificationMethods.size)
-      assertEquals(2, did.didDocument!!.authenticationVerificationMethods.size)
+      assertEquals(3, did.didDocument!!.verificationMethods.size)
+      assertEquals(3, did.didDocument!!.assertionMethodVerificationMethods.size)
+      assertEquals(3, did.didDocument!!.authenticationVerificationMethods.size)
       assertEquals(1, did.didDocument!!.capabilityDelegationVerificationMethods.size)
       assertEquals(1, did.didDocument!!.capabilityInvocationVerificationMethods.size)
       assertNull(did.didDocument!!.keyAgreementVerificationMethods)

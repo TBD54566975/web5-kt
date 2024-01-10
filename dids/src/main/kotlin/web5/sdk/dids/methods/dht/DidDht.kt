@@ -425,6 +425,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
         val keyType = when (publicKeyJwk.algorithm) {
           JWSAlgorithm.EdDSA -> 0
           JWSAlgorithm.ES256K -> 1
+          JWSAlgorithm.ES256 -> 2
           else -> throw IllegalArgumentException("unsupported algorithm: ${publicKeyJwk.algorithm}")
         }
 
