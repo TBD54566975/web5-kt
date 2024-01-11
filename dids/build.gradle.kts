@@ -21,6 +21,7 @@ dependencies {
   implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.0")
   implementation("com.nimbusds:nimbus-jose-jwt:9.34")
   implementation("com.github.multiformats:java-multibase:1.1.0")
+  implementation("io.github.oshai:kotlin-logging-jvm:6.0.2")
 
   implementation("io.ktor:ktor-client-core:$ktor_version")
   implementation("io.ktor:ktor-client-okhttp:$ktor_version")

@@ -337,11 +337,15 @@ class DidDhtTest {
   }
 }
 
+private val mapper = jacksonObjectMapper()
+
 class Web5TestVectorsDidDhtTest {
   data class CreateTestInput(
     val identityPublicJwk: Map<String, Any>?,
     val additionalVerificationMethods: List<VerificationMethodInput>?,
     val services: List<Service>?,
+    val controller: List<String>?,
+    val alsoKnownAs: List<String>?,
   )
 
   data class ResolveTestInput(
@@ -353,7 +357,6 @@ class Web5TestVectorsDidDhtTest {
     val purposes: List<PublicKeyPurpose>
   )
 
-  private val mapper = jacksonObjectMapper()
 
   @Test
   fun create() {
@@ -367,17 +370,19 @@ class Web5TestVectorsDidDhtTest {
 
       val verificationMethods = vector.input.additionalVerificationMethods?.map { verificationMethodInput ->
         val jwk = JWK.parse(verificationMethodInput.jwk)
-        Pair(jwk, verificationMethodInput.purposes.toTypedArray())
+        Triple(jwk, verificationMethodInput.purposes.toTypedArray(), null)
       }
       val options = CreateDidDhtOptions(
         verificationMethods = verificationMethods,
         publish = false,
-        services = vector.input.services
+        services = vector.input.services,
+        controllers = vector.input.controller,
+        alsoKnownAses = vector.input.alsoKnownAs,
       )
       val didDht = DidDht.create(keyManager, options)
       assertEquals(
         JsonCanonicalizer(vector.output?.toJson()).encodedString,
-        JsonCanonicalizer(didDht.didDocument?.toJson()).encodedString,
+        JsonCanonicalizer(didDht.didDocument!!.toCustomJson()).encodedString,
         vector.description
       )
     }
@@ -392,4 +397,14 @@ class Web5TestVectorsDidDhtTest {
       assertEquals(vector.output, result, vector.description)
     }
   }
+}
+
+// The test vectors assume the property "controller" is rendered as a string (vs. an array of strings) when there is
+// only one controller.
+private fun DIDDocument.toCustomJson(): String? {
+  val jsonObject = this.jsonObject.toMutableMap()
+  if (jsonObject["controller"] is List<*> && (jsonObject["controller"] as List<*>).size == 1) {
+    jsonObject["controller"] = (jsonObject["controller"] as List<*>).single()
+  }
+  return mapper.writeValueAsString(jsonObject)
 }

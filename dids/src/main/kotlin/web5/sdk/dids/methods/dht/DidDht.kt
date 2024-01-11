@@ -8,6 +8,7 @@ import foundation.identity.did.DIDDocument
 import foundation.identity.did.Service
 import foundation.identity.did.VerificationMethod
 import foundation.identity.did.parser.ParserException
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.okhttp.OkHttp
 import org.xbill.DNS.DClass
@@ -100,6 +101,8 @@ public class CreateDidDhtOptions(
 private const val PROPERTY_SEPARATOR = ";"
 
 private const val ARRAY_SEPARATOR = ","
+
+private val logger = KotlinLogging.logger {}
 
 /**
  * Base class for managing DID DHT operations. Uses the given [DidDhtConfiguration].
@@ -230,6 +233,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
     return try {
       resolveInternal(did)
     } catch (e: Exception) {
+      logger.warn(e) { "resolving DID $did failed" }
       DidResolutionResult.fromResolutionError(ResolutionError.INTERNAL_ERROR)
     }
   }
@@ -529,6 +533,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
    */
   internal fun fromDnsPacket(did: String, msg: Message): Pair<DIDDocument, List<DidDhtTypeIndexing>> {
     val doc = DIDDocument.builder().id(URI.create(did))
+      .defaultContexts(false)
 
     val verificationMethods = mutableListOf<VerificationMethod>()
     val services = mutableListOf<Service>()
