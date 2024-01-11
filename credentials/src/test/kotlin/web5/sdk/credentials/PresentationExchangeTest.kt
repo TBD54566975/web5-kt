@@ -17,7 +17,9 @@ import web5.sdk.testing.TestVectors
 import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFails
 import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 data class DateOfBirth(val dateOfBirth: String)
 data class Address(val address: String)
@@ -550,6 +552,21 @@ class PresentationExchangeTest {
       assertEquals(2, selectedCreds.size)
       assertEquals(listOf(vcJwt1, vcJwt2), selectedCreds)
     }
+
+    @Test
+    fun `catches invalid presentation definition`() {
+    val pdString = File("src/test/resources/pd_invalid.json").readText().trimIndent()
+    val pd = jsonMapper.readValue(pdString, PresentationDefinitionV2::class.java)
+
+      val exception = assertThrows<PexValidationException> {
+        PresentationExchange.validateDefinition(pd)
+      }
+
+      assertTrue(
+        exception
+          .message!!.contains("PresentationDefinition id must not be empty")
+      )
+    }
   }
 }
 
@@ -577,6 +594,29 @@ class Web5TestVectorsPresentationExchange {
         vector.input.presentationDefinition
       )
       assertEquals(vector.output!!.selectedCredentials, selectedCreds)
+    }
+  }
+
+  data class ValidateDefinitionTestInput(
+    val presentationDefinition: PresentationDefinitionV2,
+    val errors: Boolean
+  )
+
+  @Test
+  fun validate_definition() {
+    val typeRef = object : TypeReference<TestVectors<ValidateDefinitionTestInput, Unit>>() {}
+    val testVectors = mapper.readValue(File("../test-vectors/presentation_exchange/validate_definition.json"), typeRef)
+
+    testVectors.vectors.filterNot { it.errors ?: false }.forEach { vector ->
+      assertDoesNotThrow {
+        PresentationExchange.validateDefinition(vector.input.presentationDefinition)
+      }
+    }
+
+    testVectors.vectors.filter { it.errors ?: false }.forEach { vector ->
+      assertFails {
+          PresentationExchange.validateDefinition(vector.input.presentationDefinition)
+      }
     }
   }
 }
