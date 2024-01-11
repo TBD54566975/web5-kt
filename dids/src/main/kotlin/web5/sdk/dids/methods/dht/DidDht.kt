@@ -159,20 +159,21 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
     }
 
     // map to the DID object model's verification methods
-    val verificationMethods = listOf(identityVerificationMethod) + (opts.verificationMethods?.map { (key, purposes, controller) ->
-      VerificationMethod.builder()
-        .id(URI.create("$id#${key.keyID}"))
-        .type("JsonWebKey")
-        .controller(URI.create(controller ?: id))
-        .publicKeyJwk(key.toPublicJWK().toJSONObject())
-        .build().also { verificationMethod ->
-          purposes.forEach { relationship ->
-            relationshipsMap.getOrPut(relationship) { mutableListOf() }.add(
-              VerificationMethod.builder().id(verificationMethod.id).build()
-            )
+    val verificationMethods =
+      listOf(identityVerificationMethod) + (opts.verificationMethods?.map { (key, purposes, controller) ->
+        VerificationMethod.builder()
+          .id(URI.create("$id#${key.keyID}"))
+          .type("JsonWebKey")
+          .controller(URI.create(controller ?: id))
+          .publicKeyJwk(key.toPublicJWK().toJSONObject())
+          .build().also { verificationMethod ->
+            purposes.forEach { relationship ->
+              relationshipsMap.getOrPut(relationship) { mutableListOf() }.add(
+                VerificationMethod.builder().id(verificationMethod.id).build()
+              )
+            }
           }
-        }
-    } ?: emptyList())
+      } ?: emptyList())
     opts.services?.forEach { service ->
       requireNotNull(service.id) { "Service id cannot be null" }
       requireNotNull(service.type) { "Service type cannot be null" }
@@ -229,7 +230,6 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
     return try {
       resolveInternal(did)
     } catch (e: Exception) {
-      println(e)
       DidResolutionResult.fromResolutionError(ResolutionError.INTERNAL_ERROR)
     }
   }
