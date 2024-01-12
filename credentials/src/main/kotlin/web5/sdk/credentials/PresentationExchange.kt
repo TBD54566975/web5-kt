@@ -10,6 +10,7 @@ import com.nimbusds.jwt.SignedJWT
 import web5.sdk.credentials.model.InputDescriptorMapping
 import web5.sdk.credentials.model.InputDescriptorV2
 import web5.sdk.credentials.model.PresentationDefinitionV2
+import web5.sdk.credentials.model.PresentationDefinitionV2Validator
 import web5.sdk.credentials.model.PresentationSubmission
 import java.util.UUID
 
@@ -104,7 +105,8 @@ public object PresentationExchange {
           id = inputDescriptor.id,
           path = "$.verifiableCredential[$vcIndex]",
           format = "jwt_vc"
-        ))
+        )
+      )
     }
 
     return PresentationSubmission(
@@ -114,15 +116,40 @@ public object PresentationExchange {
     )
   }
 
+  /**
+   * Validates whether an object is usable as a presentation definition or not.
+   *
+   * Model as specified in https://identity.foundation/presentation-exchange/#presentation-definition.
+   *
+   * The checks are as follows:
+   * 1. Ensures that the presentation definition's ID is not empty.
+   * 2. Validates that the name, if present, is not empty.
+   * 3. Checks that the purpose, if provided, is not empty.
+   * 4. Verifies the uniqueness of all inputDescriptor IDs within the presentation.
+   * 5. Ensures that FieldV2 ids are unique across all input descriptors.
+   * 6. For each input descriptor, it validates the descriptor using InputDescriptorV2Validator.
+   *
+   * Throws an [PexValidationException] if the provided object does not conform to the Presentation Definition
+   */
+  @Throws(PexValidationException::class)
+  public fun validateDefinition(presentationDefinition: PresentationDefinitionV2) {
+    PresentationDefinitionV2Validator.validate(presentationDefinition)
+  }
+
   private fun mapInputDescriptorsToVCs(
     vcJwtList: Iterable<String>,
     presentationDefinition: PresentationDefinitionV2
   ): Map<InputDescriptorV2, List<String>> {
+    val vcJwtListWithNodes = vcJwtList.zip(vcJwtList.map { vcJwt ->
+      val vc = JWTParser.parse(vcJwt) as SignedJWT
+
+      JsonPath.parse(vc.payload.toString())
+        ?: throw JsonPathParseException()
+    })
     return presentationDefinition.inputDescriptors.associateWith { inputDescriptor ->
-      val satisfyingVCs = vcJwtList.filter { vcJwt ->
-        vcSatisfiesInputDescriptor(vcJwt, inputDescriptor)
-      }
-      satisfyingVCs
+      vcJwtListWithNodes.filter { (_, node) ->
+        vcSatisfiesInputDescriptor(node, inputDescriptor)
+      }.map { (vcJwt, _) -> vcJwt }
     }.filterValues { it.isNotEmpty() }
   }
 
@@ -142,14 +169,9 @@ public object PresentationExchange {
    */
   @Throws(JsonPathParseException::class)
   private fun vcSatisfiesInputDescriptor(
-    vcJwt: String,
+    vcPayloadJson: JsonNode,
     inputDescriptor: InputDescriptorV2
   ): Boolean {
-    val vc = JWTParser.parse(vcJwt) as SignedJWT
-
-    val vcPayloadJson = JsonPath.parse(vc.payload.toString())
-      ?: throw JsonPathParseException()
-
     // If the Input Descriptor has constraints and fields defined, evaluate them.
     inputDescriptor.constraints.fields?.let { fields ->
       val requiredFields = fields.filter { field -> field.optional != true }
