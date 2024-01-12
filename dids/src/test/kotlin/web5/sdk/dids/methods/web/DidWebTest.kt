@@ -61,6 +61,17 @@ class DidWebTest {
   }
 
   @Test
+  fun `resolve returns internal error when http fails`() {
+    val result = DidWebApi {
+      engine = MockEngine {
+        respond("some failure", HttpStatusCode.InternalServerError)
+      }
+    }.resolve("did:web:example.com")
+
+    assertEquals("internalError", result.didResolutionMetadata.error)
+  }
+
+  @Test
   fun `load returns instance when key manager contains private key`() {
     val manager = InMemoryKeyManager()
     val privateJwk = readKey("src/test/resources/jwkEs256k1Private.json")
