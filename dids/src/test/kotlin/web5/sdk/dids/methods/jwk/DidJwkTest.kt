@@ -23,7 +23,7 @@ class DidJwkTest {
       val did = DidJwk.create(manager)
 
       val didResolutionResult = DidResolvers.resolve(did.uri)
-      val verificationMethod = didResolutionResult.didDocument.allVerificationMethods[0]
+      val verificationMethod = didResolutionResult.didDocument!!.allVerificationMethods[0]
 
       assertNotNull(verificationMethod)
 

@@ -270,7 +270,7 @@ public sealed class DidIonApi(
       }
 
       return DidIon(
-        resolutionResult.didDocument.id.toString(),
+        resolutionResult.didDocument!!.id.toString(),
         keyManager,
         IonCreationMetadata(
           createOp,

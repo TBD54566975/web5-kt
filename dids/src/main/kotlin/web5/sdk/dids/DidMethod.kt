@@ -198,7 +198,7 @@ internal fun <T : Did, O : CreateDidOptions> DidMethod<T, O>.validateKeyMaterial
   }
   val didResolutionResult = resolve(did)
 
-  didResolutionResult.didDocument.allVerificationMethods.forEach {
+  didResolutionResult.didDocument!!.allVerificationMethods.forEach {
     val publicKeyJwk = JWK.parse(it.publicKeyJwk)
     val keyAlias = keyManager.getDeterministicAlias(publicKeyJwk)
     keyManager.getPublicKey(keyAlias)

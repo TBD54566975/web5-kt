@@ -56,7 +56,7 @@ class DidWebTest {
     }
     for (did in didsToTest) {
       val result = api.resolve(did)
-      assertEquals(did, result.didDocument.id.toString())
+      assertEquals(did, result.didDocument!!.id.toString())
     }
   }
 

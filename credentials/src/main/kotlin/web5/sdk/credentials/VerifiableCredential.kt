@@ -19,11 +19,11 @@ import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jwt.JWTParser
 import com.nimbusds.jwt.SignedJWT
 import foundation.identity.did.DIDURL
-import foundation.identity.did.VerificationMethod
 import web5.sdk.common.Convert
 import web5.sdk.crypto.Crypto
 import web5.sdk.dids.Did
 import web5.sdk.dids.DidResolvers
+import web5.sdk.dids.exceptions.DidResolutionException
 import web5.sdk.dids.findAssertionMethodById
 import java.net.URI
 import java.security.SignatureException
@@ -76,7 +76,16 @@ public class VerifiableCredential internal constructor(public val vcDataModel: V
   @JvmOverloads
   public fun sign(did: Did, assertionMethodId: String? = null): String {
     val didResolutionResult = DidResolvers.resolve(did.uri)
-    val assertionMethod: VerificationMethod = didResolutionResult.didDocument.findAssertionMethodById(assertionMethodId)
+    val didDocument = didResolutionResult.didDocument
+    if (didResolutionResult.didResolutionMetadata.error != null || didDocument == null) {
+      throw DidResolutionException(
+        "Signature verification failed: " +
+          "Failed to resolve DID ${did.uri}. " +
+          "Error: ${didResolutionResult.didResolutionMetadata.error}"
+      )
+    }
+
+    val assertionMethod = didDocument.findAssertionMethodById(assertionMethodId)
 
     // TODO: ensure that publicKeyJwk is not null
     val publicKeyJwk = JWK.parse(assertionMethod.publicKeyJwk)
@@ -244,18 +253,15 @@ public class VerifiableCredential internal constructor(public val vcDataModel: V
       // or just `#fragment`. See: https://www.w3.org/TR/did-core/#relative-did-urls.
       // using a set for fast string comparison. DIDs can be lonnng.
       val verificationMethodIds = setOf(parsedDidUrl.didUrlString, "#${parsedDidUrl.fragment}")
-      val assertionMethods = didResolutionResult.didDocument.assertionMethodVerificationMethodsDereferenced
+      val assertionMethods = didResolutionResult.didDocument?.assertionMethodVerificationMethodsDereferenced
       val assertionMethod = assertionMethods?.firstOrNull {
         val id = it.id.toString()
         verificationMethodIds.contains(id)
       }
-
-      if (assertionMethod == null) {
-        throw SignatureException(
+        ?: throw SignatureException(
           "Signature verification failed: Expected kid in JWS header to dereference " +
             "a DID Document Verification Method with an Assertion verification relationship"
         )
-      }
 
       require(assertionMethod.isType("JsonWebKey2020") && assertionMethod.publicKeyJwk != null) {
         throw SignatureException(
