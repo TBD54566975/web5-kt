@@ -393,7 +393,17 @@ class Web5TestVectorsDidDhtTest {
     val typeRef = object : TypeReference<TestVectors<ResolveTestInput, DidResolutionResult>>() {}
     val testVectors = mapper.readValue(File("../test-vectors/did_dht/resolve.json"), typeRef)
     testVectors.vectors.forEach { vector ->
-      val result = DidDht.resolve(vector.input.didUri)
+      val result = DidDhtApi {
+        engine = MockEngine {
+          when {
+            it.url.encodedPath.matches("/\\w+".toRegex()) && it.method == HttpMethod.Get -> {
+              respond("pkarr record not found", HttpStatusCode.NotFound)
+            }
+
+            else -> throw Exception("Unexpected request")
+          }
+        }
+      }.resolve(vector.input.didUri)
       assertEquals(vector.output, result, vector.description)
     }
   }
