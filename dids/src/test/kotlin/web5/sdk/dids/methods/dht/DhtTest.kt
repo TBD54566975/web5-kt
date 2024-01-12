@@ -3,11 +3,9 @@ package web5.sdk.dids.methods.dht
 import com.nimbusds.jose.jwk.Curve
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
-import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
-import io.ktor.http.headersOf
-import io.ktor.utils.io.ByteReadChannel
+import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
@@ -15,13 +13,54 @@ import org.junit.jupiter.api.assertThrows
 import web5.sdk.crypto.Ed25519
 import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.crypto.Secp256k1
-import java.io.File
+import web5.sdk.dids.methods.dht.DhtClient.Companion.bencode
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
-import kotlin.text.hexToByteArray
 
 class DhtTest {
+  @Nested
+  inner class BencodeTest {
+    @Test
+    fun `encode an empty byte array`() {
+      val input = ByteArray(0)
+      val expected = "0:".toByteArray()
+      val result = bencode(input)
+      assertArrayEquals(expected, result)
+    }
+
+    @Test
+    fun `encode a byte array with a single byte`() {
+      val input = byteArrayOf(65)
+      val expected = "1:A".toByteArray()
+      val result = bencode(input)
+      assertArrayEquals(expected, result)
+    }
+
+    @Test
+    fun `encode a byte array with multiple bytes`() {
+      val input = byteArrayOf(65, 66, 67)
+      val expected = "3:ABC".toByteArray()
+      val result = bencode(input)
+      assertArrayEquals(expected, result)
+    }
+
+    @Test
+    fun `encode a byte array with special characters`() {
+      val input = byteArrayOf(35, 36, 37)
+      val expected = "3:#$%".toByteArray()
+      val result = bencode(input)
+      assertArrayEquals(expected, result)
+    }
+
+    @Test
+    fun `encode a very large byte array`() {
+      val input = ByteArray(1_000_000) { 65 }
+      val expected = "1000000:${"A".repeat(1_000_000)}".toByteArray()
+      val result = bencode(input)
+      assertArrayEquals(expected, result)
+    }
+  }
 
   @Nested
   inner class Bep44Test {
@@ -172,12 +211,10 @@ class DhtTest {
 
     @OptIn(ExperimentalStdlibApi::class)
     private fun mockEngine() = MockEngine { request ->
-      // a hex response getting a pkarr did:dht packet from a gateway
-      val hexResponse = "2099f1ddf2e14c3fa693e89070cceb34d597d456e34ca32a07171badd734d62bfabac20b70e2751" +
-        "d31acd65d76e22ec0b66a0a7029064adccaf533ddd81e930a00000000655e4531000004000000000200000000035f6b3" +
-        "0045f646964000010000100001c2000373669643d302c743d302c6b3d794873562d64474b4e7947714964434c71624e5f" +
-        "345358526936385249557146695a4a5172366946665930c0100010000100001c20002322766d3d6b303b617574683d6b303" +
-        "b61736d3d6b303b696e763d6b303b64656c3d6b30"
+      val hexResponse = "1ad37b5b8ed6c5fc87b64fe4849d81e7446c31b36138d03b9f6d68837123d6ae6aedf91e0340a7c83cd53b95a60" +
+        "0ffe4a2264c3c677d7d16ca6bd30e05fa820c00000000659dd40e000004000000000200000000035f6b30045f646964000010000100" +
+        "001c2000373669643d303b743d303b6b3d63506262357357792d553547333854424a79504d6f4b714632746f4c563563395a3177484" +
+        "56b7448764c6fc0100010000100001c20002322766d3d6b303b617574683d6b303b61736d3d6b303b696e763d6b303b64656c3d6b30"
 
       when {
         request.url.encodedPath == "/" && request.method == HttpMethod.Put -> {
