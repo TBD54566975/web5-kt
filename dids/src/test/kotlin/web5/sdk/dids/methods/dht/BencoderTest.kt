@@ -15,9 +15,18 @@ class BencoderTest {
     }
 
     @Test
-    fun `should encode a string`() {
+    fun `should encode an empty string`() {
       val encoded = Bencoder.encode("")
       assertEquals(encoded, "0:")
+    }
+
+    @Test
+    fun `should encode a number`() {
+      var encoded = Bencoder.encode(3L)
+      assertEquals(encoded, "i3e")
+
+      encoded = Bencoder.encode(3)
+      assertEquals(encoded, "i3e")
     }
 
     @Test

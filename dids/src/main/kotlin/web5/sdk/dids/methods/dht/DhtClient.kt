@@ -23,7 +23,8 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.security.SignatureException
 
-private val colon = ":".toByteArray(charset("UTF-8"))
+private val BENCODED_SEQ = Bencoder.encodeAsBytes("seq")
+private val BENCODED_V = Bencoder.encodeAsBytes("v")
 
 /**
  * A utility class for working with the BEP44 DHT specification and Pkarr relays.
@@ -192,8 +193,7 @@ internal class DhtClient(
         "Value must be <= 1000 bytes compressed, current bytes {${vEncoded.size}}"
       }
 
-      // encode according to BEP44
-      val bytesToSign = "3:seqi${seq}e1:v".toByteArray() + vEncoded
+      val bytesToSign = BENCODED_SEQ + Bencoder.encodeAsBytes(seq) + BENCODED_V + Bencoder.encodeAsBytes(v)
 
       // sign and return the BEP44 message
       manager.sign(keyAlias, bytesToSign).let { signature ->
@@ -220,7 +220,8 @@ internal class DhtClient(
       val vEncoded = Bencoder.encodeAsBytes(message.v)
 
       // prepare buffer and verify
-      val bytesToVerify = "3:seqi${message.seq}e1:v".toByteArray() + vEncoded
+      val bytesToVerify =
+        BENCODED_SEQ + Bencoder.encodeAsBytes(message.seq) + BENCODED_V + Bencoder.encodeAsBytes(message.v)
 
       // create a JWK representation of the public key
       val ed25519PublicKey = Ed25519.bytesToPublicKey(message.k)

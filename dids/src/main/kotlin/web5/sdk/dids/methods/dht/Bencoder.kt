@@ -14,7 +14,8 @@ public object Bencoder {
    */
   public fun encode(input: Any): String = when (input) {
     is String -> "${input.length}:$input"
-    is Int, Long -> "i${input}e"
+    is Int -> "i${input}e"
+    is Long -> "i${input}e"
     is List<*> -> input.joinToString(separator = "", prefix = "l", postfix = "e") { encode(it!!) }
     is Map<*, *> -> input.entries.joinToString(
       separator = "",
