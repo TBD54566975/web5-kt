@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 
 class BencoderTest {
   @Nested
@@ -45,6 +46,11 @@ class BencoderTest {
     fun `should encode empty dictionary`() {
       val encoded = Bencoder.encode(emptyMap<Any, Any>())
       assertEquals(encoded, "de")
+    }
+
+    @Test
+    fun `should bork on unsupported type`() {
+      assertThrows<IllegalArgumentException> { Bencoder.encode("Hi".toByteArray()) }
     }
   }
 
@@ -103,6 +109,27 @@ class BencoderTest {
         "publisher.location" to "home"
       )
       assertEquals(result, expected)
+    }
+
+    @Test
+    fun `should decode a string`() {
+      val encoded = "3:seq"
+      val (result, _) = Bencoder.decode(encoded)
+      assertEquals(result, "seq")
+    }
+
+    @Test
+    fun `should decode a number`() {
+      val encoded = "i30e"
+      val (result, _) = Bencoder.decode(encoded)
+      assertEquals(result, 30)
+    }
+
+    @Test
+    fun `should decode a list`() {
+      val encoded = "li30e2:hie"
+      val (result, _) = Bencoder.decode(encoded)
+      assertEquals(result, listOf(30, "hi"))
     }
   }
 }
