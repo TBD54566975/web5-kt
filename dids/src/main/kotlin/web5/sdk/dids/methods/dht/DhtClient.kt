@@ -19,7 +19,6 @@ import web5.sdk.common.ZBase32
 import web5.sdk.crypto.Ed25519
 import web5.sdk.crypto.KeyManager
 import web5.sdk.dids.exceptions.PkarrRecordResponseException
-import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.security.SignatureException
@@ -187,7 +186,7 @@ internal class DhtClient(
       }
 
       // encode v using bencode
-      val vEncoded = bencode(v)
+      val vEncoded = Bencoder.encodeAsBytes(v)
 
       require(vEncoded.size <= 1000) {
         "Value must be <= 1000 bytes compressed, current bytes {${vEncoded.size}}"
@@ -207,16 +206,6 @@ internal class DhtClient(
       }
     }
 
-    /** Encodes a byte array according to https://en.wikipedia.org/wiki/Bencode. */
-    internal fun bencode(bs: ByteArray): ByteArray {
-      val out = ByteArrayOutputStream()
-      val l = bs.size.toString()
-      out.write(l.toByteArray(charset("UTF-8")))
-      out.write(colon)
-      out.write(bs)
-      return out.toByteArray()
-    }
-
     /**
      * Verifies a message according to the BEP44 Signature Verification specification.
      * https://www.bittorrent.org/beps/bep_0044.html
@@ -227,7 +216,8 @@ internal class DhtClient(
      * @throws SignatureException if the signature is invalid.
      */
     fun verifyBep44Message(message: Bep44Message) {
-      val vEncoded = bencode(message.v)
+      // encode v using bencode
+      val vEncoded = Bencoder.encodeAsBytes(message.v)
 
       // prepare buffer and verify
       val bytesToVerify = "3:seqi${message.seq}e1:v".toByteArray() + vEncoded

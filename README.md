@@ -25,7 +25,6 @@ repositories {
   mavenCentral()
   maven("https://jitpack.io")
   maven("https://repo.danubetech.com/repository/maven-public/")
-  maven("https://repository.jboss.org/nexus/content/repositories/thirdparty-releases/")
 }
 
 dependencies {
@@ -82,13 +81,13 @@ If you want to do a manual release, you have two options:
 1. Dispatch the [publish workflow](./.github/workflows/publish.yml) workflow from the Github UI. Go to the [publish
    Actions](https://github.com/TBD54566975/web5-kt/actions) > "Run workflow".
 2. Setup your local environment to publish to Central Repository. This is more involved. You'll need to:
-  1. Define all the environment variables described in the [publish workflow](./.github/workflows/publish.yml) file. You
-     can find the values in the [secrets and variable](https://github.com/TBD54566975/web5-kt/settings/secrets/actions)
-     page.
-  2. Run the following command (you can change `samplebranch` to any branch name):
-     ```bash
-     ./gradlew -Pversion=samplebranch-SNAPSHOT publishToSonatype closeAndReleaseSonatypeStagingRepository
-     ```
+1. Define all the environment variables described in the [publish workflow](./.github/workflows/publish.yml) file. You
+   can find the values in the [secrets and variable](https://github.com/TBD54566975/web5-kt/settings/secrets/actions)
+   page.
+2. Run the following command (you can change `samplebranch` to any branch name):
+   ```bash
+   ./gradlew -Pversion=samplebranch-SNAPSHOT publishToSonatype closeAndReleaseSonatypeStagingRepository
+   ```
 
 # Other Docs
 
