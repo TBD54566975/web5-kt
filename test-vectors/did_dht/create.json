@@ -1,8 +1,8 @@
 {
-  "description": "did:dht resolution",
+  "description": "did:dht create",
   "vectors": [
     {
-      "description": "resolves the vector in https://did-dht.com/#vector-1",
+      "description": "creates a did document according to the vector in https://did-dht.com/#vector-1",
       "input": {
         "identityPublicJwk": {
           "kty": "OKP",
@@ -43,7 +43,7 @@
       }
     },
     {
-      "description": "resolves the vector in https://did-dht.com/#vector-2",
+      "description": "creates a did document according to the vector in https://did-dht.com/#vector-2",
       "input": {
         "identityPublicJwk": {
           "kty": "OKP",
