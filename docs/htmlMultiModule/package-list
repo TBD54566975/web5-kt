@@ -6,6 +6,7 @@ web5.sdk.common
 module:credentials
 web5.sdk.credentials
 web5.sdk.credentials.model
+web5.sdk.credentials.util
 module:crypto
 web5.sdk.crypto
 module:dids
