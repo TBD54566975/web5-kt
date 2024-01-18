@@ -452,8 +452,8 @@ class PresentationExchangeTest {
 
       val selectedCreds = PresentationExchange.selectCredentials(listOf(vcJwt), pd)
 
-      assertEquals( 1, selectedCreds.size)
-      assertEquals( vcJwt, selectedCreds[0])
+      assertEquals(1, selectedCreds.size)
+      assertEquals(vcJwt, selectedCreds[0])
     }
 
     @Test
@@ -481,8 +481,8 @@ class PresentationExchangeTest {
 
       val selectedCreds = PresentationExchange.selectCredentials(listOf(vcJwt1, vcJwt2), pd)
 
-      assertEquals( 2, selectedCreds.size)
-      assertEquals( listOf(vcJwt1, vcJwt2), selectedCreds)
+      assertEquals(2, selectedCreds.size)
+      assertEquals(listOf(vcJwt1, vcJwt2), selectedCreds)
     }
 
     @Test
@@ -520,8 +520,8 @@ class PresentationExchangeTest {
 
       val selectedCreds = PresentationExchange.selectCredentials(listOf(vcJwt1, vcJwt2, vcJwt3), pd)
 
-      assertEquals( 2, selectedCreds.size)
-      assertEquals( listOf(vcJwt1, vcJwt2), selectedCreds)
+      assertEquals(2, selectedCreds.size)
+      assertEquals(listOf(vcJwt1, vcJwt2), selectedCreds)
     }
 
     @Test
@@ -549,8 +549,8 @@ class PresentationExchangeTest {
 
       val selectedCreds = PresentationExchange.selectCredentials(listOf(vcJwt1, vcJwt2), pd)
 
-      assertEquals( 2, selectedCreds.size)
-      assertEquals( listOf(vcJwt1, vcJwt2), selectedCreds)
+      assertEquals(2, selectedCreds.size)
+      assertEquals(listOf(vcJwt1, vcJwt2), selectedCreds)
     }
 
     @Test
@@ -582,6 +582,7 @@ class Web5TestVectorsPresentationExchange {
   )
 
   private val mapper = jacksonObjectMapper()
+
   @Test
   fun select_credentials() {
     val typeRef = object : TypeReference<TestVectors<SelectCredTestInput, SelectCredTestOutput>>() {}

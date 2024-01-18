@@ -13,10 +13,12 @@ import web5.sdk.common.Convert
 import web5.sdk.crypto.Crypto
 import web5.sdk.dids.Did
 import web5.sdk.dids.DidResolvers
+import web5.sdk.dids.exceptions.DidResolutionException
 import web5.sdk.dids.findAssertionMethodById
 import java.security.SignatureException
 
 private const val JsonWebKey2020 = "JsonWebKey2020"
+
 /**
  * Util class for common shared JWT methods.
  */
@@ -41,7 +43,16 @@ public object JwtUtil {
    */
   public fun sign(did: Did, assertionMethodId: String?, jwtPayload: JWTClaimsSet): String {
     val didResolutionResult = DidResolvers.resolve(did.uri)
-    val assertionMethod = didResolutionResult.didDocument.findAssertionMethodById(assertionMethodId)
+    val didDocument = didResolutionResult.didDocument
+    if (didResolutionResult.didResolutionMetadata.error != null || didDocument == null) {
+      throw DidResolutionException(
+        "Signature verification failed: " +
+          "Failed to resolve DID ${did.uri}. " +
+          "Error: ${didResolutionResult.didResolutionMetadata.error}"
+      )
+    }
+
+    val assertionMethod = didDocument.findAssertionMethodById(assertionMethodId)
 
     // TODO: ensure that publicKeyJwk is not null
     val publicKeyJwk = JWK.parse(assertionMethod.publicKeyJwk)
@@ -100,29 +111,38 @@ public object JwtUtil {
     val parsedDidUrl = DIDURL.fromString(verificationMethodId) // validates vm id which is a DID URL
 
     val didResolutionResult = DidResolvers.resolve(parsedDidUrl.did.didString)
-    if (didResolutionResult.didResolutionMetadata?.error != null) {
+    if (didResolutionResult.didResolutionMetadata.error != null) {
       throw SignatureException(
         "Signature verification failed: " +
           "Failed to resolve DID ${parsedDidUrl.did.didString}. " +
-          "Error: ${didResolutionResult.didResolutionMetadata?.error}"
+          "Error: ${didResolutionResult.didResolutionMetadata.error}"
       )
     }
 
+    // create a set of possible id matches. the DID spec allows for an id to be the entire `did#fragment`
+    // or just `#fragment`. See: https://www.w3.org/TR/did-core/#relative-did-urls.
+    // using a set for fast string comparison. DIDs can be lonnng.
     val verificationMethodIds = setOf(parsedDidUrl.didUrlString, "#${parsedDidUrl.fragment}")
-    val assertionMethods = didResolutionResult.didDocument.assertionMethodVerificationMethodsDereferenced
+    val assertionMethods = didResolutionResult.didDocument?.assertionMethodVerificationMethodsDereferenced
     val assertionMethod = assertionMethods?.firstOrNull {
-      it.id.toString() in verificationMethodIds
-    } ?: throw SignatureException(
-      "Signature verification failed: Expected kid in JWS header to dereference " +
-        "a DID Document Verification Method with an Assertion verification relationship"
-    )
+      val id = it.id.toString()
+      verificationMethodIds.contains(id)
+    }
+      ?: throw SignatureException(
+        "Signature verification failed: Expected kid in JWS header to dereference " +
+          "a DID Document Verification Method with an Assertion verification relationship"
+      )
 
     require(assertionMethod.isType(JsonWebKey2020) && assertionMethod.publicKeyJwk != null) {
-      "Signature verification failed: Expected kid in JWS header to dereference " +
-        "a DID Document Verification Method of type JsonWebKey2020 with a publicKeyJwk"
+      throw SignatureException(
+        "Signature verification failed: Expected kid in JWS header to dereference " +
+          "a DID Document Verification Method of type $JsonWebKey2020 with a publicKeyJwk"
+      )
     }
 
-    val publicKeyJwk = JWK.parse(assertionMethod.publicKeyJwk)
+    val publicKeyMap = assertionMethod.publicKeyJwk
+    val publicKeyJwk = JWK.parse(publicKeyMap)
+
     val toVerifyBytes = jwt.signingInput
     val signatureBytes = jwt.signature.decode()
 

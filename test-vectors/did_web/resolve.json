@@ -12,10 +12,11 @@
         }
       },
       "output": {
-        "didResolutionMetadata": {},
         "didDocument": {
           "id": "did:web:example.com"
-        }
+        },
+        "didDocumentMetadata": {},
+        "didResolutionMetadata": {}
       }
     },
     {
@@ -29,10 +30,11 @@
         }
       },
       "output": {
-        "didResolutionMetadata": {},
         "didDocument": {
           "id": "did:web:w3c-ccg.github.io:user:alice"
-        }
+        },
+        "didDocumentMetadata": {},
+        "didResolutionMetadata": {}
       }
     },
     {
@@ -46,10 +48,11 @@
         }
       },
       "output": {
-        "didResolutionMetadata": {},
         "didDocument": {
           "id": "did:web:example.com%3A3000:user:alice"
-        }
+        },
+        "didDocumentMetadata": {},
+        "didResolutionMetadata": {}
       }
     },
     {
@@ -58,6 +61,8 @@
         "didUri": "did:dht:gb46emk73wkenrut43ii67a3o5qctojcaucebth7r83pst6yeh8o"
       },
       "output": {
+        "didDocument": null,
+        "didDocumentMetadata": {},
         "didResolutionMetadata": {
           "error": "methodNotSupported"
         }
@@ -70,6 +75,8 @@
         "didUri": "did:web:doesnotexist.com"
       },
       "output": {
+        "didDocument": null,
+        "didDocumentMetadata": {},
         "didResolutionMetadata": {
           "error": "notFound"
         }
@@ -82,6 +89,8 @@
         "didUri": "did:web:invalidcharø.com"
       },
       "output": {
+        "didDocument": null,
+        "didDocumentMetadata": {},
         "didResolutionMetadata": {
           "error": "invalidDid"
         }

@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import foundation.identity.did.DIDDocument
 import web5.sdk.dids.methods.ion.models.MetadataMethod
+import java.util.Objects.hash
 
 /**
  * Represents the result of DID resolution as per the W3C DID Core specification.
@@ -18,19 +19,41 @@ import web5.sdk.dids.methods.ion.models.MetadataMethod
  */
 public class DidResolutionResult(
   @JsonProperty("@context")
-  public var context: String? = null,
-  public var didDocument: DIDDocument,
-  public var didResolutionMetadata: DidResolutionMetadata? = null,
-  public var didDocumentMetadata: DidDocumentMetadata? = null
+  public val context: String? = null,
+  public val didDocument: DIDDocument? = null,
+  public val didDocumentMetadata: DidDocumentMetadata = DidDocumentMetadata(),
+  public val didResolutionMetadata: DidResolutionMetadata = DidResolutionMetadata(),
 ) {
   override fun toString(): String {
     return objectMapper.writeValueAsString(this)
   }
 
-  private companion object {
+  override fun equals(other: Any?): Boolean {
+    if (other is DidResolutionResult) {
+      return this.toString() == other.toString()
+    }
+    return false
+  }
+
+  override fun hashCode(): Int = hash(context, didDocument, didDocumentMetadata, didResolutionMetadata)
+
+  public companion object {
     private val objectMapper: ObjectMapper = ObjectMapper().apply {
       registerModule(KotlinModule.Builder().build())
       setSerializationInclusion(JsonInclude.Include.NON_NULL)
+    }
+
+
+    /**
+     * Convenience function that creates a [DidResolutionResult] with [DidResolutionMetadata.error] populated from
+     * [error].
+     */
+    public fun fromResolutionError(error: ResolutionError): DidResolutionResult {
+      return DidResolutionResult(
+        didResolutionMetadata = DidResolutionMetadata(
+          error = error.value
+        )
+      )
     }
   }
 }
@@ -45,7 +68,7 @@ public class DidResolutionResult(
 public class DidResolutionMetadata(
   public var contentType: String? = null,
   public var error: String? = null,
-  public var additionalProperties: MutableMap<String, Any> = mutableMapOf()
+  public var additionalProperties: MutableMap<String, Any>? = null,
 )
 
 /**
