@@ -292,6 +292,7 @@ private fun getNextPowerOfTwo(n: Int): Int {
     return 1
   }
 
+  // calculates the smallest power of 2 that is greater than or equal to n + 1
   return 2.0.pow(ceil(log2((n + 1).toDouble())).toInt()).toInt()
 }
 
