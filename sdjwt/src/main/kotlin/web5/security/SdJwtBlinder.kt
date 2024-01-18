@@ -104,6 +104,13 @@ private class ClaimSetBlinder(
     return Pair(blinded, allDisclosures)
   }
 
+  /**
+   * Given a map of [claims] and a map of [claimsToBlind], returns a pair of: blinded claims and a list of disclosures
+   * that contain the original claims that were blinded.
+   *
+   * The method used to blind each claim is specified in the [claimsToBlind] object. See the subclasses of [BlindOption]
+   * for the different options on how a claim can be blinded.
+   */
   @Throws(
     BlindOptionNotValidException::class,
     ClaimValueIsNotArrayException::class,
