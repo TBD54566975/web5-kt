@@ -120,7 +120,7 @@ class DidJwkTest {
   }
 }
 
-class Web5TestVectorsDidJwkTest {
+class Web5TestVectorsDidJwk {
   private val mapper = jacksonObjectMapper()
 
   @Test
