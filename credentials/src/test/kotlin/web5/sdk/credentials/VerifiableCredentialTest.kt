@@ -269,7 +269,6 @@ class Web5TestVectorsCredentials {
     val testVectors = mapper.readValue(File("../test-vectors/credentials/verify.json"), typeRef)
 
     testVectors.vectors.filterNot { it.errors ?: false }.forEach { vector ->
-
       assertDoesNotThrow {
         VerifiableCredential.verify(vector.input.vcJwt)
       }
