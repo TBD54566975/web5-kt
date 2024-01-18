@@ -6,15 +6,22 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.net.URL
 
 plugins {
-  id("org.jetbrains.kotlin.jvm") version "1.9.0"
+  id("org.jetbrains.kotlin.jvm") version "1.9.+"
   id("java-library")
-  id("io.gitlab.arturbosch.detekt") version "1.23.1"
+  id("io.gitlab.arturbosch.detekt") version "1.23.+"
   `maven-publish`
-  id("org.jetbrains.dokka") version "1.9.0"
-  id("org.jetbrains.kotlinx.kover") version "0.7.3"
+  id("org.jetbrains.dokka") version "1.9.+"
+  id("org.jetbrains.kotlinx.kover") version "0.7.+"
   signing
   idea
   id("io.github.gradle-nexus.publish-plugin") version "1.3.0"
+}
+
+configurations.all {
+  resolutionStrategy {
+    // Pin the transitive dep to a version that's not vulnerable.
+    force("com.fasterxml.woodstox:woodstox-core:6.4.0")
+  }
 }
 
 repositories {
@@ -26,6 +33,8 @@ dependencies {
   api(project(":credentials"))
   api(project(":crypto"))
   api(project(":dids"))
+
+  detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.23.+")
 }
 
 allprojects {
@@ -50,6 +59,13 @@ subprojects {
     plugin("idea")
   }
 
+  configurations.all {
+    resolutionStrategy {
+      // Pin the transitive dep to a version that's not vulnerable.
+      force("com.fasterxml.woodstox:woodstox-core:6.4.0")
+    }
+  }
+
   tasks.withType<Detekt>().configureEach {
     jvmTarget = "1.8"
   }
@@ -69,7 +85,7 @@ subprojects {
   configurations["intTestRuntimeOnly"].extendsFrom(configurations.runtimeOnly.get())
 
   dependencies {
-    detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.23.1")
+    detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.23.4")
     detektPlugins("com.github.TBD54566975:tbd-detekt-rules:v0.0.2")
 
     testImplementation("org.junit.jupiter:junit-jupiter:5.9.2")

@@ -56,8 +56,19 @@ class DidWebTest {
     }
     for (did in didsToTest) {
       val result = api.resolve(did)
-      assertEquals(did, result.didDocument.id.toString())
+      assertEquals(did, result.didDocument!!.id.toString())
     }
+  }
+
+  @Test
+  fun `resolve returns internal error when http fails`() {
+    val result = DidWebApi {
+      engine = MockEngine {
+        respond("some failure", HttpStatusCode.InternalServerError)
+      }
+    }.resolve("did:web:example.com")
+
+    assertEquals("internalError", result.didResolutionMetadata.error)
   }
 
   @Test

@@ -21,7 +21,7 @@ class DidMethodTest {
     val manager = InMemoryKeyManager()
     val did = DidKey.create(manager)
 
-    val verificationMethod = did.resolve().didDocument.findAssertionMethodById()
+    val verificationMethod = did.resolve().didDocument!!.findAssertionMethodById()
     assertEquals("${did.uri}#${DID.fromString(did.uri).methodSpecificId}", verificationMethod.id.toString())
   }
 
@@ -31,7 +31,7 @@ class DidMethodTest {
     val did = DidKey.create(manager)
 
     val assertionMethodId = "${did.uri}#${DID.fromString(did.uri).methodSpecificId}"
-    val verificationMethod = did.resolve().didDocument.findAssertionMethodById(assertionMethodId)
+    val verificationMethod = did.resolve().didDocument!!.findAssertionMethodById(assertionMethodId)
     assertEquals(assertionMethodId, verificationMethod.id.toString())
   }
 
@@ -41,7 +41,7 @@ class DidMethodTest {
     val did = DidKey.create(manager)
 
     val exception = assertThrows<SignatureException> {
-      did.resolve().didDocument.findAssertionMethodById("made up assertion method id")
+      did.resolve().didDocument!!.findAssertionMethodById("made up assertion method id")
     }
     assertEquals("assertion method \"made up assertion method id\" not found", exception.message)
   }
@@ -54,7 +54,7 @@ class DidMethodTest {
     }.load("did:web:example.com", manager)
 
     val exception = assertThrows<SignatureException> {
-      did.resolve(null).didDocument.findAssertionMethodById("made up assertion method id")
+      did.resolve(null).didDocument!!.findAssertionMethodById("made up assertion method id")
     }
     assertEquals("No assertion methods found in DID document", exception.message)
   }

@@ -1,7 +1,6 @@
 package web5.sdk.dids.methods.dht
 
 import com.nimbusds.jose.jwk.JWK
-import com.turn.ttorrent.bcodec.BEncoder
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.okhttp.OkHttp
@@ -24,6 +23,8 @@ import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.security.SignatureException
+
+private val colon = ":".toByteArray(charset("UTF-8"))
 
 /**
  * A utility class for working with the BEP44 DHT specification and Pkarr relays.
@@ -186,9 +187,7 @@ internal class DhtClient(
       }
 
       // encode v using bencode
-      val out = ByteArrayOutputStream()
-      BEncoder.bencode(v, out)
-      val vEncoded = out.toByteArray()
+      val vEncoded = bencode(v)
 
       require(vEncoded.size <= 1000) {
         "Value must be <= 1000 bytes compressed, current bytes {${vEncoded.size}}"
@@ -208,6 +207,16 @@ internal class DhtClient(
       }
     }
 
+    /** Encodes a byte array according to https://en.wikipedia.org/wiki/Bencode. */
+    internal fun bencode(bs: ByteArray): ByteArray {
+      val out = ByteArrayOutputStream()
+      val l = bs.size.toString()
+      out.write(l.toByteArray(charset("UTF-8")))
+      out.write(colon)
+      out.write(bs)
+      return out.toByteArray()
+    }
+
     /**
      * Verifies a message according to the BEP44 Signature Verification specification.
      * https://www.bittorrent.org/beps/bep_0044.html
@@ -218,10 +227,7 @@ internal class DhtClient(
      * @throws SignatureException if the signature is invalid.
      */
     fun verifyBep44Message(message: Bep44Message) {
-      // encode v using bencode
-      val out = ByteArrayOutputStream()
-      BEncoder.bencode(message.v, out)
-      val vEncoded = out.toByteArray()
+      val vEncoded = bencode(message.v)
 
       // prepare buffer and verify
       val bytesToVerify = "3:seqi${message.seq}e1:v".toByteArray() + vEncoded

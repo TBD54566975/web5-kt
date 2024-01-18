@@ -1,7 +1,9 @@
 package web5.sdk.credentials
 
+import assertk.assertFailure
 import assertk.assertThat
 import assertk.assertions.contains
+import assertk.assertions.messageContains
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
@@ -73,5 +75,147 @@ class PresentationDefinitionTest {
     val pdString = File("src/test/resources/pd_sanctions.json").readText().trimIndent()
 
     assertDoesNotThrow { jsonMapper.readValue(pdString, PresentationDefinitionV2::class.java) }
+  }
+
+  @Test
+  fun `is valid`() {
+    val pdString = File("src/test/resources/pd_sanctions.json").readText().trimIndent()
+    val pd = jsonMapper.readValue(pdString, PresentationDefinitionV2::class.java)
+    assertDoesNotThrow { PresentationExchange.validateDefinition(pd) }
+  }
+
+  @Test
+  fun `is invalid with all inputDescriptor ids must be unique`() {
+    val pd = PresentationDefinitionV2(
+      id = "test-pd-id",
+      inputDescriptors = listOf(
+        InputDescriptorV2(
+          id = "id-123",
+          constraints = ConstraintsV2(
+            fields = listOf()
+          )
+        ),
+        InputDescriptorV2(
+          id = "id-123",
+          constraints = ConstraintsV2(
+            fields = listOf()
+          )
+        )
+      )
+    )
+
+    assertFailure {
+      PresentationExchange.validateDefinition(pd)
+    }.messageContains("All inputDescriptor ids must be unique")
+  }
+
+  @Test
+  fun `is invalid with all field ids must be unique`() {
+    val factory = JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V7)
+    val filter = factory.getSchema(
+      """
+      {"type":"string","const":"123"}
+    """.trimIndent()
+    )
+
+    val pd = PresentationDefinitionV2(
+      id = "test-pd-id",
+      inputDescriptors = listOf(
+        InputDescriptorV2(
+          id = "id-1",
+          constraints = ConstraintsV2(
+            fields = listOf(
+              FieldV2(
+                id = "field-id",
+                path = listOf("$.issuer"),
+                filterJson = filter.schemaNode
+              )
+            )
+          )
+        ),
+        InputDescriptorV2(
+          id = "id-2",
+          constraints = ConstraintsV2(
+            fields = listOf(
+              FieldV2(
+                id = "field-id",
+                path = listOf("$.issuer"),
+                filterJson = filter.schemaNode
+              )
+            )
+          )
+        )
+      )
+    )
+
+    assertFailure {
+      PresentationExchange.validateDefinition(pd)
+    }.messageContains("Field ids must be unique across all input descriptors")
+  }
+
+  @Test
+  fun `is invalid with path being empty`() {
+    val factory = JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V7)
+    val filter = factory.getSchema(
+      """
+      {"type":"string","const":"123"}
+    """.trimIndent()
+    )
+
+    val pd = PresentationDefinitionV2(
+      id = "test-pd-id",
+      inputDescriptors = listOf(
+        InputDescriptorV2(
+          id = "id-1",
+          constraints = ConstraintsV2(
+            fields = listOf(
+              FieldV2(
+                id = "field-id",
+                path = listOf(),
+                filterJson = filter.schemaNode
+              )
+            )
+          )
+        )
+      )
+    )
+
+    assertFailure {
+      PresentationExchange.validateDefinition(pd)
+    }.messageContains("FieldV2 path must not be empty")
+  }
+
+  @Test
+  fun `is invalid with invalid json paths`() {
+    val factory = JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V7)
+    val filter = factory.getSchema(
+      """
+      {"type":"string","const":"123"}
+    """.trimIndent()
+    )
+
+    val invalidPath = "$.store.book[(@.price == 10]"  // Missing closing parenthesis
+
+    val pd = PresentationDefinitionV2(
+      id = "test-pd-id",
+      inputDescriptors = listOf(
+        InputDescriptorV2(
+          id = "id-1",
+          constraints = ConstraintsV2(
+            fields = listOf(
+              FieldV2(
+                id = "field-id",
+                path = listOf(invalidPath),
+                filterJson = filter.schemaNode
+              )
+            )
+          )
+        )
+      )
+    )
+
+    assertFailure {
+      PresentationExchange.validateDefinition(pd)
+    }.messageContains("Invalid JSON path")
   }
 }

@@ -95,7 +95,7 @@
       "input": "did:jwk:hehe",
       "output": {
         "@context": "https://w3id.org/did-resolution/v1",
-        "didDocument": {},
+        "didDocument": null,
         "didResolutionMetadata": {
           "error": "invalidDid"
         },
