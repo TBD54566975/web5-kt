@@ -18,6 +18,6 @@ class DidResolversTest {
     val ionDid = DidIon.create(InMemoryKeyManager())
 
     val resolutionResult = DidResolvers.resolve(ionDid.uri)
-    assertNotNull(resolutionResult.didDocument.assertionMethodVerificationMethodsDereferenced)
+    assertNotNull(resolutionResult.didDocument!!.assertionMethodVerificationMethodsDereferenced)
   }
 }

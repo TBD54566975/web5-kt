@@ -204,7 +204,7 @@ class DidDhtTest {
         val result = api.resolve(knownDid)
         assertNotNull(result)
         assertNotNull(result.didDocument)
-        assertEquals(knownDid, result.didDocument.id.toString())
+        assertEquals(knownDid, result.didDocument!!.id.toString())
       }
     }
 

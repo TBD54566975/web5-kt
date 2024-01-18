@@ -4,6 +4,7 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import foundation.identity.did.DID
 import foundation.identity.did.DIDDocument
 import foundation.identity.did.parser.ParserException
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.okhttp.OkHttp
@@ -96,6 +97,8 @@ public sealed class DidWebApi(
   configuration: DidWebApiConfiguration
 ) : DidMethod<DidWeb, CreateDidOptions> {
 
+  private val logger = KotlinLogging.logger {}
+
   private val mapper = jacksonObjectMapper()
 
   private val engine: HttpClientEngine = configuration.engine ?: OkHttp.create {
@@ -120,6 +123,15 @@ public sealed class DidWebApi(
   override val methodName: String = "web"
 
   override fun resolve(did: String, options: ResolveDidOptions?): DidResolutionResult {
+    return try {
+      resolveInternal(did, options)
+    } catch (e: Exception) {
+      logger.warn(e) { "resolving DID $did failed" }
+      DidResolutionResult.fromResolutionError(ResolutionError.INTERNAL_ERROR)
+    }
+  }
+
+  private fun resolveInternal(did: String, options: ResolveDidOptions?): DidResolutionResult {
     val parsedDid = try {
       DID.fromString(did)
     } catch (_: ParserException) {

@@ -20,7 +20,7 @@ import java.util.Objects.hash
 public class DidResolutionResult(
   @JsonProperty("@context")
   public val context: String? = null,
-  public val didDocument: DIDDocument = DIDDocument(),
+  public val didDocument: DIDDocument? = null,
   public val didDocumentMetadata: DidDocumentMetadata = DidDocumentMetadata(),
   public val didResolutionMetadata: DidResolutionMetadata = DidResolutionMetadata(),
 ) {

@@ -19,6 +19,6 @@ class DidIntegrationTest {
   @Test
   fun `resolve an existing web did`() {
     val did = DidWeb.resolve("did:web:www.linkedin.com")
-    assertEquals("did:web:www.linkedin.com", did.didDocument.id.toString())
+    assertEquals("did:web:www.linkedin.com", did.didDocument!!.id.toString())
   }
 }

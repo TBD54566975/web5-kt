@@ -33,3 +33,10 @@ public class PkarrRecordNotFoundException : RuntimeException()
  * @param cause the exception cause
  */
 public class InvalidIdentifierException(message: String, cause: Throwable) : RuntimeException(message, cause)
+
+/**
+ * Did resolution exception.
+ *
+ * @param message the exception message detailing the error
+ */
+public class DidResolutionException(message: String) : RuntimeException(message)
