@@ -126,7 +126,7 @@ class Web5TestVectorsDidJwk {
   @Test
   fun resolve() {
     val typeRef = object : TypeReference<TestVectors<String, DidResolutionResult>>() {}
-    val testVectors = mapper.readValue(File("../test-vectors/did_jwk/resolve.json"), typeRef)
+    val testVectors = mapper.readValue(File("../web5-spec/test-vectors/did_jwk/resolve.json"), typeRef)
 
     testVectors.vectors.forEach { vector ->
       val resolutionResult = DidJwk.resolve(vector.input)
