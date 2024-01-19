@@ -1,0 +1,41 @@
+{
+  "description": "did:dht resolution",
+  "vectors": [
+    {
+      "description": "methodNotSupported error returned when did method is not dht",
+      "input": {
+        "didUri": "did:web:example.com"
+      },
+      "output": {
+        "didResolutionMetadata": {
+          "error": "methodNotSupported"
+        }
+      },
+      "errors": true
+    },
+    {
+      "description": "notFound error returned when not published",
+      "input": {
+        "didUri": "did:dht:cyuoqaf7itop8ohww4yn5ojg13qaq83r9zihgqntc5i9zwrfdfoz"
+      },
+      "output": {
+        "didResolutionMetadata": {
+          "error": "notFound"
+        }
+      },
+      "errors": true
+    },
+    {
+      "description": "invalidDid error returned for suffix with invalid character",
+      "input": {
+        "didUri": "did:dht:cyuoqaf7itop8ohww4yn5ojg13qaq83r9zihgqntc5i9zwrfdfov"
+      },
+      "output": {
+        "didResolutionMetadata": {
+          "error": "invalidDid"
+        }
+      },
+      "errors": true
+    }
+  ]
+}
