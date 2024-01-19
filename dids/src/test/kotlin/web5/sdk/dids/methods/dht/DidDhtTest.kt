@@ -339,7 +339,7 @@ class DidDhtTest {
 
 private val mapper = jacksonObjectMapper()
 
-class Web5TestVectorsDidDhtTest {
+class Web5TestVectorsDidDht {
   data class CreateTestInput(
     val identityPublicJwk: Map<String, Any>?,
     val additionalVerificationMethods: List<VerificationMethodInput>?,
