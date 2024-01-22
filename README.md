@@ -53,6 +53,12 @@ in [GitHub Pages](https://tbd54566975.github.io/web5-kt/docs/htmlMultiModule/cre
 
 ## Prerequisites
 
+Install java version 11. If you're installing a higher version, it must be compatible with Gradle 8.2.
+
+If you want to have multiple version of Java installed in your machine, we recommend using [jenv](https://www.jenv.be/).
+
+> [!NOTE]: Restart your shell after installation.
+
 ### Cloning
 This repository uses git submodules. To clone this repo with submodules
 ```sh
@@ -66,12 +72,6 @@ We recommend this config which will only checkout the files relevant to web5-kt
 ```sh
 git -C web5-spec sparse-checkout set test-vectors
 ```
-
-Install java version 11. If you're installing a higher version, it must be compatible with Gradle 8.2.
-
-If you want to have multiple version of Java installed in your machine, we recommend using [jenv](https://www.jenv.be/).
-
-> [!NOTE]: Restart your shell after installation.
 
 ## Build
 
