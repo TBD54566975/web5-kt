@@ -53,6 +53,20 @@ in [GitHub Pages](https://tbd54566975.github.io/web5-kt/docs/htmlMultiModule/cre
 
 ## Prerequisites
 
+### Cloning
+This repository uses git submodules. To clone this repo with submodules
+```sh
+git clone --recurse-submodules git@github.com:TBD54566975/web5-kt.git
+```
+Or to add submodules after cloning
+```sh
+git submodule update --init
+```
+We recommend this config which will only checkout the files relevant to web5-kt
+```sh
+git -C web5-spec sparse-checkout set test-vectors
+```
+
 Install java version 11. If you're installing a higher version, it must be compatible with Gradle 8.2.
 
 If you want to have multiple version of Java installed in your machine, we recommend using [jenv](https://www.jenv.be/).
@@ -89,6 +103,24 @@ If you want to do a manual release, you have two options:
      ```bash
      ./gradlew -Pversion=samplebranch-SNAPSHOT publishToSonatype closeAndReleaseSonatypeStagingRepository
      ```
+
+## Working with the `web5-spec` submodule
+
+### Pulling
+You may need to update the `web5-spec` submodule after pulling.
+```sh
+git pull
+git submodule update
+```
+
+### Pushing
+If you have made changes to the `web5-spec` submodule, you should push your changes to the `web5-spec` remote as well as pushing changes to `web5-kt`.
+```sh
+cd web5-spec
+git push
+cd ..
+git push
+```
 
 # Other Docs
 
