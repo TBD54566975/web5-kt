@@ -98,7 +98,7 @@ jobs:
           private-key: ${{ secrets.CICD_ROBOT_GITHUB_APP_PRIVATE_KEY }}
           owner: TBD54566975
           repositories: sdk-report-runner
-        
+
       - name: Trigger sdk-report-runner report build
         if: github.ref == 'refs/heads/main'
         run: |
