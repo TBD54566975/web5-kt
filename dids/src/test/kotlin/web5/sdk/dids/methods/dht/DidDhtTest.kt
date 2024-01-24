@@ -361,7 +361,7 @@ class Web5TestVectorsDidDht {
   @Test
   fun create() {
     val typeRef = object : TypeReference<TestVectors<CreateTestInput, DIDDocument>>() {}
-    val testVectors = mapper.readValue(File("../test-vectors/did_dht/create.json"), typeRef)
+    val testVectors = mapper.readValue(File("../web5-spec/test-vectors/did_dht/create.json"), typeRef)
 
     testVectors.vectors.forEach { vector ->
       val keyManager = spy(InMemoryKeyManager())
@@ -391,7 +391,7 @@ class Web5TestVectorsDidDht {
   @Test
   fun resolve() {
     val typeRef = object : TypeReference<TestVectors<ResolveTestInput, DidResolutionResult>>() {}
-    val testVectors = mapper.readValue(File("../test-vectors/did_dht/resolve.json"), typeRef)
+    val testVectors = mapper.readValue(File("../web5-spec/test-vectors/did_dht/resolve.json"), typeRef)
     testVectors.vectors.forEach { vector ->
       val result = DidDhtApi {
         engine = MockEngine {

@@ -243,7 +243,7 @@ class Web5TestVectorsCredentials {
   @Test
   fun create() {
     val typeRef = object : TypeReference<TestVectors<CreateTestInput, String>>() {}
-    val testVectors = mapper.readValue(File("../test-vectors/credentials/create.json"), typeRef)
+    val testVectors = mapper.readValue(File("../web5-spec/test-vectors/credentials/create.json"), typeRef)
 
     testVectors.vectors.filterNot { it.errors ?: false }.forEach { vector ->
       val vc = VerifiableCredential.fromJson(mapper.writeValueAsString(vector.input.credential))
@@ -266,7 +266,7 @@ class Web5TestVectorsCredentials {
   @Test
   fun verify() {
     val typeRef = object : TypeReference<TestVectors<VerifyTestInput, Unit>>() {}
-    val testVectors = mapper.readValue(File("../test-vectors/credentials/verify.json"), typeRef)
+    val testVectors = mapper.readValue(File("../web5-spec/test-vectors/credentials/verify.json"), typeRef)
 
     testVectors.vectors.filterNot { it.errors ?: false }.forEach { vector ->
       assertDoesNotThrow {

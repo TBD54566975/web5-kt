@@ -586,7 +586,8 @@ class Web5TestVectorsPresentationExchange {
   @Test
   fun select_credentials() {
     val typeRef = object : TypeReference<TestVectors<SelectCredTestInput, SelectCredTestOutput>>() {}
-    val testVectors = mapper.readValue(File("../test-vectors/presentation_exchange/select_credentials.json"), typeRef)
+    val testVectors =
+      mapper.readValue(File("../web5-spec/test-vectors/presentation_exchange/select_credentials.json"), typeRef)
 
     testVectors.vectors.forEach { vector ->
       val selectedCreds = PresentationExchange.selectCredentials(
@@ -605,7 +606,8 @@ class Web5TestVectorsPresentationExchange {
   @Test
   fun validate_definition() {
     val typeRef = object : TypeReference<TestVectors<ValidateDefinitionTestInput, Unit>>() {}
-    val testVectors = mapper.readValue(File("../test-vectors/presentation_exchange/validate_definition.json"), typeRef)
+    val testVectors =
+      mapper.readValue(File("../web5-spec/test-vectors/presentation_exchange/validate_definition.json"), typeRef)
 
     testVectors.vectors.filterNot { it.errors ?: false }.forEach { vector ->
       assertDoesNotThrow {
