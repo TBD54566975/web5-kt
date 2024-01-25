@@ -160,7 +160,7 @@ public object PresentationSubmissionValidator {
    * Validates a PresentationSubmission.
    *
    * This method performs several checks to ensure the integrity of the presentation submission model object:
-   * 1. Ensures that the presentation submission's ID is not empty.
+   * 1. Ensures that the presentation submission's id is not empty.
    * 2. Validates that the definitionId is not empty.
    * 3. Validates descriptorMap is a non-empty list.
    * 4. Verifies the input descriptor mapping ids are the same on all levels of nesting.

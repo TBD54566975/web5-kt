@@ -137,15 +137,13 @@ public object PresentationExchange {
     PresentationDefinitionV2Validator.validate(presentationDefinition)
   }
 
-
-
   /**
    * Validates whether an object is usable as a presentation submission or not.
    *
    * Model as specified in https://identity.foundation/presentation-exchange/#presentation-submission.
    *
    * The checks are as follows:
-   * 1. Ensures that the presentation submission's ID is not empty.
+   * 1. Ensures that the presentation submission's id is not empty.
    * 2. Validates that the definitionId is not empty.
    * 3. Validates descriptorMap is a non-empty list.
    * 4. Verifies the input descriptor mapping ids are the same on all levels of nesting.
