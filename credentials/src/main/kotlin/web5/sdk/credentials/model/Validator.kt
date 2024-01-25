@@ -149,3 +149,70 @@ public object FieldV2Validator {
   }
 }
 
+/**
+ * PresentationSubmission Validator.
+ **/
+public object PresentationSubmissionValidator {
+
+  @Throws(PexValidationException::class)
+
+  /**
+   * Validates a PresentationSubmission.
+   *
+   * This method performs several checks to ensure the integrity of the presentation submission model object:
+   * 1. Ensures that the presentation submission's ID is not empty.
+   * 2. Validates that the definitionId is not empty.
+   * 3. Validates descriptorMap is a non-empty list.
+   * 4. Verifies the input descriptor mapping ids are the same on all levels of nesting.
+   * 5. Ensures that the path is valid across all levels of nesting
+   * @throws PexValidationException if the PresentationDefinitionV2 is not valid.
+   */
+  public fun validate(presentationSubmission: PresentationSubmission) {
+    if (presentationSubmission.id.isEmpty()) {
+      throw PexValidationException("PresentationSubmission id must not be empty")
+    }
+
+    if (presentationSubmission.definitionId.isEmpty()) {
+      throw PexValidationException("PresentationSubmission definitionId must not be empty")
+    }
+
+    if (presentationSubmission.descriptorMap.isEmpty()) {
+      throw PexValidationException("PresentationSubmission descriptorMap should be a non-empty list")
+    }
+
+    validateDescriptorMap(presentationSubmission.descriptorMap)
+  }
+
+  private fun validateDescriptorMap(descriptorMap: List<InputDescriptorMapping>) {
+    descriptorMap.forEach { descriptor ->
+      validateDescriptor(descriptor, descriptor.id)
+    }
+  }
+  private fun validateDescriptor(descriptor: InputDescriptorMapping, id: String?) {
+    if (descriptor.id.isEmpty()) {
+      throw PexValidationException("Descriptor id should not be empty")
+    }
+
+    if (descriptor.path.isEmpty()) {
+      throw PexValidationException("Descriptor path should not be empty")
+    }
+
+    if (descriptor.format.isEmpty()) {
+      throw PexValidationException("Descriptor format should not be empty")
+    }
+
+    if (descriptor.id != id) {
+      throw PexValidationException("Each descriptor should have one id in it, on all levels")
+    }
+
+    if (runCatching { JsonPath(descriptor.path) }.isFailure) {
+      throw PexValidationException("Each descriptor should have a valid path id")
+    }
+
+    descriptor.pathNested?.let { nestedDescriptor ->
+      validateDescriptor(nestedDescriptor, id)
+    }
+  }
+}
+
+

@@ -12,6 +12,7 @@ import web5.sdk.credentials.model.InputDescriptorV2
 import web5.sdk.credentials.model.PresentationDefinitionV2
 import web5.sdk.credentials.model.PresentationDefinitionV2Validator
 import web5.sdk.credentials.model.PresentationSubmission
+import web5.sdk.credentials.model.PresentationSubmissionValidator
 import java.util.UUID
 
 /**
@@ -134,6 +135,27 @@ public object PresentationExchange {
   @Throws(PexValidationException::class)
   public fun validateDefinition(presentationDefinition: PresentationDefinitionV2) {
     PresentationDefinitionV2Validator.validate(presentationDefinition)
+  }
+
+
+
+  /**
+   * Validates whether an object is usable as a presentation submission or not.
+   *
+   * Model as specified in https://identity.foundation/presentation-exchange/#presentation-submission.
+   *
+   * The checks are as follows:
+   * 1. Ensures that the presentation submission's ID is not empty.
+   * 2. Validates that the definitionId is not empty.
+   * 3. Validates descriptorMap is a non-empty list.
+   * 4. Verifies the input descriptor mapping ids are the same on all levels of nesting.
+   * 5. Ensures that the path is valid across all levels of nesting
+   *
+   * Throws an [PexValidationException] if the provided object does not conform to the Presentation Definition
+   */
+  @Throws(PexValidationException::class)
+  public fun validateSubmission(presentationSubmission: PresentationSubmission) {
+    PresentationSubmissionValidator.validate(presentationSubmission)
   }
 
   private fun mapInputDescriptorsToVCs(
