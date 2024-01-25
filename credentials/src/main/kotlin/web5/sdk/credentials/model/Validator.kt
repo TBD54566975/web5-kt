@@ -163,8 +163,9 @@ public object PresentationSubmissionValidator {
    * 1. Ensures that the presentation submission's id is not empty.
    * 2. Validates that the definitionId is not empty.
    * 3. Validates descriptorMap is a non-empty list.
-   * 4. Verifies the input descriptor mapping ids are the same on all levels of nesting.
-   * 5. Ensures that the path is valid across all levels of nesting
+   * 4. Check for unique inputDescriptor ids at top level
+   * 5. Verifies the input descriptor mapping ids are the same on all levels of nesting.
+   * 6. Ensures that the path is valid across all levels of nesting
    * @throws PexValidationException if the PresentationDefinitionV2 is not valid.
    */
   public fun validate(presentationSubmission: PresentationSubmission) {
@@ -178,6 +179,12 @@ public object PresentationSubmissionValidator {
 
     if (presentationSubmission.descriptorMap.isEmpty()) {
       throw PexValidationException("PresentationSubmission descriptorMap should be a non-empty list")
+    }
+
+    // Check for unique inputDescriptor ids
+    val ids = presentationSubmission.descriptorMap.map { it.id }
+    if (ids.size != ids.toSet().size) {
+      throw PexValidationException("All descriptorMap top level ids must be unique")
     }
 
     validateDescriptorMap(presentationSubmission.descriptorMap)

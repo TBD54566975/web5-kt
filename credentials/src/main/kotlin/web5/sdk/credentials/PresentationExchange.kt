@@ -146,8 +146,9 @@ public object PresentationExchange {
    * 1. Ensures that the presentation submission's id is not empty.
    * 2. Validates that the definitionId is not empty.
    * 3. Validates descriptorMap is a non-empty list.
-   * 4. Verifies the input descriptor mapping ids are the same on all levels of nesting.
-   * 5. Ensures that the path is valid across all levels of nesting
+   * 4. Check for unique inputDescriptor ids at top level
+   * 5. Verifies the input descriptor mapping ids are the same on all levels of nesting.
+   * 6. Ensures that the path is valid across all levels of nesting
    *
    * Throws an [PexValidationException] if the provided object does not conform to the Presentation Definition
    */
