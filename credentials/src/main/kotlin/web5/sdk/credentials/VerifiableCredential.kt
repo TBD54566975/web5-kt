@@ -107,6 +107,8 @@ public class VerifiableCredential internal constructor(public val vcDataModel: V
      * @param type The type of the credential, as a [String].
      * @param issuer The issuer URI of the credential, as a [String].
      * @param subject The subject URI of the credential, as a [String].
+     * @param issuanceDate Optional date to set in the `issuanceDate` property of the credential.
+     * @param expirationDate Optional date to set in the `expirationDate` property of the credential.
      * @param data The credential data, as a generic type [T].
      * @return A [VerifiableCredential] instance.
      *
@@ -121,7 +123,9 @@ public class VerifiableCredential internal constructor(public val vcDataModel: V
       issuer: String,
       subject: String,
       data: T,
-      credentialStatus: CredentialStatus? = null
+      credentialStatus: CredentialStatus? = null,
+      issuanceDate: Date = Date(),
+      expirationDate: Date? = null
     ): VerifiableCredential {
 
       val jsonData: JsonNode = objectMapper.valueToTree(data)
@@ -139,7 +143,8 @@ public class VerifiableCredential internal constructor(public val vcDataModel: V
         .type(type)
         .id(URI.create("urn:uuid:${UUID.randomUUID()}"))
         .issuer(URI.create(issuer))
-        .issuanceDate(Date())
+        .issuanceDate(issuanceDate)
+        .apply { expirationDate?.let { expirationDate(it) } }
         .credentialSubject(credentialSubject)
         .apply {
           credentialStatus?.let {
