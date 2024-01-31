@@ -31,13 +31,13 @@ repositories {
 
 dependencies {
   // If you want to pull the entire library
-  implementation("xyz.block:web5:0.0.9-delta")
+  implementation("xyz.block:web5:0.10.0")
 
   // If you want to pull a single module
-  implementation("xyz.block:web5-common:0.0.9-delta")
-  implementation("xyz.block:web5-credentials:0.0.9-delta")
-  implementation("xyz.block:web5-crypto:0.0.9-delta")
-  implementation("xyz.block:web5-dids:0.0.9-delta")
+  implementation("xyz.block:web5-common:0.10.0")
+  implementation("xyz.block:web5-credentials:0.10.0")
+  implementation("xyz.block:web5-crypto:0.10.0")
+  implementation("xyz.block:web5-dids:0.10.0")
 }
 ```
 
