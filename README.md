@@ -1,8 +1,8 @@
 # web5-sdk-kotlin
 
 [![License](https://img.shields.io/github/license/TBD54566975/web5-kt)](https://github.com/TBD54566975/web5-kt/blob/main/LICENSE)
- [![SDK Kotlin CI](https://github.com/TBD54566975/web5-kt/actions/workflows/ci.yml/badge.svg)](https://github.com/TBD54566975/web5-kt/actions/workflows/ci.yml) [![Coverage](https://img.shields.io/codecov/c/gh/tbd54566975/web5-kt/main?logo=codecov&logoColor=FFFFFF&style=flat-square&token=YI87CKF1LI)](https://codecov.io/github/TBD54566975/web5-kt)
-
+[![SDK Kotlin CI](https://github.com/TBD54566975/web5-kt/actions/workflows/ci.yml/badge.svg)](https://github.com/TBD54566975/web5-kt/actions/workflows/ci.yml) [![Coverage](https://img.shields.io/codecov/c/gh/tbd54566975/web5-kt/main?logo=codecov&logoColor=FFFFFF&style=flat-square&token=YI87CKF1LI)](https://codecov.io/github/TBD54566975/web5-kt)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/TBD54566975/web5-kt/badge)](https://securityscorecards.dev/viewer/?uri=github.com/TBD54566975/web5-kt)
 
 This repo contains 4 jvm packages:
 
@@ -13,8 +13,7 @@ This repo contains 4 jvm packages:
 
 # Quickstart
 
-You can add this library to your project using Gradle or Maven. There are two ways to do so. The first is pulling the
-package from Maven Central. The second is pulling the package from JitPack.
+You can add this library to your project using Gradle or Maven. To do so, pull the package from Maven Central.
 
 ## Maven Central
 
@@ -29,53 +28,22 @@ repositories {
   maven("https://repo.danubetech.com/repository/maven-public/")
   maven("https://repository.jboss.org/nexus/content/repositories/thirdparty-releases/")
 }
-  
+
 dependencies {
   // If you want to pull the entire library
-  implementation("xyz.block:web5:0.1.0")
-  
+  implementation("xyz.block:web5:0.0.9-delta")
+
   // If you want to pull a single module
-  implementation("xyz.block:web5-common:0.1.0")
-  implementation("xyz.block:web5-credentials:0.1.0")
-  implementation("xyz.block:web5-crypto:0.1.0")
-  implementation("xyz.block:web5-dids:0.1.0")
-}
-```
-
-## JitPack
-
-You can also pull the jars for this library from [JitPack](https://jitpack.io). To start simply add the following to your
-`build.gradle.kts` file:
-
-```kotlin
-repositories {
-  mavenCentral()
-  maven("https://jitpack.io")
-  maven("https://repo.danubetech.com/repository/maven-public/")
-  maven("https://repository.jboss.org/nexus/content/repositories/thirdparty-releases/")
-}
-
-dependencies {
-  implementation("com.github.TBD54566975:web5-kt:main-SNAPSHOT")
+  implementation("xyz.block:web5-common:0.0.9-delta")
+  implementation("xyz.block:web5-credentials:0.0.9-delta")
+  implementation("xyz.block:web5-crypto:0.0.9-delta")
+  implementation("xyz.block:web5-dids:0.0.9-delta")
 }
 ```
 
 > [!IMPORTANT]
-> The repository at `https://repo.danubetech.com/repository/maven-public/` is required for resolving transitive
-dependencies.
-
-If you want to refer to a specific release, then replace the `main-SNAPSHOT` with release tag.
-
-If you want to pull a PR, then replace `main-SNAPSHOT` using the template `PR<NR>-SNAPSHOT`. For
-example `PR40-SNAPSHOT`.
-
-If you want to depend on a single module, like `credentials`, then use the following dependencies
-
-```kotlin
-dependencies {
-  implementation("com.github.TBD54566975.web5-kt:credentials:master-SNAPSHOT")
-}
-```
+> Additional repositories, like `https://repo.danubetech.com/repository/maven-public/`, are required for resolving
+transitive dependencies.
 
 # Examples
 
@@ -91,6 +59,20 @@ Install java version 11. If you're installing a higher version, it must be compa
 If you want to have multiple version of Java installed in your machine, we recommend using [jenv](https://www.jenv.be/).
 
 > [!NOTE]: Restart your shell after installation.
+
+### Cloning
+This repository uses git submodules. To clone this repo with submodules
+```sh
+git clone --recurse-submodules git@github.com:TBD54566975/web5-kt.git
+```
+Or to add submodules after cloning
+```sh
+git submodule update --init
+```
+We recommend this config which will only checkout the files relevant to web5-kt
+```sh
+git -C web5-spec sparse-checkout set test-vectors
+```
 
 ## Build
 
@@ -111,16 +93,35 @@ and cannot be deleted.
 ### Manual Release
 
 If you want to do a manual release, you have two options:
-1. Dispatch the [publish workflow](./.github/workflows/publish.yml) workflow from the Github UI. Go to the [publish 
-   Actions](https://github.com/TBD54566975/web5-kt/actions) > "Run workflow". 
+
+1. Dispatch the [publish workflow](./.github/workflows/publish.yml) workflow from the Github UI. Go to the [publish
+   Actions](https://github.com/TBD54566975/web5-kt/actions) > "Run workflow".
 2. Setup your local environment to publish to Central Repository. This is more involved. You'll need to:
-   1. Define all the environment variables described in the [publish workflow](./.github/workflows/publish.yml) file. You
-      can find the values in the [secrets and variable](https://github.com/TBD54566975/web5-kt/settings/secrets/actions)
-      page.
-   2. Run the following command (you can change `samplebranch` to any branch name):
-      ```bash
-      ./gradlew -Pversion=samplebranch-SNAPSHOT publishToSonatype closeAndReleaseSonatypeStagingRepository
-      ```
+  1. Define all the environment variables described in the [publish workflow](./.github/workflows/publish.yml) file. You
+     can find the values in the [secrets and variable](https://github.com/TBD54566975/web5-kt/settings/secrets/actions)
+     page.
+  2. Run the following command (you can change `samplebranch` to any branch name):
+     ```bash
+     ./gradlew -Pversion=samplebranch-SNAPSHOT publishToSonatype closeAndReleaseSonatypeStagingRepository
+     ```
+
+## Working with the `web5-spec` submodule
+
+### Pulling
+You may need to update the `web5-spec` submodule after pulling.
+```sh
+git pull
+git submodule update
+```
+
+### Pushing
+If you have made changes to the `web5-spec` submodule, you should push your changes to the `web5-spec` remote as well as pushing changes to `web5-kt`.
+```sh
+cd web5-spec
+git push
+cd ..
+git push
+```
 
 # Other Docs
 

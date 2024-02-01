@@ -3,17 +3,19 @@ package web5.sdk.dids.methods.web
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import foundation.identity.did.DID
 import foundation.identity.did.DIDDocument
+import foundation.identity.did.parser.ParserException
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.get
+import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import io.ktor.serialization.jackson.jackson
-import jdk.jshell.spi.ExecutionControl.NotImplementedException
 import kotlinx.coroutines.runBlocking
 import okhttp3.Cache
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -24,6 +26,7 @@ import web5.sdk.dids.CreateDidOptions
 import web5.sdk.dids.Did
 import web5.sdk.dids.DidMethod
 import web5.sdk.dids.DidResolutionResult
+import web5.sdk.dids.ResolutionError
 import web5.sdk.dids.ResolveDidOptions
 import web5.sdk.dids.methods.ion.InvalidStatusException
 import web5.sdk.dids.validateKeyMaterialInsideKeyManager
@@ -31,6 +34,7 @@ import java.io.File
 import java.net.InetAddress
 import java.net.URL
 import java.net.URLDecoder
+import java.net.UnknownHostException
 import kotlin.text.Charsets.UTF_8
 
 /**
@@ -93,6 +97,8 @@ public sealed class DidWebApi(
   configuration: DidWebApiConfiguration
 ) : DidMethod<DidWeb, CreateDidOptions> {
 
+  private val logger = KotlinLogging.logger {}
+
   private val mapper = jacksonObjectMapper()
 
   private val engine: HttpClientEngine = configuration.engine ?: OkHttp.create {
@@ -117,12 +123,34 @@ public sealed class DidWebApi(
   override val methodName: String = "web"
 
   override fun resolve(did: String, options: ResolveDidOptions?): DidResolutionResult {
-    val docURL = getDocURL(did)
+    return try {
+      resolveInternal(did, options)
+    } catch (e: Exception) {
+      logger.warn(e) { "resolving DID $did failed" }
+      DidResolutionResult.fromResolutionError(ResolutionError.INTERNAL_ERROR)
+    }
+  }
 
-    val resp = runBlocking {
-      client.get(docURL) {
-        contentType(ContentType.Application.Json)
+  private fun resolveInternal(did: String, options: ResolveDidOptions?): DidResolutionResult {
+    val parsedDid = try {
+      DID.fromString(did)
+    } catch (_: ParserException) {
+      return DidResolutionResult.fromResolutionError(ResolutionError.INVALID_DID)
+    }
+
+    if (parsedDid.methodName != methodName) {
+      return DidResolutionResult.fromResolutionError(ResolutionError.METHOD_NOT_SUPPORTED)
+    }
+    val docURL = getDocURL(parsedDid)
+
+    val resp: HttpResponse = try {
+      runBlocking {
+        client.get(docURL) {
+          contentType(ContentType.Application.Json)
+        }
       }
+    } catch (_: UnknownHostException) {
+      return DidResolutionResult.fromResolutionError(ResolutionError.NOT_FOUND)
     }
 
     val body = runBlocking { resp.bodyAsText() }
@@ -140,12 +168,7 @@ public sealed class DidWebApi(
     return DidWeb(uri, keyManager, this)
   }
 
-  private fun getDocURL(didWebStr: String): String {
-    val parsedDid = DID.fromString(didWebStr)
-    require(parsedDid.methodName == methodName) {
-      "$didWebStr is missing prefix \"did:$methodName\""
-    }
-
+  private fun getDocURL(parsedDid: DID): String {
     val domainNameWithPath = parsedDid.methodSpecificId.replace(":", "/")
     val decodedDomain = URLDecoder.decode(domainNameWithPath, UTF_8)
 

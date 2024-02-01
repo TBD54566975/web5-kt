@@ -1,22 +1,35 @@
 package web5.sdk.dids.methods.dht
 
+import com.fasterxml.jackson.core.type.TypeReference
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.JWK
+import com.nimbusds.jose.jwk.gen.ECKeyGenerator
+import foundation.identity.did.DIDDocument
 import foundation.identity.did.Service
 import foundation.identity.did.parser.ParserException
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
-import io.ktor.util.hex
+import org.erdtman.jcs.JsonCanonicalizer
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
+import org.mockito.kotlin.doReturn
+import org.mockito.kotlin.spy
+import org.mockito.kotlin.whenever
 import web5.sdk.common.ZBase32
 import web5.sdk.crypto.InMemoryKeyManager
+import web5.sdk.dids.DidResolutionResult
 import web5.sdk.dids.PublicKeyPurpose
+import web5.sdk.dids.exceptions.InvalidIdentifierException
+import web5.sdk.dids.exceptions.InvalidIdentifierSizeException
+import web5.sdk.dids.exceptions.InvalidMethodNameException
+import web5.sdk.testing.TestVectors
+import java.io.File
 import java.net.URI
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
@@ -103,8 +116,18 @@ class DidDhtTest {
 
       val otherKey = manager.generatePrivateKey(JWSAlgorithm.ES256K, Curve.SECP256K1)
       val publicKeyJwk = manager.getPublicKey(otherKey).toPublicJWK()
-      val verificationMethodsToAdd: Iterable<Pair<JWK, Array<PublicKeyPurpose>>> = listOf(
-        Pair(publicKeyJwk, arrayOf(PublicKeyPurpose.AUTHENTICATION, PublicKeyPurpose.ASSERTION_METHOD))
+      val publicKeyJwk2 = ECKeyGenerator(Curve.P_256).generate().toPublicJWK()
+      val verificationMethodsToAdd: Iterable<Triple<JWK, Array<PublicKeyPurpose>, String?>> = listOf(
+        Triple(
+          publicKeyJwk,
+          arrayOf(PublicKeyPurpose.AUTHENTICATION, PublicKeyPurpose.ASSERTION_METHOD),
+          "did:web:tbd.website"
+        ),
+        Triple(
+          publicKeyJwk2,
+          arrayOf(PublicKeyPurpose.AUTHENTICATION, PublicKeyPurpose.ASSERTION_METHOD),
+          "did:web:tbd.website"
+        )
       )
 
       val serviceToAdd =
@@ -121,9 +144,9 @@ class DidDhtTest {
 
       assertNotNull(did)
       assertNotNull(did.didDocument)
-      assertEquals(2, did.didDocument!!.verificationMethods.size)
-      assertEquals(2, did.didDocument!!.assertionMethodVerificationMethods.size)
-      assertEquals(2, did.didDocument!!.authenticationVerificationMethods.size)
+      assertEquals(3, did.didDocument!!.verificationMethods.size)
+      assertEquals(3, did.didDocument!!.assertionMethodVerificationMethods.size)
+      assertEquals(3, did.didDocument!!.authenticationVerificationMethods.size)
       assertEquals(1, did.didDocument!!.capabilityDelegationVerificationMethods.size)
       assertEquals(1, did.didDocument!!.capabilityInvocationVerificationMethods.size)
       assertNull(did.didDocument!!.keyAgreementVerificationMethods)
@@ -175,23 +198,22 @@ class DidDhtTest {
     fun `resolves a did dht value`() {
       val api = DidDhtApi { engine = mockEngine() }
       // known DID associated with our mock response, needed to verify the payload's signature
-      val knownDid = "did:dht:3b7tm6qtte51dktb4nf4uc59hr17dn7xnrowibcj1jek9krfxsgo"
+      val knownDid = "did:dht:qd5pz3sfsmhwhts9auy1qe6cwniemss4bpm3qxm8modtr148z17y"
 
       assertDoesNotThrow {
         val result = api.resolve(knownDid)
         assertNotNull(result)
         assertNotNull(result.didDocument)
-        assertEquals(knownDid, result.didDocument.id.toString())
+        assertEquals(knownDid, result.didDocument!!.id.toString())
       }
     }
 
     @OptIn(ExperimentalStdlibApi::class)
     private fun mockEngine() = MockEngine { request ->
-      val hexResponse = "2099f1ddf2e14c3fa693e89070cceb34d597d456e34ca32a07171badd734d62bfabac20b70e2751" +
-        "d31acd65d76e22ec0b66a0a7029064adccaf533ddd81e930a00000000655e4531000004000000000200000000035f6b3" +
-        "0045f646964000010000100001c2000373669643d302c743d302c6b3d794873562d64474b4e7947714964434c71624e5f" +
-        "345358526936385249557146695a4a5172366946665930c0100010000100001c20002322766d3d6b303b617574683d6b303" +
-        "b61736d3d6b303b696e763d6b303b64656c3d6b30"
+      val hexResponse = "1ad37b5b8ed6c5fc87b64fe4849d81e7446c31b36138d03b9f6d68837123d6ae6aedf91e0340a7c83cd53b95a600" +
+        "ffe4a2264c3c677d7d16ca6bd30e05fa820c00000000659dd40e000004000000000200000000035f6b30045f64696400001000010000" +
+        "1c2000373669643d303b743d303b6b3d63506262357357792d553547333854424a79504d6f4b714632746f4c563563395a317748456b" +
+        "7448764c6fc0100010000100001c20002322766d3d6b303b617574683d6b303b61736d3d6b303b696e763d6b303b64656c3d6b30"
 
       when {
         request.url.encodedPath == "/" && request.method == HttpMethod.Put -> {
@@ -252,18 +274,22 @@ class DidDhtTest {
 
       val otherKey = manager.generatePrivateKey(JWSAlgorithm.ES256K, Curve.SECP256K1)
       val publicKeyJwk = manager.getPublicKey(otherKey).toPublicJWK()
-      val verificationMethodsToAdd: Iterable<Pair<JWK, Array<PublicKeyPurpose>>> = listOf(
-        Pair(publicKeyJwk, arrayOf(PublicKeyPurpose.AUTHENTICATION, PublicKeyPurpose.ASSERTION_METHOD))
+      val verificationMethodsToAdd: Iterable<Triple<JWK, Array<PublicKeyPurpose>, String?>> = listOf(
+        Triple(publicKeyJwk, arrayOf(PublicKeyPurpose.AUTHENTICATION, PublicKeyPurpose.ASSERTION_METHOD), null)
       )
 
       val serviceToAdd = Service.builder()
         .id(URI("test-service"))
         .type("HubService")
-        .serviceEndpoint("https://example.com/service)")
+        .serviceEndpoint(listOf("https://example.com/service", "https://example.com/service2"))
         .build()
 
       val opts = CreateDidDhtOptions(
-        verificationMethods = verificationMethodsToAdd, services = listOf(serviceToAdd), publish = false
+        verificationMethods = verificationMethodsToAdd,
+        services = listOf(serviceToAdd),
+        controllers = listOf("did:dht:1bxdi3tbf1ud6cpk3ef9pz83erk9c6mmh877qfhfcd7ppzbgh7co"),
+        alsoKnownAses = listOf("did:web:tbd.website"),
+        publish = false
       )
       val did = DidDht.create(manager, opts)
 
@@ -289,24 +315,106 @@ class DidDhtTest {
 
     @Test
     fun `throws exception if did method isnt dht`() {
-      assertThrows<IllegalArgumentException> { DidDht.validate("did:key:abcd123") }
+      assertThrows<InvalidMethodNameException> { DidDht.validate("did:key:abcd123") }
     }
 
     @Test
     fun `throws exception if identifier cannot be zbase32 decoded`() {
-      assertThrows<java.lang.IllegalArgumentException> { DidDht.validate("did:dht:abcd123") }
+      assertThrows<InvalidIdentifierException> { DidDht.validate("did:dht:abcd123") }
     }
 
     @Test
     fun `throws exception if decoded identifier is larger than 32 bytes`() {
       val kakaId = ZBase32.encode("Hakuna matata Hakuna Matata Hakuna Matata".toByteArray())
-      assertThrows<java.lang.IllegalArgumentException> { DidDht.validate("did:dht:$kakaId") }
+      assertThrows<InvalidIdentifierSizeException> { DidDht.validate("did:dht:$kakaId") }
     }
 
     @Test
     fun `throws exception if decoded identifier is smaller than 32 bytes`() {
       val kakaId = ZBase32.encode("a".toByteArray())
-      assertThrows<java.lang.IllegalArgumentException> { DidDht.validate("did:dht:$kakaId") }
+      assertThrows<InvalidIdentifierSizeException> { DidDht.validate("did:dht:$kakaId") }
     }
   }
+}
+
+private val mapper = jacksonObjectMapper()
+
+class Web5TestVectorsDidDht {
+  data class CreateTestInput(
+    val identityPublicJwk: Map<String, Any>?,
+    val additionalVerificationMethods: List<VerificationMethodInput>?,
+    val services: List<Service>?,
+    val controller: List<String>?,
+    val alsoKnownAs: List<String>?,
+  )
+
+  data class ResolveTestInput(
+    val didUri: String,
+  )
+
+  data class VerificationMethodInput(
+    val jwk: Map<String, Any>,
+    val purposes: List<PublicKeyPurpose>
+  )
+
+
+  @Test
+  fun create() {
+    val typeRef = object : TypeReference<TestVectors<CreateTestInput, DIDDocument>>() {}
+    val testVectors = mapper.readValue(File("../web5-spec/test-vectors/did_dht/create.json"), typeRef)
+
+    testVectors.vectors.forEach { vector ->
+      val keyManager = spy(InMemoryKeyManager())
+      val identityKeyId = keyManager.import(listOf(vector.input.identityPublicJwk!!)).first()
+      doReturn(identityKeyId).whenever(keyManager).generatePrivateKey(JWSAlgorithm.EdDSA, Curve.Ed25519)
+
+      val verificationMethods = vector.input.additionalVerificationMethods?.map { verificationMethodInput ->
+        val jwk = JWK.parse(verificationMethodInput.jwk)
+        Triple(jwk, verificationMethodInput.purposes.toTypedArray(), null)
+      }
+      val options = CreateDidDhtOptions(
+        verificationMethods = verificationMethods,
+        publish = false,
+        services = vector.input.services,
+        controllers = vector.input.controller,
+        alsoKnownAses = vector.input.alsoKnownAs,
+      )
+      val didDht = DidDht.create(keyManager, options)
+      assertEquals(
+        JsonCanonicalizer(vector.output?.toJson()).encodedString,
+        JsonCanonicalizer(didDht.didDocument!!.toCustomJson()).encodedString,
+        vector.description
+      )
+    }
+  }
+
+  @Test
+  fun resolve() {
+    val typeRef = object : TypeReference<TestVectors<ResolveTestInput, DidResolutionResult>>() {}
+    val testVectors = mapper.readValue(File("../web5-spec/test-vectors/did_dht/resolve.json"), typeRef)
+    testVectors.vectors.forEach { vector ->
+      val result = DidDhtApi {
+        engine = MockEngine {
+          when {
+            it.url.encodedPath.matches("/\\w+".toRegex()) && it.method == HttpMethod.Get -> {
+              respond("pkarr record not found", HttpStatusCode.NotFound)
+            }
+
+            else -> throw Exception("Unexpected request")
+          }
+        }
+      }.resolve(vector.input.didUri)
+      assertEquals(vector.output, result, vector.description)
+    }
+  }
+}
+
+// The test vectors assume the property "controller" is rendered as a string (vs. an array of strings) when there is
+// only one controller.
+private fun DIDDocument.toCustomJson(): String? {
+  val jsonObject = this.jsonObject.toMutableMap()
+  if (jsonObject["controller"] is List<*> && (jsonObject["controller"] as List<*>).size == 1) {
+    jsonObject["controller"] = (jsonObject["controller"] as List<*>).single()
+  }
+  return mapper.writeValueAsString(jsonObject)
 }

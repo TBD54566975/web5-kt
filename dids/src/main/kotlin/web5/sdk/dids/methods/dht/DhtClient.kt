@@ -1,7 +1,6 @@
 package web5.sdk.dids.methods.dht
 
 import com.nimbusds.jose.jwk.JWK
-import com.turn.ttorrent.bcodec.BEncoder
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.okhttp.OkHttp
@@ -19,11 +18,14 @@ import org.xbill.DNS.Message
 import web5.sdk.common.ZBase32
 import web5.sdk.crypto.Ed25519
 import web5.sdk.crypto.KeyManager
+import web5.sdk.dids.exceptions.PkarrRecordNotFoundException
 import web5.sdk.dids.exceptions.PkarrRecordResponseException
 import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.security.SignatureException
+
+private val colon = ":".toByteArray(charset("UTF-8"))
 
 /**
  * A utility class for working with the BEP44 DHT specification and Pkarr relays.
@@ -77,9 +79,10 @@ internal class DhtClient(
    * @param id The z-base-32 encoded identifier of the message to get (e.g. a did:dht suffix value) [String].
    * @return A BEP44 message [Bep44Message].
    * @throws IllegalArgumentException if the identifier is not a z-base-32 encoded Ed25519 public key.
+   * @throws PkarrRecordNotFoundException if the record is not found.
    * @throws PkarrRecordResponseException if the response from the dht gateway is not successful.
    */
-  @Throws(PkarrRecordResponseException::class)
+  @Throws(PkarrRecordResponseException::class, PkarrRecordNotFoundException::class)
   fun pkarrGet(id: String): Bep44Message {
     val publicKey = ZBase32.decode(id)
     require(publicKey.size == 32) {
@@ -89,6 +92,9 @@ internal class DhtClient(
     val response = runBlocking { client.get("${gateway}/${id}") }
     if (!response.status.isSuccess()) {
       val err = runBlocking { response.bodyAsText() }
+      if (err.contains("pkarr record not found")) {
+        throw PkarrRecordNotFoundException()
+      }
       throw PkarrRecordResponseException("Error reading Pkarr Record Set of id $id. Error: $err")
     }
 
@@ -186,9 +192,7 @@ internal class DhtClient(
       }
 
       // encode v using bencode
-      val out = ByteArrayOutputStream()
-      BEncoder.bencode(v, out)
-      val vEncoded = out.toByteArray()
+      val vEncoded = bencode(v)
 
       require(vEncoded.size <= 1000) {
         "Value must be <= 1000 bytes compressed, current bytes {${vEncoded.size}}"
@@ -208,6 +212,16 @@ internal class DhtClient(
       }
     }
 
+    /** Encodes a byte array according to https://en.wikipedia.org/wiki/Bencode. */
+    internal fun bencode(bs: ByteArray): ByteArray {
+      val out = ByteArrayOutputStream()
+      val l = bs.size.toString()
+      out.write(l.toByteArray(charset("UTF-8")))
+      out.write(colon)
+      out.write(bs)
+      return out.toByteArray()
+    }
+
     /**
      * Verifies a message according to the BEP44 Signature Verification specification.
      * https://www.bittorrent.org/beps/bep_0044.html
@@ -218,10 +232,7 @@ internal class DhtClient(
      * @throws SignatureException if the signature is invalid.
      */
     fun verifyBep44Message(message: Bep44Message) {
-      // encode v using bencode
-      val out = ByteArrayOutputStream()
-      BEncoder.bencode(message.v, out)
-      val vEncoded = out.toByteArray()
+      val vEncoded = bencode(message.v)
 
       // prepare buffer and verify
       val bytesToVerify = "3:seqi${message.seq}e1:v".toByteArray() + vEncoded
