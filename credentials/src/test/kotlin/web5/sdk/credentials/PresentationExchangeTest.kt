@@ -612,7 +612,7 @@ class Web5TestVectorsPresentationExchange {
   fun create_presentation_from_credentials() {
     val typeRef = object : TypeReference<TestVectors<CreatePresFromCredTestInput, CreatePresFromCredTestOutput>>() {}
     val testVectors = mapper.readValue(
-      File("../test-vectors/presentation_exchange/create_presentation_from_credentials.json"),
+      File("../web5-spec/test-vectors/presentation_exchange/create_presentation_from_credentials.json"),
       typeRef
     )
 
