@@ -3,16 +3,11 @@ package web5.sdk.crypto
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.nimbusds.jose.JWSAlgorithm
-import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.ECKey
-import com.nimbusds.jose.jwk.JWK
 import com.nimbusds.jose.jwk.KeyType
 import com.nimbusds.jose.jwk.KeyUse
-import com.nimbusds.jose.jwk.OctetKeyPair
-import com.nimbusds.jose.util.Base64URL
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
-import org.junit.jupiter.api.assertThrows
 import web5.sdk.common.Convert
 import web5.sdk.testing.TestVectors
 import java.io.File
