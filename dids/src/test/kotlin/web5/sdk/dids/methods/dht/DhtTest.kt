@@ -10,9 +10,9 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
-import web5.sdk.crypto.dsa.eddsa.Ed25519
 import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.crypto.dsa.ecdsa.Secp256k1
+import web5.sdk.crypto.dsa.eddsa.Ed25519
 import web5.sdk.dids.methods.dht.DhtClient.Companion.bencode
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
