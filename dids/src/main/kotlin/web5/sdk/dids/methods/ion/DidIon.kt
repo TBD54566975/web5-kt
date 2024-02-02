@@ -159,6 +159,7 @@ public class DeactivateDidIonOptions(public val recoveryKeyAlias: String)
  * @property creationMetadata Metadata related to the creation of a DID. Useful for debugging purposes.
  * @property didIonApi A [DidIonApi] instance utilized to delegate all the calls to an ION node.
  */
+@Deprecated("Web5 has removed LTS for did:ion", ReplaceWith("DidDht"))
 public class DidIon(
   uri: String,
   keyManager: KeyManager,
