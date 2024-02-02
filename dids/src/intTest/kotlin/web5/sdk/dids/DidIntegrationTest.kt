@@ -1,7 +1,7 @@
 package web5.sdk.dids
 
 import org.junit.jupiter.api.Test
-import web5.sdk.crypto.InMemoryKeyManager
+import web5.sdk.crypto.LocalKeyManager
 import web5.sdk.dids.methods.ion.DidIon
 import web5.sdk.dids.methods.web.DidWeb
 import kotlin.test.assertContains
@@ -11,7 +11,7 @@ import kotlin.test.assertTrue
 class DidIntegrationTest {
   @Test
   fun `create ion did over network`() {
-    val did = DidIon.create(InMemoryKeyManager())
+    val did = DidIon.create(LocalKeyManager())
     assertContains(did.uri, "did:ion:")
     assertTrue(did.creationMetadata!!.longFormDid.startsWith(did.uri))
   }

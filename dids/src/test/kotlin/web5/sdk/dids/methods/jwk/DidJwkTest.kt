@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import web5.sdk.common.Convert
-import web5.sdk.crypto.InMemoryKeyManager
+import web5.sdk.crypto.LocalKeyManager
 import web5.sdk.dids.DidResolutionResult
 import web5.sdk.dids.DidResolvers
 import web5.sdk.testing.TestVectors
@@ -23,7 +23,7 @@ class DidJwkTest {
   inner class CreateTest {
     @Test
     fun `creates an ES256K key when no options are passed`() {
-      val manager = InMemoryKeyManager()
+      val manager = LocalKeyManager()
       val did = DidJwk.create(manager)
 
       val didResolutionResult = DidResolvers.resolve(did.uri)
@@ -43,7 +43,7 @@ class DidJwkTest {
   inner class LoadTest {
     @Test
     fun `throws exception when key manager does not contain private key`() {
-      val manager = InMemoryKeyManager()
+      val manager = LocalKeyManager()
       val exception = assertThrows<IllegalArgumentException> {
         @Suppress("MaxLineLength")
         DidJwk.load(
@@ -56,7 +56,7 @@ class DidJwkTest {
 
     @Test
     fun `returns instance when key manager contains private key`() {
-      val manager = InMemoryKeyManager()
+      val manager = LocalKeyManager()
       val did = DidJwk.create(manager)
       val didKey = DidJwk.load(did.uri, manager)
       assertEquals(did.uri, didKey.uri)
@@ -64,7 +64,7 @@ class DidJwkTest {
 
     @Test
     fun `throws exception when loading a different type of did`() {
-      val manager = InMemoryKeyManager()
+      val manager = LocalKeyManager()
       val did = DidJwk.create(manager)
       val exception = assertThrows<IllegalArgumentException> {
         DidJwk.load(did.uri.replace("jwk", "ion"), manager)
@@ -77,7 +77,7 @@ class DidJwkTest {
   inner class ResolveTest {
     @Test
     fun `private key throws exception`() {
-      val manager = InMemoryKeyManager()
+      val manager = LocalKeyManager()
       manager.generatePrivateKey(JWSAlgorithm.ES256K)
       val privateJwk = JWK.parse(manager.export().first())
       val encodedPrivateJwk = Convert(privateJwk.toJSONString()).toBase64Url(padding = false)

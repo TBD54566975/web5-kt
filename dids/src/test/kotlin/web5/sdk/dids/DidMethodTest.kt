@@ -9,7 +9,7 @@ import io.ktor.http.headersOf
 import io.ktor.utils.io.ByteReadChannel
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
-import web5.sdk.crypto.InMemoryKeyManager
+import web5.sdk.crypto.LocalKeyManager
 import web5.sdk.dids.methods.key.DidKey
 import web5.sdk.dids.methods.web.DidWebApi
 import java.security.SignatureException
@@ -18,7 +18,7 @@ import kotlin.test.assertEquals
 class DidMethodTest {
   @Test
   fun `findAssertionMethodById works with default`() {
-    val manager = InMemoryKeyManager()
+    val manager = LocalKeyManager()
     val did = DidKey.create(manager)
 
     val verificationMethod = did.resolve().didDocument!!.findAssertionMethodById()
@@ -27,7 +27,7 @@ class DidMethodTest {
 
   @Test
   fun `findAssertionMethodById finds with id`() {
-    val manager = InMemoryKeyManager()
+    val manager = LocalKeyManager()
     val did = DidKey.create(manager)
 
     val assertionMethodId = "${did.uri}#${DID.fromString(did.uri).methodSpecificId}"
@@ -37,7 +37,7 @@ class DidMethodTest {
 
   @Test
   fun `findAssertionMethodById throws exception`() {
-    val manager = InMemoryKeyManager()
+    val manager = LocalKeyManager()
     val did = DidKey.create(manager)
 
     val exception = assertThrows<SignatureException> {
@@ -48,7 +48,7 @@ class DidMethodTest {
 
   @Test
   fun `findAssertionMethodById throws exception when no assertion methods are found`() {
-    val manager = InMemoryKeyManager()
+    val manager = LocalKeyManager()
     val did = DidWebApi {
       engine = mockEngine()
     }.load("did:web:example.com", manager)

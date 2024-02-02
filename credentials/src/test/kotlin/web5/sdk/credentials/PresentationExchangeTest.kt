@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
 import web5.sdk.credentials.model.PresentationDefinitionV2
-import web5.sdk.crypto.InMemoryKeyManager
+import web5.sdk.crypto.LocalKeyManager
 import web5.sdk.dids.methods.key.DidKey
 import web5.sdk.testing.TestVectors
 import java.io.File
@@ -25,7 +25,7 @@ data class DateOfBirth(val dateOfBirth: String)
 data class Address(val address: String)
 data class DateOfBirthSSN(val dateOfBirth: String, val ssn: String)
 class PresentationExchangeTest {
-  private val keyManager = InMemoryKeyManager()
+  private val keyManager = LocalKeyManager()
   private val issuerDid = DidKey.create(keyManager)
   private val holderDid = DidKey.create(keyManager)
   private val jsonMapper: ObjectMapper = ObjectMapper()

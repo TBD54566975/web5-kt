@@ -23,7 +23,7 @@ import com.nimbusds.jose.jwk.JWK
  * - Keys are stored in an in-memory mutable map and will be lost once the application is terminated or the object is garbage-collected.
  * - It is suitable for testing or scenarios where persistent storage of keys is not necessary.
  */
-public class InMemoryKeyManager : KeyManager {
+public class LocalKeyManager : KeyManager {
 
   /**
    * An in-memory keystore represented as a flat key-value map, where the key is a key ID.

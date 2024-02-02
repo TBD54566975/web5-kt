@@ -15,10 +15,10 @@ import org.junit.jupiter.api.assertThrows
 import java.text.ParseException
 import kotlin.test.assertEquals
 
-class InMemoryKeyManagerTest {
+class LocalKeyManagerTest {
   @Test
   fun `test alias is consistent`() {
-    val keyManager = InMemoryKeyManager()
+    val keyManager = LocalKeyManager()
     val alias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K)
     val publicKey = keyManager.getPublicKey(alias)
     val defaultAlias = keyManager.getDeterministicAlias(publicKey)
@@ -28,7 +28,7 @@ class InMemoryKeyManagerTest {
 
   @Test
   fun `exception is thrown when kid not found`() {
-    val keyManager = InMemoryKeyManager()
+    val keyManager = LocalKeyManager()
     val jwk = Crypto.generatePrivateKey(JWSAlgorithm.ES256K)
     val exception = assertThrows<IllegalArgumentException> {
       keyManager.getDeterministicAlias(jwk.toPublicJWK())
@@ -39,7 +39,7 @@ class InMemoryKeyManagerTest {
   @Test
   fun `public key is available after import`() {
     val jwk = Crypto.generatePrivateKey(JWSAlgorithm.ES256K)
-    val keyManager = InMemoryKeyManager()
+    val keyManager = LocalKeyManager()
 
     val alias = keyManager.import(jwk)
 
@@ -50,7 +50,7 @@ class InMemoryKeyManagerTest {
   @Test
   fun `public keys can be imported`() {
     val jwk = Crypto.generatePrivateKey(JWSAlgorithm.ES256K)
-    val keyManager = InMemoryKeyManager()
+    val keyManager = LocalKeyManager()
 
     val alias = keyManager.import(jwk.toPublicJWK())
 
@@ -60,7 +60,7 @@ class InMemoryKeyManagerTest {
   @Test
   fun `key without kid can be imported`() {
     val jwk = ECKeyGenerator(Curve.SECP256K1).provider(BouncyCastleProviderSingleton.getInstance()).generate()
-    val keyManager = InMemoryKeyManager()
+    val keyManager = LocalKeyManager()
 
     val alias = keyManager.import(jwk)
 
@@ -70,7 +70,7 @@ class InMemoryKeyManagerTest {
 
   @Test
   fun `export returns all keys`() {
-    val keyManager = InMemoryKeyManager()
+    val keyManager = LocalKeyManager()
     keyManager.generatePrivateKey(JWSAlgorithm.EdDSA, Curve.Ed25519)
 
     val keySet = keyManager.export()
@@ -83,7 +83,7 @@ class InMemoryKeyManagerTest {
 
   @Test
   fun `import throws an exception if key isnt a JWK`() {
-    val keyManager = InMemoryKeyManager()
+    val keyManager = LocalKeyManager()
     val kakaKeySet = listOf(mapOf("hehe" to "troll"))
 
     assertThrows<ParseException> {
@@ -102,7 +102,7 @@ class InMemoryKeyManagerTest {
       .setSerializationInclusion(JsonInclude.Include.NON_NULL)
 
     val jsonKeySet: List<Map<String, Any>> = jsonMapper.readValue(serializedKeySet)
-    val keyManager = InMemoryKeyManager()
+    val keyManager = LocalKeyManager()
 
     assertDoesNotThrow {
       keyManager.import(jsonKeySet)

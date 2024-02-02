@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
-import web5.sdk.crypto.InMemoryKeyManager
+import web5.sdk.crypto.LocalKeyManager
 import web5.sdk.dids.DidResolvers
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -24,7 +24,7 @@ class DidKeyTest {
   inner class CreateTest {
     @Test
     fun `it works`() {
-      val manager = InMemoryKeyManager()
+      val manager = LocalKeyManager()
       val did = DidKey.create(manager)
 
       val didResolutionResult = DidResolvers.resolve(did.uri)
@@ -40,7 +40,7 @@ class DidKeyTest {
 
   @Test
   fun `load fails when key manager does not contain private key`() {
-    val manager = InMemoryKeyManager()
+    val manager = LocalKeyManager()
     val exception = assertThrows<IllegalArgumentException> {
       DidKey.load("did:key:z6MkiTBz1ymuepAQ4HEHYSF1H8quG5GLVVQR3djdX3mDooWp", manager)
     }
@@ -49,7 +49,7 @@ class DidKeyTest {
 
   @Test
   fun `load returns instance when key manager contains private key`() {
-    val manager = InMemoryKeyManager()
+    val manager = LocalKeyManager()
     val did = DidKey.create(manager)
     val didKey = DidKey.load(did.uri, manager)
     assertEquals(did.uri, didKey.uri)
@@ -57,7 +57,7 @@ class DidKeyTest {
 
   @Test
   fun `throws exception when loading a different type of did`() {
-    val manager = InMemoryKeyManager()
+    val manager = LocalKeyManager()
     val did = DidKey.create(manager)
     val exception = assertThrows<IllegalArgumentException> {
       DidKey.load(did.uri.replace("key", "ion"), manager)
@@ -116,7 +116,7 @@ class DidKeyTest {
         .setSerializationInclusion(JsonInclude.Include.NON_NULL)
 
       assertDoesNotThrow {
-        val km = InMemoryKeyManager()
+        val km = LocalKeyManager()
         val did = DidKey.create(km)
 
         val keySet = km.export()
@@ -124,7 +124,7 @@ class DidKeyTest {
         val didUri = did.uri
 
         val jsonKeySet: List<Map<String, Any>> = jsonMapper.readValue(serializedKeySet)
-        val km2 = InMemoryKeyManager()
+        val km2 = LocalKeyManager()
         km2.import(jsonKeySet)
 
         DidKey.load(uri = didUri, keyManager = km2)
