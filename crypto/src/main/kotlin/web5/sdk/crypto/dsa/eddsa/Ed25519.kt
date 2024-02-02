@@ -1,4 +1,4 @@
-package web5.sdk.crypto
+package web5.sdk.crypto.dsa.eddsa
 
 import com.google.crypto.tink.subtle.Ed25519Sign
 import com.google.crypto.tink.subtle.Ed25519Verify
@@ -13,10 +13,11 @@ import com.nimbusds.jose.jwk.gen.OctetKeyPairGenerator
 import com.nimbusds.jose.util.Base64URL
 import org.bouncycastle.crypto.params.Ed25519PrivateKeyParameters
 import web5.sdk.common.Convert
-import web5.sdk.crypto.Ed25519.PRIV_MULTICODEC
-import web5.sdk.crypto.Ed25519.PUB_MULTICODEC
-import web5.sdk.crypto.Ed25519.algorithm
-import web5.sdk.crypto.Ed25519.keyType
+import web5.sdk.crypto.*
+import web5.sdk.crypto.dsa.eddsa.Ed25519.PRIV_MULTICODEC
+import web5.sdk.crypto.dsa.eddsa.Ed25519.PUB_MULTICODEC
+import web5.sdk.crypto.dsa.eddsa.Ed25519.algorithm
+import web5.sdk.crypto.dsa.eddsa.Ed25519.keyType
 import java.security.GeneralSecurityException
 import java.security.SignatureException
 

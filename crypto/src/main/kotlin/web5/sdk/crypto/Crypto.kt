@@ -6,6 +6,8 @@ import com.nimbusds.jose.jwk.JWK
 import web5.sdk.crypto.Crypto.generatePrivateKey
 import web5.sdk.crypto.Crypto.publicKeyToBytes
 import web5.sdk.crypto.Crypto.sign
+import web5.sdk.crypto.dsa.ecdsa.Secp256k1
+import web5.sdk.crypto.dsa.eddsa.Ed25519
 
 public typealias CryptoAlgorithm = Pair<Algorithm?, Curve?>
 

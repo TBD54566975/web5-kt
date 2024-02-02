@@ -10,7 +10,7 @@ import io.ipfs.multibase.Multibase
 import web5.sdk.common.Varint
 import web5.sdk.crypto.Crypto
 import web5.sdk.crypto.KeyManager
-import web5.sdk.crypto.Secp256k1
+import web5.sdk.crypto.dsa.ecdsa.Secp256k1
 import web5.sdk.dids.CreateDidOptions
 import web5.sdk.dids.Did
 import web5.sdk.dids.DidMethod
