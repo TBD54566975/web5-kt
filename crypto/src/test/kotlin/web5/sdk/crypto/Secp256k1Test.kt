@@ -107,7 +107,7 @@ class Web5TestVectorsCryptoEs256k {
     val typeRef = object : TypeReference<TestVectors<SignTestInput, String>>() {}
     val testVectors = mapper.readValue(File("../web5-spec/test-vectors/crypto_es256k/sign.json"), typeRef)
 
-    testVectors.vectors.filter { it.errors != true }.forEach { vector ->
+    testVectors.vectors.filter { it.errors == false }.forEach { vector ->
       val inputByteArray: ByteArray = hexStringToByteArray(vector.input.data)
       val jwkMap = vector.input.key
       val ecJwk = ECKey.parse(jwkMap.toString())
