@@ -60,7 +60,7 @@ class VerifiableCredentialTest {
     val vcJwt = vc.sign(issuerDid)
 
     assertDoesNotThrow {
-      VerifiableCredential.verify(vcJwt)
+      VerifiableCredential.verify(vcJwt.verifiableCredentialJwt)
     }
   }
 
@@ -112,7 +112,7 @@ class VerifiableCredentialTest {
     )
 
     val vcJwt = vc.sign(issuerDid)
-    VerifiableCredential.verify(vcJwt)
+    VerifiableCredential.verify(vcJwt.verifiableCredentialJwt)
   }
 
   @Test
@@ -147,10 +147,34 @@ class VerifiableCredentialTest {
     )
   }
 
+
+}
+
+class VerifiableCredentialJwtTest {
+
+  @Test
+  fun `verifyAndParse verifies and parses valid jwt`() {
+    val keyManager = InMemoryKeyManager()
+    val issuerDid = DidKey.create(keyManager)
+    val holderDid = DidKey.create(keyManager)
+
+    val vc = VerifiableCredential.create(
+      type = "StreetCred",
+      issuer = issuerDid.uri,
+      subject = holderDid.uri,
+      data = StreetCredibility(localRespect = "high", legit = true)
+    )
+
+    val vcJwt = vc.sign(issuerDid)
+
+    assertNotNull(vcJwt.verifyAndParse())
+  }
+
+
   @Test
   fun `parseJwt throws ParseException if argument is not a valid JWT`() {
     assertThrows(ParseException::class.java) {
-      VerifiableCredential.parseJwt("hi")
+      VerifiableCredentialJwt("hi").parseJwt()
     }
   }
 
@@ -171,7 +195,7 @@ class VerifiableCredentialTest {
     signedJWT.sign(signer)
     val randomJwt = signedJWT.serialize()
     val exception = assertThrows(IllegalArgumentException::class.java) {
-      VerifiableCredential.parseJwt(randomJwt)
+      VerifiableCredentialJwt(randomJwt).parseJwt()
     }
 
     assertEquals("jwt payload missing vc property", exception.message)
@@ -196,7 +220,7 @@ class VerifiableCredentialTest {
     val randomJwt = signedJWT.serialize()
 
     val exception = assertThrows(IllegalArgumentException::class.java) {
-      VerifiableCredential.parseJwt(randomJwt)
+      VerifiableCredentialJwt(randomJwt).parseJwt()
     }
 
     assertEquals("expected vc property in JWT payload to be an object", exception.message)
@@ -217,7 +241,7 @@ class VerifiableCredentialTest {
 
     val vcJwt = vc.sign(issuerDid)
 
-    val parsedVc = VerifiableCredential.parseJwt(vcJwt)
+    val parsedVc = vcJwt.parseJwt()
     assertNotNull(parsedVc)
 
     assertEquals(vc.type, parsedVc.type)
@@ -253,7 +277,7 @@ class Web5TestVectorsCredentials {
       val issuerDid = Did.load(vector.input.signerDidUri!!, keyManager)
       val vcJwt = vc.sign(issuerDid)
 
-      assertEquals(vector.output, vcJwt, vector.description)
+      assertEquals(vector.output, vcJwt.verifiableCredentialJwt, vector.description)
     }
 
     testVectors.vectors.filter { it.errors ?: false }.forEach { vector ->

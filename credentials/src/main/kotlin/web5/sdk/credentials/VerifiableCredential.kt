@@ -2,6 +2,7 @@ package web5.sdk.credentials
 
 import com.danubetech.verifiablecredentials.CredentialSubject
 import com.danubetech.verifiablecredentials.credentialstatus.CredentialStatus
+import com.danubetech.verifiablecredentials.jwt.JwtVerifiableCredential
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.JsonNode
@@ -25,6 +26,55 @@ import java.util.UUID
  * This typealias simplifies the use of the [com.danubetech.verifiablecredentials.VerifiableCredential] class.
  */
 public typealias VcDataModel = com.danubetech.verifiablecredentials.VerifiableCredential
+
+/**
+ * Wrapper class for a potentially unverified JWT [String]
+ * to ensure that verification occurs before parsing and avoid consumer confusion.
+ *
+ * The only mechanism to retrieve a [VerifiableCredential] from the wrapped String
+ * is by executing [verifyAndParse].
+ *
+ */
+public class VerifiableCredentialJwt(public val verifiableCredentialJwt: String) {
+
+  /**
+   * Verifies a raw JWT string to ensure that it is not from a bad
+   * actor before parsing it into a [VerifiableCredential].
+   *
+   * @throws [SignatureException] if verification fails.
+   */
+  public fun verifyAndParse(): VerifiableCredential {
+    VerifiableCredential.verify(verifiableCredentialJwt)
+    return parseJwt()
+  }
+
+  /**
+   * Parses a JWT into a [VerifiableCredential] instance.
+   *
+   * @param vcJwt The verifiable credential JWT as a [String].
+   * @return A [VerifiableCredential] instance derived from the JWT.
+   *
+   * Example:
+   * ```
+   * val vc = VerifiableCredential.parseJwt(signedVcJwt)
+   * ```
+   */
+  internal fun parseJwt(): VerifiableCredential {
+    val jwt = JWTParser.parse(verifiableCredentialJwt) as SignedJWT
+    val jwtPayload = jwt.payload.toJSONObject()
+    val vcDataModelValue = jwtPayload.getOrElse("vc") {
+      throw IllegalArgumentException("jwt payload missing vc property")
+    }
+
+    @Suppress("UNCHECKED_CAST") // only partially unchecked. can only safely cast to Map<*, *>
+    val vcDataModelMap = vcDataModelValue as? Map<String, Any>
+      ?: throw IllegalArgumentException("expected vc property in JWT payload to be an object")
+
+    val vcDataModel = VcDataModel.fromMap(vcDataModelMap)
+
+    return VerifiableCredential(vcDataModel)
+  }
+}
 
 /**
  * `VerifiableCredential` represents a digitally verifiable credential according to the
@@ -64,7 +114,7 @@ public class VerifiableCredential internal constructor(public val vcDataModel: V
    * ```
    */
   @JvmOverloads
-  public fun sign(did: Did, assertionMethodId: String? = null): String {
+  public fun sign(did: Did, assertionMethodId: String? = null): VerifiableCredentialJwt {
     val payload = JWTClaimsSet.Builder()
       .issuer(vcDataModel.issuer.toString())
       .issueTime(vcDataModel.issuanceDate)
@@ -72,7 +122,7 @@ public class VerifiableCredential internal constructor(public val vcDataModel: V
       .claim("vc", vcDataModel.toMap())
       .build()
 
-    return JwtUtil.sign(did, assertionMethodId, payload)
+    return VerifiableCredentialJwt(JwtUtil.sign(did, assertionMethodId, payload))
   }
 
   /**
@@ -189,33 +239,6 @@ public class VerifiableCredential internal constructor(public val vcDataModel: V
      */
     public fun verify(vcJwt: String) {
       JwtUtil.verify(vcJwt)
-    }
-
-    /**
-     * Parses a JWT into a [VerifiableCredential] instance.
-     *
-     * @param vcJwt The verifiable credential JWT as a [String].
-     * @return A [VerifiableCredential] instance derived from the JWT.
-     *
-     * Example:
-     * ```
-     * val vc = VerifiableCredential.parseJwt(signedVcJwt)
-     * ```
-     */
-    public fun parseJwt(vcJwt: String): VerifiableCredential {
-      val jwt = JWTParser.parse(vcJwt) as SignedJWT
-      val jwtPayload = jwt.payload.toJSONObject()
-      val vcDataModelValue = jwtPayload.getOrElse("vc") {
-        throw IllegalArgumentException("jwt payload missing vc property")
-      }
-
-      @Suppress("UNCHECKED_CAST") // only partially unchecked. can only safely cast to Map<*, *>
-      val vcDataModelMap = vcDataModelValue as? Map<String, Any>
-        ?: throw IllegalArgumentException("expected vc property in JWT payload to be an object")
-
-      val vcDataModel = VcDataModel.fromMap(vcDataModelMap)
-
-      return VerifiableCredential(vcDataModel)
     }
 
     /**

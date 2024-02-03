@@ -65,7 +65,7 @@ class PresentationExchangeTest {
         subject = holderDid.uri,
         data = StreetCredibility(localRespect = "high", legit = true)
       )
-      val vcJwt = vc.sign(issuerDid)
+      val vcJwt = vc.sign(issuerDid).verifiableCredentialJwt
 
       assertDoesNotThrow { PresentationExchange.satisfiesPresentationDefinition(listOf(vcJwt), pd) }
     }
@@ -82,7 +82,7 @@ class PresentationExchangeTest {
         subject = holderDid.uri,
         data = StreetCredibility(localRespect = "high", legit = true)
       )
-      val vcJwt = vc.sign(issuerDid)
+      val vcJwt = vc.sign(issuerDid).verifiableCredentialJwt
 
       assertDoesNotThrow { PresentationExchange.satisfiesPresentationDefinition(listOf(vcJwt), pd) }
     }
@@ -99,7 +99,7 @@ class PresentationExchangeTest {
         subject = holderDid.uri,
         data = StreetCredibility(localRespect = "high", legit = true)
       )
-      val vcJwt = vc.sign(issuerDid)
+      val vcJwt = vc.sign(issuerDid).verifiableCredentialJwt
 
       assertDoesNotThrow { PresentationExchange.satisfiesPresentationDefinition(listOf(vcJwt), pd) }
     }
@@ -116,7 +116,7 @@ class PresentationExchangeTest {
         subject = holderDid.uri,
         data = StreetCredibility(localRespect = "high", legit = true)
       )
-      val vcJwt = vc.sign(issuerDid)
+      val vcJwt = vc.sign(issuerDid).verifiableCredentialJwt
 
       assertDoesNotThrow { PresentationExchange.satisfiesPresentationDefinition(listOf(vcJwt), pd) }
     }
@@ -135,7 +135,7 @@ class PresentationExchangeTest {
         data = DateOfBirth(dateOfBirth = "1/1/1111")
       )
 
-      val vcJwt = vc.sign(issuerDid)
+      val vcJwt = vc.sign(issuerDid).verifiableCredentialJwt
       assertDoesNotThrow { PresentationExchange.satisfiesPresentationDefinition(listOf(vcJwt), pd) }
     }
 
@@ -152,7 +152,7 @@ class PresentationExchangeTest {
         subject = holderDid.uri,
         data = DateOfBirth(dateOfBirth = "Data1")
       )
-      val vcJwt1 = vc1.sign(issuerDid)
+      val vcJwt1 = vc1.sign(issuerDid).verifiableCredentialJwt
 
       val vc2 = VerifiableCredential.create(
         type = "Address",
@@ -160,7 +160,7 @@ class PresentationExchangeTest {
         subject = holderDid.uri,
         data = Address("abc street 123")
       )
-      val vcJwt2 = vc2.sign(issuerDid)
+      val vcJwt2 = vc2.sign(issuerDid).verifiableCredentialJwt
 
       assertDoesNotThrow { PresentationExchange.satisfiesPresentationDefinition(listOf(vcJwt2, vcJwt1), pd) }
     }
@@ -178,7 +178,7 @@ class PresentationExchangeTest {
         subject = holderDid.uri,
         data = DateOfBirthSSN(dateOfBirth = "1999-01-01", ssn = "456-123-123")
       )
-      val vcJwt1 = vc1.sign(issuerDid)
+      val vcJwt1 = vc1.sign(issuerDid).verifiableCredentialJwt
 
       assertDoesNotThrow { PresentationExchange.satisfiesPresentationDefinition(listOf(vcJwt1), pd) }
     }
@@ -196,7 +196,7 @@ class PresentationExchangeTest {
         subject = holderDid.uri,
         data = DateOfBirthSSN(dateOfBirth = "1999-01-01", ssn = "456-123-123")
       )
-      val vcJwt1 = vc1.sign(issuerDid)
+      val vcJwt1 = vc1.sign(issuerDid).verifiableCredentialJwt
 
       assertDoesNotThrow { PresentationExchange.satisfiesPresentationDefinition(listOf(vcJwt1), pd) }
     }
@@ -215,7 +215,7 @@ class PresentationExchangeTest {
         data = DateOfBirth(dateOfBirth = "1/1/1111")
       )
 
-      val vcJwt1 = vc1.sign(issuerDid)
+      val vcJwt1 = vc1.sign(issuerDid).verifiableCredentialJwt
 
       val vc2 = VerifiableCredential.create(
         type = "Address",
@@ -224,7 +224,7 @@ class PresentationExchangeTest {
         data = Address(address = "123 abc street")
       )
 
-      val vcJwt2 = vc2.sign(issuerDid)
+      val vcJwt2 = vc2.sign(issuerDid).verifiableCredentialJwt
 
       assertDoesNotThrow { PresentationExchange.satisfiesPresentationDefinition(listOf(vcJwt2, vcJwt1), pd) }
     }
@@ -256,7 +256,7 @@ class PresentationExchangeTest {
         subject = holderDid.uri,
         data = StreetCredibility(localRespect = "high", legit = true)
       )
-      val vcJwt = vc.sign(issuerDid)
+      val vcJwt = vc.sign(issuerDid).verifiableCredentialJwt
 
       assertThrows<IllegalArgumentException> {
         PresentationExchange.satisfiesPresentationDefinition(listOf(vcJwt), pd)
@@ -281,7 +281,7 @@ class PresentationExchangeTest {
         subject = holderDid.uri,
         data = StreetCredibility(localRespect = "high", legit = true)
       )
-      val vcJwt = vc.sign(issuerDid)
+      val vcJwt = vc.sign(issuerDid).verifiableCredentialJwt
 
       assertThrows<IllegalArgumentException> {
         PresentationExchange.satisfiesPresentationDefinition(listOf(vcJwt), pd)
@@ -304,7 +304,7 @@ class PresentationExchangeTest {
         subject = holderDid.uri,
         data = DateOfBirth(dateOfBirth = "01-02-03")
       )
-      val vcJwt = vc.sign(issuerDid)
+      val vcJwt = vc.sign(issuerDid).verifiableCredentialJwt
 
       assertThrows<IllegalArgumentException> {
         PresentationExchange.satisfiesPresentationDefinition(listOf(vcJwt), pd)
@@ -327,7 +327,7 @@ class PresentationExchangeTest {
         subject = holderDid.uri,
         data = DateOfBirth(dateOfBirth = "01-02-03")
       )
-      val vcJwt = vc.sign(issuerDid)
+      val vcJwt = vc.sign(issuerDid).verifiableCredentialJwt
 
       assertFailure {
         PresentationExchange.satisfiesPresentationDefinition(listOf(vcJwt), pd)
@@ -368,7 +368,7 @@ class PresentationExchangeTest {
         subject = holderDid.uri,
         data = DateOfBirth(dateOfBirth = "Data1")
       )
-      val vcJwt1 = vc1.sign(issuerDid)
+      val vcJwt1 = vc1.sign(issuerDid).verifiableCredentialJwt
 
       val vc2 = VerifiableCredential.create(
         type = "Address",
@@ -376,7 +376,7 @@ class PresentationExchangeTest {
         subject = holderDid.uri,
         data = Address("abc street 123")
       )
-      val vcJwt2 = vc2.sign(issuerDid)
+      val vcJwt2 = vc2.sign(issuerDid).verifiableCredentialJwt
 
       val presentationSubmission = PresentationExchange.createPresentationFromCredentials(listOf(vcJwt2, vcJwt1), pd)
 
@@ -396,7 +396,7 @@ class PresentationExchangeTest {
         subject = holderDid.uri,
         data = StreetCredibility(localRespect = "high", legit = true)
       )
-      val vcJwt = vc.sign(issuerDid)
+      val vcJwt = vc.sign(issuerDid).verifiableCredentialJwt
 
       assertFailure {
         PresentationExchange.createPresentationFromCredentials(listOf(vcJwt), pd)
@@ -416,7 +416,7 @@ class PresentationExchangeTest {
         subject = holderDid.uri,
         data = DateOfBirth(dateOfBirth = "11/11/2011")
       )
-      val vcJwt1 = vc1.sign(issuerDid)
+      val vcJwt1 = vc1.sign(issuerDid).verifiableCredentialJwt
 
       val vc2 = VerifiableCredential.create(
         type = "DateOfBirth",
@@ -424,7 +424,7 @@ class PresentationExchangeTest {
         subject = holderDid.uri,
         data = DateOfBirth(dateOfBirth = "12/12/2012")
       )
-      val vcJwt2 = vc2.sign(issuerDid)
+      val vcJwt2 = vc2.sign(issuerDid).verifiableCredentialJwt
 
       val presentationSubmission = PresentationExchange.createPresentationFromCredentials(listOf(vcJwt2, vcJwt1), pd)
 
@@ -448,7 +448,7 @@ class PresentationExchangeTest {
         subject = holderDid.uri,
         data = StreetCredibility(localRespect = "high", legit = true)
       )
-      val vcJwt = vc.sign(issuerDid)
+      val vcJwt = vc.sign(issuerDid).verifiableCredentialJwt
 
       val selectedCreds = PresentationExchange.selectCredentials(listOf(vcJwt), pd)
 
@@ -469,7 +469,7 @@ class PresentationExchangeTest {
         subject = holderDid.uri,
         data = StreetCredibility(localRespect = "high", legit = true)
       )
-      val vcJwt1 = vc1.sign(issuerDid)
+      val vcJwt1 = vc1.sign(issuerDid).verifiableCredentialJwt
 
       val vc2 = VerifiableCredential.create(
         type = "StreetCred",
@@ -477,7 +477,7 @@ class PresentationExchangeTest {
         subject = holderDid.uri,
         data = StreetCredibility(localRespect = "high", legit = true)
       )
-      val vcJwt2 = vc2.sign(issuerDid)
+      val vcJwt2 = vc2.sign(issuerDid).verifiableCredentialJwt
 
       val selectedCreds = PresentationExchange.selectCredentials(listOf(vcJwt1, vcJwt2), pd)
 
@@ -498,7 +498,7 @@ class PresentationExchangeTest {
         subject = holderDid.uri,
         data = StreetCredibility(localRespect = "high", legit = true)
       )
-      val vcJwt1 = vc1.sign(issuerDid)
+      val vcJwt1 = vc1.sign(issuerDid).verifiableCredentialJwt
 
       val vc2 = VerifiableCredential.create(
         type = "StreetCred",
@@ -507,7 +507,7 @@ class PresentationExchangeTest {
         data = StreetCredibility(localRespect = "high", legit = true)
       )
 
-      val vcJwt2 = vc2.sign(issuerDid)
+      val vcJwt2 = vc2.sign(issuerDid).verifiableCredentialJwt
 
       val vc3 = VerifiableCredential.create(
         type = "DateOfBirth",
@@ -516,7 +516,7 @@ class PresentationExchangeTest {
         data = DateOfBirth(dateOfBirth = "1-1-1111")
       )
 
-      val vcJwt3 = vc3.sign(issuerDid)
+      val vcJwt3 = vc3.sign(issuerDid).verifiableCredentialJwt
 
       val selectedCreds = PresentationExchange.selectCredentials(listOf(vcJwt1, vcJwt2, vcJwt3), pd)
 
@@ -537,7 +537,7 @@ class PresentationExchangeTest {
         subject = holderDid.uri,
         data = DateOfBirthSSN(dateOfBirth = "1999-01-01", ssn = "456-123-123")
       )
-      val vcJwt1 = vc1.sign(issuerDid)
+      val vcJwt1 = vc1.sign(issuerDid).verifiableCredentialJwt
 
       val vc2 = VerifiableCredential.create(
         type = "DateOfBirthSSN",
@@ -545,7 +545,7 @@ class PresentationExchangeTest {
         subject = holderDid.uri,
         data = DateOfBirth(dateOfBirth = "1999-01-01")
       )
-      val vcJwt2 = vc2.sign(issuerDid)
+      val vcJwt2 = vc2.sign(issuerDid).verifiableCredentialJwt
 
       val selectedCreds = PresentationExchange.selectCredentials(listOf(vcJwt1, vcJwt2), pd)
 
