@@ -166,8 +166,13 @@ class VerifiableCredentialJwtTest {
     )
 
     val vcJwt = vc.sign(issuerDid)
+    val parsedVc = vcJwt.verifyAndParse()
 
-    assertNotNull(vcJwt.verifyAndParse())
+    assertNotNull(parsedVc)
+
+    assertEquals(vc.type, parsedVc.type)
+    assertEquals(vc.issuer, parsedVc.issuer)
+    assertEquals(vc.subject, parsedVc.subject)
   }
 
 
