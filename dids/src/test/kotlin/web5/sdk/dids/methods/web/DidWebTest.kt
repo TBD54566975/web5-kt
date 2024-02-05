@@ -11,7 +11,7 @@ import io.ktor.http.headersOf
 import io.ktor.utils.io.ByteReadChannel
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
-import web5.sdk.crypto.InMemoryKeyManager
+import web5.sdk.crypto.LocalKeyManager
 import web5.sdk.dids.DidResolutionResult
 import web5.sdk.dids.methods.util.readKey
 import web5.sdk.testing.TestVectors
@@ -73,7 +73,7 @@ class DidWebTest {
 
   @Test
   fun `load returns instance when key manager contains private key`() {
-    val manager = InMemoryKeyManager()
+    val manager = LocalKeyManager()
     val privateJwk = readKey("src/test/resources/jwkEs256k1Private.json")
     manager.import(privateJwk)
     DidWebApi {
@@ -83,7 +83,7 @@ class DidWebTest {
 
   @Test
   fun `load throws exception when key manager does not contain private key`() {
-    val manager = InMemoryKeyManager()
+    val manager = LocalKeyManager()
     val exception = assertThrows<IllegalArgumentException> {
       DidWebApi {
         engine = mockEngine()
@@ -97,7 +97,7 @@ class DidWebTest {
     val exception = assertThrows<UnsupportedOperationException> {
       DidWebApi {
         engine = mockEngine()
-      }.create(InMemoryKeyManager())
+      }.create(LocalKeyManager())
     }
     assertEquals("Create operation is not supported for did:web", exception.message)
   }

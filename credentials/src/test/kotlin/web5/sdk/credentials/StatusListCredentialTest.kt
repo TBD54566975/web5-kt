@@ -8,7 +8,7 @@ import io.ktor.http.fullPath
 import io.ktor.http.headersOf
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.assertThrows
-import web5.sdk.crypto.InMemoryKeyManager
+import web5.sdk.crypto.LocalKeyManager
 import web5.sdk.dids.methods.key.DidKey
 import java.io.File
 import java.net.URI
@@ -46,7 +46,7 @@ class StatusListCredentialTest {
 
   @Test
   fun `should create valid VerifiableCredential with a credential status`() {
-    val keyManager = InMemoryKeyManager()
+    val keyManager = LocalKeyManager()
     val issuerDid = DidKey.create(keyManager)
     val holderDid = DidKey.create(keyManager)
 
@@ -92,7 +92,7 @@ class StatusListCredentialTest {
 
   @Test
   fun `should generate StatusListCredential from multiple VerifiableCredentials`() {
-    val keyManager = InMemoryKeyManager()
+    val keyManager = LocalKeyManager()
     val issuerDid = DidKey.create(keyManager)
     val holderDid = DidKey.create(keyManager)
 
@@ -167,7 +167,7 @@ class StatusListCredentialTest {
 
   @Test
   fun `should fail when generating StatusListCredential with duplicate indexes`() {
-    val keyManager = InMemoryKeyManager()
+    val keyManager = LocalKeyManager()
     val issuerDid = DidKey.create(keyManager)
     val holderDid = DidKey.create(keyManager)
 
@@ -218,7 +218,7 @@ class StatusListCredentialTest {
 
   @Test
   fun `should fail when generating StatusListCredential with negative index`() {
-    val keyManager = InMemoryKeyManager()
+    val keyManager = LocalKeyManager()
     val issuerDid = DidKey.create(keyManager)
     val holderDid = DidKey.create(keyManager)
 
@@ -254,7 +254,7 @@ class StatusListCredentialTest {
 
   @Test
   fun `should fail when generating StatusListCredential with an index larger than maximum size`() {
-    val keyManager = InMemoryKeyManager()
+    val keyManager = LocalKeyManager()
     val issuerDid = DidKey.create(keyManager)
     val holderDid = DidKey.create(keyManager)
 
@@ -290,7 +290,7 @@ class StatusListCredentialTest {
 
   @Test
   fun `should validate if a credential exists in the status list`() {
-    val keyManager = InMemoryKeyManager()
+    val keyManager = LocalKeyManager()
     val issuerDid = DidKey.create(keyManager)
     val holderDid = DidKey.create(keyManager)
 
@@ -359,7 +359,7 @@ class StatusListCredentialTest {
 
   @Test
   fun `should asynchronously validate if a credential is in the status list using a mock HTTP client`() = runBlocking {
-    val keyManager = InMemoryKeyManager()
+    val keyManager = LocalKeyManager()
     val issuerDid = DidKey.create(keyManager)
     val holderDid = DidKey.create(keyManager)
 
@@ -429,7 +429,7 @@ class StatusListCredentialTest {
   @Test
   fun `should throw StatusListCredentialFetchException if client fails to fetch StatusListCredential`
     (): Unit = runBlocking {
-    val keyManager = InMemoryKeyManager()
+    val keyManager = LocalKeyManager()
     val issuerDid = DidKey.create(keyManager)
     val holderDid = DidKey.create(keyManager)
 

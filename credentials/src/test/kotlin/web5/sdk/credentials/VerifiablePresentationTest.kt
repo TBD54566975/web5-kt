@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import web5.sdk.credentials.model.InputDescriptorMapping
 import web5.sdk.credentials.model.PresentationSubmission
-import web5.sdk.crypto.InMemoryKeyManager
+import web5.sdk.crypto.LocalKeyManager
 import web5.sdk.dids.methods.ion.CreateDidIonOptions
 import web5.sdk.dids.methods.ion.DidIon
 import web5.sdk.dids.methods.ion.JsonWebKey2020VerificationMethod
@@ -41,7 +41,7 @@ class VerifiablePresentationTest {
   fun `create simple vp`() {
     val vcJwts: Iterable<String> = listOf("vcjwt1")
 
-    val keyManager = InMemoryKeyManager()
+    val keyManager = LocalKeyManager()
     val holderDid = DidKey.create(keyManager)
 
     val vp = VerifiablePresentation.create(
@@ -56,7 +56,7 @@ class VerifiablePresentationTest {
 
   @Test
   fun `create vp with presentation submission`() {
-    val keyManager = InMemoryKeyManager()
+    val keyManager = LocalKeyManager()
     val holderDid = DidKey.create(keyManager)
 
     val vcJwts: Iterable<String> = listOf("vcjwt1", "vcjwt2")
@@ -89,7 +89,7 @@ class VerifiablePresentationTest {
 
   @Test
   fun `creates simple signed vp`() {
-    val keyManager = InMemoryKeyManager()
+    val keyManager = LocalKeyManager()
     val holderDid = DidKey.create(keyManager)
 
     val vp = VerifiablePresentation.create(
@@ -103,7 +103,7 @@ class VerifiablePresentationTest {
 
   @Test
   fun `creates signed vp with presentationSubmission`() {
-    val keyManager = InMemoryKeyManager()
+    val keyManager = LocalKeyManager()
     val holderDid = DidKey.create(keyManager)
 
     val vcJwts: Iterable<String> = listOf("vcjwt1", "vcjwt2")
@@ -138,7 +138,7 @@ class VerifiablePresentationTest {
   fun `verify does not throw an exception if vp is valid`() {
     val vcJwts: Iterable<String> = listOf(validVcJwt)
 
-    val keyManager = InMemoryKeyManager()
+    val keyManager = LocalKeyManager()
     val holderDid = DidKey.create(keyManager)
 
     val vp = VerifiablePresentation.create(
@@ -153,7 +153,7 @@ class VerifiablePresentationTest {
 
   @Test
   fun `verify throws on invalid jwt`() {
-    val keyManager = InMemoryKeyManager()
+    val keyManager = LocalKeyManager()
     val holderDid = DidKey.create(keyManager)
 
     val header = JWSHeader.Builder(JWSAlgorithm.ES256K)
@@ -174,7 +174,7 @@ class VerifiablePresentationTest {
 
   @Test
   fun `parseJwt returns an instance of VerifiablePresentation on success`() {
-    val keyManager = InMemoryKeyManager()
+    val keyManager = LocalKeyManager()
     val holderDid = DidKey.create(keyManager)
 
     val vcJwts: Iterable<String> = listOf("vcjwt1", "vcjwt2")
@@ -225,7 +225,7 @@ class VerifiablePresentationTest {
 
   @Test
   fun `verify throws exception for DIDs without an assertionMethod`() {
-    val keyManager = InMemoryKeyManager()
+    val keyManager = LocalKeyManager()
 
     //Create an ION DID without an assertionMethod
     val alias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K)
@@ -236,7 +236,7 @@ class VerifiablePresentationTest {
       relationships = emptyList() //No assertionMethod
     )
     val issuerDid = DidIon.create(
-      InMemoryKeyManager(),
+      LocalKeyManager(),
       CreateDidIonOptions(verificationMethodsToAdd = listOf(key))
     )
 

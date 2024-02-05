@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
 import web5.sdk.crypto.Ed25519
-import web5.sdk.crypto.InMemoryKeyManager
+import web5.sdk.crypto.LocalKeyManager
 import web5.sdk.crypto.Secp256k1
 import web5.sdk.dids.methods.dht.DhtClient.Companion.bencode
 import kotlin.test.assertEquals
@@ -76,7 +76,7 @@ class DhtTest {
       val seq = 1L
       val v = "Hello World!".toByteArray()
 
-      val manager = InMemoryKeyManager()
+      val manager = LocalKeyManager()
       manager.import(privateKey)
 
       val bep44SignedMessage = DhtClient.signBep44Message(manager, privateKey.keyID, seq, v)
@@ -96,7 +96,7 @@ class DhtTest {
 
     @Test
     fun `sign and verify a BEP44 message`() {
-      val manager = InMemoryKeyManager()
+      val manager = LocalKeyManager()
       val keyAlias = manager.generatePrivateKey(Ed25519.algorithm, Curve.Ed25519)
 
       val seq = 1L
@@ -119,7 +119,7 @@ class DhtTest {
 
     @Test
     fun `sign BEP44 message with wrong key type`() {
-      val manager = InMemoryKeyManager()
+      val manager = LocalKeyManager()
       val keyAlias = manager.generatePrivateKey(Secp256k1.algorithm, Curve.SECP256K1)
 
       val seq = 1L
@@ -137,7 +137,7 @@ class DhtTest {
   inner class DhtTest {
     @Test
     fun `create and parse a bep44 put request`() {
-      val manager = InMemoryKeyManager()
+      val manager = LocalKeyManager()
       val did = DidDht.create(manager)
 
       require(did.didDocument != null)
@@ -160,7 +160,7 @@ class DhtTest {
     @Test
     fun `put and get a bep44 message to a pkarr relay`() {
       val dht = DhtClient(engine = mockEngine())
-      val manager = InMemoryKeyManager()
+      val manager = LocalKeyManager()
       val did = DidDht.create(manager)
 
       require(did.didDocument != null)
@@ -183,7 +183,7 @@ class DhtTest {
     @Test
     fun `bad pkarr put`() {
       val dht = DhtClient(engine = mockEngine())
-      val manager = InMemoryKeyManager()
+      val manager = LocalKeyManager()
       val did = DidDht.create(manager)
 
       require(did.didDocument != null)

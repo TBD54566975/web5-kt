@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import web5.sdk.crypto.AwsKeyManager
-import web5.sdk.crypto.InMemoryKeyManager
+import web5.sdk.crypto.LocalKeyManager
 import web5.sdk.dids.Did
 import web5.sdk.dids.extensions.load
 import web5.sdk.dids.methods.ion.CreateDidIonOptions
@@ -66,7 +66,7 @@ class VerifiableCredentialTest {
 
   @Test
   fun `create works`() {
-    val keyManager = InMemoryKeyManager()
+    val keyManager = LocalKeyManager()
     val issuerDid = DidKey.create(keyManager)
     val holderDid = DidKey.create(keyManager)
 
@@ -81,7 +81,7 @@ class VerifiableCredentialTest {
 
   @Test
   fun `create throws if data cannot be parsed into a json object`() {
-    val keyManager = InMemoryKeyManager()
+    val keyManager = LocalKeyManager()
     val issuerDid = DidKey.create(keyManager)
     val holderDid = DidKey.create(keyManager)
 
@@ -100,7 +100,7 @@ class VerifiableCredentialTest {
 
   @Test
   fun `verify does not throw an exception if vc is legit`() {
-    val keyManager = InMemoryKeyManager()
+    val keyManager = LocalKeyManager()
     val issuerDid = DidKey.create(keyManager)
     val holderDid = DidKey.create(keyManager)
 
@@ -117,7 +117,7 @@ class VerifiableCredentialTest {
 
   @Test
   fun `verify handles DIDs without an assertionMethod`() {
-    val keyManager = InMemoryKeyManager()
+    val keyManager = LocalKeyManager()
 
     //Create an ION DID without an assertionMethod
     val alias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K)
@@ -128,7 +128,7 @@ class VerifiableCredentialTest {
       relationships = emptyList() //No assertionMethod
     )
     val issuerDid = DidIon.create(
-      InMemoryKeyManager(),
+      LocalKeyManager(),
       CreateDidIonOptions(verificationMethodsToAdd = listOf(key))
     )
 
@@ -204,7 +204,7 @@ class VerifiableCredentialTest {
 
   @Test
   fun `parseJwt returns an instance of VerifiableCredential on success`() {
-    val keyManager = InMemoryKeyManager()
+    val keyManager = LocalKeyManager()
     val issuerDid = DidKey.create(keyManager)
     val holderDid = DidKey.create(keyManager)
 
@@ -248,7 +248,7 @@ class Web5TestVectorsCredentials {
     testVectors.vectors.filterNot { it.errors ?: false }.forEach { vector ->
       val vc = VerifiableCredential.fromJson(mapper.writeValueAsString(vector.input.credential))
 
-      val keyManager = InMemoryKeyManager()
+      val keyManager = LocalKeyManager()
       keyManager.import(listOf(vector.input.signerPrivateJwk!!))
       val issuerDid = Did.load(vector.input.signerDidUri!!, keyManager)
       val vcJwt = vc.sign(issuerDid)

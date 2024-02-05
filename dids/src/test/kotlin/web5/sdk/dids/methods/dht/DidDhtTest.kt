@@ -22,7 +22,7 @@ import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.spy
 import org.mockito.kotlin.whenever
 import web5.sdk.common.ZBase32
-import web5.sdk.crypto.InMemoryKeyManager
+import web5.sdk.crypto.LocalKeyManager
 import web5.sdk.dids.DidResolutionResult
 import web5.sdk.dids.PublicKeyPurpose
 import web5.sdk.dids.exceptions.InvalidIdentifierException
@@ -41,7 +41,7 @@ class DidDhtTest {
   inner class UtilsTest {
     @Test
     fun `did dht identifier`() {
-      val manager = InMemoryKeyManager()
+      val manager = LocalKeyManager()
       val keyAlias = manager.generatePrivateKey(JWSAlgorithm.EdDSA, Curve.Ed25519)
       val publicKey = manager.getPublicKey(keyAlias)
 
@@ -55,7 +55,7 @@ class DidDhtTest {
 
     @Test
     fun `validate identity key`() {
-      val manager = InMemoryKeyManager()
+      val manager = LocalKeyManager()
       val keyAlias = manager.generatePrivateKey(JWSAlgorithm.EdDSA, Curve.Ed25519)
       val publicKey = manager.getPublicKey(keyAlias)
       val identifier = DidDht.getDidIdentifier(publicKey)
@@ -67,7 +67,7 @@ class DidDhtTest {
 
     @Test
     fun `validate identity key throws exception when private key not in manager`() {
-      val manager = InMemoryKeyManager()
+      val manager = LocalKeyManager()
 
       val exception = assertThrows<IllegalArgumentException> {
         DidDht.validateIdentityKey("did:dht:1bxdi3tbf1ud6cpk3ef9pz83erk9c6mmh877qfhfcd7ppzbgh7co", manager)
@@ -77,7 +77,7 @@ class DidDhtTest {
 
     @Test
     fun `validate identity key throws exception when encoded bytes are not 32`() {
-      val manager = InMemoryKeyManager()
+      val manager = LocalKeyManager()
 
       val exception = assertThrows<IllegalArgumentException> {
         DidDht.validateIdentityKey("did:dht:1bxdi3tbf1ud6cpk3ef9pz83erk9c6mmh877qfhfcd7ppzbgh7co7", manager)
@@ -94,7 +94,7 @@ class DidDhtTest {
 
     @Test
     fun `create with no options`() {
-      val manager = InMemoryKeyManager()
+      val manager = LocalKeyManager()
       val did = DidDht.create(manager, CreateDidDhtOptions(publish = false))
 
       assertDoesNotThrow { did.validate() }
@@ -112,7 +112,7 @@ class DidDhtTest {
 
     @Test
     fun `create with another key and service`() {
-      val manager = InMemoryKeyManager()
+      val manager = LocalKeyManager()
 
       val otherKey = manager.generatePrivateKey(JWSAlgorithm.ES256K, Curve.SECP256K1)
       val publicKeyJwk = manager.getPublicKey(otherKey).toPublicJWK()
@@ -157,7 +157,7 @@ class DidDhtTest {
 
     @Test
     fun `create and transform to packet with types`() {
-      val manager = InMemoryKeyManager()
+      val manager = LocalKeyManager()
       val did = DidDht.create(manager, CreateDidDhtOptions(publish = false))
 
       assertDoesNotThrow { did.validate() }
@@ -178,7 +178,7 @@ class DidDhtTest {
 
     @Test
     fun `create with publishing`() {
-      val manager = InMemoryKeyManager()
+      val manager = LocalKeyManager()
       val api = DidDhtApi { engine = mockEngine() }
       val did = api.create(manager, CreateDidDhtOptions(publish = true))
 
@@ -233,7 +233,7 @@ class DidDhtTest {
   inner class DnsPacketTest {
     @Test
     fun `to and from DNS packet - simple DID`() {
-      val manager = InMemoryKeyManager()
+      val manager = LocalKeyManager()
       val did = DidDht.create(manager, CreateDidDhtOptions(publish = false))
 
       require(did.didDocument != null)
@@ -250,7 +250,7 @@ class DidDhtTest {
 
     @Test
     fun `to and from DNS packet - DID with types`() {
-      val manager = InMemoryKeyManager()
+      val manager = LocalKeyManager()
       val did = DidDht.create(manager, CreateDidDhtOptions(publish = false))
 
       require(did.didDocument != null)
@@ -270,7 +270,7 @@ class DidDhtTest {
 
     @Test
     fun `to and from DNS packet - complex DID`() {
-      val manager = InMemoryKeyManager()
+      val manager = LocalKeyManager()
 
       val otherKey = manager.generatePrivateKey(JWSAlgorithm.ES256K, Curve.SECP256K1)
       val publicKeyJwk = manager.getPublicKey(otherKey).toPublicJWK()
@@ -364,7 +364,7 @@ class Web5TestVectorsDidDht {
     val testVectors = mapper.readValue(File("../web5-spec/test-vectors/did_dht/create.json"), typeRef)
 
     testVectors.vectors.forEach { vector ->
-      val keyManager = spy(InMemoryKeyManager())
+      val keyManager = spy(LocalKeyManager())
       val identityKeyId = keyManager.import(listOf(vector.input.identityPublicJwk!!)).first()
       doReturn(identityKeyId).whenever(keyManager).generatePrivateKey(JWSAlgorithm.EdDSA, Curve.Ed25519)
 

@@ -21,7 +21,7 @@ import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.spy
 import org.mockito.kotlin.whenever
 import web5.sdk.crypto.AwsKeyManager
-import web5.sdk.crypto.InMemoryKeyManager
+import web5.sdk.crypto.LocalKeyManager
 import web5.sdk.dids.PublicKeyPurpose
 import web5.sdk.dids.methods.ion.models.PublicKey
 import web5.sdk.dids.methods.ion.models.Service
@@ -42,7 +42,7 @@ class DidIonTest {
   @Test
   @Ignore("For demonstration purposes only - this makes a network call")
   fun createWithDefault() {
-    val did = DidIon.create(InMemoryKeyManager())
+    val did = DidIon.create(LocalKeyManager())
     assertContains(did.uri, "did:ion:")
     assertTrue(did.creationMetadata!!.longFormDid.startsWith(did.uri))
   }
@@ -62,7 +62,7 @@ class DidIonTest {
 
   @Test
   fun `exceptions are thrown when attempting ops on non-anchored did`() {
-    val did = DidIon.create(InMemoryKeyManager())
+    val did = DidIon.create(LocalKeyManager())
     assertThrows<IllegalArgumentException> {
       did.update(UpdateDidIonOptions(did.creationMetadata?.keyAliases?.updateKeyAlias!!))
     }
@@ -80,7 +80,7 @@ class DidIonTest {
 
     val exception = assertThrows<IllegalArgumentException> {
       DidIon.create(
-        InMemoryKeyManager(),
+        LocalKeyManager(),
         CreateDidIonOptions(
           verificationMethodsToAdd = listOf(
             JsonWebKey2020VerificationMethod(
@@ -131,7 +131,7 @@ class DidIonTest {
     for (testCase in testCases) {
       val exception = assertThrows<IllegalArgumentException> {
         DidIon.create(
-          InMemoryKeyManager(),
+          LocalKeyManager(),
           CreateDidIonOptions(
             servicesToAdd = listOf(testCase.service)
           )
@@ -147,7 +147,7 @@ class DidIonTest {
 
     val exception = assertThrows<IllegalArgumentException> {
       DidIon.create(
-        InMemoryKeyManager(),
+        LocalKeyManager(),
         CreateDidIonOptions(
           verificationMethodsToAdd = listOf(
             JsonWebKey2020VerificationMethod(
@@ -163,7 +163,7 @@ class DidIonTest {
 
   @Test
   fun createWithCustom() {
-    val keyManager = spy(InMemoryKeyManager())
+    val keyManager = spy(LocalKeyManager())
     val verificationKey = readKey("src/test/resources/verification_jwk.json")
     val updateKey = readKey("src/test/resources/update_jwk.json")
     val updateKeyId = keyManager.import(updateKey)
@@ -217,7 +217,7 @@ class DidIonTest {
 
   @Test
   fun `create changes the key manager state`() {
-    val keyManager = InMemoryKeyManager()
+    val keyManager = LocalKeyManager()
     val did = DidIonApi {
       engine = mockEngine()
     }.create(
@@ -248,7 +248,7 @@ class DidIonTest {
 
   @Test
   fun `update throws exception when given invalid input`() {
-    val keyManager = InMemoryKeyManager()
+    val keyManager = LocalKeyManager()
     val keyAlias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K)
     val publicKey = keyManager.getPublicKey(keyAlias)
 
@@ -325,7 +325,7 @@ class DidIonTest {
   fun `update fails when update key is absent`() {
     val result = assertThrows<IllegalArgumentException> {
       DidIon.update(
-        InMemoryKeyManager(),
+        LocalKeyManager(),
         "did:ion:123",
         UpdateDidIonOptions(
           updateKeyAlias = "my_fake_key",
@@ -342,7 +342,7 @@ class DidIonTest {
     val verificationMethod1 = publicKey1VerificationMethod(mapper)
     val service: Service = mapper.readValue(File("src/test/resources/service1.json").readText())
 
-    val keyManager = spy(InMemoryKeyManager())
+    val keyManager = spy(LocalKeyManager())
 
     val recoveryKey = readKey("src/test/resources/jwkEs256k1Public.json")
     val recoveryKeyAlias = keyManager.import(recoveryKey)
@@ -383,7 +383,7 @@ class DidIonTest {
   fun `update sends the expected operation`() {
     val mapper = jacksonObjectMapper()
 
-    val keyManager: InMemoryKeyManager = spy(InMemoryKeyManager())
+    val keyManager: LocalKeyManager = spy(LocalKeyManager())
 
     val updateKey = readKey("src/test/resources/jwkEs256k1Private.json")
     val updateKeyId = keyManager.import(updateKey)
@@ -440,7 +440,7 @@ class DidIonTest {
     val publicKey1 = publicKey1VerificationMethod(mapper)
     val service: Service = mapper.readValue(File("src/test/resources/service1.json").readText())
 
-    val keyManager = spy(InMemoryKeyManager())
+    val keyManager = spy(LocalKeyManager())
     val recoveryKey = readKey("src/test/resources/jwkEs256k1Private.json")
     val recoveryKeyAlias = keyManager.import(recoveryKey)
 
@@ -487,7 +487,7 @@ class DidIonTest {
     val ionManager = DidIonApi {
       engine = mockEngine()
     }
-    val keyManager = spy(InMemoryKeyManager())
+    val keyManager = spy(LocalKeyManager())
     val did = ionManager.create(keyManager)
     assertNotNull(did.creationMetadata)
     val recoveryKeyAlias = did.creationMetadata!!.keyAliases.recoveryKeyAlias
@@ -513,7 +513,7 @@ class DidIonTest {
 
   @Test
   fun `deactivate operation is the expected one`() {
-    val keyManager = InMemoryKeyManager()
+    val keyManager = LocalKeyManager()
     val recoveryKey = readKey("src/test/resources/jwkEs256k1Private.json")
     val recoveryKeyAlias = keyManager.import(recoveryKey)
 
