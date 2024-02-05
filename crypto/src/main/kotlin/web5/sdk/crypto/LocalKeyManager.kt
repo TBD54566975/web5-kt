@@ -5,33 +5,33 @@ import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.JWK
 
 /**
- * A class for managing cryptographic keys in-memory.
+ * A class for managing cryptographic keys locally.
  *
- * `InMemoryKeyManager` is an implementation of [KeyManager] that stores keys in-memory using a mutable map. It provides methods to:
+ * `LocalKeyManager` is an implementation of [KeyManager] that stores keys locally using a mutable map. It provides methods to:
  * - Generate private keys ([generatePrivateKey])
  * - Retrieve public keys ([getPublicKey])
  * - Sign payloads ([sign])
  *
  * ### Example Usage:
  * ```
- * val keyManager = InMemoryKeyManager()
+ * val keyManager = LocalKeyManager()
  * val keyID = keyManager.generatePrivateKey(JWSAlgorithm.EdDSA, Curve.Ed25519)
  * val publicKey = keyManager.getPublicKey(keyID)
  * ```
  *
  * ### Notes:
- * - Keys are stored in an in-memory mutable map and will be lost once the application is terminated or the object is garbage-collected.
+ * - Keys are stored in a local mutable map and will be lost once the application is terminated or the object is garbage-collected.
  * - It is suitable for testing or scenarios where persistent storage of keys is not necessary.
  */
 public class LocalKeyManager : KeyManager {
 
   /**
-   * An in-memory keystore represented as a flat key-value map, where the key is a key ID.
+   * A local keystore represented as a flat key-value map, where the key is a key ID.
    */
   private val keyStore: MutableMap<String, JWK> = HashMap()
 
   /**
-   * Generates a private key using specified algorithm and curve, and stores it in the in-memory keyStore.
+   * Generates a private key using specified algorithm and curve, and stores it in the local keyStore.
    *
    * @param algorithm The JWA algorithm identifier.
    * @param curve The elliptic curve. Null for algorithms that do not use elliptic curves.
