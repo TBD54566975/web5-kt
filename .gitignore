@@ -5,6 +5,9 @@ build/
 !**/src/test/**/build/
 **/cacheDir/
 
+### Maven
+**/target
+
 ### IntelliJ IDEA ###
 .idea
 .idea/modules.xml
