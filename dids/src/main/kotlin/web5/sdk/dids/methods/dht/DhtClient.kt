@@ -16,8 +16,8 @@ import kotlinx.coroutines.runBlocking
 import org.xbill.DNS.DNSInput
 import org.xbill.DNS.Message
 import web5.sdk.common.ZBase32
-import web5.sdk.crypto.Ed25519
 import web5.sdk.crypto.KeyManager
+import web5.sdk.crypto.dsa.eddsa.Ed25519
 import web5.sdk.dids.exceptions.PkarrRecordNotFoundException
 import web5.sdk.dids.exceptions.PkarrRecordResponseException
 import java.io.ByteArrayOutputStream

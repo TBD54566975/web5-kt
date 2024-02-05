@@ -1,4 +1,4 @@
-package web5.sdk.crypto
+package web5.sdk.crypto.dsa.ecdsa
 
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.jwk.KeyType

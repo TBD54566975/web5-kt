@@ -1,13 +1,9 @@
-package web5.sdk.crypto
+package web5.sdk.crypto.dsa.ecdsa
 
 import com.nimbusds.jose.Algorithm
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.crypto.bc.BouncyCastleProviderSingleton
-import com.nimbusds.jose.jwk.Curve
-import com.nimbusds.jose.jwk.ECKey
-import com.nimbusds.jose.jwk.JWK
-import com.nimbusds.jose.jwk.KeyType
-import com.nimbusds.jose.jwk.KeyUse
+import com.nimbusds.jose.jwk.*
 import com.nimbusds.jose.jwk.gen.ECKeyGenerator
 import com.nimbusds.jose.util.Base64URL
 import org.bouncycastle.crypto.digests.SHA256Digest
@@ -19,8 +15,7 @@ import org.bouncycastle.crypto.signers.HMacDSAKCalculator
 import org.bouncycastle.jce.ECNamedCurveTable
 import org.bouncycastle.jce.spec.ECNamedCurveParameterSpec
 import org.bouncycastle.math.ec.ECPoint
-import web5.sdk.crypto.Secp256k1.PRIV_MULTICODEC
-import web5.sdk.crypto.Secp256k1.PUB_MULTICODEC
+import web5.sdk.crypto.*
 import java.math.BigInteger
 import java.security.MessageDigest
 import java.security.Security
@@ -58,7 +53,7 @@ import java.security.SignatureException
  */
 public object Secp256k1 : KeyGenerator, Signer {
   init {
-    Security.addProvider(BouncyCastleProviderSingleton.getInstance())
+      Security.addProvider(BouncyCastleProviderSingleton.getInstance())
   }
 
   override val algorithm: Algorithm = JWSAlgorithm.ES256K

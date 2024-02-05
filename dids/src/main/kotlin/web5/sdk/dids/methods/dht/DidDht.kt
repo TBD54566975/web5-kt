@@ -20,9 +20,9 @@ import web5.sdk.common.Convert
 import web5.sdk.common.EncodingFormat
 import web5.sdk.common.ZBase32
 import web5.sdk.crypto.Crypto
-import web5.sdk.crypto.Ed25519
 import web5.sdk.crypto.KeyManager
-import web5.sdk.crypto.Secp256k1
+import web5.sdk.crypto.dsa.ecdsa.Secp256k1
+import web5.sdk.crypto.dsa.eddsa.Ed25519
 import web5.sdk.dids.CreateDidOptions
 import web5.sdk.dids.Did
 import web5.sdk.dids.DidDocumentMetadata
