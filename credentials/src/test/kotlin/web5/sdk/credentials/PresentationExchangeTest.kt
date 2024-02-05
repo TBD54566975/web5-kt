@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
 import web5.sdk.credentials.model.PresentationDefinitionV2
+import web5.sdk.credentials.model.PresentationSubmission
 import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.dids.methods.key.DidKey
 import web5.sdk.testing.TestVectors
@@ -618,6 +619,29 @@ class Web5TestVectorsPresentationExchange {
     testVectors.vectors.filter { it.errors ?: false }.forEach { vector ->
       assertFails {
           PresentationExchange.validateDefinition(vector.input.presentationDefinition)
+      }
+    }
+  }
+
+  data class ValidateSubmissionTestInput(
+    val presentationSubmission: PresentationSubmission,
+    val errors: Boolean
+  )
+  @Test
+  fun validate_submission() {
+    val typeRef = object : TypeReference<TestVectors<ValidateSubmissionTestInput, Unit>>() {}
+    val testVectors =
+      mapper.readValue(File("../web5-spec/test-vectors/presentation_exchange/validate_submission.json"), typeRef)
+
+    testVectors.vectors.filterNot { it.errors ?: false }.forEach { vector ->
+      assertDoesNotThrow {
+        PresentationExchange.validateSubmission(vector.input.presentationSubmission)
+      }
+    }
+
+    testVectors.vectors.filter { it.errors ?: false }.forEach { vector ->
+      assertFails {
+        PresentationExchange.validateSubmission(vector.input.presentationSubmission)
       }
     }
   }
