@@ -2,7 +2,7 @@ name: Publish Tests Report
 
 on:
   workflow_run:
-    workflows: ["SDK Kotlin CI"]
+    workflows: ["Build, Test, and Deploy SNAPSHOT"]
     types:
       - completed
 
@@ -28,7 +28,7 @@ jobs:
 
           for project in "${projects[@]}"; do
             # Find Tests Reports in each project and store them in an array
-            files=($(find "${project}/build/test-results/test" -name '*.xml'))
+            files=($(find "${project}/target/surefire-reports" -name '*.xml'))
 
             # Check if files array is empty
             if [ ${#files[@]} -eq 0 ]; then

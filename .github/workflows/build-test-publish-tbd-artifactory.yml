@@ -1,0 +1,177 @@
+# Runs on every commit to main. This is the main CI job; it runs in MacOS and Ubuntu environments which:
+# * Build
+# * Run tests
+#
+# In the Ubuntu environment only, to avoid double uploads from MacOS, it also:
+# * Uploads Test reports to BuildKite
+# * Uploads Coverage reports to CodeCov
+# * Uploads Web5 Test Vectors reports to the SDK Report Runner
+# * Publishes (deploys) to TBD's Artifactory instance
+#
+# If triggered from workflow_dispatch, you may select a branch or tag to
+# deploy as an internal "release" (or SNAPSHOT, depending upon the version in the POM)
+# to TBD's Artifactory instance by not specifying a version.
+name: Build, Test, and Publish to TBD Artifactory
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish. For example "1.0.0-SNAPSHOT". If not supplied, will default to version specified in the POM. Must end in "-SNAPSHOT".'
+        required: false
+        default: '0.0.0-SNAPSHOT'
+  push:
+    branches:
+      - main
+
+jobs:
+
+  # On MacOS we only build, test, and verify
+  build-test-macos:
+    runs-on: macOS-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      # https://cashapp.github.io/hermit/usage/ci/
+      - name: Init Hermit
+        uses: cashapp/activate-hermit@v1
+
+      - uses: actions/cache@v3
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: hash test inputs
+        run: |
+          if ! which sha256sum; then brew install coreutils; fi
+          sha256sum $(find test-vectors -name '*.json') > test-vector-hashes.txt
+
+      - name: Build, Test, and Verify
+        run: |
+          # Maven "verify" lifecycle will build, test, and verify
+          mvn verify \
+              --batch-mode \
+              -P sign-artifacts
+        env:
+          SIGN_KEY_PASS: ${{ secrets.GPG_SECRET_PASSPHRASE }}
+          SIGN_KEY: ${{ secrets.GPG_SECRET_KEY }}
+
+  # On Ubuntu we build, test, verify, and deploy: Code Coverage, Test Vectors, and SNAPSHOT artifacts to TBD Artifactory
+  build-test-deploy-snapshot-ubuntu:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      # https://cashapp.github.io/hermit/usage/ci/
+      - name: Init Hermit
+        uses: cashapp/activate-hermit@v1
+
+      - uses: actions/cache@v3
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: hash test inputs
+        run: |
+          if ! which sha256sum; then brew install coreutils; fi
+          sha256sum $(find test-vectors -name '*.json') > test-vector-hashes.txt
+
+      - name: Build, Test, and Deploy to TBD Artifactory
+        run: |
+          # Version resolution: use provided
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            resolvedVersion=${{ github.event.inputs.version }}
+          # Otherwise, construct a version for deployment in form X.Y.Z-commit-$shortSHA-SNAPSHOT
+          else
+            longSHA=$(git rev-parse --verify HEAD)
+            shortSHA=$(echo "${longSHA:0:7}")
+            resolvedVersion="commit-$shortSHA-SNAPSHOT"
+            echo "Requesting deployment as version: $resolvedVersion"
+          fi
+          
+          # Postcondition check; only allow this to proceed if we have a version ending in "-SNAPSHOT"
+          if [[ ! "$resolvedVersion" =~ -SNAPSHOT$ ]]; then
+            echo "Error: The version does not end with \"-SNAPSHOT\": $resolvedVersion"
+            exit 1
+          fi
+          
+          # Set newly resolved version in POM config
+          mvn \
+            versions:set \
+            --batch-mode \
+            -DnewVersion=$resolvedVersion 
+        
+          # Maven deploy lifecycle will build, run tests, verify, sign, and deploy
+          mvn \
+            deploy \
+              --batch-mode \
+              --settings .maven_settings.xml \
+              -P sign-artifacts
+        env:
+          ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
+          ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
+          SIGN_KEY_PASS: ${{ secrets.GPG_SECRET_PASSPHRASE }}
+          SIGN_KEY: ${{ secrets.GPG_SECRET_KEY }}
+
+      # Upload Web5 Vector test results
+      - uses: actions/upload-artifact@v3
+        with:
+          name: test-results
+          path: |
+            **/target/surefire-reports/*Web5TestVectors*.xml
+            test-vector-hashes.txt
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          verbose: true
+          flags: ${{ runner.os }}
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: tests-report-junit
+          path: |
+            **/target/surefire-reports/*.xml
+
+      # Uncomment these before merging upstream again; this Action is custom to TBD and can't be verified in ALRubinger fork
+      #- name: Generate an access token to trigger downstream repo
+      #  uses: actions/create-github-app-token@2986852ad836768dfea7781f31828eb3e17990fa # v1.6.2
+      #  id: generate_token
+      #  if: github.ref == 'refs/heads/main'
+      #  with:
+      #    app-id: ${{ secrets.CICD_ROBOT_GITHUB_APP_ID }}
+      #    private-key: ${{ secrets.CICD_ROBOT_GITHUB_APP_PRIVATE_KEY }}
+      #    owner: TBD54566975
+      #    repositories: sdk-report-runner
+
+      #- name: Trigger sdk-report-runner report build
+      #  if: github.ref == 'refs/heads/main'
+      #  run: |
+      #    curl -L \
+      #    -H "Authorization: Bearer ${APP_TOKEN}" \
+      #    -H "X-GitHub-Api-Version: 2022-11-28" \
+      #    -H "Content-Type: application/json" \
+      #    --fail \
+      #    --data '{"ref": "main"}' \
+      #    https://api.github.com/repos/TBD54566975/sdk-report-runner/actions/workflows/build-report.yaml/dispatches
+      #  env:
+      #    APP_TOKEN: ${{ steps.generate_token.outputs.token }}
+  # Ensure both MacOS and Ubuntu build/test jobs succeeded
+  confirm-successful-build-and-tests:
+    # Wait on both jobs to succeed
+    needs: [ build-test-macos, build-test-deploy-snapshot-ubuntu ]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Log Success
+        run: |
+          echo "Builds for MacOS and Ubuntu succeeded."
