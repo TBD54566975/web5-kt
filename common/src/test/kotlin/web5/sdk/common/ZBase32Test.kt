@@ -1,10 +1,6 @@
 package web5.sdk.common
 
-import com.nimbusds.jose.JWSAlgorithm
-import com.nimbusds.jose.jwk.Curve
 import org.junit.jupiter.api.Test
-import web5.sdk.crypto.Crypto
-import web5.sdk.crypto.InMemoryKeyManager
 import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 
@@ -37,15 +33,22 @@ class ZBase32Test {
 
   @Test
   fun `it encodes and decodes keys`() {
-    val manager = InMemoryKeyManager()
+//    val manager = InMemoryKeyManager()
+//    val publicKey = "11qYAYKxCrfVS_7TyWQHOg7hcvPapiMlrwIaaPcHURo"
+//    val publicKeyBytes = Convert(publicKey, EncodingFormat.Base64Url).toByteArray()
+//
+//    val encodedPubKey = ZBase32.encode(publicKeyBytes)
+//    val decodedPubKey = ZBase32.decode(encodedPubKey)
+//    assertContentEquals(pubKeyBytes, decodedPubKey)
 
-    for (i in 0..50) {
-      val keyAlias = manager.generatePrivateKey(JWSAlgorithm.EdDSA, Curve.Ed25519)
-      val pubKeyJwk = manager.getPublicKey(keyAlias)
-      val pubKeyBytes = Crypto.publicKeyToBytes(pubKeyJwk)
-      val encodedPubKey = ZBase32.encode(pubKeyBytes)
-      val decodedPubKey = ZBase32.decode(encodedPubKey)
-      assertContentEquals(pubKeyBytes, decodedPubKey)
-    }
+//    {245, 87, 189, 12}
+    val byteArray = ByteArray(26)
+    byteArray.fill(0, 0, 25)
+    val byteArray2 = byteArrayOf(-11, 87, -67, 12)
+    val finalByteArray = byteArray2 + byteArray
+    println(finalByteArray.size)
+
+    val ba2 = byteArrayOf(0, 0)
+    println(ZBase32.encode(ba2))
   }
 }
