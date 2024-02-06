@@ -192,6 +192,5 @@ public object Ed25519 : KeyGenerator, Signer {
    */
   private fun validateKey(key: JWK) {
     require(key is OctetKeyPair) { "key must be an Octet Key Pair (kty: OKP)" }
-    require(key.keyType == keyType) { "private key key type must be OKP" }
   }
 }

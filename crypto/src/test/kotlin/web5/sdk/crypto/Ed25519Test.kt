@@ -63,7 +63,6 @@ class Web5TestVectorsCryptoEd25519 {
     val testVectors = mapper.readValue(File("../web5-spec/test-vectors/crypto_ed25519/verify.json"), typeRef)
 
     testVectors.vectors.filter { it.errors == false }.forEach { vector ->
-      println("Testing vector for ${vector.description}")
       val key = OctetKeyPair.parse(vector.input.key)
       val data = hexStringToByteArray(vector.input.data)
       val signature = hexStringToByteArray(vector.input.signature)
@@ -80,7 +79,6 @@ class Web5TestVectorsCryptoEd25519 {
 
     testVectors.vectors.filter { it.errors == true }.forEach { vector ->
       assertFails {
-        println("Testing vector for ${vector.description}")
         val key = OctetKeyPair.parse(vector.input.key)
         val data = hexStringToByteArray(vector.input.data)
         val signature = hexStringToByteArray(vector.input.signature)
