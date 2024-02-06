@@ -46,7 +46,7 @@
           "kty": "OKP",
           "x": "CV-aGlld3nVdgnhoZK0D36Wk-9aIMlZjZOK2XhPMnkQ"
         },
-        "type": "JsonWebKey2020"
+        "type": "JsonWebKey"
       }
     ]
   }

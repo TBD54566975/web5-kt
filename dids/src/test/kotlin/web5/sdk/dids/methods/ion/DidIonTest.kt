@@ -83,7 +83,7 @@ class DidIonTest {
         InMemoryKeyManager(),
         CreateDidIonOptions(
           verificationMethodsToAdd = listOf(
-            JsonWebKey2020VerificationMethod(
+            JsonWebKeyVerificationMethod(
               id = "space is not part of the base64 url chars",
               publicKeyJwk = verificationKey
             )
@@ -150,7 +150,7 @@ class DidIonTest {
         InMemoryKeyManager(),
         CreateDidIonOptions(
           verificationMethodsToAdd = listOf(
-            JsonWebKey2020VerificationMethod(
+            JsonWebKeyVerificationMethod(
               id = "something_thats_really_really_really_really_really_really_long",
               publicKeyJwk = verificationKey
             )
@@ -179,7 +179,7 @@ class DidIonTest {
     }
     val opts = CreateDidIonOptions(
       verificationMethodsToAdd = listOf(
-        JsonWebKey2020VerificationMethod(
+        JsonWebKeyVerificationMethod(
           id = verificationKey.keyID,
           publicKeyJwk = verificationKey,
           relationships = listOf(PublicKeyPurpose.AUTHENTICATION),
@@ -273,7 +273,7 @@ class DidIonTest {
       ),
       TestCase(
         publicKeys = listOf(
-          JsonWebKey2020VerificationMethod(
+          JsonWebKeyVerificationMethod(
             id = "#publicKey1",
             publicKeyJwk = publicKey,
           )
@@ -282,12 +282,12 @@ class DidIonTest {
       ),
       TestCase(
         publicKeys = listOf(
-          JsonWebKey2020VerificationMethod(
+          JsonWebKeyVerificationMethod(
             id = "publicKey1",
             publicKeyJwk = publicKey,
           ),
 
-          JsonWebKey2020VerificationMethod(
+          JsonWebKeyVerificationMethod(
             id = "publicKey1",
             publicKeyJwk = publicKey,
           )
@@ -296,7 +296,7 @@ class DidIonTest {
       ),
       TestCase(
         publicKeys = listOf(
-          JsonWebKey2020VerificationMethod(
+          JsonWebKeyVerificationMethod(
             id = "publicKey1",
             publicKeyJwk = publicKey,
             relationships = listOf(PublicKeyPurpose.AUTHENTICATION, PublicKeyPurpose.AUTHENTICATION)

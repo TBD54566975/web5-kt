@@ -19,7 +19,7 @@ import web5.sdk.dids.Did
 import web5.sdk.dids.extensions.load
 import web5.sdk.dids.methods.ion.CreateDidIonOptions
 import web5.sdk.dids.methods.ion.DidIon
-import web5.sdk.dids.methods.ion.JsonWebKey2020VerificationMethod
+import web5.sdk.dids.methods.ion.JsonWebKeyVerificationMethod
 import web5.sdk.dids.methods.key.DidKey
 import web5.sdk.testing.TestVectors
 import java.io.File
@@ -122,7 +122,7 @@ class VerifiableCredentialTest {
     //Create an ION DID without an assertionMethod
     val alias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K)
     val verificationJwk = keyManager.getPublicKey(alias)
-    val key = JsonWebKey2020VerificationMethod(
+    val key = JsonWebKeyVerificationMethod(
       id = UUID.randomUUID().toString(),
       publicKeyJwk = verificationJwk,
       relationships = emptyList() //No assertionMethod

@@ -93,7 +93,7 @@ class DidKeyTest {
       // Note: cannot run the controller assertion because underlying lib enforces JSON-LD @context
       // despite it not being a required field
       // assertEquals(did, verificationMethod.controller.toString())
-      assertEquals("JsonWebKey2020", verificationMethod.type)
+      assertEquals("JsonWebKey", verificationMethod.type)
       assertNotNull(verificationMethod.publicKeyJwk)
 
       val publicKeyJwk = JWK.parse(verificationMethod.publicKeyJwk) // validates

@@ -819,14 +819,14 @@ public class VerificationMethodCreationParams(
  *
  * The [id] property cannot be over 50 chars and must only use characters from the Base64URL character set.
  */
-public class JsonWebKey2020VerificationMethod(
+public class JsonWebKeyVerificationMethod(
   public val id: String,
   public val controller: String? = null,
   public val publicKeyJwk: JWK,
   public val relationships: Iterable<PublicKeyPurpose> = emptySet()
 ) : VerificationMethodSpec, VerificationMethodGenerator {
   override fun generate(): Pair<String?, PublicKey> {
-    return Pair(null, PublicKey(id, "JsonWebKey2020", controller, publicKeyJwk, relationships))
+    return Pair(null, PublicKey(id, "JsonWebKey", controller, publicKeyJwk, relationships))
   }
 }
 
@@ -862,7 +862,7 @@ internal class VerificationMethodKeyManagerGenerator(
       alias,
       PublicKey(
         id = UUID.randomUUID().toString(),
-        type = "JsonWebKey2020",
+        type = "JsonWebKey",
         publicKeyJwk = publicKeyJwk,
         purposes = params.relationships,
       )
