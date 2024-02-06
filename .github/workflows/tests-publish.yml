@@ -1,0 +1,57 @@
+name: Publish Tests Report
+
+on:
+  workflow_run:
+    workflows: ["SDK Kotlin CI"]
+    types:
+      - completed
+
+jobs:
+  comment-action:
+    name: Publish Tests Report
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download TBDocs Report
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          run_id: ${{ github.event.workflow_run.id }}
+          name: tests-report-junit
+          path: ./
+
+      - name: Publish Tests Results
+        env:
+          BUILDKITE_ANALYTICS_TOKEN: ${{ secrets.BUILDKITE_ANALYTICS_TOKEN }}
+        run: |
+          declare -a projects=("common" "credentials" "crypto" "dids")
+
+          for project in "${projects[@]}"; do
+            # Find Tests Reports in each project and store them in an array
+            files=($(find "${project}/build/test-results/test" -name '*.xml'))
+
+            # Check if files array is empty
+            if [ ${#files[@]} -eq 0 ]; then
+              echo "No Tests files found in ${project} directory!"
+              exit 1
+            else
+              echo "Found ${#files[@]} XML files in ${project} directory, proceeding with upload..."
+            fi
+
+            # Iterate over the files and upload each one
+            for file in "${files[@]}"; do
+                echo "Uploading ${file} to BuildKite..."
+                curl \
+                  -X POST \
+                  --fail-with-body \
+                  -H "Authorization: Token token=\"$BUILDKITE_ANALYTICS_TOKEN\"" \
+                  -F "data=@$file" \
+                  -F "format=junit" \
+                  -F "run_env[CI]=github_actions" \
+                  -F "run_env[key]=$GITHUB_ACTION-$GITHUB_RUN_NUMBER-$GITHUB_RUN_ATTEMPT" \
+                  -F "run_env[number]=$GITHUB_RUN_NUMBER" \
+                  -F "run_env[branch]=$GITHUB_REF" \
+                  -F "run_env[commit_sha]=$GITHUB_SHA" \
+                  -F "run_env[url]=https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
+                  https://analytics-api.buildkite.com/v1/uploads
+            done
+          done
