@@ -22,6 +22,7 @@ jobs:
       - name: Publish Tests Results
         env:
           BUILDKITE_ANALYTICS_TOKEN: ${{ secrets.BUILDKITE_ANALYTICS_TOKEN }}
+          WORKFLOW_RUN_ID: ${{ github.event.workflow_run.id }}
         run: |
           declare -a projects=("common" "credentials" "crypto" "dids")
 
@@ -51,7 +52,7 @@ jobs:
                   -F "run_env[number]=$GITHUB_RUN_NUMBER" \
                   -F "run_env[branch]=$GITHUB_REF" \
                   -F "run_env[commit_sha]=$GITHUB_SHA" \
-                  -F "run_env[url]=https://github.com/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
+                  -F "run_env[url]=https://github.com/$GITHUB_REPOSITORY/actions/runs/$WORKFLOW_RUN_ID" \
                   https://analytics-api.buildkite.com/v1/uploads
             done
           done
