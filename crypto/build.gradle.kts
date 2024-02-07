@@ -20,4 +20,5 @@ dependencies {
 
   testImplementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.5")
   testImplementation(kotlin("test"))
+  testImplementation(project(":testing"))
 }

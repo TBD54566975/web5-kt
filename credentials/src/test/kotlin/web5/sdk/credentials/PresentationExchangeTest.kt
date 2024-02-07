@@ -659,4 +659,27 @@ class Web5TestVectorsPresentationExchange {
       }
     }
   }
+
+  data class ValidateSubmissionTestInput(
+    val presentationSubmission: PresentationSubmission,
+    val errors: Boolean
+  )
+  @Test
+  fun validate_submission() {
+    val typeRef = object : TypeReference<TestVectors<ValidateSubmissionTestInput, Unit>>() {}
+    val testVectors =
+      mapper.readValue(File("../web5-spec/test-vectors/presentation_exchange/validate_submission.json"), typeRef)
+
+    testVectors.vectors.filterNot { it.errors ?: false }.forEach { vector ->
+      assertDoesNotThrow {
+        PresentationExchange.validateSubmission(vector.input.presentationSubmission)
+      }
+    }
+
+    testVectors.vectors.filter { it.errors ?: false }.forEach { vector ->
+      assertFails {
+        PresentationExchange.validateSubmission(vector.input.presentationSubmission)
+      }
+    }
+  }
 }
