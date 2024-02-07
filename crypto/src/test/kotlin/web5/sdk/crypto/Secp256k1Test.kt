@@ -6,6 +6,7 @@ import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.jwk.ECKey
 import com.nimbusds.jose.jwk.KeyType
 import com.nimbusds.jose.jwk.KeyUse
+import org.apache.commons.codec.binary.Hex
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import web5.sdk.common.Convert
@@ -108,19 +109,19 @@ class Web5TestVectorsCryptoEs256k {
     val testVectors = mapper.readValue(File("../web5-spec/test-vectors/crypto_es256k/sign.json"), typeRef)
 
     testVectors.vectors.filter { it.errors == false }.forEach { vector ->
-      val inputByteArray: ByteArray = hexStringToByteArray(vector.input.data)
+      val inputByteArray: ByteArray = Hex.decodeHex(vector.input.data.toCharArray())
       val jwkMap = vector.input.key
       val ecJwk = ECKey.parse(jwkMap.toString())
       val signedByteArray: ByteArray = Secp256k1.sign(ecJwk, inputByteArray)
 
-      val signedHex = byteArrayToHexString(signedByteArray)
+      val signedHex = Hex.encodeHexString(signedByteArray)
 
       assertEquals(vector.output, signedHex)
     }
 
     testVectors.vectors.filter { it.errors == true }.forEach { vector ->
       assertFails {
-        val inputByteArray: ByteArray = hexStringToByteArray(vector.input.data)
+        val inputByteArray: ByteArray = Hex.decodeHex(vector.input.data.toCharArray())
         val jwkMap = vector.input.key
 
         val ecJwk = ECKey.parse(jwkMap.toString())
@@ -136,41 +137,28 @@ class Web5TestVectorsCryptoEs256k {
     val testVectors = mapper.readValue(File("../web5-spec/test-vectors/crypto_es256k/verify.json"), typeRef)
 
     testVectors.vectors.filter { it.errors == false }.forEach { vector ->
-      val inputByteArray: ByteArray = hexStringToByteArray(vector.input.data)
+      val inputByteArray: ByteArray = Hex.decodeHex(vector.input.data.toCharArray())
       val jwkMap = vector.input.key
-      val signatureByteArray = hexStringToByteArray(vector.input.signature)
+      val signatureByteArray = Hex.decodeHex(vector.input.signature.toCharArray())
 
       val ecJwk = ECKey.parse(jwkMap.toString())
 
       if (vector.output == true) {
-        assertDoesNotThrow { Secp256k1.verify(ecJwk, inputByteArray, signatureByteArray)  }
+        assertDoesNotThrow { Secp256k1.verify(ecJwk, inputByteArray, signatureByteArray) }
       } else {
-        assertFails { Secp256k1.verify(ecJwk, inputByteArray, signatureByteArray)  }
+        assertFails { Secp256k1.verify(ecJwk, inputByteArray, signatureByteArray) }
       }
     }
 
     testVectors.vectors.filter { it.errors == true }.forEach { vector ->
       assertFails {
-        val inputByteArray: ByteArray = hexStringToByteArray(vector.input.data)
+        val inputByteArray: ByteArray = Hex.decodeHex(vector.input.data.toCharArray())
         val jwkMap = vector.input.key
-        val signatureByteArray = hexStringToByteArray(vector.input.signature)
+        val signatureByteArray = Hex.decodeHex(vector.input.signature.toCharArray())
 
         val ecJwk = ECKey.parse(jwkMap.toString())
         Secp256k1.verify(ecJwk, inputByteArray, signatureByteArray)
       }
     }
-  }
-
-  private fun hexStringToByteArray(s: String): ByteArray {
-    val len = s.length
-    val data = ByteArray(len / 2)
-    for (i in 0 until len step 2) {
-      data[i / 2] = ((Character.digit(s[i], 16) shl 4) + Character.digit(s[i + 1], 16)).toByte()
-    }
-    return data
-  }
-
-  private fun byteArrayToHexString(bytes: ByteArray): String {
-    return bytes.joinToString("") { "%02x".format(it) }
   }
 }
