@@ -70,13 +70,13 @@ public object Ed25519 : KeyGenerator, Signer {
   }
 
   override fun privateKeyToBytes(privateKey: JWK): ByteArray {
-    validateKey(privateKey)
+    validatePrivateKey(privateKey)
 
     return privateKey.toOctetKeyPair().decodedD
   }
 
   override fun publicKeyToBytes(publicKey: JWK): ByteArray {
-    validateKey(publicKey)
+    validatePublicKey(publicKey)
 
     return publicKey.toOctetKeyPair().decodedX
   }
@@ -107,7 +107,7 @@ public object Ed25519 : KeyGenerator, Signer {
   }
 
   override fun sign(privateKey: JWK, payload: ByteArray, options: SignOptions?): ByteArray {
-    validateKey(privateKey)
+    validatePrivateKey(privateKey)
 
     val privateKeyBytes = privateKeyToBytes(privateKey)
     val signer = Ed25519Sign(privateKeyBytes)
@@ -116,7 +116,7 @@ public object Ed25519 : KeyGenerator, Signer {
   }
 
   override fun verify(publicKey: JWK, signedPayload: ByteArray, signature: ByteArray, options: VerifyOptions?) {
-    validateKey(publicKey)
+    validatePublicKey(publicKey)
 
     val publicKeyBytes = publicKeyToBytes(publicKey)
     val verifier = Ed25519Verify(publicKeyBytes)
@@ -128,6 +128,40 @@ public object Ed25519 : KeyGenerator, Signer {
     }
   }
 
+  /**
+   * Validates the provided [JWK] (JSON Web Key) is a public key
+   *
+   * This function checks the following:
+   * - The key must be a public key
+   * - The key must be a valid Ed25519 key
+   *
+   * If any of these checks fail, this function throws an [IllegalArgumentException] with
+   * a descriptive error message.
+   *
+   * @param key The [JWK] to validate.
+   * @throws IllegalArgumentException if the key is not a public key
+   */
+  public fun validatePublicKey(key: JWK) {
+    require(!key.isPrivate) { "key must be public" }
+    validateKey(key)
+  }
+  /**
+   * Validates the provided [JWK] (JSON Web Key) to ensure it conforms to the expected key type and format.
+   *
+   * This function checks the following:
+   * - The key must be a private key
+   * - The key must be a valid Ed25519 key
+   *
+   * If any of these checks fail, this function throws an [IllegalArgumentException] with
+   * a descriptive error message.
+   *
+   * @param key The [JWK] to validate.
+   * @throws IllegalArgumentException if the key is not a private key
+   */
+  public fun validatePrivateKey(key: JWK) {
+    require(key.isPrivate) { "key must be private" }
+    validateKey(key)
+  }
   /**
    * Validates the provided [JWK] (JSON Web Key) to ensure it conforms to the expected key type and format.
    *
@@ -142,7 +176,7 @@ public object Ed25519 : KeyGenerator, Signer {
    * ```
    * val jwk: JWK = //...obtain or generate a JWK
    * try {
-   *     Secp256k1.validateKey(jwk)
+   *     Ed25519.validateKey(jwk)
    *     // Key is valid, proceed with further operations...
    * } catch (e: IllegalArgumentException) {
    *     // Handle invalid key...
@@ -156,8 +190,7 @@ public object Ed25519 : KeyGenerator, Signer {
    * @param key The [JWK] to validate.
    * @throws IllegalArgumentException if the key is not of type [OctetKeyPair] or if the key type is not [KeyType.EC].
    */
-  public fun validateKey(key: JWK) {
-    require(key is OctetKeyPair) { "private key must be an Octet Key Pair (kty: OKP)" }
-    require(key.keyType == keyType) { "private key key type must be OKP" }
+  private fun validateKey(key: JWK) {
+    require(key is OctetKeyPair) { "key must be an Octet Key Pair (kty: OKP)" }
   }
 }
