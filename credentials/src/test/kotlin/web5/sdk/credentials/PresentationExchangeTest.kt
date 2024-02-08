@@ -599,6 +599,43 @@ class Web5TestVectorsPresentationExchange {
     }
   }
 
+  data class CreatePresFromCredTestInput(
+    val presentationDefinition: PresentationDefinitionV2,
+    val credentialJwts: List<String>
+  )
+
+  data class CreatePresFromCredTestOutput(
+    val presentationSubmission: PresentationSubmission
+  )
+
+  @Test
+  fun create_presentation_from_credentials() {
+    val typeRef = object : TypeReference<TestVectors<CreatePresFromCredTestInput, CreatePresFromCredTestOutput>>() {}
+    val testVectors = mapper.readValue(
+      File("../web5-spec/test-vectors/presentation_exchange/create_presentation_from_credentials.json"),
+      typeRef
+    )
+
+    testVectors.vectors.forEach { vector ->
+      val presSubmission = PresentationExchange.createPresentationFromCredentials(
+        vector.input.credentialJwts,
+        vector.input.presentationDefinition
+      )
+
+      val vectorOutputPresSubmission = vector.output!!.presentationSubmission
+
+      assertEquals(vectorOutputPresSubmission.definitionId, presSubmission.definitionId)
+      assertEquals(vectorOutputPresSubmission.descriptorMap.size, presSubmission.descriptorMap.size)
+
+      for (i in vectorOutputPresSubmission.descriptorMap.indices) {
+        assertEquals(vectorOutputPresSubmission.descriptorMap[i].id, presSubmission.descriptorMap[i].id)
+        assertEquals(vectorOutputPresSubmission.descriptorMap[i].format, presSubmission.descriptorMap[i].format)
+        assertEquals(vectorOutputPresSubmission.descriptorMap[i].path, presSubmission.descriptorMap[i].path)
+      }
+    }
+  }
+
+
   data class ValidateDefinitionTestInput(
     val presentationDefinition: PresentationDefinitionV2,
     val errors: Boolean
