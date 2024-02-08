@@ -54,7 +54,6 @@ subprojects {
     plugin("maven-publish")
     plugin("org.jetbrains.dokka")
     plugin("org.jetbrains.kotlinx.kover")
-    plugin("maven-publish")
     plugin("signing")
     plugin("idea")
   }
@@ -184,11 +183,13 @@ subprojects {
       }
     }
 
-    signing {
-      val signingKey: String? by project
-      val signingPassword: String? by project
-      useInMemoryPgpKeys(signingKey, signingPassword)
-      sign(publishing.publications[publicationName])
+    if (!project.hasProperty("skipSigning") || project.property("skipSigning") != "true") {
+      signing {
+        val signingKey: String? by project
+        val signingPassword: String? by project
+        useInMemoryPgpKeys(signingKey, signingPassword)
+        sign(publishing.publications[publicationName])
+      }
     }
   }
 
@@ -272,11 +273,13 @@ publishing {
   }
 }
 
-signing {
-  val signingKey: String? by project
-  val signingPassword: String? by project
-  useInMemoryPgpKeys(signingKey, signingPassword)
-  sign(publishing.publications["web5"])
+if (!project.hasProperty("skipSigning") || project.property("skipSigning") != "true") {
+  signing {
+    val signingKey: String? by project
+    val signingPassword: String? by project
+    useInMemoryPgpKeys(signingKey, signingPassword)
+    sign(publishing.publications["web5"])
+  }
 }
 
 nexusPublishing {

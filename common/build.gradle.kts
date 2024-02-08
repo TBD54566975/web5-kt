@@ -9,5 +9,4 @@ repositories {
 
 dependencies {
   testImplementation(kotlin("test"))
-  testImplementation(project(mapOf("path" to ":crypto")))
 }
