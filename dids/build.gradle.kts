@@ -12,7 +12,7 @@ repositories {
 }
 
 val ktor_version = "2.3.4"
-val jackson_version = "2.13.5"
+val jackson_version = "2.14.2"
 
 dependencies {
   api("decentralized-identity:did-common-java:1.9.0")

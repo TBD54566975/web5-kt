@@ -1,6 +1,7 @@
 package web5.sdk.common
 
 import java.io.ByteArrayOutputStream
+import kotlin.math.ceil
 
 /**
  * ZBase32 is a variant of Base32 encoding designed to be human-readable and more robust for oral transmission.
@@ -10,6 +11,7 @@ public object ZBase32 {
   private const val ALPHABET = "ybndrfg8ejkmcpqxot1uwisza345h769"
   private const val BITS_PER_BYTE = 8
   private const val BITS_PER_BASE32_CHAR = 5
+  private const val BITS_PER_BASE32_CHAR_DOUBLE = 5.0
   private const val MASK_BASE32 = 0x1F // Mask for extracting 5 bits, equivalent to '11111' in binary.
   private const val MASK_BYTE = 0xFF // Mask for byte within an integer, equivalent to '11111111' in binary.
   private const val DECODER_SIZE = 128 // Size of the decoder array based on ASCII range
@@ -52,11 +54,12 @@ public object ZBase32 {
       val charIndex = (buffer shl BITS_PER_BASE32_CHAR - bufferLength) and MASK_BASE32
       result.append(ALPHABET[charIndex])
     }
-
-    val numCharacters = Math.ceil(data.size / 5.0)
-    println(numCharacters)
-
-    return result.toString().take(numCharacters.toInt())
+    val numCharacters: Int = if (data.size < BITS_PER_BASE32_CHAR) {
+      data.size
+    } else {
+      ceil(data.size / BITS_PER_BASE32_CHAR_DOUBLE).toInt()
+    }
+    return result.toString().take(numCharacters)
   }
 
   /**

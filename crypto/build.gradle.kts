@@ -8,6 +8,7 @@ repositories {
 }
 
 val bouncy_castle_version = "1.77"
+val jackson_version = "2.14.2"
 
 dependencies {
   api("com.nimbusds:nimbus-jose-jwt:9.34")
@@ -18,6 +19,6 @@ dependencies {
 
   api("com.amazonaws:aws-java-sdk-kms:1.12.538")
 
-  testImplementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.5")
+  testImplementation("com.fasterxml.jackson.module:jackson-module-kotlin:$jackson_version")
   testImplementation(kotlin("test"))
 }
