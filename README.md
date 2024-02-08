@@ -51,6 +51,12 @@ in [GitHub Pages](https://tbd54566975.github.io/web5-kt/docs/htmlMultiModule/cre
 
 # Development
 
+## Testing with local builds
+If you want to build an artifact locally, you can do so by running the following command - either at the top level or in any of the subprojects:
+```sh
+./gradlew publishToMavenLocal -PskipSigning=true -Pversion={your-local-version-name}
+```
+
 ## Prerequisites
 
 Install java version 11. If you're installing a higher version, it must be compatible with Gradle 8.2.
