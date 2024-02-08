@@ -247,6 +247,21 @@ public object Secp256k1 : KeyGenerator, Signer {
     return rBigint.toFixedByteArray(SIG_SIZE / 2) + sBigint.toFixedByteArray(SIG_SIZE / 2)
   }
 
+  /**
+   * Verifies a signature against a given payload using the ECDSA (Elliptic Curve Digital Signature Algorithm)
+   * with the curve `secp256k1`. This function supports deterministic k-value generation
+   * through HMAC and SHA-256, ensuring consistent verification outcomes for identical payloads
+   * and signatures.
+   *
+   * @param publicKey The public key used for verification, provided as a `JWK` (JSON Web Key).
+   * @param signedPayload The byte array containing the data that was signed.
+   * @param signature The byte array representing the signature to be verified against the payload.
+   * @param options Optional parameter to provide additional configuration for the verification process.
+   * @throws SignatureException If the signature does not validly correspond to the provided payload
+   *                            and public key, indicating either a data integrity issue
+   * @throws IllegalArgumentException If the provided public key or signature format is invalid or not
+   *                                  supported by the implementation.
+   */
   override fun verify(publicKey: JWK, signedPayload: ByteArray, signature: ByteArray, options: VerifyOptions?) {
     val publicKeyBytes = publicKeyToBytes(publicKey)
     val publicKeyPoint = spec.curve.decodePoint(publicKeyBytes)
