@@ -28,7 +28,7 @@ import web5.sdk.dids.DidMethod
 import web5.sdk.dids.DidResolutionResult
 import web5.sdk.dids.ResolutionError
 import web5.sdk.dids.ResolveDidOptions
-import web5.sdk.dids.methods.ion.InvalidStatusException
+import web5.sdk.dids.exceptions.InvalidStatusException
 import web5.sdk.dids.validateKeyMaterialInsideKeyManager
 import java.io.File
 import java.net.InetAddress

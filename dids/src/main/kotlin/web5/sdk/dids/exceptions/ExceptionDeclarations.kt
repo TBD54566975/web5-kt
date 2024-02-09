@@ -40,3 +40,8 @@ public class InvalidIdentifierException(message: String, cause: Throwable) : Run
  * @param message the exception message detailing the error
  */
 public class DidResolutionException(message: String) : RuntimeException(message)
+
+/**
+ * Represents an HTTP response where the status code is outside the range considered success.
+ */
+public class InvalidStatusException(public val statusCode: Int, msg: String) : RuntimeException(msg)

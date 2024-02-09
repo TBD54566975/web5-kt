@@ -37,6 +37,7 @@ import web5.sdk.dids.DidResolutionMetadata
 import web5.sdk.dids.DidResolutionResult
 import web5.sdk.dids.PublicKeyPurpose
 import web5.sdk.dids.ResolveDidOptions
+import web5.sdk.dids.exceptions.InvalidStatusException
 import web5.sdk.dids.methods.ion.models.AddPublicKeysAction
 import web5.sdk.dids.methods.ion.models.AddServicesAction
 import web5.sdk.dids.methods.ion.models.Commitment
@@ -752,10 +753,7 @@ public data class IonUpdateResult(
   public val keyAliases: KeyAliases
 )
 
-/**
- * Represents an HTTP response where the status code is outside the range considered success.
- */
-public class InvalidStatusException(public val statusCode: Int, msg: String) : RuntimeException(msg)
+
 
 /**
  * Represents an exception where the response from calling [DidIonApi.resolve] contains a non-empty value in

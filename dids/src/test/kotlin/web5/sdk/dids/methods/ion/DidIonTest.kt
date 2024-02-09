@@ -23,6 +23,7 @@ import org.mockito.kotlin.whenever
 import web5.sdk.crypto.AwsKeyManager
 import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.dids.PublicKeyPurpose
+import web5.sdk.dids.exceptions.InvalidStatusException
 import web5.sdk.dids.methods.ion.models.PublicKey
 import web5.sdk.dids.methods.ion.models.Service
 import web5.sdk.dids.methods.ion.models.SidetreeCreateOperation
