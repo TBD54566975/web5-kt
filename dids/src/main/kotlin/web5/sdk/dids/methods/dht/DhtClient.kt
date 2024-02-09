@@ -20,12 +20,12 @@ import web5.sdk.crypto.Ed25519
 import web5.sdk.crypto.KeyManager
 import web5.sdk.dids.exceptions.PkarrRecordNotFoundException
 import web5.sdk.dids.exceptions.PkarrRecordResponseException
-import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.security.SignatureException
 
-private val colon = ":".toByteArray(charset("UTF-8"))
+private val BENCODED_SEQ = Bencoder.encodeAsBytes("seq")
+private val BENCODED_V = Bencoder.encodeAsBytes("v")
 
 /**
  * A utility class for working with the BEP44 DHT specification and Pkarr relays.
@@ -192,14 +192,13 @@ internal class DhtClient(
       }
 
       // encode v using bencode
-      val vEncoded = bencode(v)
+      val vEncoded = Bencoder.encodeAsBytes(v)
 
       require(vEncoded.size <= 1000) {
         "Value must be <= 1000 bytes compressed, current bytes {${vEncoded.size}}"
       }
 
-      // encode according to BEP44
-      val bytesToSign = "3:seqi${seq}e1:v".toByteArray() + vEncoded
+      val bytesToSign = BENCODED_SEQ + Bencoder.encodeAsBytes(seq) + BENCODED_V + Bencoder.encodeAsBytes(v)
 
       // sign and return the BEP44 message
       manager.sign(keyAlias, bytesToSign).let { signature ->
@@ -212,16 +211,6 @@ internal class DhtClient(
       }
     }
 
-    /** Encodes a byte array according to https://en.wikipedia.org/wiki/Bencode. */
-    internal fun bencode(bs: ByteArray): ByteArray {
-      val out = ByteArrayOutputStream()
-      val l = bs.size.toString()
-      out.write(l.toByteArray(charset("UTF-8")))
-      out.write(colon)
-      out.write(bs)
-      return out.toByteArray()
-    }
-
     /**
      * Verifies a message according to the BEP44 Signature Verification specification.
      * https://www.bittorrent.org/beps/bep_0044.html
@@ -232,10 +221,12 @@ internal class DhtClient(
      * @throws SignatureException if the signature is invalid.
      */
     fun verifyBep44Message(message: Bep44Message) {
-      val vEncoded = bencode(message.v)
+      // encode v using bencode
+      val vEncoded = Bencoder.encodeAsBytes(message.v)
 
       // prepare buffer and verify
-      val bytesToVerify = "3:seqi${message.seq}e1:v".toByteArray() + vEncoded
+      val bytesToVerify =
+        BENCODED_SEQ + Bencoder.encodeAsBytes(message.seq) + BENCODED_V + Bencoder.encodeAsBytes(message.v)
 
       // create a JWK representation of the public key
       val ed25519PublicKey = Ed25519.bytesToPublicKey(message.k)

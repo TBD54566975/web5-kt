@@ -8,7 +8,6 @@ repositories {
 
   maven("https://jitpack.io")
   maven("https://repo.danubetech.com/repository/maven-public/")
-  maven("https://repository.jboss.org/nexus/content/repositories/thirdparty-releases/")
 }
 
 val ktor_version = "2.3.4"
