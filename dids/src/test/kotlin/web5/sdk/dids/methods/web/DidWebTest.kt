@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.dids.DidResolutionResult
+import web5.sdk.dids.methods.jwk.DidJwk
 import web5.sdk.dids.methods.util.readKey
 import web5.sdk.testing.TestVectors
 import java.io.File
@@ -143,7 +144,7 @@ class DidWebTest {
   }
 }
 
-class Web5TestVectorsDidWebTest {
+class Web5TestVectorsDidWeb {
   data class ResolveTestInput(
     val didUri: String,
     val mockServer: Map<String, JsonNode>?,
