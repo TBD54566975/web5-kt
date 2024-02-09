@@ -1,0 +1,18 @@
+run = "./gradlew build --console=rich"
+
+hidden=["*.jar"]
+
+[nix]
+channel = "stable-23_11"
+
+[packager]
+language = "java"
+
+[packager.features]
+packageSearch = true
+
+[languages.kotlin]
+pattern = "**/*.{kt,kts,java}"
+
+[languages.kotlin.languageServer]
+start = ["kotlin-language-server"]
