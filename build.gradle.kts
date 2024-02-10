@@ -6,8 +6,8 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.net.URL
 
 plugins {
-  id("org.jetbrains.kotlin.jvm") version "1.9.+"
-  id("java-library")
+  id("org.jetbrains.kotlin.jvm") version "1.9.22"
+  id("base")
   id("io.gitlab.arturbosch.detekt") version "1.23.+"
   `maven-publish`
   id("org.jetbrains.dokka") version "1.9.+"
@@ -15,6 +15,7 @@ plugins {
   signing
   idea
   id("io.github.gradle-nexus.publish-plugin") version "1.3.0"
+  id("version-catalog")
 }
 
 configurations.all {
@@ -150,7 +151,7 @@ subprojects {
       create<MavenPublication>(publicationName) {
         groupId = project.group.toString()
         artifactId = name
-        description = "Kotlin SDK for web5 functionality"
+        description = name
         version = project.property("version").toString()
         from(components["java"])
       }
@@ -158,7 +159,7 @@ subprojects {
         pom {
           name = publicationName
           packaging = "jar"
-          description.set("web5 kotlin SDK")
+          description.set("Web5 SDK for the JVM")
           url.set("https://github.com/TBD54566975/web5-kt")
           inceptionYear.set("2023")
           licenses {
@@ -240,14 +241,14 @@ publishing {
     create<MavenPublication>("web5") {
       groupId = project.group.toString()
       artifactId = name
-      description = "Kotlin SDK for web5 functionality"
+      description = "Web5 SDK for the JVM"
       version = project.property("version").toString()
       from(components["java"])
 
       pom {
-        packaging = "jar"
-        name = project.name
-        description.set("web5 kotlin SDK")
+        packaging = "pom"
+        name = "Web5 SDK for the JVM"
+        description.set("Web5 SDK for the JVM")
         url.set("https://github.com/TBD54566975/web5-kt")
         inceptionYear.set("2023")
         licenses {
