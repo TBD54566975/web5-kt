@@ -138,7 +138,7 @@ public object JwtUtil {
       assertionMethod.publicKeyJwk != null) {
       throw SignatureException(
         "Signature verification failed: Expected kid in JWS header to dereference " +
-          "a DID Document Verification Methoda of type $JsonWebKey2020 or $JsonWebKey with a publicKeyJwk"
+          "a DID Document Verification Method of type $JsonWebKey2020 or $JsonWebKey with a publicKeyJwk"
       )
     }
 
