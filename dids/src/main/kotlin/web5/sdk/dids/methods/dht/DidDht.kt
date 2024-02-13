@@ -241,12 +241,14 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
   private fun resolveInternal(did: String): DidResolutionResult {
     try {
       validate(did)
+    } catch (_: ParserException) {
+      return DidResolutionResult.fromResolutionError(ResolutionError.INVALID_DID)
     } catch (_: InvalidMethodNameException) {
       return DidResolutionResult.fromResolutionError(ResolutionError.METHOD_NOT_SUPPORTED)
     } catch (_: InvalidIdentifierSizeException) {
       return DidResolutionResult.fromResolutionError(ResolutionError.INVALID_DID)
     } catch (_: InvalidIdentifierException) {
-      return DidResolutionResult.fromResolutionError(ResolutionError.INVALID_DID)
+      return DidResolutionResult.fromResolutionError(ResolutionError.INVALID_PUBLIC_KEY)
     }
     val getId = DidDht.suffix(did)
     val bep44Message = try {

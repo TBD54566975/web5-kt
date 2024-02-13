@@ -7,5 +7,6 @@ public enum class ResolutionError(public val value: String) {
   METHOD_NOT_SUPPORTED("methodNotSupported"),
   NOT_FOUND("notFound"),
   INVALID_DID("invalidDid"),
+  INVALID_PUBLIC_KEY("invalidPublicKey"),
   INTERNAL_ERROR("internalError"),
 }
