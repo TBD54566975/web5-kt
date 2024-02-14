@@ -23,6 +23,8 @@ allprojects {
     resolutionStrategy {
       // Pin the transitive dep to a version that's not vulnerable.
       force("com.fasterxml.woodstox:woodstox-core:6.4.0")
+      // Addresss https://github.com/TBD54566975/web5-kt/issues/242
+      force("com.google.protobuf:protobuf-javalite:3.19.6")
     }
   }
 }
