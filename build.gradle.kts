@@ -18,10 +18,12 @@ plugins {
   id("version-catalog")
 }
 
-configurations.all {
-  resolutionStrategy {
-    // Pin the transitive dep to a version that's not vulnerable.
-    force("com.fasterxml.woodstox:woodstox-core:6.4.0")
+allprojects {
+  configurations.all {
+    resolutionStrategy {
+      // Pin the transitive dep to a version that's not vulnerable.
+      force("com.fasterxml.woodstox:woodstox-core:6.4.0")
+    }
   }
 }
 
