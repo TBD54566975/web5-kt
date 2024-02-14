@@ -11,6 +11,7 @@ import com.nimbusds.jwt.SignedJWT
 import foundation.identity.did.DIDURL
 import web5.sdk.common.Convert
 import web5.sdk.crypto.Crypto
+import web5.sdk.crypto.Jwa
 import web5.sdk.dids.Did
 import web5.sdk.dids.DidResolvers
 import web5.sdk.dids.exceptions.DidResolutionException
@@ -31,8 +32,8 @@ public object JwtUtil {
    * the [did]. The result is a String in a JWT format.
    *
    * @param did The [Did] used to sign the credential.
-   * @param assertionMethodId An optional identifier for the assertion method that will be used for verification of the
-   *        produces signature.
+   * @param assertionMethodId An optional identifier for the assertion method
+   *        that will be used for verification of the produced signature.
    * @param jwtPayload the payload that is getting signed by the [Did]
    * @return The JWT representing the signed verifiable credential.
    *
@@ -146,6 +147,11 @@ public object JwtUtil {
     val toVerifyBytes = jwt.signingInput
     val signatureBytes = jwt.signature.decode()
 
-    Crypto.verify(publicKeyJwk, toVerifyBytes, signatureBytes, jwt.header.algorithm)
+    Crypto.verify(
+      publicKeyJwk,
+      toVerifyBytes,
+      signatureBytes,
+      Jwa.parse(jwt.header.algorithm?.name)
+    )
   }
 }

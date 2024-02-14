@@ -18,6 +18,7 @@ import org.xbill.DNS.Message
 import web5.sdk.common.ZBase32
 import web5.sdk.crypto.Ed25519
 import web5.sdk.crypto.KeyManager
+import web5.sdk.crypto.Jwa
 import web5.sdk.dids.exceptions.PkarrRecordNotFoundException
 import web5.sdk.dids.exceptions.PkarrRecordResponseException
 import java.io.ByteArrayOutputStream
@@ -133,7 +134,7 @@ internal class DhtClient(
       val pubKey = manager.getPublicKey(keyAlias)
       require(
         pubKey.keyType == Ed25519.keyType &&
-          pubKey.algorithm == Ed25519.algorithm
+          pubKey.algorithm == Jwa.toJwsAlgorithm(Ed25519.algorithm)
       ) {
         "Must supply an Ed25519 key"
       }
@@ -186,7 +187,7 @@ internal class DhtClient(
       val pubKey = manager.getPublicKey(keyAlias)
       require(
         pubKey.keyType == Ed25519.keyType &&
-          pubKey.algorithm == Ed25519.algorithm
+          pubKey.algorithm == Jwa.toJwsAlgorithm(Ed25519.algorithm)
       ) {
         "Must supply an Ed25519 key"
       }

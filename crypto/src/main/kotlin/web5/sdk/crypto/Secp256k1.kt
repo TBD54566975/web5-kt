@@ -1,9 +1,7 @@
 package web5.sdk.crypto
 
-import com.nimbusds.jose.Algorithm
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.crypto.bc.BouncyCastleProviderSingleton
-import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.ECKey
 import com.nimbusds.jose.jwk.JWK
 import com.nimbusds.jose.jwk.KeyType
@@ -61,7 +59,7 @@ public object Secp256k1 : KeyGenerator, Signer {
     Security.addProvider(BouncyCastleProviderSingleton.getInstance())
   }
 
-  override val algorithm: Algorithm = JWSAlgorithm.ES256K
+  override val algorithm: Jwa = Jwa.ES256K
   override val keyType: KeyType = KeyType.EC
 
   /** [reference](https://github.com/multiformats/multicodec/blob/master/table.csv#L92). */
@@ -140,7 +138,7 @@ public object Secp256k1 : KeyGenerator, Signer {
    * @return A JWK representing the generated private key.
    */
   override fun generatePrivateKey(options: KeyGenOptions?): JWK {
-    return ECKeyGenerator(Curve.SECP256K1)
+    return ECKeyGenerator(com.nimbusds.jose.jwk.Curve.SECP256K1)
       .algorithm(JWSAlgorithm.ES256K)
       .provider(BouncyCastleProviderSingleton.getInstance())
       .keyIDFromThumbprint(true)
@@ -177,7 +175,7 @@ public object Secp256k1 : KeyGenerator, Signer {
     val rawX = pointQ.rawXCoord.encoded
     val rawY = pointQ.rawYCoord.encoded
 
-    return ECKey.Builder(Curve.SECP256K1, Base64URL.encode(rawX), Base64URL.encode(rawY))
+    return ECKey.Builder(com.nimbusds.jose.jwk.Curve.SECP256K1, Base64URL.encode(rawX), Base64URL.encode(rawY))
       .algorithm(JWSAlgorithm.ES256K)
       .keyIDFromThumbprint()
       .keyUse(KeyUse.SIGNATURE)
@@ -188,7 +186,7 @@ public object Secp256k1 : KeyGenerator, Signer {
     val xBytes = publicKeyBytes.sliceArray(1..32)
     val yBytes = publicKeyBytes.sliceArray(33..64)
 
-    return ECKey.Builder(Curve.SECP256K1, Base64URL.encode(xBytes), Base64URL.encode(yBytes))
+    return ECKey.Builder(com.nimbusds.jose.jwk.Curve.SECP256K1, Base64URL.encode(xBytes), Base64URL.encode(yBytes))
       .algorithm(JWSAlgorithm.ES256K)
       .keyIDFromThumbprint()
       .keyUse(KeyUse.SIGNATURE)

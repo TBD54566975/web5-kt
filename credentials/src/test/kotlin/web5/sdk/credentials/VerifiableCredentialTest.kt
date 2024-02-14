@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import web5.sdk.crypto.AwsKeyManager
 import web5.sdk.crypto.InMemoryKeyManager
+import web5.sdk.crypto.Jwa
 import web5.sdk.dids.Did
 import web5.sdk.dids.extensions.load
 import web5.sdk.dids.methods.ion.CreateDidIonOptions
@@ -120,7 +121,7 @@ class VerifiableCredentialTest {
     val keyManager = InMemoryKeyManager()
 
     //Create an ION DID without an assertionMethod
-    val alias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K)
+    val alias = keyManager.generatePrivateKey(Jwa.ES256K)
     val verificationJwk = keyManager.getPublicKey(alias)
     val key = JsonWebKey2020VerificationMethod(
       id = UUID.randomUUID().toString(),

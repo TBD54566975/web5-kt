@@ -1,7 +1,5 @@
 package web5.sdk.crypto
 
-import com.nimbusds.jose.Algorithm
-import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.JWK
 
 /**
@@ -28,7 +26,10 @@ public interface KeyManager {
    * Implementations should ensure secure storage of the generated keys, protecting against
    * unauthorized access and ensuring cryptographic strength according to the provided parameters.
    */
-  public fun generatePrivateKey(algorithm: Algorithm, curve: Curve? = null, options: KeyGenOptions? = null): String
+  public fun generatePrivateKey(
+    algorithm: Jwa,
+    curve: JwaCurve? = null,
+    options: KeyGenOptions? = null): String
 
   /**
    * Retrieves the public key associated with a previously stored private key, identified by the provided alias.

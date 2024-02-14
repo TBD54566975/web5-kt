@@ -1,7 +1,5 @@
 package web5.sdk.crypto
 
-import com.nimbusds.jose.Algorithm
-import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.JWK
 
 /**
@@ -38,7 +36,8 @@ public class InMemoryKeyManager : KeyManager {
    * @param options Options for key generation, may include specific parameters relevant to the algorithm.
    * @return The key ID of the generated private key.
    */
-  override fun generatePrivateKey(algorithm: Algorithm, curve: Curve?, options: KeyGenOptions?): String {
+  // TODO: have caller call in with AlgorithmId instead of algorithm + curve combo?
+  override fun generatePrivateKey(algorithm: Jwa, curve: JwaCurve?, options: KeyGenOptions?): String {
     val jwk = Crypto.generatePrivateKey(algorithm, curve, options)
     keyStore[jwk.keyID] = jwk
 

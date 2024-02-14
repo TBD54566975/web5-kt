@@ -1,8 +1,5 @@
 package web5.sdk.dids.methods.key
 
-import com.nimbusds.jose.Algorithm
-import com.nimbusds.jose.JWSAlgorithm
-import com.nimbusds.jose.jwk.Curve
 import foundation.identity.did.DID
 import foundation.identity.did.DIDDocument
 import foundation.identity.did.VerificationMethod
@@ -11,6 +8,8 @@ import web5.sdk.common.Varint
 import web5.sdk.crypto.Crypto
 import web5.sdk.crypto.KeyManager
 import web5.sdk.crypto.Secp256k1
+import web5.sdk.crypto.Jwa
+import web5.sdk.crypto.JwaCurve
 import web5.sdk.dids.CreateDidOptions
 import web5.sdk.dids.Did
 import web5.sdk.dids.DidMethod
@@ -36,8 +35,8 @@ import java.net.URI
  * ```
  */
 public class CreateDidKeyOptions(
-  public val algorithm: Algorithm = JWSAlgorithm.ES256K,
-  public val curve: Curve? = null
+  public val algorithm: Jwa = Jwa.ES256K,
+  public val curve: JwaCurve? = null
 ) : CreateDidOptions
 
 /**
@@ -90,7 +89,7 @@ public class DidKey(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
       val publicKey = keyManager.getPublicKey(keyAlias)
       var publicKeyBytes = Crypto.publicKeyToBytes(publicKey)
 
-      if (opts.algorithm == JWSAlgorithm.ES256K) {
+      if (opts.algorithm == Jwa.ES256K) {
         publicKeyBytes = Secp256k1.compressPublicKey(publicKeyBytes)
       }
 

@@ -1,12 +1,10 @@
 package web5.sdk.dids.methods.ion
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.nimbusds.jose.Algorithm
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.JWSHeader
 import com.nimbusds.jose.JWSObject
 import com.nimbusds.jose.Payload
-import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.JWK
 import com.nimbusds.jose.util.Base64URL
 import foundation.identity.did.DID
@@ -29,6 +27,8 @@ import web5.sdk.common.Convert
 import web5.sdk.common.Varint
 import web5.sdk.crypto.KeyGenOptions
 import web5.sdk.crypto.KeyManager
+import web5.sdk.crypto.Jwa
+import web5.sdk.crypto.JwaCurve
 import web5.sdk.dids.CreateDidOptions
 import web5.sdk.dids.CreationMetadata
 import web5.sdk.dids.Did
@@ -357,7 +357,7 @@ public sealed class DidIonApi(
     }
     val updatePublicKey = keyManager.getPublicKey(options.updateKeyAlias)
 
-    val newUpdateKeyAlias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K)
+    val newUpdateKeyAlias = keyManager.generatePrivateKey(Jwa.ES256K)
     val newUpdatePublicKey = keyManager.getPublicKey(newUpdateKeyAlias)
 
     val reveal = updatePublicKey.reveal()
@@ -444,7 +444,7 @@ public sealed class DidIonApi(
 
   internal fun createOperation(keyManager: KeyManager, options: CreateDidIonOptions?)
     : Pair<SidetreeCreateOperation, KeyAliases> {
-    val updateKeyAlias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K)
+    val updateKeyAlias = keyManager.generatePrivateKey(Jwa.ES256K)
     val updatePublicJwk = keyManager.getPublicKey(updateKeyAlias)
 
     val publicKeyCommitment = updatePublicJwk.commitment()
@@ -460,7 +460,7 @@ public sealed class DidIonApi(
       updateCommitment = publicKeyCommitment
     )
 
-    val recoveryKeyAlias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K)
+    val recoveryKeyAlias = keyManager.generatePrivateKey(Jwa.ES256K)
     val recoveryPublicJwk = keyManager.getPublicKey(recoveryKeyAlias)
     val recoveryCommitment = recoveryPublicJwk.commitment()
 
@@ -485,7 +485,7 @@ public sealed class DidIonApi(
     if (options == null || options.verificationMethodsToAdd.count() == 0) {
       listOf<VerificationMethodSpec>(
         VerificationMethodCreationParams(
-          JWSAlgorithm.ES256K,
+          Jwa.ES256K,
           relationships = listOf(PublicKeyPurpose.AUTHENTICATION, PublicKeyPurpose.ASSERTION_METHOD)
         )
       ).toPublicKeys(keyManager)
@@ -546,11 +546,11 @@ public sealed class DidIonApi(
     val recoveryPublicKey = keyManager.getPublicKey(options.recoveryKeyAlias)
     val reveal = recoveryPublicKey.reveal()
 
-    val nextRecoveryKeyAlias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K)
+    val nextRecoveryKeyAlias = keyManager.generatePrivateKey(Jwa.ES256K)
     val nextRecoveryPublicKey = keyManager.getPublicKey(nextRecoveryKeyAlias)
     val nextRecoveryCommitment = nextRecoveryPublicKey.commitment()
 
-    val nextUpdateKeyAlias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K)
+    val nextUpdateKeyAlias = keyManager.generatePrivateKey(Jwa.ES256K)
     val nextUpdatePublicKey = keyManager.getPublicKey(nextUpdateKeyAlias)
     val nextUpdateCommitment = nextUpdatePublicKey.commitment()
 
@@ -804,8 +804,8 @@ private interface VerificationMethodGenerator {
  * [relationships] will be used to determine the verification relationships in the DID Document being created.
  * */
 public class VerificationMethodCreationParams(
-  public val algorithm: Algorithm,
-  public val curve: Curve? = null,
+  public val algorithm: Jwa,
+  public val curve: JwaCurve? = null,
   public val options: KeyGenOptions? = null,
   public val relationships: Iterable<PublicKeyPurpose>
 ) : VerificationMethodSpec {
