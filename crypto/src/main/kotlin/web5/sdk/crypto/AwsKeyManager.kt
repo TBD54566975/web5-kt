@@ -49,7 +49,7 @@ public class AwsKeyManager @JvmOverloads constructor(
   )
 
   private val algorithmDetails = mapOf(
-    Jwa.ES256K to AlgorithmDetails(
+    AlgorithmId.secp256k1 to AlgorithmDetails(
       algorithm = Jwa.ES256K,
       curve = JwaCurve.SECP256K1,
       keySpec = KeySpec.ECC_SECG_P256K1,
@@ -80,8 +80,9 @@ public class AwsKeyManager @JvmOverloads constructor(
 //    )
   )
 
-  private fun getAlgorithmDetails(algorithm: Jwa): AlgorithmDetails {
-    return algorithmDetails[algorithm] ?: throw IllegalArgumentException("Algorithm $algorithm is not supported")
+  private fun getAlgorithmDetails(algorithmId: AlgorithmId): AlgorithmDetails {
+    return algorithmDetails[algorithmId] ?:
+    throw IllegalArgumentException("Algorithm ${algorithmId.algorithmName} is not supported")
   }
 
   private fun getAlgorithmDetails(keySpec: KeySpec): AlgorithmDetails {
@@ -100,8 +101,8 @@ public class AwsKeyManager @JvmOverloads constructor(
    * @throws IllegalArgumentException if the [algorithm] is not supported by AWS
    * @throws [AWSKMSException] for any error originating from the [AWSKMS] client
    */
-  override fun generatePrivateKey(algorithm: Jwa, curve: JwaCurve?, options: KeyGenOptions?): String {
-    val keySpec = getAlgorithmDetails(algorithm).keySpec
+  override fun generatePrivateKey(algorithmId: AlgorithmId, options: KeyGenOptions?): String {
+    val keySpec = getAlgorithmDetails(algorithmId).keySpec
     val createKeyRequest = CreateKeyRequest()
       .withKeySpec(keySpec)
       .withKeyUsage(KeyUsageType.SIGN_VERIFY)

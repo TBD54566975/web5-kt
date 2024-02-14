@@ -18,12 +18,11 @@ import org.xbill.DNS.TXTRecord
 import web5.sdk.common.Convert
 import web5.sdk.common.EncodingFormat
 import web5.sdk.common.ZBase32
+import web5.sdk.crypto.AlgorithmId
 import web5.sdk.crypto.Crypto
 import web5.sdk.crypto.Ed25519
 import web5.sdk.crypto.KeyManager
 import web5.sdk.crypto.Secp256k1
-import web5.sdk.crypto.Jwa
-import web5.sdk.crypto.JwaCurve
 import web5.sdk.dids.CreateDidOptions
 import web5.sdk.dids.Did
 import web5.sdk.dids.DidDocumentMetadata
@@ -134,7 +133,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
     val opts = options ?: CreateDidDhtOptions()
 
     // create identity key
-    val keyAlias = keyManager.generatePrivateKey(Jwa.EdDSA, JwaCurve.Ed25519)
+    val keyAlias = keyManager.generatePrivateKey(AlgorithmId.Ed25519)
     val publicKey = keyManager.getPublicKey(keyAlias)
 
     // build DID Document

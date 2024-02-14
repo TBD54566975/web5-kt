@@ -36,7 +36,7 @@ public typealias CryptoAlgorithm = Pair<Jwa?, JwaCurve?>
  * @see Signer for signing functionalities.
  */
 public object Crypto {
-  private val keyGenerators = mapOf<AlgorithmId, KeyGenerator>(
+  private val keyGeneratorsByAlgorithmId = mapOf<AlgorithmId, KeyGenerator>(
     AlgorithmId.secp256k1 to Secp256k1,
     AlgorithmId.Ed25519 to Ed25519
   )
@@ -48,17 +48,15 @@ public object Crypto {
     Secp256k1.PUB_MULTICODEC to Secp256k1
   )
 
-  private val multiCodecsByAlgorithm = mapOf(
-    Pair(Secp256k1.algorithm, null) to Secp256k1.PUB_MULTICODEC,
-    Pair(Secp256k1.algorithm, JwaCurve.SECP256K1) to Secp256k1.PUB_MULTICODEC,
-    Pair(Ed25519.algorithm, JwaCurve.Ed25519) to Ed25519.PUB_MULTICODEC
+  private val multiCodecsByAlgorithmId = mapOf(
+    AlgorithmId.secp256k1 to Secp256k1.PUB_MULTICODEC,
+    AlgorithmId.secp256k1 to Secp256k1.PUB_MULTICODEC,
+    AlgorithmId.Ed25519 to Ed25519.PUB_MULTICODEC
   )
 
-  private val signers = mapOf<CryptoAlgorithm, Signer>(
-    Pair(null, JwaCurve.SECP256K1) to Secp256k1,
-    Pair(Secp256k1.algorithm, null) to Secp256k1,
-    Pair(Secp256k1.algorithm, JwaCurve.SECP256K1) to Secp256k1,
-    Pair(Ed25519.algorithm, JwaCurve.Ed25519) to Ed25519
+  private val signersByAlgorithmId = mapOf<AlgorithmId, Signer>(
+    AlgorithmId.secp256k1 to Secp256k1,
+    AlgorithmId.Ed25519 to Ed25519
   )
 
   /**
@@ -72,10 +70,9 @@ public object Crypto {
    */
   @JvmOverloads
   public fun generatePrivateKey(
-    algorithm: Jwa,
-    curve: JwaCurve? = null,
+    algorithmId: AlgorithmId,
     options: KeyGenOptions? = null): JWK {
-    val keyGenerator = getKeyGenerator(AlgorithmId.parse(curve, algorithm))
+    val keyGenerator = getKeyGenerator(algorithmId)
     return keyGenerator.generatePrivateKey(options)
   }
 
@@ -109,7 +106,7 @@ public object Crypto {
     val rawCurve = privateKey.toJSONObject()["crv"]
     val curve = rawCurve?.let { JwaCurve.parse(it.toString()) }
 
-    val signer = getSigner(Jwa.parse(privateKey.algorithm?.name), curve)
+    val signer = getSigner(AlgorithmId.parse(curve))
 
     return signer.sign(privateKey, payload, options)
   }
@@ -139,6 +136,7 @@ public object Crypto {
   @JvmOverloads
   @Suppress("SwallowedException")
   public fun verify(publicKey: JWK, signedPayload: ByteArray, signature: ByteArray, algorithm: Jwa? = null) {
+    // todo this feels bleh
     val alg = try {
       Jwa.parse(publicKey.algorithm?.name)
     } catch (e: IllegalArgumentException) {
@@ -189,7 +187,7 @@ public object Crypto {
    * @throws IllegalArgumentException if the algorithm or curve is not supported.
    */
   public fun getKeyGenerator(algorithmId: AlgorithmId): KeyGenerator {
-    return keyGenerators.getOrElse(algorithmId) {
+    return keyGeneratorsByAlgorithmId.getOrElse(algorithmId) {
       throw IllegalArgumentException("Algorithm $algorithmId not supported")
     }
   }
@@ -221,10 +219,9 @@ public object Crypto {
    * @return The corresponding [Signer].
    * @throws IllegalArgumentException if the algorithm or curve is not supported.
    */
-  @JvmOverloads
-  public fun getSigner(algorithm: Jwa?, curve: JwaCurve? = null): Signer {
-    return signers.getOrElse(Pair(algorithm, curve)) {
-      throw IllegalArgumentException("Algorithm $algorithm not supported")
+  public fun getSigner(algorithmId: AlgorithmId): Signer {
+    return signersByAlgorithmId.getOrElse(algorithmId) {
+      throw IllegalArgumentException("Algorithm ${algorithmId.algorithmName} not supported")
     }
   }
 
@@ -241,7 +238,8 @@ public object Crypto {
    */
   @JvmOverloads
   public fun getVerifier(algorithm: Jwa, curve: JwaCurve? = null): Signer {
-    return getSigner(algorithm, curve)
+    val algorithmId = AlgorithmId.parse(curve, algorithm)
+    return getSigner(algorithmId)
   }
 
   /**
@@ -277,7 +275,7 @@ public object Crypto {
    * val multicodec = getAlgorithmMultiCodec(JWSAlgorithm.EdDSA, Curve.Ed25519)
    * ```
    */
-  public fun getAlgorithmMultiCodec(algorithm: Jwa, curve: JwaCurve?): Int? {
-    return multiCodecsByAlgorithm[Pair(algorithm, curve)]
+  public fun getAlgorithmMultiCodec(algorithmId: AlgorithmId): Int? {
+    return multiCodecsByAlgorithmId[algorithmId]
   }
 }

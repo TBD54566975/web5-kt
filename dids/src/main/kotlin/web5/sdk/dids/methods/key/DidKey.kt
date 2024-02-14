@@ -5,11 +5,10 @@ import foundation.identity.did.DIDDocument
 import foundation.identity.did.VerificationMethod
 import io.ipfs.multibase.Multibase
 import web5.sdk.common.Varint
+import web5.sdk.crypto.AlgorithmId
 import web5.sdk.crypto.Crypto
 import web5.sdk.crypto.KeyManager
 import web5.sdk.crypto.Secp256k1
-import web5.sdk.crypto.Jwa
-import web5.sdk.crypto.JwaCurve
 import web5.sdk.dids.CreateDidOptions
 import web5.sdk.dids.Did
 import web5.sdk.dids.DidMethod
@@ -35,8 +34,7 @@ import java.net.URI
  * ```
  */
 public class CreateDidKeyOptions(
-  public val algorithm: Jwa = Jwa.ES256K,
-  public val curve: JwaCurve? = null
+  public val algorithmId: AlgorithmId = AlgorithmId.secp256k1,
 ) : CreateDidOptions
 
 /**
@@ -85,16 +83,16 @@ public class DidKey(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
     override fun create(keyManager: KeyManager, options: CreateDidKeyOptions?): DidKey {
       val opts = options ?: CreateDidKeyOptions()
 
-      val keyAlias = keyManager.generatePrivateKey(opts.algorithm, opts.curve)
+      val keyAlias = keyManager.generatePrivateKey(opts.algorithmId)
       val publicKey = keyManager.getPublicKey(keyAlias)
       var publicKeyBytes = Crypto.publicKeyToBytes(publicKey)
 
-      if (opts.algorithm == Jwa.ES256K) {
+      if (opts.algorithmId == AlgorithmId.secp256k1) {
         publicKeyBytes = Secp256k1.compressPublicKey(publicKeyBytes)
       }
 
-      val multiCodec = Crypto.getAlgorithmMultiCodec(opts.algorithm, opts.curve)
-        ?: throw UnsupportedOperationException("${opts.curve} curve not supported")
+      val multiCodec = Crypto.getAlgorithmMultiCodec(opts.algorithmId)
+        ?: throw UnsupportedOperationException("${opts.algorithmId.curveName} curve not supported")
 
       val multiCodecBytes = Varint.encode(multiCodec)
       val idBytes = multiCodecBytes + publicKeyBytes

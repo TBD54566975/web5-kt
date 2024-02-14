@@ -111,6 +111,7 @@ public enum class AlgorithmId(public val curveName: String, public val algorithm
     @JvmOverloads
     public fun parse(curve: JwaCurve?, algorithm: Jwa? = null): AlgorithmId {
       return when (algorithm to curve) {
+        // todo do i need to add the null algo or null curve cases?
         Jwa.ES256K to JwaCurve.SECP256K1 -> secp256k1
         Jwa.EdDSA to JwaCurve.Ed25519 -> Ed25519
         null to JwaCurve.Ed25519 -> Ed25519

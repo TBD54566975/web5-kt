@@ -37,8 +37,8 @@ public class InMemoryKeyManager : KeyManager {
    * @return The key ID of the generated private key.
    */
   // TODO: have caller call in with AlgorithmId instead of algorithm + curve combo?
-  override fun generatePrivateKey(algorithm: Jwa, curve: JwaCurve?, options: KeyGenOptions?): String {
-    val jwk = Crypto.generatePrivateKey(algorithm, curve, options)
+  override fun generatePrivateKey(algorithmId: AlgorithmId, options: KeyGenOptions?): String {
+    val jwk = Crypto.generatePrivateKey(algorithmId, options)
     keyStore[jwk.keyID] = jwk
 
     return jwk.keyID

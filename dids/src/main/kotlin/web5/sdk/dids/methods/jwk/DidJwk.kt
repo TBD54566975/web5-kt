@@ -8,9 +8,8 @@ import foundation.identity.did.VerificationMethod
 import foundation.identity.did.parser.ParserException
 import web5.sdk.common.Convert
 import web5.sdk.common.EncodingFormat
+import web5.sdk.crypto.AlgorithmId
 import web5.sdk.crypto.KeyManager
-import web5.sdk.crypto.Jwa
-import web5.sdk.crypto.JwaCurve
 import web5.sdk.dids.CreateDidOptions
 import web5.sdk.dids.Did
 import web5.sdk.dids.DidMethod
@@ -39,8 +38,7 @@ import java.text.ParseException
  * ```
  */
 public class CreateDidJwkOptions(
-  public val algorithm: Jwa = Jwa.ES256K,
-  public val curve: JwaCurve? = null
+  public val algorithmId: AlgorithmId? = AlgorithmId.secp256k1,
 ) : CreateDidOptions
 
 /**
@@ -90,7 +88,8 @@ public class DidJwk(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
     override fun create(keyManager: KeyManager, options: CreateDidJwkOptions?): DidJwk {
       val opts = options ?: CreateDidJwkOptions()
 
-      val keyAlias = keyManager.generatePrivateKey(opts.algorithm, opts.curve)
+      // todo do i need this null coalescing?
+      val keyAlias = keyManager.generatePrivateKey(opts.algorithmId ?: AlgorithmId.secp256k1)
       val publicKey = keyManager.getPublicKey(keyAlias)
 
       val base64Encoded = Convert(publicKey.toJSONString()).toBase64Url(padding = false)

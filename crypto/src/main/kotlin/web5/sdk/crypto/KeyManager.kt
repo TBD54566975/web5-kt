@@ -27,8 +27,7 @@ public interface KeyManager {
    * unauthorized access and ensuring cryptographic strength according to the provided parameters.
    */
   public fun generatePrivateKey(
-    algorithm: Jwa,
-    curve: JwaCurve? = null,
+    algorithmId: AlgorithmId,
     options: KeyGenOptions? = null): String
 
   /**

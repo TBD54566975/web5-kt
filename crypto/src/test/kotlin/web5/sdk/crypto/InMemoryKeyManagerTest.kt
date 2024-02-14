@@ -18,7 +18,7 @@ class InMemoryKeyManagerTest {
   @Test
   fun `test alias is consistent`() {
     val keyManager = InMemoryKeyManager()
-    val alias = keyManager.generatePrivateKey(Jwa.ES256K)
+    val alias = keyManager.generatePrivateKey(AlgorithmId.secp256k1)
     val publicKey = keyManager.getPublicKey(alias)
     val defaultAlias = keyManager.getDeterministicAlias(publicKey)
 
@@ -28,7 +28,7 @@ class InMemoryKeyManagerTest {
   @Test
   fun `exception is thrown when kid not found`() {
     val keyManager = InMemoryKeyManager()
-    val jwk = Crypto.generatePrivateKey(Jwa.ES256K)
+    val jwk = Crypto.generatePrivateKey(AlgorithmId.secp256k1)
     val exception = assertThrows<IllegalArgumentException> {
       keyManager.getDeterministicAlias(jwk.toPublicJWK())
     }
@@ -37,7 +37,7 @@ class InMemoryKeyManagerTest {
 
   @Test
   fun `public key is available after import`() {
-    val jwk = Crypto.generatePrivateKey(Jwa.ES256K)
+    val jwk = Crypto.generatePrivateKey(AlgorithmId.secp256k1)
     val keyManager = InMemoryKeyManager()
 
     val alias = keyManager.import(jwk)
@@ -48,7 +48,7 @@ class InMemoryKeyManagerTest {
 
   @Test
   fun `public keys can be imported`() {
-    val jwk = Crypto.generatePrivateKey(Jwa.ES256K)
+    val jwk = Crypto.generatePrivateKey(AlgorithmId.secp256k1)
     val keyManager = InMemoryKeyManager()
 
     val alias = keyManager.import(jwk.toPublicJWK())
@@ -56,6 +56,7 @@ class InMemoryKeyManagerTest {
     assertEquals(jwk.toPublicJWK(), keyManager.getPublicKey(alias))
   }
 
+  // todo should this test actually assert an exception thrown?
   @Test
   fun `key without kid can be imported`() {
     val jwk = ECKeyGenerator(Curve.SECP256K1)
@@ -74,7 +75,7 @@ class InMemoryKeyManagerTest {
   @Test
   fun `export returns all keys`() {
     val keyManager = InMemoryKeyManager()
-    keyManager.generatePrivateKey(Jwa.EdDSA, JwaCurve.Ed25519)
+    keyManager.generatePrivateKey(AlgorithmId.Ed25519)
 
     val keySet = keyManager.export()
     assertEquals(1, keySet.size)

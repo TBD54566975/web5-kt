@@ -20,7 +20,7 @@ class AwsKeyManagerTest {
   @Disabled("Needs an AWS connection")
   fun `test key generation`() {
     val awsKeyManager = AwsKeyManager()
-    val alias = awsKeyManager.generatePrivateKey(Jwa.ES256K)
+    val alias = awsKeyManager.generatePrivateKey(AlgorithmId.secp256k1)
     val publicKey = awsKeyManager.getPublicKey(alias)
 
     assertEquals(alias, publicKey.keyID)
@@ -33,7 +33,7 @@ class AwsKeyManagerTest {
   @Disabled("Needs an AWS connection")
   fun `test alias is stable`() {
     val awsKeyManager = AwsKeyManager()
-    val alias = awsKeyManager.generatePrivateKey(Jwa.ES256K)
+    val alias = awsKeyManager.generatePrivateKey(AlgorithmId.secp256k1)
     val publicKey = awsKeyManager.getPublicKey(alias)
     val defaultAlias = awsKeyManager.getDeterministicAlias(publicKey)
 
@@ -44,7 +44,7 @@ class AwsKeyManagerTest {
   @Disabled("Needs an AWS connection")
   fun `test signing`() {
     val awsKeyManager = AwsKeyManager()
-    val alias = awsKeyManager.generatePrivateKey(Jwa.ES256K)
+    val alias = awsKeyManager.generatePrivateKey(AlgorithmId.secp256k1)
     val signature = awsKeyManager.sign(alias, signingInput)
 
     //Verify the signature with BouncyCastle via Crypto
@@ -64,7 +64,7 @@ class AwsKeyManagerTest {
     val customisedKeyManager = AwsKeyManager(kmsClient = kmsClient)
 
     assertThrows<AmazonServiceException> {
-      customisedKeyManager.generatePrivateKey(Jwa.ES256K)
+      customisedKeyManager.generatePrivateKey(AlgorithmId.secp256k1)
     }
   }
 }
