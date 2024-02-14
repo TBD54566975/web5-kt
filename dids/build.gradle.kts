@@ -5,15 +5,18 @@ plugins {
 
 repositories {
   mavenCentral()
-  maven("https://repo.danubetech.com/repository/maven-public")
-  maven("https://jitpack.io")
-  maven("https://jcenter.bintray.com/")
-  maven("https://repository.jboss.org/nexus/content/repositories/thirdparty-releases/")
   // temp maven repo for danubetech
   maven {
     name = "tbd-danubetech-temp"
     url = uri("https://blockxyz.jfrog.io/artifactory/danubetech-temp/")
+    mavenContent {
+      releasesOnly()
+    }
   }
+  maven("https://repo.danubetech.com/repository/maven-public")
+  maven("https://jitpack.io")
+  maven("https://jcenter.bintray.com/")
+  maven("https://repository.jboss.org/nexus/content/repositories/thirdparty-releases/")
 }
 
 dependencies {
