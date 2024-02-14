@@ -27,6 +27,8 @@ allprojects {
       force("com.google.protobuf:protobuf-javalite:3.19.6")
       // Addresss https://github.com/TBD54566975/web5-kt/issues/243
       force("com.google.guava:guava:32.0.0-android")
+      // Addresses https://github.com/TBD54566975/web5-kt/issues/244
+      force("com.squareup.okio:okio:3.6.0")
     }
   }
 }
