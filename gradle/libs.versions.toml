@@ -30,7 +30,6 @@ com_nfeld_jsonpathkt = "2.0.1"
 com_nimbusds = "9.34"
 com_squareup_okhttp3 = "4.12.0"
 com_willowtreeapps_assertk = "0.27.0"
-decentralized_identity_did_common_java = "1.9.0"
 dnsjava = "3.5.2"
 io_github_erdtman_java_json_canonicalization = "1.1"
 io_github_oshai_kotlin_logging = "6.0.2"
@@ -48,7 +47,6 @@ comNfeldJsonpathkt = { module = "com.nfeld.jsonpathkt:jsonpathkt", version.ref =
 comNimbusdsJoseJwt = { module = "com.nimbusds:nimbus-jose-jwt", version.ref = "com_nimbusds" }
 comSquareupOkhttp3 = { module = "com.squareup.okhttp3:okhttp-dnsoverhttps", version.ref = "com_squareup_okhttp3" }
 comWillowtreeappsAssertk = { module = "com.willowtreeapps.assertk:assertk", version.ref = "com_willowtreeapps_assertk" }
-decentralizedIdentityDidCommonJava= { module = "decentralized-identity:did-common-java", version.ref = "decentralized_identity_did_common_java" }
 dnsJava = { module = "dnsjava:dnsjava", version.ref = "dnsjava" }
 orgBouncycastleBcprov = { module = "org.bouncycastle:bcprov-jdk15to18", version.ref = "org_bouncycastle" }
 orgBouncycastleBcpkix = { module = "org.bouncycastle:bcpkix-jdk15to18", version.ref = "org_bouncycastle" }

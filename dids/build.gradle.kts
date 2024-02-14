@@ -26,7 +26,7 @@ dependencies {
    *
    * Change and move to "implementation" when completed
    */
-  api(libs.decentralizedIdentityDidCommonJava)
+//  api(libs.decentralizedIdentityDidCommonJava)
 
   // Project
   implementation(project(":common"))
