@@ -9,6 +9,11 @@ repositories {
   maven("https://jitpack.io")
   maven("https://jcenter.bintray.com/")
   maven("https://repository.jboss.org/nexus/content/repositories/thirdparty-releases/")
+  // temp maven repo for danubetech
+  maven {
+    name = "tbd-danubetech-temp"
+    url = uri("https://blockxyz.jfrog.io/artifactory/danubetech-temp/")
+  }
 }
 
 dependencies {
