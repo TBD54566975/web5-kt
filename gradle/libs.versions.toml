@@ -12,6 +12,10 @@
 # up the same version. This will guarantee that submodule test suites are running
 # in the correct ClassLoading environment aligned with the Web5 platform.
 #
+# WARNING: The manual "force" clauses in "./build.gradle.kts" will override
+# anything we declare here. If you're wondering why dependencies (and transitive deps)
+# aren't resolving as declared here, check there.
+#
 # More about Gradle Version Catalogs:
 # https://docs.gradle.org/current/userguide/platforms.html
 #
