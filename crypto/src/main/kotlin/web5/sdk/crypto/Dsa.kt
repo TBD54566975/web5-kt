@@ -106,20 +106,15 @@ public enum class AlgorithmId(public val curveName: String, public val algorithm
      * Converts JwaCurve and Jwa combination into a valid AlgorithmId.
      *
      * @param curve JwaCurve
-     * @param algorithm Jwa
      * @return AlgorithmId that matches the provided curve and algorithm combination
      * @throws IllegalArgumentException if the combination of curve and algorithm is not supported
      */
-    @JvmOverloads
-    public fun from(curve: JwaCurve?, algorithm: Jwa? = null): AlgorithmId {
-      return when (algorithm to curve) {
-        // todo do i need to add the null algo or null curve cases?
-        Jwa.ES256K to JwaCurve.secp256k1 -> secp256k1
-        Jwa.EdDSA to JwaCurve.Ed25519 -> Ed25519
-        null to JwaCurve.Ed25519 -> Ed25519
+    public fun from(curve: JwaCurve?): AlgorithmId {
+      return when (curve) {
+        JwaCurve.secp256k1 -> secp256k1
+        JwaCurve.Ed25519 -> Ed25519
         else -> throw IllegalArgumentException(
-          "Unknown combination of algorithm to curve: " +
-            "${algorithm?.name} to ${curve?.name}"
+          "Unknown curve to match to a known algorithmId: ${curve?.name}"
         )
       }
     }
