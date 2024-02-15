@@ -9,7 +9,9 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import web5.sdk.common.Convert
+import web5.sdk.crypto.AlgorithmId
 import web5.sdk.crypto.InMemoryKeyManager
+import web5.sdk.crypto.Jwa
 import web5.sdk.dids.DidResolutionResult
 import web5.sdk.dids.DidResolvers
 import web5.sdk.testing.TestVectors
@@ -78,7 +80,7 @@ class DidJwkTest {
     @Test
     fun `private key throws exception`() {
       val manager = InMemoryKeyManager()
-      manager.generatePrivateKey(JWSAlgorithm.ES256K)
+      manager.generatePrivateKey(AlgorithmId.secp256k1)
       val privateJwk = JWK.parse(manager.export().first())
       val encodedPrivateJwk = Convert(privateJwk.toJSONString()).toBase64Url(padding = false)
 

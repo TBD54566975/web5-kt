@@ -1,7 +1,6 @@
 package web5.sdk.dids.methods.dht
 
 import com.nimbusds.jose.JWSAlgorithm
-import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.JWK
 import foundation.identity.did.DID
 import foundation.identity.did.DIDDocument
@@ -19,6 +18,7 @@ import org.xbill.DNS.TXTRecord
 import web5.sdk.common.Convert
 import web5.sdk.common.EncodingFormat
 import web5.sdk.common.ZBase32
+import web5.sdk.crypto.AlgorithmId
 import web5.sdk.crypto.Crypto
 import web5.sdk.crypto.Ed25519
 import web5.sdk.crypto.KeyManager
@@ -133,7 +133,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
     val opts = options ?: CreateDidDhtOptions()
 
     // create identity key
-    val keyAlias = keyManager.generatePrivateKey(JWSAlgorithm.EdDSA, Curve.Ed25519)
+    val keyAlias = keyManager.generatePrivateKey(AlgorithmId.Ed25519)
     val publicKey = keyManager.getPublicKey(keyAlias)
 
     // build DID Document
