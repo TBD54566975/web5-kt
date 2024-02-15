@@ -7,19 +7,43 @@ repositories {
   mavenCentral()
 }
 
-val bouncy_castle_version = "1.77"
-val jackson_version = "2.14.2"
-
 dependencies {
-  api("com.nimbusds:nimbus-jose-jwt:9.34")
-  implementation("com.google.crypto.tink:tink:1.10.0")
-  implementation("org.bouncycastle:bcprov-jdk15to18:$bouncy_castle_version")
-  implementation("org.bouncycastle:bcpkix-jdk15to18:$bouncy_castle_version")
+
+  /**
+   * Maintainers - please do not declare versioning here at the module level;
+   * versioning is centralized for the platform in $projectRoot/gradle/libs.versions.toml
+   *
+   * Deps are declared in alphabetical order.
+   */
+
+  // API
+  /*
+   * API Leak: https://github.com/TBD54566975/web5-kt/issues/229
+   *
+   * Change and move to "implementation" when completed
+   */
+  api(libs.comNimbusdsJoseJwt)
+  /*
+   * API Leak: https://github.com/TBD54566975/web5-kt/issues/230
+   *
+   * Change and move to "implementation" when completed
+   */
+  api(libs.comAmazonawsAwsKms)
+
+  // Project
   implementation(project(":common"))
 
-  api("com.amazonaws:aws-java-sdk-kms:1.12.538")
+  // Implementation
+  implementation(libs.comGoogleCryptoTink)
+  implementation(libs.bundles.orgBouncycastle)
+  implementation(libs.comFasterXmlJacksonModuleKotlin)
 
-  testImplementation("com.fasterxml.jackson.module:jackson-module-kotlin:$jackson_version")
+  // Test
+  /**
+   * Test dependencies may declare direct versions; they are not exported
+   * and therefore are within the remit of this module to self-define
+   * if desired.
+   */
   testImplementation(kotlin("test"))
   testImplementation(project(":testing"))
 }

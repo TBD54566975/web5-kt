@@ -3,7 +3,7 @@ name: 🐛 Bug Report
 about: Thank you for taking the time, please report a reproducible bug
 title: "[Bug] <Bug Title Here>"
 labels: bug
-assignees: nitro-neal, andresuribe87, mistermoe
+assignees: nitro-neal, jiyoontbd, mistermoe
 
 ---
 

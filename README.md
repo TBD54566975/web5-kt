@@ -57,6 +57,20 @@ If you want to build an artifact locally, you can do so by running the following
 ./gradlew publishToMavenLocal -PskipSigning=true -Pversion={your-local-version-name}
 ```
 
+## Dependency Management
+As Web5 is a platform intended to run in a single `ClassLoader`, 
+versions and dependencies must be aligned among the subprojects
+(sometimes called modules) of this project. To address, we declare
+versions in `gradle/libs.versions.toml` and import references defined
+there in the subproject `build.gradle.kts` files. More docs on this 
+approach using Gradle Version Catalogs is at the top of `gradle/libs.versions.toml`.
+
+We have a secondary mechanism to force dependency upgrades of transitive
+deps in the case we encounter security vulnerabilities we do not directly
+depend upon. That config is located in the `resolutionStrategy` section of 
+`./build.gradle.kts`. Notes for applying fixes for security vulnerabilities
+are documented there.
+
 ## Prerequisites
 
 Install java version 11. If you're installing a higher version, it must be compatible with Gradle 8.2.

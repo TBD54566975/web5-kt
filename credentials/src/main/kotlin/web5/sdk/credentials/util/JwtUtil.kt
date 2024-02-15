@@ -19,6 +19,7 @@ import web5.sdk.dids.findAssertionMethodById
 import java.security.SignatureException
 
 private const val JsonWebKey2020 = "JsonWebKey2020"
+private const val JsonWebKey = "JsonWebKey"
 
 /**
  * Util class for common shared JWT methods.
@@ -134,10 +135,11 @@ public object JwtUtil {
           "a DID Document Verification Method with an Assertion verification relationship"
       )
 
-    require(assertionMethod.isType(JsonWebKey2020) && assertionMethod.publicKeyJwk != null) {
+    require((assertionMethod.isType(JsonWebKey2020) || assertionMethod.isType(JsonWebKey))  &&
+      assertionMethod.publicKeyJwk != null) {
       throw SignatureException(
         "Signature verification failed: Expected kid in JWS header to dereference " +
-          "a DID Document Verification Method of type $JsonWebKey2020 with a publicKeyJwk"
+          "a DID Document Verification Method of type $JsonWebKey2020 or $JsonWebKey with a publicKeyJwk"
       )
     }
 
