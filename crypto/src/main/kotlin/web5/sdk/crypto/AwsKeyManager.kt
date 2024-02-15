@@ -51,7 +51,7 @@ public class AwsKeyManager @JvmOverloads constructor(
   private val algorithmDetails = mapOf(
     AlgorithmId.secp256k1 to AlgorithmDetails(
       algorithm = Jwa.ES256K,
-      curve = JwaCurve.SECP256K1,
+      curve = JwaCurve.secp256k1,
       keySpec = KeySpec.ECC_SECG_P256K1,
       signingAlgorithm = SigningAlgorithmSpec.ECDSA_SHA_256,
       newDigest = { SHA256Digest() }

@@ -6,15 +6,10 @@ import com.nimbusds.jose.jwk.Curve
 /**
  * JSON Web Algorithm Curve.
  *
- * @property curveName name of the curve.
  */
-public enum class JwaCurve(public val curveName: String) {
-  // todo nimbusds had identifier and oid but i don't think i need it
-//  SECP256K1("secp256k1", "secp256k1", "1.3.132.0.10"),
-//  Ed25519("Ed25519", "Ed25519", null);
-
-  SECP256K1("secp256k1"),
-  Ed25519("Ed25519");
+public enum class JwaCurve {
+  secp256k1,
+  Ed25519;
 
   public companion object {
     /**
@@ -27,8 +22,8 @@ public enum class JwaCurve(public val curveName: String) {
     public fun parse(curveName: String?): JwaCurve? {
       return if (!curveName.isNullOrEmpty()) {
         when (curveName) {
-          SECP256K1.curveName -> SECP256K1
-          Ed25519.curveName -> Ed25519
+          secp256k1.name -> secp256k1
+          Ed25519.name -> Ed25519
           else -> throw IllegalArgumentException("Unknown curve: $curveName")
         }
       } else {
@@ -45,7 +40,7 @@ public enum class JwaCurve(public val curveName: String) {
      */
     public fun toJwkCurve(curve: JwaCurve): Curve {
       return when (curve) {
-        SECP256K1 -> Curve.SECP256K1
+        secp256k1 -> Curve.SECP256K1
         Ed25519 -> Curve.Ed25519
       }
     }
@@ -103,8 +98,8 @@ public enum class Jwa {
  * @property algorithmName name of the algorithm
  */
 public enum class AlgorithmId(public val curveName: String, public val algorithmName: String? = null) {
-  secp256k1(JwaCurve.SECP256K1.curveName, Jwa.ES256K.name),
-  Ed25519(JwaCurve.Ed25519.curveName);
+  secp256k1(JwaCurve.secp256k1.name, Jwa.ES256K.name),
+  Ed25519(JwaCurve.Ed25519.name);
 
   public companion object {
     /**
@@ -119,7 +114,7 @@ public enum class AlgorithmId(public val curveName: String, public val algorithm
     public fun from(curve: JwaCurve?, algorithm: Jwa? = null): AlgorithmId {
       return when (algorithm to curve) {
         // todo do i need to add the null algo or null curve cases?
-        Jwa.ES256K to JwaCurve.SECP256K1 -> secp256k1
+        Jwa.ES256K to JwaCurve.secp256k1 -> secp256k1
         Jwa.EdDSA to JwaCurve.Ed25519 -> Ed25519
         null to JwaCurve.Ed25519 -> Ed25519
         else -> throw IllegalArgumentException(
