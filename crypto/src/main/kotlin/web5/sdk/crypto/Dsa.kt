@@ -103,8 +103,8 @@ public enum class Jwa {
  * @property algorithmName name of the algorithm
  */
 public enum class AlgorithmId(public val curveName: String, public val algorithmName: String? = null) {
-  secp256k1("secp256k1", "ES256K"),
-  Ed25519("Ed25519");
+  secp256k1(JwaCurve.SECP256K1.curveName, Jwa.ES256K.name),
+  Ed25519(JwaCurve.Ed25519.curveName);
 
   public companion object {
     /**
