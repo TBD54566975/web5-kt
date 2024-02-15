@@ -64,6 +64,12 @@ public interface KeyGenerator {
   /**  Indicates the algorithm intended to be used with the key. */
   public val algorithm: Jwa
 
+  /** KeyType in String format (OKP, EC, etc.). */
+  public val keyType: String
+
+  /** The curve used for the key generation. */
+  public val curve: JwaCurve
+
   /** Generates a private key. */
   public fun generatePrivateKey(options: KeyGenOptions? = null): JWK
 

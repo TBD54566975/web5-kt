@@ -32,6 +32,9 @@ import java.security.SignatureException
 
 public object Ed25519 : KeyGenerator, Signer {
   override val algorithm: Jwa = Jwa.EdDSA
+  override val curve: JwaCurve = JwaCurve.Ed25519
+  override val keyType: String = "OKP"
+
 
   public const val PUB_MULTICODEC: Int = 0xed
   public const val PRIV_MULTICODEC: Int = 0x1300
@@ -139,6 +142,7 @@ public object Ed25519 : KeyGenerator, Signer {
     require(!key.isPrivate) { "key must be public" }
     validateKey(key)
   }
+
   /**
    * Validates the provided [JWK] (JSON Web Key) to ensure it conforms to the expected key type and format.
    *
@@ -156,6 +160,7 @@ public object Ed25519 : KeyGenerator, Signer {
     require(key.isPrivate) { "key must be private" }
     validateKey(key)
   }
+
   /**
    * Validates the provided [JWK] (JSON Web Key) to ensure it conforms to the expected key type and format.
    *

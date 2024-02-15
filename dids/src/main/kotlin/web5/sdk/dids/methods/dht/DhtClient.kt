@@ -19,6 +19,7 @@ import org.xbill.DNS.Message
 import web5.sdk.common.ZBase32
 import web5.sdk.crypto.Ed25519
 import web5.sdk.crypto.Jwa
+import web5.sdk.crypto.JwaCurve
 import web5.sdk.crypto.KeyManager
 import web5.sdk.dids.exceptions.PkarrRecordNotFoundException
 import web5.sdk.dids.exceptions.PkarrRecordResponseException
@@ -133,11 +134,8 @@ internal class DhtClient(
     fun createBep44PutRequest(manager: KeyManager, keyAlias: String, message: Message): Bep44Message {
       // get the public key to verify it is an Ed25519 key
       val pubKey = manager.getPublicKey(keyAlias)
-      require(
-        // todo changed this to specifying pubkey keytype, but want to use Ed25519.keyType (now removed)
-        pubKey is OctetKeyPair &&
-          pubKey.algorithm == Jwa.toJwsAlgorithm(Ed25519.algorithm)
-      ) {
+      val curve = pubKey.toJSONObject()["crv"]
+      require(curve == Ed25519.curve.name) {
         "Must supply an Ed25519 key"
       }
 
@@ -187,11 +185,9 @@ internal class DhtClient(
     fun signBep44Message(manager: KeyManager, keyAlias: String, seq: Long, v: ByteArray): Bep44Message {
       // get the public key to verify it is an Ed25519 key
       val pubKey = manager.getPublicKey(keyAlias)
-      require(
-        // todo changed this to specifying pubkey keytype, but want to use Ed25519.keyType (now removed)
-        pubKey is OctetKeyPair &&
-          pubKey.algorithm == Jwa.toJwsAlgorithm(Ed25519.algorithm)
-      ) {
+
+      val curve = pubKey.toJSONObject()["crv"]
+      require(curve == Ed25519.curve.name) {
         "Must supply an Ed25519 key"
       }
 

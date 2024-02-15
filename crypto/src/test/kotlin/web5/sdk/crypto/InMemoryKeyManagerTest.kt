@@ -56,7 +56,6 @@ class InMemoryKeyManagerTest {
     assertEquals(jwk.toPublicJWK(), keyManager.getPublicKey(alias))
   }
 
-  // todo should this test actually assert an exception thrown?
   @Test
   fun `key without kid can be imported`() {
     val jwk = ECKeyGenerator(Curve.SECP256K1)

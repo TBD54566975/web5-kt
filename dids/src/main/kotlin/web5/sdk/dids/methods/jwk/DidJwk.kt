@@ -24,11 +24,8 @@ import java.text.ParseException
 /**
  * Specifies options for creating a new "did:jwk" Decentralized Identifier (DID).
  *
- * @property algorithm Specifies the algorithm to be used for key creation.
+ * @property algorithmId Specifies the algorithmId to be used for key creation.
  *                     Defaults to ES256K (Elliptic Curve Digital Signature Algorithm with SHA-256 and secp256k1 curve).
- * @property curve Specifies the elliptic curve to be used with the algorithm.
- *                 Optional and can be null if the algorithm does not require an explicit curve specification.
- *
  * @constructor Creates an instance of [CreateDidJwkOptions] with the provided [algorithm] and [curve].
  *
  * ### Usage Example:
@@ -38,7 +35,7 @@ import java.text.ParseException
  * ```
  */
 public class CreateDidJwkOptions(
-  public val algorithmId: AlgorithmId? = AlgorithmId.secp256k1,
+  public val algorithmId: AlgorithmId = AlgorithmId.secp256k1,
 ) : CreateDidOptions
 
 /**
@@ -88,8 +85,7 @@ public class DidJwk(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
     override fun create(keyManager: KeyManager, options: CreateDidJwkOptions?): DidJwk {
       val opts = options ?: CreateDidJwkOptions()
 
-      // todo do i need this null coalescing? it's there by default during CreateDidJwkOptions constructor.
-      val keyAlias = keyManager.generatePrivateKey(opts.algorithmId ?: AlgorithmId.secp256k1)
+      val keyAlias = keyManager.generatePrivateKey(opts.algorithmId)
       val publicKey = keyManager.getPublicKey(keyAlias)
 
       val base64Encoded = Convert(publicKey.toJSONString()).toBase64Url(padding = false)

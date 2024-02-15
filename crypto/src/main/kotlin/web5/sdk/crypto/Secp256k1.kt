@@ -59,6 +59,8 @@ public object Secp256k1 : KeyGenerator, Signer {
   }
 
   override val algorithm: Jwa = Jwa.ES256K
+  override val curve: JwaCurve = JwaCurve.secp256k1
+  override val keyType: String = "EC"
 
   /** [reference](https://github.com/multiformats/multicodec/blob/master/table.csv#L92). */
   public const val PUB_MULTICODEC: Int = 0xe7
