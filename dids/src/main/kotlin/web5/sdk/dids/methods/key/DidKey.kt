@@ -20,12 +20,9 @@ import java.net.URI
 /**
  * Specifies options for creating a new "did:key" Decentralized Identifier (DID).
  *
- * @property algorithm Specifies the algorithm to be used for key creation.
- *                     Defaults to ES256K (Elliptic Curve Digital Signature Algorithm with SHA-256 and secp256k1 curve).
- * @property curve Specifies the elliptic curve to be used with the algorithm.
- *                 Optional and can be null if the algorithm does not require an explicit curve specification.
- *
- * @constructor Creates an instance of [CreateDidKeyOptions] with the provided [algorithm] and [curve].
+ * @property algorithmId Specifies the algorithmId to be used for key creation.
+ *                       Defaults to ES256K (Elliptic Curve Digital Signature Algorithm with SHA-256 and secp256k1 curve).
+ * @constructor Creates an instance of [CreateDidKeyOptions] with the provided [algorithmId].
  *
  * ### Usage Example:
  * ```
@@ -75,7 +72,7 @@ public class DidKey(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
      * **Note**: Defaults to ES256K if no options are provided
      *
      * @param keyManager A [KeyManager] instance where the new key will be stored.
-     * @param options Optional parameters ([CreateDidKeyOptions]) to specify algorithm and curve during key creation.
+     * @param options Optional parameters ([CreateDidKeyOptions]) to specify algorithmId during key creation.
      * @return A [DidKey] instance representing the newly created "did:key" DID.
      *
      * @throws UnsupportedOperationException if the specified curve is not supported.

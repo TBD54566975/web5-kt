@@ -81,8 +81,8 @@ public class AwsKeyManager @JvmOverloads constructor(
   )
 
   private fun getAlgorithmDetails(algorithmId: AlgorithmId): AlgorithmDetails {
-    return algorithmDetails[algorithmId] ?:
-    throw IllegalArgumentException("Algorithm ${algorithmId.algorithmName} is not supported")
+    return algorithmDetails[algorithmId]
+      ?: throw IllegalArgumentException("Algorithm ${algorithmId.algorithmName} is not supported")
   }
 
   private fun getAlgorithmDetails(keySpec: KeySpec): AlgorithmDetails {
@@ -94,11 +94,10 @@ public class AwsKeyManager @JvmOverloads constructor(
    * Generates and securely stores a private key based on the provided algorithm and options,
    * returning a unique alias that can be utilized to reference the generated key for future operations.
    *
-   * @param algorithm The cryptographic algorithm to use for key generation.
-   * @param curve (Optional) The elliptic curve to use (relevant for EC algorithms).
+   * @param algorithmId The algorithmId to use for key generation.
    * @param options (Optional) Additional options to control key generation behavior.
    * @return A unique alias (String) that can be used to reference the stored key.
-   * @throws IllegalArgumentException if the [algorithm] is not supported by AWS
+   * @throws IllegalArgumentException if the [algorithmId] is not supported by AWS
    * @throws [AWSKMSException] for any error originating from the [AWSKMS] client
    */
   override fun generatePrivateKey(algorithmId: AlgorithmId, options: KeyGenOptions?): String {

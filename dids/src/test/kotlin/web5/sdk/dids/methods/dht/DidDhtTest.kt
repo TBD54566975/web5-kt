@@ -21,9 +21,8 @@ import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.spy
 import org.mockito.kotlin.whenever
 import web5.sdk.common.ZBase32
+import web5.sdk.crypto.AlgorithmId
 import web5.sdk.crypto.InMemoryKeyManager
-import web5.sdk.crypto.Jwa
-import web5.sdk.crypto.JwaCurve
 import web5.sdk.dids.DidResolutionResult
 import web5.sdk.dids.PublicKeyPurpose
 import web5.sdk.dids.exceptions.InvalidIdentifierException
@@ -43,7 +42,7 @@ class DidDhtTest {
     @Test
     fun `did dht identifier`() {
       val manager = InMemoryKeyManager()
-      val keyAlias = manager.generatePrivateKey(Jwa.EdDSA, JwaCurve.Ed25519)
+      val keyAlias = manager.generatePrivateKey(AlgorithmId.Ed25519)
       val publicKey = manager.getPublicKey(keyAlias)
 
       val identifier = DidDht.getDidIdentifier(publicKey)
@@ -57,7 +56,7 @@ class DidDhtTest {
     @Test
     fun `validate identity key`() {
       val manager = InMemoryKeyManager()
-      val keyAlias = manager.generatePrivateKey(Jwa.EdDSA, JwaCurve.Ed25519)
+      val keyAlias = manager.generatePrivateKey(AlgorithmId.Ed25519)
       val publicKey = manager.getPublicKey(keyAlias)
       val identifier = DidDht.getDidIdentifier(publicKey)
 
@@ -115,7 +114,7 @@ class DidDhtTest {
     fun `create with another key and service`() {
       val manager = InMemoryKeyManager()
 
-      val otherKey = manager.generatePrivateKey(Jwa.ES256K, JwaCurve.SECP256K1)
+      val otherKey = manager.generatePrivateKey(AlgorithmId.secp256k1)
       val publicKeyJwk = manager.getPublicKey(otherKey).toPublicJWK()
       val publicKeyJwk2 = ECKeyGenerator(Curve.P_256).generate().toPublicJWK()
       val verificationMethodsToAdd: Iterable<Triple<JWK, Array<PublicKeyPurpose>, String?>> = listOf(
@@ -273,7 +272,7 @@ class DidDhtTest {
     fun `to and from DNS packet - complex DID`() {
       val manager = InMemoryKeyManager()
 
-      val otherKey = manager.generatePrivateKey(Jwa.ES256K, JwaCurve.SECP256K1)
+      val otherKey = manager.generatePrivateKey(AlgorithmId.secp256k1)
       val publicKeyJwk = manager.getPublicKey(otherKey).toPublicJWK()
       val verificationMethodsToAdd: Iterable<Triple<JWK, Array<PublicKeyPurpose>, String?>> = listOf(
         Triple(publicKeyJwk, arrayOf(PublicKeyPurpose.AUTHENTICATION, PublicKeyPurpose.ASSERTION_METHOD), null)
@@ -367,7 +366,7 @@ class Web5TestVectorsDidDht {
     testVectors.vectors.forEach { vector ->
       val keyManager = spy(InMemoryKeyManager())
       val identityKeyId = keyManager.import(listOf(vector.input.identityPublicJwk!!)).first()
-      doReturn(identityKeyId).whenever(keyManager).generatePrivateKey(Jwa.EdDSA, JwaCurve.Ed25519)
+      doReturn(identityKeyId).whenever(keyManager).generatePrivateKey(AlgorithmId.Ed25519)
 
       val verificationMethods = vector.input.additionalVerificationMethods?.map { verificationMethodInput ->
         val jwk = JWK.parse(verificationMethodInput.jwk)

@@ -80,7 +80,7 @@ public class DidJwk(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
      * **Note**: Defaults to ES256K if no options are provided
      *
      * @param keyManager A [KeyManager] instance where the new key will be stored.
-     * @param options Optional parameters ([CreateDidJwkOptions]) to specify algorithm and curve during key creation.
+     * @param options Optional parameters ([CreateDidJwkOptions]) to specify algorithmId during key creation.
      * @return A [DidJwk] instance representing the newly created "did:jwk" DID.
      *
      * @throws UnsupportedOperationException if the specified curve is not supported.
@@ -88,7 +88,7 @@ public class DidJwk(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
     override fun create(keyManager: KeyManager, options: CreateDidJwkOptions?): DidJwk {
       val opts = options ?: CreateDidJwkOptions()
 
-      // todo do i need this null coalescing?
+      // todo do i need this null coalescing? it's there by default during CreateDidJwkOptions constructor.
       val keyAlias = keyManager.generatePrivateKey(opts.algorithmId ?: AlgorithmId.secp256k1)
       val publicKey = keyManager.getPublicKey(keyAlias)
 

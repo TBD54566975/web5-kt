@@ -798,7 +798,7 @@ private interface VerificationMethodGenerator {
 
 /**
  * A [VerificationMethodSpec] where a [KeyManager] will be used to generate the underlying verification method keys.
- * The parameters [algorithm], [curve], and [options] will be forwarded to the keyManager.
+ * The parameters [algorithmId] and [options] will be forwarded to the keyManager.
  *
  * [relationships] will be used to determine the verification relationships in the DID Document being created.
  * */

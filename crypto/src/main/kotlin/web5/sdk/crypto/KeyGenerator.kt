@@ -1,7 +1,6 @@
 package web5.sdk.crypto
 
 import com.nimbusds.jose.jwk.JWK
-import com.nimbusds.jose.jwk.KeyType
 
 /**
  * `KeyGenOptions` serves as an interface defining options or parameters that influence
@@ -64,9 +63,6 @@ public interface KeyGenOptions
 public interface KeyGenerator {
   /**  Indicates the algorithm intended to be used with the key. */
   public val algorithm: Jwa
-
-  /** Indicates the cryptographic algorithm family used with the key. */
-  public val keyType: KeyType
 
   /** Generates a private key. */
   public fun generatePrivateKey(options: KeyGenOptions? = null): JWK

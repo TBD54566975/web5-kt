@@ -4,7 +4,6 @@ import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.crypto.bc.BouncyCastleProviderSingleton
 import com.nimbusds.jose.jwk.ECKey
 import com.nimbusds.jose.jwk.JWK
-import com.nimbusds.jose.jwk.KeyType
 import com.nimbusds.jose.jwk.KeyUse
 import com.nimbusds.jose.jwk.gen.ECKeyGenerator
 import com.nimbusds.jose.util.Base64URL
@@ -60,7 +59,6 @@ public object Secp256k1 : KeyGenerator, Signer {
   }
 
   override val algorithm: Jwa = Jwa.ES256K
-  override val keyType: KeyType = KeyType.EC
 
   /** [reference](https://github.com/multiformats/multicodec/blob/master/table.csv#L92). */
   public const val PUB_MULTICODEC: Int = 0xe7
@@ -294,7 +292,6 @@ public object Secp256k1 : KeyGenerator, Signer {
    *
    * This function checks the following:
    * - The key must be an instance of [ECKey].
-   * - The key type (`kty`) must be [KeyType.EC] (Elliptic Curve).
    *
    * If any of these checks fail, this function throws an [IllegalArgumentException] with
    * a descriptive error message.
@@ -315,11 +312,10 @@ public object Secp256k1 : KeyGenerator, Signer {
    * to safeguard against invalid key usage and potential vulnerabilities.
    *
    * @param key The [JWK] to validate.
-   * @throws IllegalArgumentException if the key is not of type [ECKey] or if the key type is not [KeyType.EC].
+   * @throws IllegalArgumentException if the key is not of type [ECKey].
    */
   public fun validateKey(key: JWK) {
     require(key is ECKey) { "private key must be an ECKey (kty: EC)" }
-    require(key.keyType == keyType) { "private key key type must be EC" }
   }
 
   /**

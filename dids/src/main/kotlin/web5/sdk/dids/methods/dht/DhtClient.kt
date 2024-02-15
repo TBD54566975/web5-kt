@@ -1,6 +1,7 @@
 package web5.sdk.dids.methods.dht
 
 import com.nimbusds.jose.jwk.JWK
+import com.nimbusds.jose.jwk.OctetKeyPair
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.okhttp.OkHttp
@@ -133,7 +134,8 @@ internal class DhtClient(
       // get the public key to verify it is an Ed25519 key
       val pubKey = manager.getPublicKey(keyAlias)
       require(
-        pubKey.keyType == Ed25519.keyType &&
+        // todo changed this to specifying pubkey keytype, but want to use Ed25519.keyType (now removed)
+        pubKey is OctetKeyPair &&
           pubKey.algorithm == Jwa.toJwsAlgorithm(Ed25519.algorithm)
       ) {
         "Must supply an Ed25519 key"
@@ -186,7 +188,8 @@ internal class DhtClient(
       // get the public key to verify it is an Ed25519 key
       val pubKey = manager.getPublicKey(keyAlias)
       require(
-        pubKey.keyType == Ed25519.keyType &&
+        // todo changed this to specifying pubkey keytype, but want to use Ed25519.keyType (now removed)
+        pubKey is OctetKeyPair &&
           pubKey.algorithm == Jwa.toJwsAlgorithm(Ed25519.algorithm)
       ) {
         "Must supply an Ed25519 key"

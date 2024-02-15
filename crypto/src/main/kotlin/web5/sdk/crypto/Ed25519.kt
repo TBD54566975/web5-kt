@@ -4,7 +4,6 @@ import com.google.crypto.tink.subtle.Ed25519Sign
 import com.google.crypto.tink.subtle.Ed25519Verify
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.jwk.JWK
-import com.nimbusds.jose.jwk.KeyType
 import com.nimbusds.jose.jwk.KeyUse
 import com.nimbusds.jose.jwk.OctetKeyPair
 import com.nimbusds.jose.jwk.gen.OctetKeyPairGenerator
@@ -14,7 +13,6 @@ import web5.sdk.common.Convert
 import web5.sdk.crypto.Ed25519.PRIV_MULTICODEC
 import web5.sdk.crypto.Ed25519.PUB_MULTICODEC
 import web5.sdk.crypto.Ed25519.algorithm
-import web5.sdk.crypto.Ed25519.keyType
 import java.security.GeneralSecurityException
 import java.security.SignatureException
 
@@ -28,14 +26,12 @@ import java.security.SignatureException
  * TODO: Insert example usage here.
  *
  * @property algorithm Specifies the JWS algorithm type. For Ed25519, this is `EdDSA`.
- * @property keyType Specifies the key type. For Ed25519, this is `OKP`.
  * @property PUB_MULTICODEC A byte array representing the multicodec prefix for an Ed25519 public key.
  * @property PRIV_MULTICODEC A byte array representing the multicodec prefix for an Ed25519 private key.
  */
 
 public object Ed25519 : KeyGenerator, Signer {
   override val algorithm: Jwa = Jwa.EdDSA
-  override val keyType: KeyType = KeyType.OKP
 
   public const val PUB_MULTICODEC: Int = 0xed
   public const val PRIV_MULTICODEC: Int = 0x1300
@@ -47,7 +43,7 @@ public object Ed25519 : KeyGenerator, Signer {
    * @return The generated private key in JWK format.
    */
   override fun generatePrivateKey(options: KeyGenOptions?): JWK {
-    return OctetKeyPairGenerator(JwaCurve.toJwkCurve(JwaCurve.Ed25519))
+    return OctetKeyPairGenerator(com.nimbusds.jose.jwk.Curve.Ed25519)
       .algorithm(JWSAlgorithm.EdDSA)
       .keyIDFromThumbprint(true)
       .keyUse(KeyUse.SIGNATURE)
@@ -86,7 +82,7 @@ public object Ed25519 : KeyGenerator, Signer {
     val base64UrlEncodedPrivateKey = Convert(privateKeyBytes).toBase64Url(padding = false)
     val base64UrlEncodedPublicKey = Convert(publicKeyBytes).toBase64Url(padding = false)
 
-    return OctetKeyPair.Builder(JwaCurve.toJwkCurve(JwaCurve.Ed25519), Base64URL(base64UrlEncodedPublicKey))
+    return OctetKeyPair.Builder(com.nimbusds.jose.jwk.Curve.Ed25519, Base64URL(base64UrlEncodedPublicKey))
       .algorithm(Jwa.toJwsAlgorithm(algorithm))
       .keyIDFromThumbprint()
       .d(Base64URL(base64UrlEncodedPrivateKey))
@@ -97,7 +93,7 @@ public object Ed25519 : KeyGenerator, Signer {
   override fun bytesToPublicKey(publicKeyBytes: ByteArray): JWK {
     val base64UrlEncodedPublicKey = Convert(publicKeyBytes).toBase64Url(padding = false)
 
-    return OctetKeyPair.Builder(JwaCurve.toJwkCurve(JwaCurve.Ed25519), Base64URL(base64UrlEncodedPublicKey))
+    return OctetKeyPair.Builder(com.nimbusds.jose.jwk.Curve.Ed25519, Base64URL(base64UrlEncodedPublicKey))
       .algorithm(Jwa.toJwsAlgorithm(algorithm))
       .keyIDFromThumbprint()
       .keyUse(KeyUse.SIGNATURE)
@@ -165,7 +161,6 @@ public object Ed25519 : KeyGenerator, Signer {
    *
    * This function checks the following:
    * - The key must be an instance of [OctetKeyPair].
-   * - The key type (`kty`) must be [KeyType.OKP] (Octet Key Pair).
    *
    * If any of these checks fail, this function throws an [IllegalArgumentException] with
    * a descriptive error message.
@@ -186,7 +181,7 @@ public object Ed25519 : KeyGenerator, Signer {
    * to safeguard against invalid key usage and potential vulnerabilities.
    *
    * @param key The [JWK] to validate.
-   * @throws IllegalArgumentException if the key is not of type [OctetKeyPair] or if the key type is not [KeyType.EC].
+   * @throws IllegalArgumentException if the key is not of type [OctetKeyPair].
    */
   private fun validateKey(key: JWK) {
     require(key is OctetKeyPair) { "key must be an Octet Key Pair (kty: OKP)" }

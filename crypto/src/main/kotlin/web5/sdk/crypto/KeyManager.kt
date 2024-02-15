@@ -18,17 +18,14 @@ public interface KeyManager {
    * Generates and securely stores a private key based on the provided algorithm and options,
    * returning a unique alias that can be utilized to reference the generated key for future operations.
    *
-   * @param algorithm The cryptographic algorithm to use for key generation.
-   * @param curve (Optional) The elliptic curve to use (relevant for EC algorithms).
+   * @param algorithmId The algorithmId to use for key generation.
    * @param options (Optional) Additional options to control key generation behavior.
    * @return A unique alias (String) that can be used to reference the stored key.
    *
    * Implementations should ensure secure storage of the generated keys, protecting against
    * unauthorized access and ensuring cryptographic strength according to the provided parameters.
    */
-  public fun generatePrivateKey(
-    algorithmId: AlgorithmId,
-    options: KeyGenOptions? = null): String
+  public fun generatePrivateKey(algorithmId: AlgorithmId, options: KeyGenOptions? = null): String
 
   /**
    * Retrieves the public key associated with a previously stored private key, identified by the provided alias.

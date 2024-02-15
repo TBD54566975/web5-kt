@@ -29,14 +29,12 @@ public class InMemoryKeyManager : KeyManager {
   private val keyStore: MutableMap<String, JWK> = HashMap()
 
   /**
-   * Generates a private key using specified algorithm and curve, and stores it in the in-memory keyStore.
+   * Generates a private key using specified algorithmId, and stores it in the in-memory keyStore.
    *
-   * @param algorithm The JWA algorithm identifier.
-   * @param curve The elliptic curve. Null for algorithms that do not use elliptic curves.
+   * @param algorithmId The algorithmId [AlgorithmId].
    * @param options Options for key generation, may include specific parameters relevant to the algorithm.
    * @return The key ID of the generated private key.
    */
-  // TODO: have caller call in with AlgorithmId instead of algorithm + curve combo?
   override fun generatePrivateKey(algorithmId: AlgorithmId, options: KeyGenOptions?): String {
     val jwk = Crypto.generatePrivateKey(algorithmId, options)
     keyStore[jwk.keyID] = jwk

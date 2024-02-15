@@ -5,8 +5,6 @@ import web5.sdk.crypto.Crypto.generatePrivateKey
 import web5.sdk.crypto.Crypto.publicKeyToBytes
 import web5.sdk.crypto.Crypto.sign
 
-public typealias CryptoAlgorithm = Pair<Jwa?, JwaCurve?>
-
 /**
  * Cryptography utility object providing key generation, signature creation, and other crypto-related functionalities.
  *
@@ -16,7 +14,7 @@ public typealias CryptoAlgorithm = Pair<Jwa?, JwaCurve?>
  * - Generate private keys ([generatePrivateKey])
  * - Create digital signatures ([sign])
  * - conversion from JWK <-> bytes ([publicKeyToBytes])
- * - Get relevant key generators and signers based on algorithm and curve type.
+ * - Get relevant key generators and signers based on algorithmId.
  *
  * Internally, it utilizes predefined mappings to pair algorithms and curve types with their respective [KeyGenerator]
  * and [Signer] implementations, ensuring appropriate handlers are utilized for different cryptographic approaches.
@@ -30,7 +28,7 @@ public typealias CryptoAlgorithm = Pair<Jwa?, JwaCurve?>
  *
  * ### Key Points:
  * - Manages key generation and signing operations via predefined mappings to handle different crypto approaches.
- * - Provides mechanisms to perform actions (e.g., signing, key generation) dynamically based on algorithm and curve.
+ * - Provides mechanisms to perform actions (e.g., signing, key generation) dynamically based on algorithmId [AlgorithmId].
  *
  * @see KeyGenerator for key generation functionalities.
  * @see Signer for signing functionalities.
@@ -50,7 +48,6 @@ public object Crypto {
 
   private val multiCodecsByAlgorithmId = mapOf(
     AlgorithmId.secp256k1 to Secp256k1.PUB_MULTICODEC,
-    AlgorithmId.secp256k1 to Secp256k1.PUB_MULTICODEC,
     AlgorithmId.Ed25519 to Ed25519.PUB_MULTICODEC
   )
 
@@ -60,18 +57,15 @@ public object Crypto {
   )
 
   /**
-   * Generates a private key using the specified algorithm and curve, utilizing the appropriate [KeyGenerator].
+   * Generates a private key using the specified algorithmId, utilizing the appropriate [KeyGenerator].
    *
-   * @param algorithm The JWA algorithm identifier.
-   * @param curve The elliptic curve. Null for algorithms that do not use elliptic curves.
+   * @param algorithmId The algorithmId [AlgorithmId].
    * @param options Options for key generation, may include specific parameters relevant to the algorithm.
    * @return The generated private key as a JWK object.
    * @throws IllegalArgumentException if the provided algorithm or curve is not supported.
    */
   @JvmOverloads
-  public fun generatePrivateKey(
-    algorithmId: AlgorithmId,
-    options: KeyGenOptions? = null): JWK {
+  public fun generatePrivateKey(algorithmId: AlgorithmId, options: KeyGenOptions? = null): JWK {
     val keyGenerator = getKeyGenerator(algorithmId)
     return keyGenerator.generatePrivateKey(options)
   }
@@ -85,7 +79,7 @@ public object Crypto {
   public fun computePublicKey(privateKey: JWK): JWK {
     val rawCurve = privateKey.toJSONObject()["crv"]
     val curve = rawCurve?.let { JwaCurve.parse(it.toString()) }
-    val generator = getKeyGenerator(AlgorithmId.parse(curve, Jwa.parse(privateKey.algorithm?.name)))
+    val generator = getKeyGenerator(AlgorithmId.from(curve, Jwa.parse(privateKey.algorithm?.name)))
 
     return generator.computePublicKey(privateKey)
   }
@@ -104,9 +98,9 @@ public object Crypto {
   @JvmOverloads
   public fun sign(privateKey: JWK, payload: ByteArray, options: SignOptions? = null): ByteArray {
     val rawCurve = privateKey.toJSONObject()["crv"]
-    val curve = rawCurve?.let { JwaCurve.parse(it.toString()) }
+    val jwaCurve = rawCurve?.let { JwaCurve.parse(it.toString()) }
 
-    val signer = getSigner(AlgorithmId.parse(curve))
+    val signer = getSigner(AlgorithmId.from(jwaCurve))
 
     return signer.sign(privateKey, payload, options)
   }
@@ -129,19 +123,16 @@ public object Crypto {
    * @param algorithm Optional parameter: the algorithm used for signing/verification,
    *                  if not provided in the JWK. Default is null.
    *
-   * @throws IllegalArgumentException if neither the JWK nor the explicit parameter
+   * @throws IllegalArgumentException if neither the JWK nor the explicit algorithm parameter
    *                                  provides an algorithm.
    *
    */
   @JvmOverloads
-  @Suppress("SwallowedException")
   public fun verify(publicKey: JWK, signedPayload: ByteArray, signature: ByteArray, algorithm: Jwa? = null) {
-    // todo this feels bleh
-    val alg = try {
+    val alg = runCatching {
       Jwa.parse(publicKey.algorithm?.name)
-    } catch (e: IllegalArgumentException) {
-      algorithm
-    } ?: throw IllegalArgumentException("Algorithm not found in JWK or provided as parameter")
+    }.getOrElse { algorithm }
+      ?: throw IllegalArgumentException("Algorithm not found in JWK or provided as algorithm parameter")
 
     val curve = getJwkCurve(publicKey)
     val verifier = getVerifier(alg, curve)
@@ -171,7 +162,7 @@ public object Crypto {
    */
   public fun publicKeyToBytes(publicKey: JWK): ByteArray {
     val curve = getJwkCurve(publicKey)
-    val generator = getKeyGenerator(AlgorithmId.parse(curve))
+    val generator = getKeyGenerator(AlgorithmId.from(curve))
 
     return generator.publicKeyToBytes(publicKey)
   }
@@ -180,7 +171,7 @@ public object Crypto {
    * Retrieves a [KeyGenerator] based on the provided algorithmId.
    *
    * This function looks up and retrieves the relevant [KeyGenerator] based on the provided
-   * algorithm and curve parameters.
+   * algorithmId.
    *
    * @param algorithmId The cryptographic algorithmId to find a key generator for.
    * @return The corresponding [KeyGenerator].
@@ -188,7 +179,7 @@ public object Crypto {
    */
   public fun getKeyGenerator(algorithmId: AlgorithmId): KeyGenerator {
     return keyGeneratorsByAlgorithmId.getOrElse(algorithmId) {
-      throw IllegalArgumentException("Algorithm $algorithmId not supported")
+      throw IllegalArgumentException("Algorithm ${algorithmId.algorithmName} not supported")
     }
   }
 
@@ -209,13 +200,12 @@ public object Crypto {
   }
 
   /**
-   * Retrieves a [Signer] based on the provided algorithm and curve.
+   * Retrieves a [Signer] based on the provided algorithmId.
    *
-   * This function looks up and retrieves the relevant [Signer] based on the provided
-   * algorithm and curve parameters.
+   * This function looks up and retrieves the relevant [Signer]
+   * based on the provided algorithmId.
    *
-   * @param algorithm The cryptographic algorithm to find a signer for.
-   * @param curve The cryptographic curve to find a signer for.
+   * @param algorithmId The algorithmId to find a signer for.
    * @return The corresponding [Signer].
    * @throws IllegalArgumentException if the algorithm or curve is not supported.
    */
@@ -238,7 +228,7 @@ public object Crypto {
    */
   @JvmOverloads
   public fun getVerifier(algorithm: Jwa, curve: JwaCurve? = null): Signer {
-    val algorithmId = AlgorithmId.parse(curve, algorithm)
+    val algorithmId = AlgorithmId.from(curve, algorithm)
     return getSigner(algorithmId)
   }
 
@@ -254,20 +244,20 @@ public object Crypto {
   public fun getJwkCurve(jwk: JWK): JwaCurve? {
     val rawCurve = jwk.toJSONObject()["crv"]
 
+    // todo since crv is required in JWK, shouldn't we throw an error if rawCurve is null?
     return rawCurve?.let { JwaCurve.parse(it.toString()) }
   }
 
   /**
-   * Retrieves the multicodec identifier associated with a given cryptographic algorithm and curve.
+   * Retrieves the multicodec identifier associated with a given algorithmId.
    *
-   * This function consults a predefined mapping of cryptographic algorithm and curve pairs to their
+   * This function consults a predefined mapping of algorithmId to their
    * respective multicodec identifiers, returning the matched identifier.
    * Multicodec identifiers are useful for encoding the format or type of the key in systems that
    * leverage multiple cryptographic standards.
    *
-   * @param algorithm The cryptographic [Jwa] for which the multicodec is requested.
-   * @param curve The cryptographic [JwaCurve] associated with the algorithm, or null if not applicable.
-   * @return The multicodec identifier as an [Int] if a mapping exists, or null if the algorithm and curve
+   * @param algorithmId The algorithmId for which the multicodec is requested.
+   * @return The multicodec identifier as an [Int] if a mapping exists, or null if the algorithmId
    *         combination is not supported or mapped.
    *
    * ### Example
