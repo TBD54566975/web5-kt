@@ -150,8 +150,7 @@ public object JwtUtil {
     Crypto.verify(
       publicKeyJwk,
       toVerifyBytes,
-      signatureBytes,
-      Jwa.parse(jwt.header.algorithm?.name)
+      signatureBytes
     )
   }
 }

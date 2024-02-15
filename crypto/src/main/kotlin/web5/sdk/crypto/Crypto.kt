@@ -79,7 +79,7 @@ public object Crypto {
   public fun computePublicKey(privateKey: JWK): JWK {
     val rawCurve = privateKey.toJSONObject()["crv"]
     val curve = rawCurve?.let { JwaCurve.parse(it.toString()) }
-    val generator = getKeyGenerator(AlgorithmId.from(curve, Jwa.parse(privateKey.algorithm?.name)))
+    val generator = getKeyGenerator(AlgorithmId.from(curve))
 
     return generator.computePublicKey(privateKey)
   }
@@ -120,22 +120,15 @@ public object Crypto {
    * @param publicKey The JWK public key to be used for verifying the signature.
    * @param signedPayload The byte array data that was signed.
    * @param signature The signature that will be verified.
-   * @param algorithm Optional parameter: the algorithm used for signing/verification,
    *                  if not provided in the JWK. Default is null.
    *
    * @throws IllegalArgumentException if neither the JWK nor the explicit algorithm parameter
    *                                  provides an algorithm.
    *
    */
-  @JvmOverloads
-  public fun verify(publicKey: JWK, signedPayload: ByteArray, signature: ByteArray, algorithm: Jwa? = null) {
-    val alg = runCatching {
-      Jwa.parse(publicKey.algorithm?.name)
-    }.getOrElse { algorithm }
-      ?: throw IllegalArgumentException("Algorithm not found in JWK or provided as algorithm parameter")
-
+  public fun verify(publicKey: JWK, signedPayload: ByteArray, signature: ByteArray) {
     val curve = getJwkCurve(publicKey)
-    val verifier = getVerifier(alg, curve)
+    val verifier = getVerifier(curve)
 
     verifier.verify(publicKey, signedPayload, signature)
   }
@@ -221,14 +214,13 @@ public object Crypto {
    * This function fetches the appropriate [Signer], which contains the verification
    * logic for the cryptographic approach determined by the specified algorithm and curve.
    *
-   * @param algorithm The cryptographic algorithm to find a verifier for.
    * @param curve The cryptographic curve to find a verifier for.
    * @return The corresponding [Signer] capable of verification.
    * @throws IllegalArgumentException if the algorithm or curve is not supported.
    */
   @JvmOverloads
-  public fun getVerifier(algorithm: Jwa, curve: JwaCurve? = null): Signer {
-    val algorithmId = AlgorithmId.from(curve, algorithm)
+  public fun getVerifier(curve: JwaCurve? = null): Signer {
+    val algorithmId = AlgorithmId.from(curve)
     return getSigner(algorithmId)
   }
 
