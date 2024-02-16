@@ -18,10 +18,39 @@ plugins {
   id("version-catalog")
 }
 
-configurations.all {
-  resolutionStrategy {
-    // Pin the transitive dep to a version that's not vulnerable.
-    force("com.fasterxml.woodstox:woodstox-core:6.4.0")
+allprojects {
+  configurations.all {
+    /**
+     * In this section we address build issues including security vulnerabilities
+     * in transitive dependencies we don't explicitly declare in
+     * `gradle/libs.versions.toml`. Forced actions taken here will override any
+     * declarations we make, so use with care. Also note: these are in place for a
+     * point in time. As we maintain this software, the manual forced resolution we do
+     * here may:
+     *
+     * 1) No longer be necessary (if we have removed a dependency path leading to dep)
+     * 2) Break an upgrade (if we upgrade a dependency and this forces a lower version
+     *    of a transitive dependency it brings in)
+     *
+     * So we need to exercise care here, and, when upgrading our deps, check to see if
+     * these forces aren't breaking things.
+     *
+     * When adding forces here, please reference the issue which explains why we
+     * needed to do this; it will help future maintainers understand if the force
+     * is still valid, should be removed, or handled in another way.
+     *
+     * When in doubt, ask! :)
+     */
+    resolutionStrategy {
+      // Pin the transitive dep to a version that's not vulnerable.
+      force("com.fasterxml.woodstox:woodstox-core:6.4.0")
+      // Addresss https://github.com/TBD54566975/web5-kt/issues/242
+      force("com.google.protobuf:protobuf-javalite:3.19.6")
+      // Addresss https://github.com/TBD54566975/web5-kt/issues/243
+      force("com.google.guava:guava:32.0.0-android")
+      // Addresses https://github.com/TBD54566975/web5-kt/issues/244
+      force("com.squareup.okio:okio:3.6.0")
+    }
   }
 }
 

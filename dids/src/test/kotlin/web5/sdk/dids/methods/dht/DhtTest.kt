@@ -1,6 +1,5 @@
 package web5.sdk.dids.methods.dht
 
-import com.nimbusds.jose.jwk.Curve
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
 import io.ktor.http.HttpMethod
@@ -10,9 +9,9 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
+import web5.sdk.crypto.AlgorithmId
 import web5.sdk.crypto.Ed25519
 import web5.sdk.crypto.InMemoryKeyManager
-import web5.sdk.crypto.Secp256k1
 import web5.sdk.dids.methods.dht.DhtClient.Companion.bencode
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -97,7 +96,7 @@ class DhtTest {
     @Test
     fun `sign and verify a BEP44 message`() {
       val manager = InMemoryKeyManager()
-      val keyAlias = manager.generatePrivateKey(Ed25519.algorithm, Curve.Ed25519)
+      val keyAlias = manager.generatePrivateKey(AlgorithmId.Ed25519)
 
       val seq = 1L
       val v = "Hello World!".toByteArray()
@@ -120,7 +119,7 @@ class DhtTest {
     @Test
     fun `sign BEP44 message with wrong key type`() {
       val manager = InMemoryKeyManager()
-      val keyAlias = manager.generatePrivateKey(Secp256k1.algorithm, Curve.SECP256K1)
+      val keyAlias = manager.generatePrivateKey(AlgorithmId.secp256k1)
 
       val seq = 1L
       val v = "Hello World!".toByteArray()

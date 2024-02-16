@@ -5,12 +5,13 @@ import com.amazonaws.auth.AWSStaticCredentialsProvider
 import com.amazonaws.auth.BasicAWSCredentials
 import com.amazonaws.services.kms.AWSKMSClient
 import com.nimbusds.jose.JWSAlgorithm
-import com.nimbusds.jose.jwk.KeyType
+import com.nimbusds.jose.jwk.ECKey
 import com.nimbusds.jose.jwk.KeyUse
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class AwsKeyManagerTest {
 
@@ -20,11 +21,11 @@ class AwsKeyManagerTest {
   @Disabled("Needs an AWS connection")
   fun `test key generation`() {
     val awsKeyManager = AwsKeyManager()
-    val alias = awsKeyManager.generatePrivateKey(JWSAlgorithm.ES256K)
+    val alias = awsKeyManager.generatePrivateKey(AlgorithmId.secp256k1)
     val publicKey = awsKeyManager.getPublicKey(alias)
 
     assertEquals(alias, publicKey.keyID)
-    assertEquals(KeyType.EC, publicKey.keyType)
+    assertTrue(publicKey is ECKey)
     assertEquals(KeyUse.SIGNATURE, publicKey.keyUse)
     assertEquals(JWSAlgorithm.ES256K, publicKey.algorithm)
   }
@@ -33,7 +34,7 @@ class AwsKeyManagerTest {
   @Disabled("Needs an AWS connection")
   fun `test alias is stable`() {
     val awsKeyManager = AwsKeyManager()
-    val alias = awsKeyManager.generatePrivateKey(JWSAlgorithm.ES256K)
+    val alias = awsKeyManager.generatePrivateKey(AlgorithmId.secp256k1)
     val publicKey = awsKeyManager.getPublicKey(alias)
     val defaultAlias = awsKeyManager.getDeterministicAlias(publicKey)
 
@@ -44,7 +45,7 @@ class AwsKeyManagerTest {
   @Disabled("Needs an AWS connection")
   fun `test signing`() {
     val awsKeyManager = AwsKeyManager()
-    val alias = awsKeyManager.generatePrivateKey(JWSAlgorithm.ES256K)
+    val alias = awsKeyManager.generatePrivateKey(AlgorithmId.secp256k1)
     val signature = awsKeyManager.sign(alias, signingInput)
 
     //Verify the signature with BouncyCastle via Crypto
@@ -64,7 +65,7 @@ class AwsKeyManagerTest {
     val customisedKeyManager = AwsKeyManager(kmsClient = kmsClient)
 
     assertThrows<AmazonServiceException> {
-      customisedKeyManager.generatePrivateKey(JWSAlgorithm.ES256K)
+      customisedKeyManager.generatePrivateKey(AlgorithmId.secp256k1)
     }
   }
 }

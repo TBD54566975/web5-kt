@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.jwk.ECKey
-import com.nimbusds.jose.jwk.KeyType
 import com.nimbusds.jose.jwk.KeyUse
 import org.apache.commons.codec.binary.Hex
 import org.junit.jupiter.api.Test
@@ -29,7 +28,7 @@ class Secp256k1Test {
     assertEquals(JWSAlgorithm.ES256K, privateKey.algorithm)
     assertEquals(KeyUse.SIGNATURE, privateKey.keyUse)
     assertNotNull(privateKey.keyID)
-    assertEquals(KeyType.EC, privateKey.keyType)
+    assertTrue(privateKey is ECKey)
     assertTrue(privateKey.isPrivate)
   }
 
@@ -43,7 +42,7 @@ class Secp256k1Test {
     assertEquals(publicKey.keyID, privateKey.keyID)
     assertEquals(JWSAlgorithm.ES256K, publicKey.algorithm)
     assertEquals(KeyUse.SIGNATURE, publicKey.keyUse)
-    assertEquals(KeyType.EC, publicKey.keyType)
+    assertTrue(publicKey is ECKey)
     assertFalse(publicKey.isPrivate)
   }
 

@@ -5,7 +5,14 @@ plugins {
 
 repositories {
   mavenCentral()
-
+  // temp maven repo for danubetech
+  maven {
+    name = "tbd-danubetech-temp"
+    url = uri("https://blockxyz.jfrog.io/artifactory/danubetech-temp/")
+    mavenContent {
+      releasesOnly()
+    }
+  }
   maven("https://jitpack.io")
   maven("https://repo.danubetech.com/repository/maven-public/")
   maven("https://repository.jboss.org/nexus/content/repositories/thirdparty-releases/")

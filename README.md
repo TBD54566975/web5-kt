@@ -65,6 +65,12 @@ versions in `gradle/libs.versions.toml` and import references defined
 there in the subproject `build.gradle.kts` files. More docs on this 
 approach using Gradle Version Catalogs is at the top of `gradle/libs.versions.toml`.
 
+We have a secondary mechanism to force dependency upgrades of transitive
+deps in the case we encounter security vulnerabilities we do not directly
+depend upon. That config is located in the `resolutionStrategy` section of 
+`./build.gradle.kts`. Notes for applying fixes for security vulnerabilities
+are documented there.
+
 ## Prerequisites
 
 Install java version 11. If you're installing a higher version, it must be compatible with Gradle 8.2.
