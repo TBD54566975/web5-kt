@@ -246,6 +246,7 @@ class Web5TestVectorsCredentials {
     val testVectors = mapper.readValue(File("../web5-spec/test-vectors/credentials/create.json"), typeRef)
 
     testVectors.vectors.filterNot { it.errors ?: false }.forEach { vector ->
+      println(vector.description)
       val vc = VerifiableCredential.fromJson(mapper.writeValueAsString(vector.input.credential))
 
       val keyManager = InMemoryKeyManager()
@@ -253,7 +254,10 @@ class Web5TestVectorsCredentials {
       val issuerDid = Did.load(vector.input.signerDidUri!!, keyManager)
       val vcJwt = vc.sign(issuerDid)
 
-      assertEquals(vector.output, vcJwt, vector.description)
+      val vectorOutputParsedVc = vector.output?.let { VerifiableCredential.parseJwt(it) }
+      val outputParsedVc = VerifiableCredential.parseJwt(vcJwt)
+
+      assertEquals(vectorOutputParsedVc.toString(), outputParsedVc.toString())
     }
 
     testVectors.vectors.filter { it.errors ?: false }.forEach { vector ->

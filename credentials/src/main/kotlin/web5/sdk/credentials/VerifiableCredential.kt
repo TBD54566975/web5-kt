@@ -1,7 +1,5 @@
 package web5.sdk.credentials
 
-import com.danubetech.verifiablecredentials.CredentialSubject
-import com.danubetech.verifiablecredentials.credentialstatus.CredentialStatus
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.JsonNode
@@ -13,18 +11,15 @@ import com.nfeld.jsonpathkt.extension.read
 import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jwt.JWTParser
 import com.nimbusds.jwt.SignedJWT
+import web5.sdk.credentials.model.BitstringStatusListEntry
+import web5.sdk.credentials.model.CredentialSubject
+import web5.sdk.credentials.model.VcDataModel
 import web5.sdk.credentials.util.JwtUtil
 import web5.sdk.dids.Did
 import java.net.URI
 import java.security.SignatureException
 import java.util.Date
 import java.util.UUID
-
-/**
- * Type alias representing the danubetech Verifiable Credential data model.
- * This typealias simplifies the use of the [com.danubetech.verifiablecredentials.VerifiableCredential] class.
- */
-public typealias VcDataModel = com.danubetech.verifiablecredentials.VerifiableCredential
 
 /**
  * `VerifiableCredential` represents a digitally verifiable credential according to the
@@ -39,7 +34,7 @@ public typealias VcDataModel = com.danubetech.verifiablecredentials.VerifiableCr
 public class VerifiableCredential internal constructor(public val vcDataModel: VcDataModel) {
 
   public val type: String
-    get() = vcDataModel.types.last()
+    get() = vcDataModel.type.last()
   public val issuer: String
     get() = vcDataModel.issuer.toString()
 
@@ -123,7 +118,7 @@ public class VerifiableCredential internal constructor(public val vcDataModel: V
       issuer: String,
       subject: String,
       data: T,
-      credentialStatus: CredentialStatus? = null,
+      credentialStatus: BitstringStatusListEntry? = null,
       issuanceDate: Date = Date(),
       expirationDate: Date? = null
     ): VerifiableCredential {
@@ -134,13 +129,14 @@ public class VerifiableCredential internal constructor(public val vcDataModel: V
         false -> throw IllegalArgumentException("expected data to be parseable into a JSON object")
       }
 
-      val credentialSubject = CredentialSubject.builder()
+      val credentialSubject = CredentialSubject.Builder()
         .id(URI.create(subject))
         .claims(mapData)
         .build()
 
-      val vcDataModel = VcDataModel.builder()
-        .type(type)
+      val vcDataModel = VcDataModel.Builder()
+        .contexts(listOf(URI.create("https://www.w3.org/2018/credentials/v1")))
+        .type(listOf("VerifiableCredential", type))
         .id(URI.create("urn:uuid:${UUID.randomUUID()}"))
         .issuer(URI.create(issuer))
         .issuanceDate(issuanceDate)
@@ -149,7 +145,12 @@ public class VerifiableCredential internal constructor(public val vcDataModel: V
         .apply {
           credentialStatus?.let {
             credentialStatus(it)
-            context(URI.create("https://w3id.org/vc/status-list/2021/v1"))
+            contexts(
+              listOf(
+                URI.create("https://www.w3.org/2018/credentials/v1"),
+                URI.create("https://w3id.org/vc/status-list/2021/v1")
+              )
+            )
           }
         }
         .build()
