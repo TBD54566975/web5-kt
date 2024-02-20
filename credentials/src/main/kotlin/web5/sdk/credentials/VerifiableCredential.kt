@@ -129,31 +129,26 @@ public class VerifiableCredential internal constructor(public val vcDataModel: V
         false -> throw IllegalArgumentException("expected data to be parseable into a JSON object")
       }
 
-      val credentialSubject = CredentialSubject.Builder()
-        .id(URI.create(subject))
-        .claims(mapData)
-        .build()
+      val credentialSubject = CredentialSubject(
+        id = URI.create(subject),
+        additionalClaims = mapData
+      )
 
-      val vcDataModel = VcDataModel.Builder()
-        .contexts(listOf(URI.create("https://www.w3.org/2018/credentials/v1")))
-        .type(listOf("VerifiableCredential", type))
-        .id(URI.create("urn:uuid:${UUID.randomUUID()}"))
-        .issuer(URI.create(issuer))
-        .issuanceDate(issuanceDate)
-        .apply { expirationDate?.let { expirationDate(it) } }
-        .credentialSubject(credentialSubject)
-        .apply {
-          credentialStatus?.let {
-            credentialStatus(it)
-            contexts(
-              listOf(
-                URI.create("https://www.w3.org/2018/credentials/v1"),
-                URI.create("https://w3id.org/vc/status-list/2021/v1")
-              )
-            )
-          }
-        }
-        .build()
+      val contexts = mutableListOf(URI.create("https://www.w3.org/2018/credentials/v1"))
+      if (credentialStatus != null) {
+        contexts.add(URI.create("https://w3id.org/vc/status-list/2021/v1"))
+      }
+
+      val vcDataModel = VcDataModel(
+        id = URI.create("urn:uuid:${UUID.randomUUID()}"),
+        context = contexts,
+        type = mutableListOf("VerifiableCredential", type),
+        issuer = URI.create(issuer),
+        issuanceDate = issuanceDate,
+        expirationDate = expirationDate,
+        credentialSubject = credentialSubject,
+        credentialStatus = credentialStatus
+      )
 
       // This should be a no-op just to make sure we've set all the correct fields.
       validateDataModel(vcDataModel.toMap())

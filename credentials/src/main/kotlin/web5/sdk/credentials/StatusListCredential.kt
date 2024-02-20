@@ -22,6 +22,7 @@ import java.net.URI
 import java.util.Base64
 import java.util.BitSet
 import java.util.Date
+import java.util.UUID
 import java.util.zip.GZIPInputStream
 import java.util.zip.GZIPOutputStream
 
@@ -109,20 +110,20 @@ public object StatusListCredential {
       STATUS_PURPOSE to statusPurpose.toString().lowercase(),
       ENCODED_LIST to bitString)
 
-    val credSubject = CredentialSubject.Builder()
-      .id(URI.create(statusListCredentialId))
-      .claims(claims)
-      .build()
+    val credSubject = CredentialSubject(
+      id = URI.create(statusListCredentialId),
+      additionalClaims = claims
+    )
 
-    val vcDataModel = VcDataModel.Builder()
-      .id(URI.create(statusListCredentialId))
-      .issuer(URI.create(issuer))
-      .issuanceDate(Date())
-      .contexts(listOf(URI.create("https://www.w3.org/2018/credentials/v1"),
-        URI.create("https://w3id.org/vc/status-list/2021/v1")))
-      .type(listOf("VerifiableCredential", "BitstringStatusListCredential"))
-      .credentialSubject(credSubject)
-      .build()
+    val vcDataModel = VcDataModel(
+      id = URI.create(statusListCredentialId),
+      context = mutableListOf(URI.create("https://www.w3.org/2018/credentials/v1"),
+        URI.create("https://w3id.org/vc/status-list/2021/v1")),
+      type = mutableListOf("VerifiableCredential", "BitstringStatusListCredential"),
+      issuer = URI.create(issuer),
+      issuanceDate = Date(),
+      credentialSubject = credSubject,
+    )
 
     return VerifiableCredential(vcDataModel)
   }
@@ -148,8 +149,9 @@ public object StatusListCredential {
     val statusListEntryValue: BitstringStatusListEntry =
       BitstringStatusListEntry.fromJsonObject(credentialToValidate.vcDataModel.credentialStatus!!.toJson())
 
-    val statusListCredStatusPurpose: String? =
-      statusListCredential.vcDataModel.credentialSubject.toMap()[STATUS_PURPOSE] as? String?
+    val credentialSubject = statusListCredential.vcDataModel.credentialSubject
+
+    val statusListCredStatusPurpose: String? = credentialSubject.additionalClaims[STATUS_PURPOSE] as? String?
 
     require(statusListEntryValue.statusPurpose != null) {
       "Status purpose in the credential to validate is null"
@@ -164,7 +166,7 @@ public object StatusListCredential {
     }
 
     val compressedBitstring: String? =
-      statusListCredential.vcDataModel.credentialSubject.toMap()[ENCODED_LIST] as? String?
+      credentialSubject.additionalClaims[ENCODED_LIST] as? String?
 
     require(!compressedBitstring.isNullOrEmpty()) {
       "Compressed bitstring is null or empty"
