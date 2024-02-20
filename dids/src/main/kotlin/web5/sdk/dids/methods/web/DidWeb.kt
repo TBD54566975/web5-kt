@@ -1,9 +1,6 @@
 package web5.sdk.dids.methods.web
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import foundation.identity.did.DID
-import foundation.identity.did.DIDDocument
-import foundation.identity.did.parser.ParserException
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.HttpClientEngine
@@ -28,6 +25,9 @@ import web5.sdk.dids.DidMethod
 import web5.sdk.dids.DidResolutionResult
 import web5.sdk.dids.ResolutionError
 import web5.sdk.dids.ResolveDidOptions
+import web5.sdk.dids.didcore.DID
+import web5.sdk.dids.didcore.DIDDocument
+import web5.sdk.dids.exceptions.ParserException
 import web5.sdk.dids.methods.ion.InvalidStatusException
 import web5.sdk.dids.validateKeyMaterialInsideKeyManager
 import java.io.File
@@ -133,12 +133,12 @@ public sealed class DidWebApi(
 
   private fun resolveInternal(did: String, options: ResolveDidOptions?): DidResolutionResult {
     val parsedDid = try {
-      DID.fromString(did)
+      DID.parse(did)
     } catch (_: ParserException) {
       return DidResolutionResult.fromResolutionError(ResolutionError.INVALID_DID)
     }
 
-    if (parsedDid.methodName != methodName) {
+    if (parsedDid.method != methodName) {
       return DidResolutionResult.fromResolutionError(ResolutionError.METHOD_NOT_SUPPORTED)
     }
     val docURL = getDocURL(parsedDid)
@@ -169,7 +169,7 @@ public sealed class DidWebApi(
   }
 
   private fun getDocURL(parsedDid: DID): String {
-    val domainNameWithPath = parsedDid.methodSpecificId.replace(":", "/")
+    val domainNameWithPath = parsedDid.id.replace(":", "/")
     val decodedDomain = URLDecoder.decode(domainNameWithPath, UTF_8)
 
     val targetUrl = StringBuilder("https://$decodedDomain")

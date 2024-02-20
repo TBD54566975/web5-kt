@@ -1,8 +1,5 @@
 package web5.sdk.dids.methods.key
 
-import foundation.identity.did.DID
-import foundation.identity.did.DIDDocument
-import foundation.identity.did.VerificationMethod
 import io.ipfs.multibase.Multibase
 import web5.sdk.common.Varint
 import web5.sdk.crypto.AlgorithmId
@@ -14,6 +11,9 @@ import web5.sdk.dids.Did
 import web5.sdk.dids.DidMethod
 import web5.sdk.dids.DidResolutionResult
 import web5.sdk.dids.ResolveDidOptions
+import web5.sdk.dids.didcore.DID
+import web5.sdk.dids.didcore.DIDDocument
+import web5.sdk.dids.didcore.VerificationMethod
 import web5.sdk.dids.validateKeyMaterialInsideKeyManager
 import java.net.URI
 
@@ -127,11 +127,11 @@ public class DidKey(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
      * @throws IllegalArgumentException if the provided DID does not conform to the "did:key" method.
      */
     override fun resolve(did: String, options: ResolveDidOptions?): DidResolutionResult {
-      val parsedDid = DID.fromString(did)
+      val parsedDid = DID.parse(did)
 
-      require(parsedDid.methodName == methodName) { throw IllegalArgumentException("expected did:key") }
+      require(parsedDid.method == methodName) { throw IllegalArgumentException("expected did:key") }
 
-      val id = parsedDid.methodSpecificId
+      val id = parsedDid.id
       val idBytes = Multibase.decode(id)
       val (multiCodec, numBytes) = Varint.decode(idBytes)
 
@@ -161,7 +161,7 @@ public class DidKey(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
         .verificationMethod(verificationMethod)
         .assertionMethodVerificationMethod(verificationMethodRef)
         .authenticationVerificationMethod(verificationMethodRef)
-        .capabilityDelegationVerificationMethods(listOf(verificationMethodRef))
+        .capabilityDelegationVerificationMethods(listOf(verificationMethodRef).toMutableList())
         .capabilityInvocationVerificationMethod(verificationMethodRef)
         .keyAgreementVerificationMethod(verificationMethodRef)
         .build()

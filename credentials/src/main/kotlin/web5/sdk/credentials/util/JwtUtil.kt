@@ -8,14 +8,11 @@ import com.nimbusds.jose.util.Base64URL
 import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jwt.JWTParser
 import com.nimbusds.jwt.SignedJWT
-import foundation.identity.did.DIDURL
 import web5.sdk.common.Convert
 import web5.sdk.crypto.Crypto
-import web5.sdk.crypto.Jwa
 import web5.sdk.dids.Did
 import web5.sdk.dids.DidResolvers
 import web5.sdk.dids.exceptions.DidResolutionException
-import web5.sdk.dids.findAssertionMethodById
 import java.security.SignatureException
 
 private const val JsonWebKey2020 = "JsonWebKey2020"

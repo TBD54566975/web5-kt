@@ -2,10 +2,6 @@ package web5.sdk.dids.methods.jwk
 
 import com.nimbusds.jose.jwk.JWK
 import com.nimbusds.jose.jwk.KeyUse
-import foundation.identity.did.DID
-import foundation.identity.did.DIDDocument
-import foundation.identity.did.VerificationMethod
-import foundation.identity.did.parser.ParserException
 import web5.sdk.common.Convert
 import web5.sdk.common.EncodingFormat
 import web5.sdk.crypto.AlgorithmId
@@ -17,6 +13,10 @@ import web5.sdk.dids.DidResolutionMetadata
 import web5.sdk.dids.DidResolutionResult
 import web5.sdk.dids.ResolutionError
 import web5.sdk.dids.ResolveDidOptions
+import web5.sdk.dids.didcore.DID
+import web5.sdk.dids.didcore.DIDDocument
+import web5.sdk.dids.didcore.VerificationMethod
+import web5.sdk.dids.exceptions.ParserException
 import web5.sdk.dids.validateKeyMaterialInsideKeyManager
 import java.net.URI
 import java.text.ParseException
@@ -108,7 +108,7 @@ public class DidJwk(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
      */
     override fun resolve(did: String, options: ResolveDidOptions?): DidResolutionResult {
       val parsedDid = try {
-        DID.fromString(did)
+        DID.parse(did)
       } catch (_: ParserException) {
         return DidResolutionResult(
           context = "https://w3id.org/did-resolution/v1",
@@ -118,7 +118,7 @@ public class DidJwk(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
         )
       }
 
-      if (parsedDid.methodName != methodName) {
+      if (parsedDid.method != methodName) {
         return DidResolutionResult(
           context = "https://w3id.org/did-resolution/v1",
           didResolutionMetadata = DidResolutionMetadata(
@@ -127,7 +127,7 @@ public class DidJwk(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
         )
       }
 
-      val id = parsedDid.methodSpecificId
+      val id = parsedDid.id
       val decodedKey = Convert(id, EncodingFormat.Base64Url).toStr()
       val publicKeyJwk = try {
         JWK.parse(decodedKey)
@@ -147,7 +147,7 @@ public class DidJwk(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
       val verificationMethodId = URI.create("$did#0")
       val verificationMethod = VerificationMethod.builder()
         .id(verificationMethodId)
-        .publicKeyJwk(publicKeyJwk.toJSONObject())
+        .publicKeyJwk(publicKeyJwk)
         .controller(URI(did))
         .type("JsonWebKey2020")
         .build()
@@ -169,7 +169,7 @@ public class DidJwk(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
         didDocumentBuilder
           .assertionMethodVerificationMethod(verificationMethodRef)
           .authenticationVerificationMethod(verificationMethodRef)
-          .capabilityDelegationVerificationMethods(listOf(verificationMethodRef))
+          .capabilityDelegationVerificationMethods(listOf(verificationMethodRef).toMutableList())
           .capabilityInvocationVerificationMethod(verificationMethodRef)
       }
       if (publicKeyJwk.keyUse != KeyUse.SIGNATURE) {

@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
-import foundation.identity.did.DIDDocument
+import web5.sdk.dids.didcore.DIDDocument
 import web5.sdk.dids.methods.ion.models.MetadataMethod
 import java.util.Objects.hash
 

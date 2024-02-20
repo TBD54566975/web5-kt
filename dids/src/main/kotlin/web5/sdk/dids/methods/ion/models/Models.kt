@@ -19,6 +19,7 @@ import com.nimbusds.jose.jwk.JWK
 import web5.sdk.common.Convert
 import web5.sdk.common.EncodingFormat
 import web5.sdk.dids.PublicKeyPurpose
+import web5.sdk.dids.didcore.Service
 
 /**
  * Represents an ION document containing public keys and services. See bullet 2 in https://identity.foundation/sidetree/spec/#replace.
@@ -30,19 +31,6 @@ import web5.sdk.dids.PublicKeyPurpose
 public data class Document(
   val publicKeys: Iterable<PublicKey> = emptyList(),
   val services: Iterable<Service> = emptyList()
-)
-
-/**
- * Represents an ION service. See bullet 3 in https://identity.foundation/sidetree/spec/#add-services.
- *
- * @property id The service ID.
- * @property type The service type.
- * @property serviceEndpoint The service endpoint.
- */
-public data class Service(
-  public val id: String,
-  public val type: String,
-  public val serviceEndpoint: String
 )
 
 /**

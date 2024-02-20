@@ -2,11 +2,6 @@ package web5.sdk.dids.methods.dht
 
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.jwk.JWK
-import foundation.identity.did.DID
-import foundation.identity.did.DIDDocument
-import foundation.identity.did.Service
-import foundation.identity.did.VerificationMethod
-import foundation.identity.did.parser.ParserException
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.okhttp.OkHttp
@@ -31,6 +26,10 @@ import web5.sdk.dids.DidResolutionResult
 import web5.sdk.dids.PublicKeyPurpose
 import web5.sdk.dids.ResolutionError
 import web5.sdk.dids.ResolveDidOptions
+import web5.sdk.dids.didcore.DID
+import web5.sdk.dids.didcore.DIDDocument
+import web5.sdk.dids.didcore.Service
+import web5.sdk.dids.didcore.VerificationMethod
 import web5.sdk.dids.exceptions.InvalidIdentifierException
 import web5.sdk.dids.exceptions.InvalidIdentifierSizeException
 import web5.sdk.dids.exceptions.InvalidMethodNameException
@@ -141,16 +140,16 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
 
     // add identity key to relationships map
     val identityVerificationMethod =
-      VerificationMethod.builder()
-        .id(URI.create("$id#0"))
-        .type("JsonWebKey")
-        .controller(URI.create(id))
-        .publicKeyJwk(publicKey.toPublicJWK().toJSONObject())
-        .build()
+      VerificationMethod(
+        id = URI.create("$id#0"),
+        type = "JsonWebKey",
+        controller = URI.create(id).toString(),
+        publicKeyJwk = publicKey.toPublicJWK()
+      )
 
     // add all other keys to the verificationMethod and relationships arrays
     val relationshipsMap = mutableMapOf<PublicKeyPurpose, MutableList<VerificationMethod>>().apply {
-      val identityVerificationMethodRef = VerificationMethod.builder().id(identityVerificationMethod.id).build()
+      val identityVerificationMethodRef = VerificationMethod(id = identityVerificationMethod.id)
       listOf(
         PublicKeyPurpose.AUTHENTICATION,
         PublicKeyPurpose.ASSERTION_METHOD,
@@ -168,7 +167,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
           .id(URI.create("$id#${key.keyID}"))
           .type("JsonWebKey")
           .controller(URI.create(controller ?: id))
-          .publicKeyJwk(key.toPublicJWK().toJSONObject())
+          .publicKeyJwk(key.toPublicJWK())
           .build().also { verificationMethod ->
             purposes.forEach { relationship ->
               relationshipsMap.getOrPut(relationship) { mutableListOf() }.add(
@@ -184,11 +183,11 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
     }
     // map to the DID object model's services
     val services = opts.services?.map { service ->
-      Service.builder()
-        .id(URI.create("$id#${service.id}"))
-        .type(service.type)
-        .serviceEndpoint(service.serviceEndpoint)
-        .build()
+      Service(
+        id = URI.create("$id#${service.id}").toString(),
+        type = service.type,
+        serviceEndpoint = service.serviceEndpoint
+      )
     }
 
     // build DID Document
@@ -299,9 +298,9 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
    * @throws IllegalArgumentException if the provided DID does not conform to the "did:dht" method.
    */
   private fun getIdentityKid(didDocument: DIDDocument): String {
-    validate(didDocument.id.toString())
+    validate(didDocument.id)
 
-    val publicKeyJwk = JWK.parse(didDocument.verificationMethods?.first()?.publicKeyJwk)
+    val publicKeyJwk = didDocument.verificationMethod.first().publicKeyJwk
     return publicKeyJwk.keyID
   }
 
@@ -312,10 +311,10 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
   }
 
   internal fun validateIdentityKey(did: String, keyManager: KeyManager) {
-    val parsedDid = DID.fromString(did)
-    val decodedId = ZBase32.decode(parsedDid.methodSpecificId)
+    val parsedDid = DID.parse(did)
+    val decodedId = ZBase32.decode(parsedDid.id)
     require(decodedId.size == 32) {
-      "expected size of decoded identifier \"${parsedDid.methodSpecificId}\" to be 32"
+      "expected size of decoded identifier ${parsedDid.id} to be 32"
     }
 
     val publicKeyJwk = Ed25519.bytesToPublicKey(decodedId)
@@ -344,13 +343,13 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
    * @throws ParserException if the provided DID is not a valid DID.
    */
   internal fun validate(did: String) {
-    val parsedDid = DID.fromString(did)
-    require(parsedDid.methodName == DidDht.methodName) {
+    val parsedDid = DID.parse(did)
+    require(parsedDid.method == DidDht.methodName) {
       throw InvalidMethodNameException("expected method to be dht")
     }
 
     val decodedId = try {
-      ZBase32.decode(parsedDid.methodSpecificId)
+      ZBase32.decode(parsedDid.id)
     } catch (e: IllegalArgumentException) {
       throw InvalidIdentifierException("expected method-specific identifier to be z-base-32 encoded", e)
     }
@@ -377,7 +376,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
 
     val serviceIds = mutableListOf<String>()
     // Add Resource Records for each Service
-    didDocument.services?.forEachIndexed { i, service ->
+    didDocument.service.forEachIndexed { i, service ->
       val sId = "s$i"
       message.addRecord(
         TXTRecord(
@@ -385,7 +384,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
           DClass.IN,
           ttl,
           listOf(
-            "id=${service.id.rawFragment}",
+            "id=${service.id}",
             "t=${service.type}",
             "se=${serviceRecordValue(service)}"
           ).joinToString(PROPERTY_SEPARATOR)
@@ -447,13 +446,13 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
     Pair<List<String>, Map<String, String>> {
     val verificationMethodsById = mutableMapOf<String, String>()
     val verificationMethods = buildList {
-      didDocument.verificationMethods?.forEachIndexed { i, verificationMethod ->
-        val publicKeyJwk = JWK.parse(verificationMethod.publicKeyJwk)
+      didDocument.verificationMethod.forEachIndexed { i, verificationMethod ->
+        val publicKeyJwk = verificationMethod.publicKeyJwk
         val publicKeyBytes = Crypto.publicKeyToBytes(publicKeyJwk)
         val base64UrlEncodedKey = Convert(publicKeyBytes).toBase64Url(padding = false)
         val verificationMethodId = "k$i"
 
-        verificationMethodsById[verificationMethod.id.toString()] = verificationMethodId
+        verificationMethodsById[verificationMethod.id] = verificationMethodId
 
         val keyType = when (publicKeyJwk.algorithm) {
           JWSAlgorithm.EdDSA -> 0
@@ -468,7 +467,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
             DClass.IN,
             ttl,
             buildList {
-              add("id=${verificationMethod.id.rawFragment}")
+              add("id=${verificationMethod.id}")
               add("t=$keyType")
               add("k=$base64UrlEncodedKey")
               if (verificationMethod.jsonObject.containsKey("controller")) {
@@ -513,13 +512,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
   }
 
   private fun serviceRecordValue(service: Service): String {
-    val endpoint = service.serviceEndpoint
-    val seValue = if (endpoint is List<*>) {
-      endpoint.joinToString(ARRAY_SEPARATOR)
-    } else {
-      endpoint.toString()
-    }
-    return seValue
+    return service.serviceEndpoint
   }
 
   /**
@@ -623,7 +616,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
     val builder = VerificationMethod.builder()
       .id(URI.create("$did#$verificationMethodId"))
       .type("JsonWebKey")
-      .publicKeyJwk(publicKeyJwk.toPublicJWK().toJSONObject())
+      .publicKeyJwk(publicKeyJwk.toPublicJWK())
 
     if (data.containsKey("c")) {
       builder.controller(URI.create(data["c"]!!))

@@ -5,9 +5,6 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.JWK
 import com.nimbusds.jose.jwk.gen.ECKeyGenerator
-import foundation.identity.did.DIDDocument
-import foundation.identity.did.Service
-import foundation.identity.did.parser.ParserException
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
 import io.ktor.http.HttpMethod
@@ -25,9 +22,12 @@ import web5.sdk.crypto.AlgorithmId
 import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.dids.DidResolutionResult
 import web5.sdk.dids.PublicKeyPurpose
+import web5.sdk.dids.didcore.DIDDocument
+import web5.sdk.dids.didcore.Service
 import web5.sdk.dids.exceptions.InvalidIdentifierException
 import web5.sdk.dids.exceptions.InvalidIdentifierSizeException
 import web5.sdk.dids.exceptions.InvalidMethodNameException
+import web5.sdk.dids.exceptions.ParserException
 import web5.sdk.testing.TestVectors
 import java.io.File
 import java.net.URI
@@ -100,12 +100,12 @@ class DidDhtTest {
       assertDoesNotThrow { did.validate() }
       assertNotNull(did)
       assertNotNull(did.didDocument)
-      assertEquals(1, did.didDocument!!.verificationMethods.size)
-      assertContains(did.didDocument!!.verificationMethods[0].id.toString(), "#0")
-      assertEquals(1, did.didDocument!!.assertionMethodVerificationMethods.size)
-      assertEquals(1, did.didDocument!!.authenticationVerificationMethods.size)
-      assertEquals(1, did.didDocument!!.capabilityDelegationVerificationMethods.size)
-      assertEquals(1, did.didDocument!!.capabilityInvocationVerificationMethods.size)
+      assertEquals(1, did.didDocument!!.verificationMethods?.size)
+      assertContains(did.didDocument!!.verificationMethods?.get(0)?.id.toString(), "#0")
+      assertEquals(1, did.didDocument!!.assertionMethodVerificationMethods?.size)
+      assertEquals(1, did.didDocument!!.authenticationVerificationMethods?.size)
+      assertEquals(1, did.didDocument!!.capabilityDelegationVerificationMethods?.size)
+      assertEquals(1, did.didDocument!!.capabilityInvocationVerificationMethods?.size)
       assertNull(did.didDocument!!.keyAgreementVerificationMethods)
       assertNull(did.didDocument!!.services)
     }
@@ -144,15 +144,15 @@ class DidDhtTest {
 
       assertNotNull(did)
       assertNotNull(did.didDocument)
-      assertEquals(3, did.didDocument!!.verificationMethods.size)
-      assertEquals(3, did.didDocument!!.assertionMethodVerificationMethods.size)
-      assertEquals(3, did.didDocument!!.authenticationVerificationMethods.size)
-      assertEquals(1, did.didDocument!!.capabilityDelegationVerificationMethods.size)
-      assertEquals(1, did.didDocument!!.capabilityInvocationVerificationMethods.size)
+      assertEquals(3, did.didDocument!!.verificationMethods?.size)
+      assertEquals(3, did.didDocument!!.assertionMethodVerificationMethods?.size)
+      assertEquals(3, did.didDocument!!.authenticationVerificationMethods?.size)
+      assertEquals(1, did.didDocument!!.capabilityDelegationVerificationMethods?.size)
+      assertEquals(1, did.didDocument!!.capabilityInvocationVerificationMethods?.size)
       assertNull(did.didDocument!!.keyAgreementVerificationMethods)
       assertNotNull(did.didDocument!!.services)
-      assertEquals(1, did.didDocument!!.services.size)
-      assertContains(did.didDocument!!.services[0].id.toString(), "test-service")
+      assertEquals(1, did.didDocument!!.services?.size)
+      assertContains(did.didDocument!!.services?.get(0)?.id.toString(), "test-service")
     }
 
     @Test
@@ -184,12 +184,12 @@ class DidDhtTest {
 
       assertNotNull(did)
       assertNotNull(did.didDocument)
-      assertEquals(1, did.didDocument!!.verificationMethods.size)
-      assertContains(did.didDocument!!.verificationMethods[0].id.toString(), "#0")
-      assertEquals(1, did.didDocument!!.assertionMethodVerificationMethods.size)
-      assertEquals(1, did.didDocument!!.authenticationVerificationMethods.size)
-      assertEquals(1, did.didDocument!!.capabilityDelegationVerificationMethods.size)
-      assertEquals(1, did.didDocument!!.capabilityInvocationVerificationMethods.size)
+      assertEquals(1, did.didDocument!!.verificationMethods?.size)
+      assertContains(did.didDocument!!.verificationMethods?.get(0)?.id.toString(), "#0")
+      assertEquals(1, did.didDocument!!.assertionMethodVerificationMethods?.size)
+      assertEquals(1, did.didDocument!!.authenticationVerificationMethods?.size)
+      assertEquals(1, did.didDocument!!.capabilityDelegationVerificationMethods?.size)
+      assertEquals(1, did.didDocument!!.capabilityInvocationVerificationMethods?.size)
       assertNull(did.didDocument!!.keyAgreementVerificationMethods)
       assertNull(did.didDocument!!.services)
     }
@@ -381,6 +381,7 @@ class Web5TestVectorsDidDht {
       )
       val didDht = DidDht.create(keyManager, options)
       assertEquals(
+        // todo fix this test?
         JsonCanonicalizer(vector.output?.toJson()).encodedString,
         JsonCanonicalizer(didDht.didDocument!!.toCustomJson()).encodedString,
         vector.description
