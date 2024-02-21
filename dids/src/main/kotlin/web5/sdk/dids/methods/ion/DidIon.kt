@@ -7,7 +7,6 @@ import com.nimbusds.jose.JWSObject
 import com.nimbusds.jose.Payload
 import com.nimbusds.jose.jwk.JWK
 import com.nimbusds.jose.util.Base64URL
-import foundation.identity.did.DID
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.okhttp.OkHttp
@@ -36,6 +35,8 @@ import web5.sdk.dids.DidResolutionMetadata
 import web5.sdk.dids.DidResolutionResult
 import web5.sdk.dids.PublicKeyPurpose
 import web5.sdk.dids.ResolveDidOptions
+import web5.sdk.dids.didcore.DID
+import web5.sdk.dids.didcore.Service
 import web5.sdk.dids.methods.ion.models.AddPublicKeysAction
 import web5.sdk.dids.methods.ion.models.AddServicesAction
 import web5.sdk.dids.methods.ion.models.Commitment
@@ -51,7 +52,6 @@ import web5.sdk.dids.methods.ion.models.RemovePublicKeysAction
 import web5.sdk.dids.methods.ion.models.RemoveServicesAction
 import web5.sdk.dids.methods.ion.models.ReplaceAction
 import web5.sdk.dids.methods.ion.models.Reveal
-import web5.sdk.dids.methods.ion.models.Service
 import web5.sdk.dids.methods.ion.models.SidetreeCreateOperation
 import web5.sdk.dids.methods.ion.models.SidetreeDeactivateOperation
 import web5.sdk.dids.methods.ion.models.SidetreeRecoverOperation
@@ -316,8 +316,8 @@ public sealed class DidIonApi(
    * @throws [InvalidStatusException] When any of the network requests return an invalid HTTP status code.
    */
   override fun resolve(did: String, options: ResolveDidOptions?): DidResolutionResult {
-    val didObj = DID.fromString(did)
-    require(didObj.methodName == methodName) { throw IllegalArgumentException("expected did:ion") }
+    val didObj = DID.parse(did)
+    require(didObj.method == methodName) { throw IllegalArgumentException("expected did:ion") }
 
     val resp = runBlocking { client.get("$identifiersEndpoint/$didObj") }
     val body = runBlocking { resp.bodyAsText() }
@@ -350,8 +350,8 @@ public sealed class DidIonApi(
 
   private fun createUpdateOperation(keyManager: KeyManager, did: String, options: UpdateDidIonOptions):
     Pair<SidetreeUpdateOperation, KeyAliases> {
-    val parsedDid = DID.fromString(did)
-    require(!parsedDid.methodSpecificId.contains(":")) {
+    val parsedDid = DID.parse(did)
+    require(!parsedDid.id.contains(":")) {
       "updating a DID is only allowed for short form dids, but got $did"
     }
     val updatePublicKey = keyManager.getPublicKey(options.updateKeyAlias)
@@ -384,7 +384,7 @@ public sealed class DidIonApi(
     return Pair(
       SidetreeUpdateOperation(
         type = "update",
-        didSuffix = parsedDid.methodSpecificId,
+        didSuffix = parsedDid.id,
         revealValue = reveal,
         delta = updateOpDeltaObject,
         signedData = signedJwsObject.serialize(false),
@@ -537,8 +537,8 @@ public sealed class DidIonApi(
 
   internal fun createRecoverOperation(keyManager: KeyManager, did: String, options: RecoverDidIonOptions):
     Pair<SidetreeRecoverOperation, KeyAliases> {
-    val parsedDid = DID.fromString(did)
-    require(!parsedDid.methodSpecificId.contains(":")) {
+    val parsedDid = DID.parse(did)
+    require(!parsedDid.id.contains(":")) {
       "recovering a DID is only allowed for short form dids, but got $did"
     }
 
@@ -576,7 +576,7 @@ public sealed class DidIonApi(
     return Pair(
       SidetreeRecoverOperation(
         type = "recover",
-        didSuffix = parsedDid.methodSpecificId,
+        didSuffix = parsedDid.id,
         revealValue = reveal,
         delta = delta,
         signedData = jwsObject.serialize(),
@@ -593,8 +593,8 @@ public sealed class DidIonApi(
     keyManager: KeyManager,
     did: String,
     options: DeactivateDidIonOptions): SidetreeDeactivateOperation {
-    val parsedDid = DID.fromString(did)
-    require(!parsedDid.methodSpecificId.contains(":")) {
+    val parsedDid = DID.parse(did)
+    require(!parsedDid.id.contains(":")) {
       "deactivating a DID is only allowed for short form dids, but got $did"
     }
     val recoveryPublicKey = keyManager.getPublicKey(options.recoveryKeyAlias)
@@ -602,7 +602,7 @@ public sealed class DidIonApi(
 
 
     val dataToBeSigned = DeactivateUpdateSignedData(
-      didSuffix = parsedDid.methodSpecificId,
+      didSuffix = parsedDid.id,
       recoveryKey = recoveryPublicKey,
     )
 
@@ -610,7 +610,7 @@ public sealed class DidIonApi(
 
     return SidetreeDeactivateOperation(
       type = "deactivate",
-      didSuffix = parsedDid.methodSpecificId,
+      didSuffix = parsedDid.id,
       revealValue = reveal,
       signedData = jwsObject.serialize(),
     )

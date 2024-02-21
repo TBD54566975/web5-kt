@@ -13,6 +13,7 @@ import web5.sdk.crypto.Crypto
 import web5.sdk.dids.Did
 import web5.sdk.dids.DidResolvers
 import web5.sdk.dids.exceptions.DidResolutionException
+import java.net.URI
 import java.security.SignatureException
 
 private const val JsonWebKey2020 = "JsonWebKey2020"
@@ -61,8 +62,8 @@ public object JwtUtil {
     val algorithm = publicKeyJwk.algorithm
     val jwsAlgorithm = JWSAlgorithm.parse(algorithm.toString())
 
-    val kid = when (assertionMethod.id.isAbsolute) {
-      true -> assertionMethod.id.toString()
+    val kid = when (URI.create(assertionMethod.id).isAbsolute) {
+      true -> assertionMethod.id
       false -> "${did.uri}${assertionMethod.id}"
     }
 

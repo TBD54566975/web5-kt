@@ -144,7 +144,7 @@ public class DidKey(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
 
       val publicKeyJwk = keyGenerator.bytesToPublicKey(publicKeyBytes)
 
-      val verificationMethodId = URI.create("$did#$id")
+      val verificationMethodId = "$did#$id"
       val verificationMethod = VerificationMethod.builder()
         .id(verificationMethodId)
         .publicKeyJwk(publicKeyJwk.toJSONObject())
@@ -157,7 +157,7 @@ public class DidKey(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
         .build()
 
       val didDocument = DIDDocument.builder()
-        .id(URI(did))
+        .id(did)
         .verificationMethod(verificationMethod)
         .assertionMethodVerificationMethod(verificationMethodRef)
         .authenticationVerificationMethod(verificationMethodRef)

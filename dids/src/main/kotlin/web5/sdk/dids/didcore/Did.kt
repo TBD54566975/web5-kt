@@ -2,6 +2,31 @@ package web5.sdk.dids.didcore
 
 import java.util.regex.Pattern
 
+/**
+ * DID provides a way to parse and handle Decentralized Identifier (DID) URIs
+ * according to the W3C DID Core specification (https://www.w3.org/TR/did-core/).
+ *
+ * @property uri represents the complete Decentralized Identifier (DID) URI.
+ *           Spec: https://www.w3.org/TR/did-core/#did-syntax
+ * @property url represents the DID URI + A network location identifier for a specific resource
+ * 	         Spec: https://www.w3.org/TR/did-core/#did-url-syntax
+ * @property method specifies the DID method in the URI, which indicates the underlying
+ * 	         method-specific identifier scheme (e.g., jwk, dht, key, etc.).
+ * 	         Spec: https://www.w3.org/TR/did-core/#method-schemes
+ * @property id is the method-specific identifier in the DID URI.
+ * 	         Spec: https://www.w3.org/TR/did-core/#method-specific-id
+ * @property params is a map containing optional parameters present in the DID URI.
+ * 	         These parameters are method-specific.
+ * 	         Spec: https://www.w3.org/TR/did-core/#did-parameters
+ * @property path is an optional path component in the DID URI.
+ * 	         Spec: https://www.w3.org/TR/did-core/#path
+ * @property query is an optional query component in the DID URI, used to express a request
+ * 	         for a specific representation or resource related to the DID.
+ * 	         Spec: https://www.w3.org/TR/did-core/#query
+ * @property fragment is an optional fragment component in the DID URI, used to reference
+ * 	         a specific part of a DID document.
+ * 	         Spec: https://www.w3.org/TR/did-core/#fragment
+ */
 public class DID(
   public val uri: String,
   public val url: String,

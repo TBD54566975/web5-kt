@@ -144,7 +144,7 @@ public class DidJwk(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
         throw IllegalArgumentException("decoded jwk value cannot be a private key")
       }
 
-      val verificationMethodId = URI.create("$did#0")
+      val verificationMethodId = "$did#0"
       val verificationMethod = VerificationMethod.builder()
         .id(verificationMethodId)
         .publicKeyJwk(publicKeyJwk)
@@ -162,7 +162,7 @@ public class DidJwk(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
             URI.create("https://w3id.org/security/suites/jws-2020/v1")
           )
         )
-        .id(URI(did))
+        .id(did)
         .verificationMethod(verificationMethod)
 
       if (publicKeyJwk.keyUse != KeyUse.ENCRYPTION) {

@@ -6,7 +6,7 @@ import java.net.URI
 
 public class VerificationMethod(
   // todo id is URI in did-common-java but string in web5-go
-  public val id: URI,
+  public val id: String,
   public val publicKeyJwk: JWK? = null,
   public val type: String? = null,
   public val controller: String? = null
@@ -16,13 +16,13 @@ public class VerificationMethod(
   }
 
   public companion object Builder {
-    private var id: URI? = null
+    private var id: String? = null
     private var type: String? = null
     private var controller: URI? = null
     private var publicKeyJwk: JWK? = null
 
 
-    public fun id(id: URI): Builder = apply { this.id = id }
+    public fun id(id: String): Builder = apply { this.id = id }
     public fun type(type: String): Builder = apply { this.type = type }
     public fun controller(controller: URI): Builder = apply { this.controller = controller }
     public fun publicKeyJwk(publicKeyJwk: JWK): Builder = apply { this.publicKeyJwk = publicKeyJwk }

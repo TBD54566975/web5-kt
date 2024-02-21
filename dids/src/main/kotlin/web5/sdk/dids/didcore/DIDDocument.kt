@@ -40,7 +40,7 @@ import java.net.URI
  */
 public class DIDDocument(
   // todo id is URI in did-common-java but string in web5-go
-  public val id: URI,
+  public val id: String,
   @JsonProperty("@context")
   public val context: String? = null,
   alsoKnownAs: List<String> = emptyList(),
@@ -149,12 +149,12 @@ public class DIDDocument(
 
   // todo fill this method out
   public fun findAssertionMethodById(assertionMethodId: String?): VerificationMethod {
-    return VerificationMethod(URI.create("id"), JWK.parse("..."), "JsonWebKey")
+    return VerificationMethod(URI.create("id").toString(), JWK.parse("..."), "JsonWebKey")
   }
 
 
   public companion object Builder {
-    private var id: URI? = null
+    private var id: String? = null
 
     private var uri: String? = null
     private var url: String? = null
@@ -170,7 +170,7 @@ public class DIDDocument(
     public fun uri(uri: String): Builder = apply { this.uri = uri }
     public fun url(url: String): Builder = apply { this.url = url }
     public fun method(method: String): Builder = apply { this.method = method }
-    public fun id(id: URI): Builder = apply { this.id = id }
+    public fun id(id: String): Builder = apply { this.id = id }
     public fun params(params: Map<String, String>): Builder = apply { this.params = params }
     public fun path(path: String?): Builder = apply { this.path = path }
     public fun query(query: String?): Builder = apply { this.query = query }
