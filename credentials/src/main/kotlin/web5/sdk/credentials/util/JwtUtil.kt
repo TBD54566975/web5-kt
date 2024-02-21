@@ -54,8 +54,7 @@ public object JwtUtil {
 
     val assertionMethod = didDocument.findAssertionMethodById(assertionMethodId)
 
-    // TODO: ensure that publicKeyJwk is not null
-    val publicKeyJwk = JWK.parse(assertionMethod.publicKeyJwk)
+    val publicKeyJwk = assertionMethod.publicKeyJwk
     val keyAlias = did.keyManager.getDeterministicAlias(publicKeyJwk)
 
     // TODO: figure out how to make more reliable since algorithm is technically not a required property of a JWK
@@ -141,8 +140,7 @@ public object JwtUtil {
       )
     }
 
-    val publicKeyMap = assertionMethod.publicKeyJwk
-    val publicKeyJwk = JWK.parse(publicKeyMap)
+    val publicKeyJwk = assertionMethod.publicKeyJwk
 
     val toVerifyBytes = jwt.signingInput
     val signatureBytes = jwt.signature.decode()

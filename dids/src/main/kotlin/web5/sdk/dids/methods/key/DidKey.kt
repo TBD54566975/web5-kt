@@ -147,7 +147,7 @@ public class DidKey(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
       val verificationMethodId = "$did#$id"
       val verificationMethod = VerificationMethod.builder()
         .id(verificationMethodId)
-        .publicKeyJwk(publicKeyJwk.toJSONObject())
+        .publicKeyJwk(publicKeyJwk)
         .controller(URI(did))
         .type("JsonWebKey2020")
         .build()

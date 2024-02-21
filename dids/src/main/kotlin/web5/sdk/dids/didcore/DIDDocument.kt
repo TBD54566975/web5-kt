@@ -39,7 +39,6 @@ import java.net.URI
  * 	         cryptographic capability, such as the authorization to update the DID Document.
  */
 public class DIDDocument(
-  // todo id is URI in did-common-java but string in web5-go
   public val id: String,
   @JsonProperty("@context")
   public val context: String? = null,

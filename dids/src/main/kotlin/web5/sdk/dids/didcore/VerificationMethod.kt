@@ -5,7 +5,6 @@ import java.net.URI
 
 
 public class VerificationMethod(
-  // todo id is URI in did-common-java but string in web5-go
   public val id: String,
   public val publicKeyJwk: JWK? = null,
   public val type: String? = null,

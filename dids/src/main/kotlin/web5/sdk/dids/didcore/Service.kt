@@ -18,7 +18,6 @@ import java.net.URI
  * 	         operate on behalf of a DID subject.
  */
 public class Service(
-  // todo id is URI in did-common-java but string in web5-go
   public val id: String,
   public val type: String,
   public val serviceEndpoint: String
