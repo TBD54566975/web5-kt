@@ -34,6 +34,7 @@ import web5.sdk.dids.exceptions.InvalidIdentifierException
 import web5.sdk.dids.exceptions.InvalidIdentifierSizeException
 import web5.sdk.dids.exceptions.InvalidMethodNameException
 import web5.sdk.dids.exceptions.PkarrRecordNotFoundException
+import web5.sdk.dids.exceptions.PublicKeyJwkMissingException
 import web5.sdk.dids.validateKeyMaterialInsideKeyManager
 import java.net.URI
 
@@ -192,8 +193,8 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
 
     // build DID Document
     val didDocumentBuilder =
+      // run the test in did-common-java with defaultcontext to true or false
       DIDDocument.builder()
-        .defaultContexts(false)
         .id(id)
         .verificationMethods(verificationMethods)
         .services(services)
@@ -203,8 +204,8 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
         .capabilityDelegationVerificationMethods(relationshipsMap[PublicKeyPurpose.CAPABILITY_DELEGATION])
         .capabilityInvocationVerificationMethods(relationshipsMap[PublicKeyPurpose.CAPABILITY_INVOCATION])
 
-    opts.controllers?.let { didDocumentBuilder.controllers(it.map(URI::create)) }
-    opts.alsoKnownAses?.let { didDocumentBuilder.alsoKnownAses(it.map(URI::create)) }
+    opts.controllers?.let { didDocumentBuilder.controllers(it.toList()) }
+    opts.alsoKnownAses?.let { didDocumentBuilder.alsoKnownAses(it.toList()) }
 
     val didDocument = didDocumentBuilder.build()
 
@@ -301,6 +302,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
     validate(didDocument.id)
 
     val publicKeyJwk = didDocument.verificationMethod.first().publicKeyJwk
+      ?: throw PublicKeyJwkMissingException("publicKeyJwk is null")
     return publicKeyJwk.keyID
   }
 
@@ -402,23 +404,23 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
       if (serviceIds.isNotEmpty()) add("svc=${serviceIds.joinToString(ARRAY_SEPARATOR)}")
 
       didDocument.authenticationVerificationMethodsDereferenced?.map {
-        verificationMethodsById[it.id.toString()]
+        verificationMethodsById[it.id]
       }?.joinToString(ARRAY_SEPARATOR)?.let { add("auth=$it") }
 
       didDocument.assertionMethodVerificationMethodsDereferenced?.map {
-        verificationMethodsById[it.id.toString()]
+        verificationMethodsById[it.id]
       }?.joinToString(ARRAY_SEPARATOR)?.let { add("asm=$it") }
 
       didDocument.keyAgreementVerificationMethodsDereferenced?.map {
-        verificationMethodsById[it.id.toString()]
+        verificationMethodsById[it.id]
       }?.joinToString(ARRAY_SEPARATOR)?.let { add("agm=$it") }
 
       didDocument.capabilityInvocationVerificationMethodsDereferenced?.map {
-        verificationMethodsById[it.id.toString()]
+        verificationMethodsById[it.id]
       }?.joinToString(ARRAY_SEPARATOR)?.let { add("inv=$it") }
 
       didDocument.capabilityDelegationVerificationMethodsDereferenced?.map {
-        verificationMethodsById[it.id.toString()]
+        verificationMethodsById[it.id]
       }?.joinToString(ARRAY_SEPARATOR)?.let { add("del=$it") }
     }
 
@@ -447,7 +449,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
     val verificationMethodsById = mutableMapOf<String, String>()
     val verificationMethods = buildList {
       didDocument.verificationMethod.forEachIndexed { i, verificationMethod ->
-        val publicKeyJwk = verificationMethod.publicKeyJwk
+        val publicKeyJwk = verificationMethod.publicKeyJwk ?: throw PublicKeyJwkMissingException("publicKeyJwk is null")
         val publicKeyBytes = Crypto.publicKeyToBytes(publicKeyJwk)
         val base64UrlEncodedKey = Convert(publicKeyBytes).toBase64Url(padding = false)
         val verificationMethodId = "k$i"
@@ -470,8 +472,8 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
               add("id=${verificationMethod.id}")
               add("t=$keyType")
               add("k=$base64UrlEncodedKey")
-              if (verificationMethod.jsonObject.containsKey("controller")) {
-                add("c=${verificationMethod.jsonObject["controller"]}")
+              if (verificationMethod.controller != null) {
+                add("c=${verificationMethod.controller}")
               }
             }.joinToString(PROPERTY_SEPARATOR)
           ), Section.ANSWER
@@ -511,7 +513,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
     )
   }
 
-  private fun serviceRecordValue(service: Service): String {
+  private fun serviceRecordValue(service: Service): List<String> {
     return service.serviceEndpoint
   }
 
@@ -526,7 +528,6 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
    */
   internal fun fromDnsPacket(did: String, msg: Message): Pair<DIDDocument, List<DidDhtTypeIndexing>> {
     val doc = DIDDocument.builder().id(did)
-      .defaultContexts(false)
 
     val verificationMethods = mutableListOf<VerificationMethod>()
     val services = mutableListOf<Service>()
@@ -587,12 +588,12 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
 
   private fun handleAlsoKnownAsRecord(rr: TXTRecord, doc: DIDDocument.Builder) {
     val data = rr.strings.joinToString("")
-    doc.alsoKnownAses(data.split(ARRAY_SEPARATOR).map { URI.create(it) })
+    doc.alsoKnownAses(data.split(ARRAY_SEPARATOR))
   }
 
   private fun handleControllerRecord(rr: TXTRecord, doc: DIDDocument.Builder) {
     val data = rr.strings.joinToString("")
-    doc.controllers(data.split(ARRAY_SEPARATOR).map { URI.create(it) })
+    doc.controllers(data.split(ARRAY_SEPARATOR))
   }
 
   private fun handleVerificationMethods(

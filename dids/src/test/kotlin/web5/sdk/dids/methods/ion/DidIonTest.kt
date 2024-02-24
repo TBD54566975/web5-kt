@@ -23,8 +23,8 @@ import web5.sdk.crypto.AlgorithmId
 import web5.sdk.crypto.AwsKeyManager
 import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.dids.PublicKeyPurpose
+import web5.sdk.dids.didcore.Service
 import web5.sdk.dids.methods.ion.models.PublicKey
-import web5.sdk.dids.methods.ion.models.Service
 import web5.sdk.dids.methods.ion.models.SidetreeCreateOperation
 import web5.sdk.dids.methods.ion.models.SidetreeUpdateOperation
 import web5.sdk.dids.methods.util.readKey
@@ -106,7 +106,7 @@ class DidIonTest {
         Service(
           id = "#dwn",
           type = "DWN",
-          serviceEndpoint = "http://my.service.com",
+          serviceEndpoint = listOf("http://my.service.com"),
         ),
         "is not base 64 url charse",
       ),
@@ -114,7 +114,7 @@ class DidIonTest {
         Service(
           id = "dwn",
           type = "really really really really really really really really long type",
-          serviceEndpoint = "http://my.service.com",
+          serviceEndpoint = listOf("http://my.service.com"),
         ),
         "service type \"really really really really really really really really long type\" exceeds" +
           " max allowed length of 30",
@@ -123,7 +123,7 @@ class DidIonTest {
         Service(
           id = "dwn",
           type = "DWN",
-          serviceEndpoint = "an invalid uri",
+          serviceEndpoint = listOf("an invalid uri"),
         ),
         "service endpoint is not a valid URI",
       )
@@ -189,7 +189,7 @@ class DidIonTest {
         Service(
           id = "dwn",
           type = "DWN",
-          serviceEndpoint = "http://hub.my-personal-server.com",
+          serviceEndpoint = listOf("http://hub.my-personal-server.com"),
         )
       ),
     )
@@ -266,7 +266,7 @@ class DidIonTest {
           Service(
             id = "#dwn",
             type = "DWN",
-            serviceEndpoint = "http://my.service.com",
+            serviceEndpoint = listOf("http://my.service.com"),
           )
         ),
         expected = "id \"#dwn\" is not base 64 url charset",

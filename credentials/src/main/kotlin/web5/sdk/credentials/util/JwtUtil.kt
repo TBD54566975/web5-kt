@@ -3,7 +3,6 @@ package web5.sdk.credentials.util
 import com.nimbusds.jose.JOSEObjectType
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.JWSHeader
-import com.nimbusds.jose.jwk.JWK
 import com.nimbusds.jose.util.Base64URL
 import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jwt.JWTParser
@@ -13,6 +12,7 @@ import web5.sdk.crypto.Crypto
 import web5.sdk.dids.Did
 import web5.sdk.dids.DidResolvers
 import web5.sdk.dids.exceptions.DidResolutionException
+import web5.sdk.dids.exceptions.PublicKeyJwkMissingException
 import java.net.URI
 import java.security.SignatureException
 
@@ -54,7 +54,7 @@ public object JwtUtil {
 
     val assertionMethod = didDocument.findAssertionMethodById(assertionMethodId)
 
-    val publicKeyJwk = assertionMethod.publicKeyJwk
+    val publicKeyJwk = assertionMethod.publicKeyJwk ?: throw PublicKeyJwkMissingException("publicKeyJwk is null.")
     val keyAlias = did.keyManager.getDeterministicAlias(publicKeyJwk)
 
     // TODO: figure out how to make more reliable since algorithm is technically not a required property of a JWK
@@ -107,13 +107,13 @@ public object JwtUtil {
     }
 
     val verificationMethodId = jwt.header.keyID
-    val parsedDidUrl = DIDURL.fromString(verificationMethodId) // validates vm id which is a DID URL
+    val verificationMethodIdParseResult = parseVerificationMethodId(verificationMethodId)
 
-    val didResolutionResult = DidResolvers.resolve(parsedDidUrl.did.didString)
+    val didResolutionResult = DidResolvers.resolve(verificationMethodIdParseResult.didUrlString)
     if (didResolutionResult.didResolutionMetadata.error != null) {
       throw SignatureException(
         "Signature verification failed: " +
-          "Failed to resolve DID ${parsedDidUrl.did.didString}. " +
+          "Failed to resolve DID ${verificationMethodIdParseResult}. " +
           "Error: ${didResolutionResult.didResolutionMetadata.error}"
       )
     }
@@ -121,7 +121,7 @@ public object JwtUtil {
     // create a set of possible id matches. the DID spec allows for an id to be the entire `did#fragment`
     // or just `#fragment`. See: https://www.w3.org/TR/did-core/#relative-did-urls.
     // using a set for fast string comparison. DIDs can be lonnng.
-    val verificationMethodIds = setOf(parsedDidUrl.didUrlString, "#${parsedDidUrl.fragment}")
+    val verificationMethodIds = setOf(verificationMethodIdParseResult.didUrlString, "#${verificationMethodIdParseResult.fragment}")
     val assertionMethods = didResolutionResult.didDocument?.assertionMethodVerificationMethodsDereferenced
     val assertionMethod = assertionMethods?.firstOrNull {
       val id = it.id.toString()
@@ -140,8 +140,7 @@ public object JwtUtil {
       )
     }
 
-    val publicKeyJwk = assertionMethod.publicKeyJwk
-
+    val publicKeyJwk = assertionMethod.publicKeyJwk ?: throw PublicKeyJwkMissingException("publicKeyJwk is null")
     val toVerifyBytes = jwt.signingInput
     val signatureBytes = jwt.signature.decode()
 
@@ -151,4 +150,16 @@ public object JwtUtil {
       signatureBytes
     )
   }
+
+  private fun parseVerificationMethodId(verificationMethodId: String): ParsedVerificationMethodId {
+
+    val verificationMethodIdArray = verificationMethodId.split("#")
+    require(verificationMethodIdArray.size == 2) {
+      "Invalid verification method id: $verificationMethodId"
+    }
+    return ParsedVerificationMethodId(verificationMethodIdArray[0], verificationMethodIdArray[1])
+  }
+
+  private data class ParsedVerificationMethodId(val didUrlString: String, val fragment: String)
+
 }

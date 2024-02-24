@@ -11,9 +11,9 @@ import org.junit.jupiter.api.assertThrows
 import web5.sdk.common.Convert
 import web5.sdk.crypto.AlgorithmId
 import web5.sdk.crypto.InMemoryKeyManager
-import web5.sdk.crypto.Jwa
 import web5.sdk.dids.DidResolutionResult
 import web5.sdk.dids.DidResolvers
+import web5.sdk.dids.Json
 import web5.sdk.testing.TestVectors
 import java.io.File
 import kotlin.test.assertEquals
@@ -29,11 +29,11 @@ class DidJwkTest {
       val did = DidJwk.create(manager)
 
       val didResolutionResult = DidResolvers.resolve(did.uri)
-      val verificationMethod = didResolutionResult.didDocument!!.allVerificationMethods[0]
+      val verificationMethod = didResolutionResult.didDocument!!.verificationMethods?.get(0)
 
       assertNotNull(verificationMethod)
 
-      val jwk = JWK.parse(verificationMethod.publicKeyJwk)
+      val jwk = verificationMethod.publicKeyJwk!!
       val keyAlias = did.keyManager.getDeterministicAlias(jwk)
       val publicKey = did.keyManager.getPublicKey(keyAlias)
 
@@ -101,7 +101,10 @@ class DidJwkTest {
       assertNotNull(didDocument)
 
       val expectedJson = File("src/test/resources/did_jwk_p256_document.json").readText()
-      assertEquals(JsonCanonicalizer(expectedJson).encodedString, JsonCanonicalizer(didDocument.toJson()).encodedString)
+      assertEquals(
+        JsonCanonicalizer(expectedJson).encodedString,
+        JsonCanonicalizer(Json.stringify(didDocument)).encodedString
+      )
     }
 
     @Test
@@ -117,7 +120,10 @@ class DidJwkTest {
       assertNotNull(didDocument)
 
       val expectedJson = File("src/test/resources/did_jwk_x25519_document.json").readText()
-      assertEquals(JsonCanonicalizer(expectedJson).encodedString, JsonCanonicalizer(didDocument.toJson()).encodedString)
+      assertEquals(
+        JsonCanonicalizer(expectedJson).encodedString,
+        JsonCanonicalizer(Json.stringify(didDocument)).encodedString
+      )
     }
   }
 }

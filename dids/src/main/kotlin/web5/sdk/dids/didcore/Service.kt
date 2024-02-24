@@ -20,18 +20,18 @@ import java.net.URI
 public class Service(
   public val id: String,
   public val type: String,
-  public val serviceEndpoint: String
+  public val serviceEndpoint: List<String>
 ) {
 
   public companion object Builder {
     private var id: String? = null
     private var type: String? = null
-    private var serviceEndpoint: String? = null
+    private var serviceEndpoint: List<String>? = null
 
 
     public fun id(id: String): Builder = apply { this.id = id }
     public fun type(type: String): Builder = apply { this.type = type }
-    public fun serviceEndpoint(serviceEndpoint: String?): Builder = apply {
+    public fun serviceEndpoint(serviceEndpoint: List<String>?): Builder = apply {
       this.serviceEndpoint = serviceEndpoint
     }
 

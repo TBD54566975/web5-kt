@@ -28,11 +28,11 @@ class DidKeyTest {
       val did = DidKey.create(manager)
 
       val didResolutionResult = DidResolvers.resolve(did.uri)
-      val verificationMethod = didResolutionResult.didDocument!!.allVerificationMethods[0]
+      val verificationMethod = didResolutionResult.didDocument!!.verificationMethods?.get(0)
 
       require(verificationMethod != null) { "no verification method found" }
 
-      val jwk = JWK.parse(verificationMethod.publicKeyJwk)
+      val jwk = verificationMethod.publicKeyJwk!!
       val keyAlias = did.keyManager.getDeterministicAlias(jwk)
       val publicKey = did.keyManager.getPublicKey(keyAlias)
     }
@@ -76,18 +76,20 @@ class DidKeyTest {
 
       val didDocument = result.didDocument
       assertNotNull(didDocument)
-      assertEquals(did, didDocument.id.toString())
-      assertEquals(1, didDocument.allVerificationMethods.size)
-      assertEquals(1, didDocument.assertionMethodVerificationMethods.size)
-      assertEquals(1, didDocument.authenticationVerificationMethods.size)
-      assertEquals(1, didDocument.capabilityDelegationVerificationMethods.size)
-      assertEquals(1, didDocument.capabilityInvocationVerificationMethods.size)
-      assertEquals(1, didDocument.keyAgreementVerificationMethods.size)
+      assertEquals(did, didDocument.id)
+      assertEquals(1, didDocument.verificationMethods?.size)
+      assertEquals(1, didDocument.assertionMethodVerificationMethods?.size)
+      assertEquals(1, didDocument.authenticationVerificationMethods?.size)
+      assertEquals(1, didDocument.capabilityDelegationVerificationMethods?.size)
+      assertEquals(1, didDocument.capabilityInvocationVerificationMethods?.size)
+      assertEquals(1, didDocument.keyAgreementVerificationMethods?.size)
 
-      val verificationMethod = didDocument.verificationMethods.first()
+      val verificationMethod = didDocument.verificationMethods?.first()
+      assertNotNull(verificationMethod)
+
       assertEquals(
         "did:key:zQ3shjmnWpSDEbYKpaFm4kTs9kXyqG6N2QwCYHNPP4yubqgJS#zQ3shjmnWpSDEbYKpaFm4kTs9kXyqG6N2QwCYHNPP4yubqgJS",
-        verificationMethod.id.toString()
+        verificationMethod.id
       )
 
       // Note: cannot run the controller assertion because underlying lib enforces JSON-LD @context
@@ -96,7 +98,7 @@ class DidKeyTest {
       assertEquals("JsonWebKey2020", verificationMethod.type)
       assertNotNull(verificationMethod.publicKeyJwk)
 
-      val publicKeyJwk = JWK.parse(verificationMethod.publicKeyJwk) // validates
+      val publicKeyJwk = verificationMethod.publicKeyJwk // validates
       assertTrue(publicKeyJwk is ECKey)
 
       assertEquals(publicKeyJwk.algorithm, JWSAlgorithm.ES256K)

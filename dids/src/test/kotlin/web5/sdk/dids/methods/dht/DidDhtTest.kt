@@ -1,7 +1,9 @@
 package web5.sdk.dids.methods.dht
 
 import com.fasterxml.jackson.core.type.TypeReference
+import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.jsonMapper
 import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.JWK
 import com.nimbusds.jose.jwk.gen.ECKeyGenerator
@@ -21,6 +23,7 @@ import web5.sdk.common.ZBase32
 import web5.sdk.crypto.AlgorithmId
 import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.dids.DidResolutionResult
+import web5.sdk.dids.Json
 import web5.sdk.dids.PublicKeyPurpose
 import web5.sdk.dids.didcore.DIDDocument
 import web5.sdk.dids.didcore.Service
@@ -132,9 +135,9 @@ class DidDhtTest {
 
       val serviceToAdd =
         Service.builder()
-          .id(URI("test-service"))
+          .id("test-service")
           .type("HubService")
-          .serviceEndpoint("https://example.com/service)")
+          .serviceEndpoint(listOf("https://example.com/service)"))
           .build()
 
       val opts = CreateDidDhtOptions(
@@ -279,7 +282,7 @@ class DidDhtTest {
       )
 
       val serviceToAdd = Service.builder()
-        .id(URI("test-service"))
+        .id("test-service")
         .type("HubService")
         .serviceEndpoint(listOf("https://example.com/service", "https://example.com/service2"))
         .build()
@@ -337,7 +340,7 @@ class DidDhtTest {
   }
 }
 
-private val mapper = jacksonObjectMapper()
+private val mapper = Json.jsonMapper
 
 class Web5TestVectorsDidDht {
   data class CreateTestInput(
@@ -381,8 +384,7 @@ class Web5TestVectorsDidDht {
       )
       val didDht = DidDht.create(keyManager, options)
       assertEquals(
-        // todo fix this test?
-        JsonCanonicalizer(vector.output?.toJson()).encodedString,
+        JsonCanonicalizer(Json.stringify(vector.output!!)).encodedString,
         JsonCanonicalizer(didDht.didDocument!!.toCustomJson()).encodedString,
         vector.description
       )
@@ -413,9 +415,15 @@ class Web5TestVectorsDidDht {
 // The test vectors assume the property "controller" is rendered as a string (vs. an array of strings) when there is
 // only one controller.
 private fun DIDDocument.toCustomJson(): String? {
-  val jsonObject = this.jsonObject.toMutableMap()
-  if (jsonObject["controller"] is List<*> && (jsonObject["controller"] as List<*>).size == 1) {
-    jsonObject["controller"] = (jsonObject["controller"] as List<*>).single()
+  val jsonObject = Json.jsonMapper.readTree(Json.stringify(this))
+  val controller = jsonObject.get("controller")
+  var modifiedObject: ObjectNode? = null
+
+  if (controller.isArray && controller.size() == 1) {
+    val singleController = controller.get(0).asText()
+    modifiedObject = jsonObject.deepCopy()
+    modifiedObject.put("controller", singleController)
   }
-  return mapper.writeValueAsString(jsonObject)
+
+  return Json.stringify(modifiedObject ?: jsonObject)
 }

@@ -504,7 +504,7 @@ public sealed class DidIonApi(
     }
 
     try {
-      URI.create(service.serviceEndpoint)
+      URI.create(service.serviceEndpoint.first()) // todo grab the first one? seems sus
     } catch (e: Exception) {
       throw IllegalArgumentException("service endpoint is not a valid URI", e)
     }

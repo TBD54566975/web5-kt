@@ -6,7 +6,7 @@ import java.net.URI
 
 public class VerificationMethod(
   public val id: String,
-  public val publicKeyJwk: JWK? = null,
+  public val publicKeyJwk: JWK? = null, // todo not required per the spec - keep as optional, but use null checks
   public val type: String? = null,
   public val controller: String? = null
 ) {
@@ -36,9 +36,6 @@ public class VerificationMethod(
 
     public fun builder(): Builder {
       return Builder
-
     }
-
-
   }
 }

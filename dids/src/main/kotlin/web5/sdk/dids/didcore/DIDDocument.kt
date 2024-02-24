@@ -53,16 +53,16 @@ public class DIDDocument(
   capabilityInvocation: List<String> = emptyList()
 ) {
 
+  public val alsoKnownAses: List<String>? = null
+  public val controllers: List<String>? = null
   public val services: List<Service>? = null
+  public val verificationMethods: List<VerificationMethod>? = null
+
   public val assertionMethodVerificationMethods: List<VerificationMethod>? = null
   public val authenticationVerificationMethods: List<VerificationMethod>? = null
   public val capabilityDelegationVerificationMethods: List<VerificationMethod>? = null
   public val capabilityInvocationVerificationMethods: List<VerificationMethod>? = null
   public val keyAgreementVerificationMethods: List<VerificationMethod>? = null
-
-  public val verificationMethods: List<VerificationMethod>? = null
-  public val alsoKnownAses: List<URI>? = null
-  public val controllers: List<URI>? = null
 
   public val authenticationVerificationMethodsDereferenced: List<VerificationMethod>? = null
   public val assertionMethodVerificationMethodsDereferenced: List<VerificationMethod>? = null
@@ -134,7 +134,8 @@ public class DIDDocument(
       else -> throw Exception("Invalid selector type $selector")
     }
 
-    val vm = verificationMethod.find { it.id == vmID } ?: throw Exception("No verification method found for id: $vmID")
+    val vm = verificationMethod.find { it.id == vmID }
+      ?: throw Exception("No verification method found for id: $vmID")
     return vm
   }
 
@@ -153,6 +154,8 @@ public class DIDDocument(
 
 
   public companion object Builder {
+    private var controller: List<String> = emptyList()
+    private var alsoKnownAs: List<String> = emptyList()
     private var id: String? = null
 
     private var uri: String? = null
@@ -162,8 +165,12 @@ public class DIDDocument(
     private var path: String? = null
     private var query: String? = null
     private var fragment: String? = null
-    private var defaultContexts: Boolean? = null
     private var verificationMethods: List<VerificationMethod>? = null
+    private var assertionMethodVerificationMethods: List<VerificationMethod>? = null
+    private var authenticationVerificationMethods: List<VerificationMethod>? = null
+    private var keyAgreementVerificationMethods: List<VerificationMethod>? = null
+    private var capabilityDelegationVerificationMethods: List<VerificationMethod>? = null
+    private var capabilityInvocationVerificationMethods: List<VerificationMethod>? = null
     private var services: List<Service>? = null
 
     public fun uri(uri: String): Builder = apply { this.uri = uri }
@@ -174,17 +181,8 @@ public class DIDDocument(
     public fun path(path: String?): Builder = apply { this.path = path }
     public fun query(query: String?): Builder = apply { this.query = query }
     public fun fragment(fragment: String?): Builder = apply { this.fragment = fragment }
-
-
-    public fun controllers(map: List<URI>) {
-
-    }
-
-    public fun alsoKnownAses(map: List<URI>) {
-
-    }
-
-    public fun defaultContexts(defaultContexts: Boolean): Builder = apply { this.defaultContexts = defaultContexts }
+    public fun controllers(controllers: List<String>): Builder = apply { this.controller = controllers }
+    public fun alsoKnownAses(alsoKnownAses: List<String>): Builder = apply { this.alsoKnownAs = alsoKnownAses }
     public fun verificationMethods(verificationMethods: List<VerificationMethod>): Builder = apply {
       this.verificationMethods = verificationMethods
     }
@@ -192,23 +190,25 @@ public class DIDDocument(
     public fun services(services: List<Service>?): Builder = apply { this.services = services }
 
 
-    public fun assertionMethodVerificationMethods(verificationMethods: MutableList<VerificationMethod>?): Builder = apply {
+    public fun assertionMethodVerificationMethods(assertionMethodVerificationMethods: MutableList<VerificationMethod>?): Builder =
+      apply {
+        this.assertionMethodVerificationMethods = assertionMethodVerificationMethods
+      }
 
-    }
-
-    public fun authenticationVerificationMethods(verificationMethods: MutableList<VerificationMethod>?): Builder = apply {
-
+    public fun authenticationVerificationMethods(authenticationVerificationMethods: MutableList<VerificationMethod>?): Builder = apply {
+      this.authenticationVerificationMethods = authenticationVerificationMethods
     }
 
     public fun keyAgreementVerificationMethods(verificationMethods: MutableList<VerificationMethod>?): Builder = apply {
-
+      this.keyAgreementVerificationMethods = verificationMethods
     }
 
-    public fun capabilityDelegationVerificationMethods(verificationMethods: MutableList<VerificationMethod>?): Builder = apply { }
+    public fun capabilityDelegationVerificationMethods(capabilityDelegationVerificationMethods: MutableList<VerificationMethod>?): Builder = apply {
+      this.capabilityDelegationVerificationMethods = capabilityDelegationVerificationMethods
+    }
 
-
-    public fun capabilityInvocationVerificationMethods(verificationMethods: MutableList<VerificationMethod>?): Builder = apply {
-
+    public fun capabilityInvocationVerificationMethods(capabilityInvocationVerificationMethods: MutableList<VerificationMethod>?): Builder = apply {
+      this.capabilityInvocationVerificationMethods = capabilityInvocationVerificationMethods
     }
 
     public fun verificationMethod(verificationMethod: VerificationMethod): Builder = apply { }

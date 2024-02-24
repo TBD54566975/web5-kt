@@ -47,3 +47,10 @@ public class DidResolutionException(message: String) : RuntimeException(message)
  * @param message the exception message detailing the error
  */
 public class ParserException(message: String) : RuntimeException(message)
+
+/**
+ * PublicKeyJwkMissingException
+ *
+ * @param message the exception message detailing the error
+ */
+public class PublicKeyJwkMissingException(message: String) : RuntimeException(message)

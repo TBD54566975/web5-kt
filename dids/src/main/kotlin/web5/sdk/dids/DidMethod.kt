@@ -3,6 +3,7 @@ package web5.sdk.dids
 import com.nimbusds.jose.jwk.JWK
 import web5.sdk.crypto.KeyManager
 import web5.sdk.dids.didcore.DID
+import web5.sdk.dids.exceptions.PublicKeyJwkMissingException
 
 /**
  * A base abstraction for Decentralized Identifiers (DID) compliant with the W3C DID standard.
@@ -177,7 +178,8 @@ internal fun <T : Did, O : CreateDidOptions> DidMethod<T, O>.validateKeyMaterial
   val didResolutionResult = resolve(did)
 
   didResolutionResult.didDocument!!.verificationMethod.forEach {
-    val keyAlias = keyManager.getDeterministicAlias(it.publicKeyJwk)
+    val publicKeyJwk = it.publicKeyJwk ?: throw PublicKeyJwkMissingException("publicKeyJwk is null")
+    val keyAlias = keyManager.getDeterministicAlias(publicKeyJwk)
     keyManager.getPublicKey(keyAlias)
   }
 }
