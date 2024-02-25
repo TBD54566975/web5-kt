@@ -1,8 +1,5 @@
 package web5.sdk.dids.didcore
 
-import java.net.URI
-
-
 /**
  * Service is used in DID documents to express ways of communicating with
  * the DID subject or associated entities.
@@ -35,7 +32,6 @@ public class Service(
       this.serviceEndpoint = serviceEndpoint
     }
 
-    // todo not sure which fields are required and which are not
     public fun build(): Service {
       val localId = id ?: throw IllegalStateException("ID is required")
       val localType = type ?: throw IllegalStateException("Type is required")

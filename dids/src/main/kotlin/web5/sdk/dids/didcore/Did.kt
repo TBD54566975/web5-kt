@@ -50,18 +50,20 @@ public class DID(
   }
 
   public companion object Parser {
-    private val pctEncodedPattern = """(?:%[0-9a-fA-F]{2})"""
-    private val idCharPattern = """(?:[a-zA-Z0-9._-]|$pctEncodedPattern)"""
-    private val methodPattern = """([a-z0-9]+)"""
-    private val methodIdPattern = """((?:$idCharPattern*:)*($idCharPattern+))"""
-    private val paramCharPattern = """[a-zA-Z0-9_.:%-]"""
-    private val paramPattern = """;$paramCharPattern+=$paramCharPattern*"""
-    private val paramsPattern = """(($paramPattern)*)"""
-    private val pathPattern = """/[^#?]*"""
-    private val queryPattern = """(\?[^#]*)?"""
-    private val fragmentPattern = """(\#.*)?"""
+    private const val PCT_ENCODED_PATTERN = """(?:%[0-9a-fA-F]{2})"""
+    private const val ID_CHAR_PATTERN = """(?:[a-zA-Z0-9._-]|$PCT_ENCODED_PATTERN)"""
+    private const val METHOD_PATTERN = """([a-z0-9]+)"""
+    private const val METHOD_ID_PATTERN = """((?:$ID_CHAR_PATTERN*:)*($ID_CHAR_PATTERN+))"""
+    private const val PARAM_CHAR_PATTERN = """[a-zA-Z0-9_.:%-]"""
+    private const val PARAM_PATTERN = """;$PARAM_CHAR_PATTERN+=$PARAM_CHAR_PATTERN*"""
+    private const val PARAMS_PATTERN = """(($PARAM_PATTERN)*)"""
+    private const val PATH_PATTERN = """/[^#?]*"""
+    private const val QUERY_PATTERN = """(\?[^#]*)?"""
+    private const val FRAGMENT_PATTERN = """(\#.*)?"""
     private val didUriPattern =
-      Pattern.compile("""^did:$methodPattern:$methodIdPattern$paramsPattern$pathPattern$queryPattern$fragmentPattern$""")
+      Pattern.compile(
+        """^did:$METHOD_PATTERN:$METHOD_ID_PATTERN$PARAMS_PATTERN$PATH_PATTERN$QUERY_PATTERN$FRAGMENT_PATTERN$"""
+      )
 
     public fun parse(input: String): DID {
       val matcher = didUriPattern.matcher(input)

@@ -7,7 +7,7 @@ import web5.sdk.common.EncodingFormat
 import web5.sdk.crypto.AlgorithmId
 import web5.sdk.crypto.KeyManager
 import web5.sdk.dids.CreateDidOptions
-import web5.sdk.dids.Did
+import web5.sdk.dids.BaseDid
 import web5.sdk.dids.DidMethod
 import web5.sdk.dids.DidResolutionMetadata
 import web5.sdk.dids.DidResolutionResult
@@ -18,7 +18,6 @@ import web5.sdk.dids.didcore.DIDDocument
 import web5.sdk.dids.didcore.VerificationMethod
 import web5.sdk.dids.exceptions.ParserException
 import web5.sdk.dids.validateKeyMaterialInsideKeyManager
-import java.net.URI
 import java.text.ParseException
 
 /**
@@ -51,7 +50,7 @@ public class CreateDidJwkOptions(
  *
  * @constructor Initializes a new instance of [DidJwk] with the provided [uri] and [keyManager].
  */
-public class DidJwk(uri: String, keyManager: KeyManager) : Did(uri, keyManager) {
+public class DidJwk(uri: String, keyManager: KeyManager) : BaseDid(uri, keyManager) {
   /**
    * Resolves the current instance's [uri] to a [DidResolutionResult], which contains the DID Document
    * and possible related metadata.

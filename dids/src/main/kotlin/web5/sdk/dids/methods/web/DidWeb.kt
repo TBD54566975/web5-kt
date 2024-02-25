@@ -21,7 +21,7 @@ import okhttp3.OkHttpClient
 import okhttp3.dnsoverhttps.DnsOverHttps
 import web5.sdk.crypto.KeyManager
 import web5.sdk.dids.CreateDidOptions
-import web5.sdk.dids.Did
+import web5.sdk.dids.BaseDid
 import web5.sdk.dids.DidMethod
 import web5.sdk.dids.DidResolutionResult
 import web5.sdk.dids.ResolutionError
@@ -56,7 +56,7 @@ public class DidWeb(
   uri: String,
   keyManager: KeyManager,
   private val didWebApi: DidWebApi
-) : Did(uri, keyManager) {
+) : BaseDid(uri, keyManager) {
   /**
    * Calls [DidWebApi.resolve] for this DID.
    */
@@ -87,8 +87,8 @@ public fun DidWebApi(blockConfiguration: DidWebApiConfiguration.() -> Unit): Did
 
 private class DidWebApiImpl(configuration: DidWebApiConfiguration) : DidWebApi(configuration)
 
-private const val wellKnownURLPath = "/.well-known"
-private const val didDocFilename = "/did.json"
+private const val WELL_KNOWN_URL_PATH = "/.well-known"
+private const val DID_DOC_FILE_NAME = "/did.json"
 
 /**
  * Implements [resolve] and [create] according to https://w3c-ccg.github.io/did-method-web/
@@ -176,9 +176,9 @@ public sealed class DidWebApi(
 
     val url = URL(targetUrl.toString())
     if (url.path.isEmpty()) {
-      targetUrl.append(wellKnownURLPath)
+      targetUrl.append(WELL_KNOWN_URL_PATH)
     }
-    targetUrl.append(didDocFilename)
+    targetUrl.append(DID_DOC_FILE_NAME)
     return targetUrl.toString()
   }
 

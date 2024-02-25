@@ -139,7 +139,7 @@ internal class DhtClient(
       // set the sequence number to the current time in seconds
       val seq = System.currentTimeMillis() / 1000
       val v = message.toWire()
-      require(!v.isEmpty()) {
+      require(v.isNotEmpty()) {
         "Message must be not be empty"
       }
       return signBep44Message(manager, keyAlias, seq, v)

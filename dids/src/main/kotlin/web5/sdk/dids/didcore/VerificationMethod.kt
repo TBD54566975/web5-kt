@@ -1,8 +1,6 @@
 package web5.sdk.dids.didcore
 
 import com.nimbusds.jose.jwk.JWK
-import java.net.URI
-
 
 public class VerificationMethod(
   public val id: String,
@@ -27,7 +25,6 @@ public class VerificationMethod(
     public fun publicKeyJwk(publicKeyJwk: JWK): Builder = apply { this.publicKeyJwk = publicKeyJwk }
 
 
-    // todo not sure which fields are required and which are not
     public fun build(): VerificationMethod {
       val localId = id ?: throw IllegalStateException("ID is required")
       val localType = type ?: throw IllegalStateException("Type is required")

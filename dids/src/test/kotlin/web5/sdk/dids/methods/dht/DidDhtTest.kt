@@ -2,8 +2,6 @@ package web5.sdk.dids.methods.dht
 
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.node.ObjectNode
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.fasterxml.jackson.module.kotlin.jsonMapper
 import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.JWK
 import com.nimbusds.jose.jwk.gen.ECKeyGenerator
@@ -24,8 +22,8 @@ import web5.sdk.crypto.AlgorithmId
 import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.dids.DidResolutionResult
 import web5.sdk.dids.Json
-import web5.sdk.dids.PublicKeyPurpose
 import web5.sdk.dids.didcore.DIDDocument
+import web5.sdk.dids.didcore.PublicKeyPurpose
 import web5.sdk.dids.didcore.Service
 import web5.sdk.dids.exceptions.InvalidIdentifierException
 import web5.sdk.dids.exceptions.InvalidIdentifierSizeException
@@ -33,7 +31,6 @@ import web5.sdk.dids.exceptions.InvalidMethodNameException
 import web5.sdk.dids.exceptions.ParserException
 import web5.sdk.testing.TestVectors
 import java.io.File
-import java.net.URI
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull

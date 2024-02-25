@@ -2,7 +2,6 @@ package web5.sdk.dids.didcore
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.nimbusds.jose.jwk.JWK
-import java.net.URI
 
 
 /**
@@ -136,7 +135,9 @@ public class DIDDocument(
 
   // todo fill this method out
   public fun findAssertionMethodById(assertionMethodId: String?): VerificationMethod {
-    return VerificationMethod(URI.create("id").toString(), "type","JsonWebKey", JWK.parse("..."))
+    return VerificationMethod(
+      "id", "type", "JsonWebKey", JWK.parse("...")
+    )
   }
 
 
@@ -179,20 +180,20 @@ public class DIDDocument(
         this.assertionMethod = assertionMethodVerificationMethods
       }
 
-    public fun authenticationMethods(authenticationVerificationMethods: MutableList<VerificationMethod>?): Builder = apply {
-      this.authenticationMethod = authenticationVerificationMethods
+    public fun authenticationMethods(authenticationMethods: MutableList<VerificationMethod>?): Builder = apply {
+      this.authenticationMethod = authenticationMethods
     }
 
     public fun keyAgreementMethods(verificationMethods: MutableList<VerificationMethod>?): Builder = apply {
       this.keyAgreementMethod = verificationMethods
     }
 
-    public fun capabilityDelegationMethods(capabilityDelegationVerificationMethods: MutableList<VerificationMethod>?): Builder = apply {
-      this.capabilityDelegationMethod = capabilityDelegationVerificationMethods
+    public fun capabilityDelegationMethods(capabilityDelegationMethods: MutableList<VerificationMethod>?): Builder = apply {
+      this.capabilityDelegationMethod = capabilityDelegationMethods
     }
 
-    public fun capabilityInvocationMethods(capabilityInvocationVerificationMethods: MutableList<VerificationMethod>?): Builder = apply {
-      this.capabilityInvocationMethod = capabilityInvocationVerificationMethods
+    public fun capabilityInvocationMethods(capabilityInvocationMethods: MutableList<VerificationMethod>?): Builder = apply {
+      this.capabilityInvocationMethod = capabilityInvocationMethods
     }
 
     // todo a couple places ask for either adding a list or just one.
@@ -205,6 +206,7 @@ public class DIDDocument(
     public fun authenticationMethod(authenticationMethod: VerificationMethod): Builder = apply {
       this.authenticationMethod!!.add(authenticationMethod)
     }
+
     public fun keyAgreementMethod(keyAgreementMethod: VerificationMethod): Builder = apply {
       this.keyAgreementMethod!!.add(keyAgreementMethod)
     }
@@ -213,7 +215,6 @@ public class DIDDocument(
       this.capabilityInvocationMethod!!.add(capabilityInvocationMethod)
     }
 
-    // todo not sure which fields are required and which are not
     public fun build(): DIDDocument {
       val localId = id ?: throw IllegalStateException("ID is required")
       return DIDDocument(

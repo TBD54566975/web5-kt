@@ -19,15 +19,15 @@ import web5.sdk.crypto.Ed25519
 import web5.sdk.crypto.KeyManager
 import web5.sdk.crypto.Secp256k1
 import web5.sdk.dids.CreateDidOptions
-import web5.sdk.dids.Did
+import web5.sdk.dids.BaseDid
 import web5.sdk.dids.DidMethod
 import web5.sdk.dids.DidResolutionResult
-import web5.sdk.dids.PublicKeyPurpose
 import web5.sdk.dids.ResolutionError
 import web5.sdk.dids.ResolveDidOptions
 import web5.sdk.dids.didcore.DID
 import web5.sdk.dids.didcore.DIDDocument
 import web5.sdk.dids.didcore.DidDocumentMetadata
+import web5.sdk.dids.didcore.PublicKeyPurpose
 import web5.sdk.dids.didcore.Service
 import web5.sdk.dids.didcore.VerificationMethod
 import web5.sdk.dids.exceptions.InvalidIdentifierException
@@ -142,7 +142,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
     // add identity key to relationships map
     val identityVerificationMethod =
       VerificationMethod(
-        id = URI.create("$id#0").toString(),
+        id = "$id#0",
         type = "JsonWebKey",
         controller = URI.create(id).toString(),
         publicKeyJwk = publicKey.toPublicJWK()
@@ -347,7 +347,9 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
    *
    * @param did The DID to check.
    * @throws IllegalArgumentException if the provided DID does not conform to the "did:dht" method.
-   * @throws ParserException if the provided DID is not a valid DID.
+   * @throws InvalidMethodNameException if method name is incorrect
+   * @throws InvalidIdentifierException if identifier is not z-base-32 encoded
+   * @throws InvalidIdentifierException if decoded identifier length is not 32
    */
   internal fun validate(did: String) {
     val parsedDid = DID.parse(did)
@@ -698,7 +700,7 @@ public class DidDht(
   uri: String, keyManager: KeyManager,
   public val didDocument: DIDDocument? = null,
   private val didDhtApi: DidDhtApi
-) : Did(uri, keyManager) {
+) : BaseDid(uri, keyManager) {
 
   /**
    * Calls [DidDhtApi.create] with the provided [CreateDidDhtOptions] and returns the result.
