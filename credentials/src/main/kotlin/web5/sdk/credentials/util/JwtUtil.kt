@@ -124,7 +124,7 @@ public object JwtUtil {
     val verificationMethodIds = setOf(verificationMethodIdParseResult.didUrlString, "#${verificationMethodIdParseResult.fragment}")
     val assertionMethods = didResolutionResult.didDocument?.assertionMethodVerificationMethodsDereferenced
     val assertionMethod = assertionMethods?.firstOrNull {
-      val id = it.id.toString()
+      val id = it.id
       verificationMethodIds.contains(id)
     }
       ?: throw SignatureException(

@@ -8,7 +8,7 @@ public class VerificationMethod(
   public val id: String,
   public val type: String,
   public val controller: String,
-  public val publicKeyJwk: JWK
+  public val publicKeyJwk: JWK? = null
 ) {
   public fun isType(type: String): Boolean {
     return type == this.type

@@ -20,7 +20,6 @@ import web5.sdk.crypto.KeyManager
 import web5.sdk.crypto.Secp256k1
 import web5.sdk.dids.CreateDidOptions
 import web5.sdk.dids.Did
-import web5.sdk.dids.DidDocumentMetadata
 import web5.sdk.dids.DidMethod
 import web5.sdk.dids.DidResolutionResult
 import web5.sdk.dids.PublicKeyPurpose
@@ -28,6 +27,7 @@ import web5.sdk.dids.ResolutionError
 import web5.sdk.dids.ResolveDidOptions
 import web5.sdk.dids.didcore.DID
 import web5.sdk.dids.didcore.DIDDocument
+import web5.sdk.dids.didcore.DidDocumentMetadata
 import web5.sdk.dids.didcore.Service
 import web5.sdk.dids.didcore.VerificationMethod
 import web5.sdk.dids.exceptions.InvalidIdentifierException

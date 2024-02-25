@@ -28,13 +28,19 @@ class DidKeyTest {
       val did = DidKey.create(manager)
 
       val didResolutionResult = DidResolvers.resolve(did.uri)
-      val verificationMethod = didResolutionResult.didDocument!!.verificationMethods?.get(0)
 
-      require(verificationMethod != null) { "no verification method found" }
+      assertNotNull(didResolutionResult.didDocument)
+      val verificationMethod = didResolutionResult.didDocument!!.verificationMethod[0]
 
-      val jwk = verificationMethod.publicKeyJwk!!
+      val jwk = verificationMethod.publicKeyJwk
+      assertNotNull(jwk)
+
       val keyAlias = did.keyManager.getDeterministicAlias(jwk)
       val publicKey = did.keyManager.getPublicKey(keyAlias)
+      assertNotNull(jwk)
+      assertNotNull(keyAlias)
+      assertNotNull(publicKey)
+
     }
   }
 
@@ -77,14 +83,14 @@ class DidKeyTest {
       val didDocument = result.didDocument
       assertNotNull(didDocument)
       assertEquals(did, didDocument.id)
-      assertEquals(1, didDocument.verificationMethods?.size)
+      assertEquals(1, didDocument.verificationMethod.size)
       assertEquals(1, didDocument.assertionMethodVerificationMethods?.size)
       assertEquals(1, didDocument.authenticationVerificationMethods?.size)
       assertEquals(1, didDocument.capabilityDelegationVerificationMethods?.size)
       assertEquals(1, didDocument.capabilityInvocationVerificationMethods?.size)
       assertEquals(1, didDocument.keyAgreementVerificationMethods?.size)
 
-      val verificationMethod = didDocument.verificationMethods?.first()
+      val verificationMethod = didDocument.verificationMethod.first()
       assertNotNull(verificationMethod)
 
       assertEquals(

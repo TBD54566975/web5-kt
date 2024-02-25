@@ -103,14 +103,14 @@ class DidDhtTest {
       assertDoesNotThrow { did.validate() }
       assertNotNull(did)
       assertNotNull(did.didDocument)
-      assertEquals(1, did.didDocument!!.verificationMethods?.size)
-      assertContains(did.didDocument!!.verificationMethods?.get(0)?.id.toString(), "#0")
+      assertEquals(1, did.didDocument!!.verificationMethod.size)
+      assertContains(did.didDocument!!.verificationMethod[0].id, "#0")
       assertEquals(1, did.didDocument!!.assertionMethodVerificationMethods?.size)
       assertEquals(1, did.didDocument!!.authenticationVerificationMethods?.size)
       assertEquals(1, did.didDocument!!.capabilityDelegationVerificationMethods?.size)
       assertEquals(1, did.didDocument!!.capabilityInvocationVerificationMethods?.size)
       assertNull(did.didDocument!!.keyAgreementVerificationMethods)
-      assertNull(did.didDocument!!.services)
+      assertNull(did.didDocument!!.service)
     }
 
     @Test
@@ -147,15 +147,15 @@ class DidDhtTest {
 
       assertNotNull(did)
       assertNotNull(did.didDocument)
-      assertEquals(3, did.didDocument!!.verificationMethods?.size)
+      assertEquals(3, did.didDocument!!.verificationMethod.size)
       assertEquals(3, did.didDocument!!.assertionMethodVerificationMethods?.size)
       assertEquals(3, did.didDocument!!.authenticationVerificationMethods?.size)
       assertEquals(1, did.didDocument!!.capabilityDelegationVerificationMethods?.size)
       assertEquals(1, did.didDocument!!.capabilityInvocationVerificationMethods?.size)
       assertNull(did.didDocument!!.keyAgreementVerificationMethods)
-      assertNotNull(did.didDocument!!.services)
-      assertEquals(1, did.didDocument!!.services?.size)
-      assertContains(did.didDocument!!.services?.get(0)?.id.toString(), "test-service")
+      assertNotNull(did.didDocument!!.service)
+      assertEquals(1, did.didDocument!!.service.size)
+      assertContains(did.didDocument!!.service[0].id, "test-service")
     }
 
     @Test
@@ -187,14 +187,14 @@ class DidDhtTest {
 
       assertNotNull(did)
       assertNotNull(did.didDocument)
-      assertEquals(1, did.didDocument!!.verificationMethods?.size)
-      assertContains(did.didDocument!!.verificationMethods?.get(0)?.id.toString(), "#0")
+      assertEquals(1, did.didDocument!!.verificationMethod.size)
+      assertContains(did.didDocument!!.verificationMethod[0].id, "#0")
       assertEquals(1, did.didDocument!!.assertionMethodVerificationMethods?.size)
       assertEquals(1, did.didDocument!!.authenticationVerificationMethods?.size)
       assertEquals(1, did.didDocument!!.capabilityDelegationVerificationMethods?.size)
       assertEquals(1, did.didDocument!!.capabilityInvocationVerificationMethods?.size)
       assertNull(did.didDocument!!.keyAgreementVerificationMethods)
-      assertNull(did.didDocument!!.services)
+      assertNull(did.didDocument!!.service)
     }
 
     @Test
@@ -207,7 +207,7 @@ class DidDhtTest {
         val result = api.resolve(knownDid)
         assertNotNull(result)
         assertNotNull(result.didDocument)
-        assertEquals(knownDid, result.didDocument!!.id.toString())
+        assertEquals(knownDid, result.didDocument!!.id)
       }
     }
 
@@ -244,7 +244,7 @@ class DidDhtTest {
       val packet = DidDht.toDnsPacket(did.didDocument!!)
       assertNotNull(packet)
 
-      val didFromPacket = DidDht.fromDnsPacket(did.didDocument!!.id.toString(), packet)
+      val didFromPacket = DidDht.fromDnsPacket(did.didDocument!!.id, packet)
       assertNotNull(didFromPacket)
       assertNotNull(didFromPacket.first)
 
@@ -262,7 +262,7 @@ class DidDhtTest {
       val packet = DidDht.toDnsPacket(did.didDocument!!, indexes)
       assertNotNull(packet)
 
-      val didFromPacket = DidDht.fromDnsPacket(did.didDocument!!.id.toString(), packet)
+      val didFromPacket = DidDht.fromDnsPacket(did.didDocument!!.id, packet)
       assertNotNull(didFromPacket)
       assertNotNull(didFromPacket.first)
       assertNotNull(didFromPacket.second)
@@ -301,7 +301,7 @@ class DidDhtTest {
       val packet = DidDht.toDnsPacket(did.didDocument!!)
       assertNotNull(packet)
 
-      val didFromPacket = DidDht.fromDnsPacket(did.didDocument!!.id.toString(), packet)
+      val didFromPacket = DidDht.fromDnsPacket(did.didDocument!!.id, packet)
       assertNotNull(didFromPacket)
       assertNotNull(didFromPacket.first)
 
@@ -414,7 +414,7 @@ class Web5TestVectorsDidDht {
 
 // The test vectors assume the property "controller" is rendered as a string (vs. an array of strings) when there is
 // only one controller.
-private fun DIDDocument.toCustomJson(): String? {
+private fun DIDDocument.toCustomJson(): String {
   val jsonObject = Json.jsonMapper.readTree(Json.stringify(this))
   val controller = jsonObject.get("controller")
   var modifiedObject: ObjectNode? = null

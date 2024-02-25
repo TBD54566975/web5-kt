@@ -5,6 +5,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.okhttp.OkHttp
+import io.ktor.client.plugins.ResponseException
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.get
 import io.ktor.client.statement.HttpResponse
@@ -28,7 +29,6 @@ import web5.sdk.dids.ResolveDidOptions
 import web5.sdk.dids.didcore.DID
 import web5.sdk.dids.didcore.DIDDocument
 import web5.sdk.dids.exceptions.ParserException
-import web5.sdk.dids.methods.ion.InvalidStatusException
 import web5.sdk.dids.validateKeyMaterialInsideKeyManager
 import java.io.File
 import java.net.InetAddress
@@ -156,7 +156,7 @@ public sealed class DidWebApi(
     val body = runBlocking { resp.bodyAsText() }
 
     if (!resp.status.isSuccess()) {
-      throw InvalidStatusException(resp.status.value, "resolution error response: '$body'")
+      throw ResponseException(resp, "resolution error response: '$body'")
     }
     return DidResolutionResult(
       didDocument = mapper.readValue(body, DIDDocument::class.java),

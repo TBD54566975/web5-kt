@@ -29,11 +29,12 @@ class DidJwkTest {
       val did = DidJwk.create(manager)
 
       val didResolutionResult = DidResolvers.resolve(did.uri)
-      val verificationMethod = didResolutionResult.didDocument!!.verificationMethods?.get(0)
+      val verificationMethod = didResolutionResult.didDocument!!.verificationMethod[0]
 
       assertNotNull(verificationMethod)
 
-      val jwk = verificationMethod.publicKeyJwk!!
+      val jwk = verificationMethod.publicKeyJwk
+      assertNotNull(jwk)
       val keyAlias = did.keyManager.getDeterministicAlias(jwk)
       val publicKey = did.keyManager.getPublicKey(keyAlias)
 
