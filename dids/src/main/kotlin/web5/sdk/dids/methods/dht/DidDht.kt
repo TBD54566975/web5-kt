@@ -150,7 +150,12 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
 
     // add all other keys to the verificationMethod and relationships arrays
     val relationshipsMap = mutableMapOf<PublicKeyPurpose, MutableList<VerificationMethod>>().apply {
-      val identityVerificationMethodRef = VerificationMethod(id = identityVerificationMethod.id)
+      val identityVerificationMethodRef = VerificationMethod(
+        id = identityVerificationMethod.id,
+        type = identityVerificationMethod.type,
+        controller = identityVerificationMethod.controller,
+        publicKeyJwk = identityVerificationMethod.publicKeyJwk
+      )
       listOf(
         PublicKeyPurpose.AUTHENTICATION,
         PublicKeyPurpose.ASSERTION_METHOD,
@@ -167,7 +172,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
         VerificationMethod.builder()
           .id(URI.create("$id#${key.keyID}").toString())
           .type("JsonWebKey")
-          .controller(URI.create(controller ?: id))
+          .controller(controller ?: id)
           .publicKeyJwk(key.toPublicJWK())
           .build().also { verificationMethod ->
             purposes.forEach { relationship ->
@@ -198,11 +203,11 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
         .id(id)
         .verificationMethods(verificationMethods)
         .services(services)
-        .assertionMethodVerificationMethods(relationshipsMap[PublicKeyPurpose.ASSERTION_METHOD])
-        .authenticationVerificationMethods(relationshipsMap[PublicKeyPurpose.AUTHENTICATION])
-        .keyAgreementVerificationMethods(relationshipsMap[PublicKeyPurpose.KEY_AGREEMENT])
-        .capabilityDelegationVerificationMethods(relationshipsMap[PublicKeyPurpose.CAPABILITY_DELEGATION])
-        .capabilityInvocationVerificationMethods(relationshipsMap[PublicKeyPurpose.CAPABILITY_INVOCATION])
+        .assertionMethods(relationshipsMap[PublicKeyPurpose.ASSERTION_METHOD])
+        .authenticationMethods(relationshipsMap[PublicKeyPurpose.AUTHENTICATION])
+        .keyAgreementMethods(relationshipsMap[PublicKeyPurpose.KEY_AGREEMENT])
+        .capabilityDelegationMethods(relationshipsMap[PublicKeyPurpose.CAPABILITY_DELEGATION])
+        .capabilityInvocationMethods(relationshipsMap[PublicKeyPurpose.CAPABILITY_INVOCATION])
 
     opts.controllers?.let { didDocumentBuilder.controllers(it.toList()) }
     opts.alsoKnownAses?.let { didDocumentBuilder.alsoKnownAses(it.toList()) }
@@ -486,7 +491,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
   }
 
   private fun addAlsoKnownAsRecord(didDocument: DIDDocument, message: Message) {
-    if (didDocument.alsoKnownAses.isNullOrEmpty()) {
+    if (didDocument.alsoKnownAs.isEmpty()) {
       return
     }
     message.addRecord(
@@ -494,21 +499,18 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
         Name("_aka._did."),
         DClass.IN,
         ttl,
-        didDocument.alsoKnownAses.joinToString(PROPERTY_SEPARATOR)
+        didDocument.alsoKnownAs.joinToString(PROPERTY_SEPARATOR)
       ), Section.ANSWER
     )
   }
 
   private fun addControllerRecord(didDocument: DIDDocument, message: Message) {
-    if (didDocument.controllers.isNullOrEmpty()) {
-      return
-    }
     message.addRecord(
       TXTRecord(
         Name("_cnt._did."),
         DClass.IN,
         ttl,
-        didDocument.controllers.joinToString(PROPERTY_SEPARATOR)
+        didDocument.controller.joinToString(PROPERTY_SEPARATOR)
       ), Section.ANSWER
     )
   }
@@ -620,15 +622,14 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
       .publicKeyJwk(publicKeyJwk.toPublicJWK())
 
     if (data.containsKey("c")) {
-      builder.controller(URI.create(data["c"]!!))
+      builder.controller(data["c"]!!)
     } else {
       builder.controller(
-        URI.create(
-          when (verificationMethodId) {
-            "0" -> did
-            else -> ""
-          }
-        )
+        when (verificationMethodId) {
+          "0" -> did
+          else -> ""
+        }
+
       )
     }
 
@@ -644,8 +645,8 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
   ) {
     val rootData = rr.strings.joinToString(PROPERTY_SEPARATOR).split(PROPERTY_SEPARATOR)
 
-    val lists = mapOf(
-      "auth" to mutableListOf<VerificationMethod>(),
+    val lists = mapOf<String, MutableList<VerificationMethod>>(
+      "auth" to mutableListOf(),
       "asm" to mutableListOf(),
       "agm" to mutableListOf(),
       "inv" to mutableListOf(),
@@ -662,11 +663,11 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
     }
 
     // add verification relationships
-    doc.authenticationVerificationMethods(lists["auth"])
-    doc.assertionMethodVerificationMethods(lists["asm"])
-    doc.keyAgreementVerificationMethods(lists["agm"])
-    doc.capabilityInvocationVerificationMethods(lists["inv"])
-    doc.capabilityDelegationVerificationMethods(lists["del"])
+    doc.authenticationMethods(lists["auth"])
+    doc.assertionMethods(lists["asm"])
+    doc.keyAgreementMethods(lists["agm"])
+    doc.capabilityInvocationMethods(lists["inv"])
+    doc.capabilityDelegationMethods(lists["del"])
   }
 
   /**

@@ -26,7 +26,7 @@ import java.text.ParseException
  *
  * @property algorithmId Specifies the algorithmId to be used for key creation.
  *                     Defaults to ES256K (Elliptic Curve Digital Signature Algorithm with SHA-256 and secp256k1 curve).
- * @constructor Creates an instance of [CreateDidJwkOptions] with the provided [algorithm] and [curve].
+ * @constructor Creates an instance of [CreateDidJwkOptions] with the provided [algorithmId]
  *
  * ### Usage Example:
  * ```
@@ -148,7 +148,7 @@ public class DidJwk(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
       val verificationMethod = VerificationMethod.builder()
         .id(verificationMethodId)
         .publicKeyJwk(publicKeyJwk)
-        .controller(URI(did))
+        .controller(did)
         .type("JsonWebKey2020")
         .build()
 
@@ -157,23 +157,19 @@ public class DidJwk(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
         .build()
 
       val didDocumentBuilder = DIDDocument.builder()
-        .contexts(
-          mutableListOf(
-            URI.create("https://w3id.org/security/suites/jws-2020/v1")
-          )
-        )
+        .context("https://w3id.org/security/suites/jws-2020/v1")
         .id(did)
         .verificationMethod(verificationMethod)
 
       if (publicKeyJwk.keyUse != KeyUse.ENCRYPTION) {
         didDocumentBuilder
-          .assertionMethodVerificationMethod(verificationMethodRef)
-          .authenticationVerificationMethod(verificationMethodRef)
-          .capabilityDelegationVerificationMethods(listOf(verificationMethodRef).toMutableList())
-          .capabilityInvocationVerificationMethod(verificationMethodRef)
+          .assertionMethod(verificationMethodRef)
+          .authenticationMethod(verificationMethodRef)
+          .capabilityDelegationMethods(listOf(verificationMethodRef).toMutableList())
+          .capabilityInvocationMethod(verificationMethodRef)
       }
       if (publicKeyJwk.keyUse != KeyUse.SIGNATURE) {
-        didDocumentBuilder.keyAgreementVerificationMethod(verificationMethodRef)
+        didDocumentBuilder.keyAgreementMethod(verificationMethodRef)
       }
       val didDocument = didDocumentBuilder.build()
 
