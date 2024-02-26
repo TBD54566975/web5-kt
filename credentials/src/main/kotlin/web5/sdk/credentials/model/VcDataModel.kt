@@ -30,28 +30,20 @@ private val DATE_FORMAT: SimpleDateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm
   timeZone = TimeZone.getTimeZone("UTC")
 }
 
-/**
- * DateSerializer.
- */
 private class DateSerializer : JsonSerializer<Date>() {
   override fun serialize(value: Date?, gen: JsonGenerator?, serializers: SerializerProvider?) {
     gen?.writeString(value?.let { DATE_FORMAT.format(it) })
   }
 }
 
-/**
- * DateDeserializer.
- */
+
 private class DateDeserializer : JsonDeserializer<Date>() {
   override fun deserialize(p: JsonParser?, ctxt: DeserializationContext?): Date {
     return DATE_FORMAT.parse(p?.text ?: "")
   }
 }
 
-/**
- * CredentialSubjectSerializer.
- */
-public class CredentialSubjectSerializer : JsonSerializer<CredentialSubject>() {
+private class CredentialSubjectSerializer : JsonSerializer<CredentialSubject>() {
   override fun serialize(value: CredentialSubject, gen: JsonGenerator, serializers: SerializerProvider) {
     gen.writeStartObject()
     // Write the id field. If id is null, write an empty string; otherwise, write its string representation.
@@ -64,10 +56,7 @@ public class CredentialSubjectSerializer : JsonSerializer<CredentialSubject>() {
   }
 }
 
-/**
- * CredentialSubjectDeserializer.
- */
-public class CredentialSubjectDeserializer : JsonDeserializer<CredentialSubject>() {
+private class CredentialSubjectDeserializer : JsonDeserializer<CredentialSubject>() {
   override fun deserialize(p: JsonParser, ctxt: DeserializationContext): CredentialSubject {
     val node: JsonNode = p.codec.readTree(p)
     val idNode = node.get("id")
