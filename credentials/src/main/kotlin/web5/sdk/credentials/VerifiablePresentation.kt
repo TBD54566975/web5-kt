@@ -7,7 +7,7 @@ import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jwt.JWTParser
 import com.nimbusds.jwt.SignedJWT
 import web5.sdk.credentials.util.JwtUtil
-import web5.sdk.dids.BaseDid
+import web5.sdk.dids.Did
 import java.net.URI
 import java.security.SignatureException
 import java.util.Date
@@ -40,13 +40,13 @@ public class VerifiablePresentation internal constructor(public val vpDataModel:
     get() = vpDataModel.holder.toString()
 
   /**
-   * Sign a verifiable presentation using a specified decentralized identifier ([baseDid]) with the private key that pairs
+   * Sign a verifiable presentation using a specified decentralized identifier ([did]) with the private key that pairs
    * with the public key identified by [assertionMethodId].
    *
    * If the [assertionMethodId] is null, the function will attempt to use the first available verification method from
-   * the [baseDid]. The result is a String in a JWT format.
+   * the [did]. The result is a String in a JWT format.
    *
-   * @param baseDid The [BaseDid] used to sign the credential.
+   * @param did The [Did] used to sign the credential.
    * @param assertionMethodId An optional identifier for the assertion method that will be used for verification of the
    *        produced signature.
    * @return The JWT representing the signed verifiable credential.
@@ -57,14 +57,14 @@ public class VerifiablePresentation internal constructor(public val vpDataModel:
    * ```
    */
   @JvmOverloads
-  public fun sign(baseDid: BaseDid, assertionMethodId: String? = null): String {
+  public fun sign(did: Did, assertionMethodId: String? = null): String {
     val payload = JWTClaimsSet.Builder()
-      .issuer(baseDid.uri)
+      .issuer(did.uri)
       .issueTime(Date())
       .claim("vp", vpDataModel.toMap())
       .build()
 
-    return JwtUtil.sign(baseDid, assertionMethodId, payload)
+    return JwtUtil.sign(did, assertionMethodId, payload)
   }
 
   /**

@@ -19,7 +19,7 @@ import web5.sdk.crypto.Ed25519
 import web5.sdk.crypto.KeyManager
 import web5.sdk.crypto.Secp256k1
 import web5.sdk.dids.CreateDidOptions
-import web5.sdk.dids.BaseDid
+import web5.sdk.dids.Did
 import web5.sdk.dids.DidMethod
 import web5.sdk.dids.DidResolutionResult
 import web5.sdk.dids.ResolutionError
@@ -681,7 +681,7 @@ public class DidDht(
   uri: String, keyManager: KeyManager,
   public val didDocument: DIDDocument? = null,
   private val didDhtApi: DidDhtApi
-) : BaseDid(uri, keyManager) {
+) : Did(uri, keyManager) {
 
   /**
    * Calls [DidDhtApi.create] with the provided [CreateDidDhtOptions] and returns the result.

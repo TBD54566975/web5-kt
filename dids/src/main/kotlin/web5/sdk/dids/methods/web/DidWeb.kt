@@ -21,7 +21,7 @@ import okhttp3.OkHttpClient
 import okhttp3.dnsoverhttps.DnsOverHttps
 import web5.sdk.crypto.KeyManager
 import web5.sdk.dids.CreateDidOptions
-import web5.sdk.dids.BaseDid
+import web5.sdk.dids.Did
 import web5.sdk.dids.DidMethod
 import web5.sdk.dids.DidResolutionResult
 import web5.sdk.dids.ResolutionError
@@ -56,7 +56,7 @@ public class DidWeb(
   uri: String,
   keyManager: KeyManager,
   private val didWebApi: DidWebApi
-) : BaseDid(uri, keyManager) {
+) : Did(uri, keyManager) {
   /**
    * Calls [DidWebApi.resolve] for this DID.
    */

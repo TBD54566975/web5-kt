@@ -1,7 +1,7 @@
 package web5.sdk.dids.extensions
 
 import web5.sdk.crypto.KeyManager
-import web5.sdk.dids.BaseDid
+import web5.sdk.dids.Did
 import web5.sdk.dids.didcore.DID
 import web5.sdk.dids.methods.dht.DidDht
 import web5.sdk.dids.methods.jwk.DidJwk
@@ -20,6 +20,6 @@ internal val supportedMethods = mapOf(
  * signing and managing the passed in [didUri] exists within the provided [keyManager]. This function is meant
  * to be used when the method of the DID is unknown.
  */
-public fun BaseDid.Companion.load(didUri: String, keyManager: KeyManager): BaseDid {
+public fun Did.Companion.load(didUri: String, keyManager: KeyManager): Did {
   return supportedMethods.getValue(DID.parse(didUri).method).load(didUri, keyManager)
 }

@@ -7,7 +7,7 @@ import web5.sdk.crypto.Crypto
 import web5.sdk.crypto.KeyManager
 import web5.sdk.crypto.Secp256k1
 import web5.sdk.dids.CreateDidOptions
-import web5.sdk.dids.BaseDid
+import web5.sdk.dids.Did
 import web5.sdk.dids.DidMethod
 import web5.sdk.dids.DidResolutionResult
 import web5.sdk.dids.ResolveDidOptions
@@ -47,7 +47,7 @@ public class CreateDidKeyOptions(
  *
  * @constructor Initializes a new instance of [DidKey] with the provided [uri] and [keyManager].
  */
-public class DidKey(uri: String, keyManager: KeyManager) : BaseDid(uri, keyManager) {
+public class DidKey(uri: String, keyManager: KeyManager) : Did(uri, keyManager) {
   /**
    * Resolves the current instance's [uri] to a [DidResolutionResult], which contains the DID Document
    * and possible related metadata.

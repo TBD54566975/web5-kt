@@ -44,7 +44,6 @@ dependencies {
   implementation(libs.comNetworkntJsonSchemaValidator)
   implementation(libs.comNfeldJsonpathkt)
   implementation(libs.comNimbusdsJoseJwt)
-//  implementation(libs.decentralizedIdentityDidCommonJava)
   implementation(libs.bundles.ioKtorForCredentials)
 
   // Test
