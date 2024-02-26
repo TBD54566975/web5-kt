@@ -152,7 +152,8 @@ class StatusListCredentialTest {
       )
     )
     assertEquals(statusListCredential.subject, "revocation-id")
-    assertEquals(statusListCredential.vcDataModel.credentialSubject.additionalClaims["type"], "StatusList2021")
+    assertEquals(statusListCredential.vcDataModel.credentialSubject
+      .additionalClaims["type"], "BitstringStatusListEntry")
     assertEquals(
       "revocation",
       statusListCredential.vcDataModel.credentialSubject.additionalClaims["statusPurpose"] as? String?

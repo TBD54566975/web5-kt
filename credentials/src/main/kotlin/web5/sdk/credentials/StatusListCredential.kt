@@ -14,6 +14,11 @@ import io.ktor.serialization.jackson.jackson
 import kotlinx.coroutines.runBlocking
 import web5.sdk.credentials.model.BitstringStatusListEntry
 import web5.sdk.credentials.model.CredentialSubject
+import web5.sdk.credentials.model.DEFAULT_BITSTRING_STATUS_LIST_ENTRY_TYPE
+import web5.sdk.credentials.model.DEFAULT_BITSTRING_STATUS_LIST_VC_TYPE
+import web5.sdk.credentials.model.DEFAULT_STATUS_LIST_CONTEXT
+import web5.sdk.credentials.model.DEFAULT_VC_CONTEXT
+import web5.sdk.credentials.model.DEFAULT_VC_TYPE
 import web5.sdk.credentials.model.VcDataModel
 import web5.sdk.dids.DidResolvers
 import java.io.ByteArrayInputStream
@@ -106,7 +111,7 @@ public object StatusListCredential {
       throw IllegalArgumentException("issuer: $issuer not resolvable", e)
     }
 
-    val claims = mapOf(TYPE to "StatusList2021",
+    val claims = mapOf(TYPE to DEFAULT_BITSTRING_STATUS_LIST_ENTRY_TYPE,
       STATUS_PURPOSE to statusPurpose.toString().lowercase(),
       ENCODED_LIST to bitString)
 
@@ -117,9 +122,9 @@ public object StatusListCredential {
 
     val vcDataModel = VcDataModel(
       id = URI.create(statusListCredentialId),
-      context = mutableListOf(URI.create("https://www.w3.org/2018/credentials/v1"),
-        URI.create("https://w3id.org/vc/status-list/2021/v1")),
-      type = mutableListOf("VerifiableCredential", "BitstringStatusListCredential"),
+      context = mutableListOf(URI.create(DEFAULT_VC_CONTEXT),
+        URI.create(DEFAULT_STATUS_LIST_CONTEXT)),
+      type = mutableListOf(DEFAULT_VC_TYPE, DEFAULT_BITSTRING_STATUS_LIST_VC_TYPE),
       issuer = URI.create(issuer),
       issuanceDate = Date(),
       credentialSubject = credSubject,

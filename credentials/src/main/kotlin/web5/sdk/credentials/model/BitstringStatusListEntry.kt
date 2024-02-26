@@ -7,7 +7,9 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import java.net.URI
 
+public const val DEFAULT_BITSTRING_STATUS_LIST_VC_TYPE: String = "BitstringStatusListCredential"
 public const val DEFAULT_BITSTRING_STATUS_LIST_ENTRY_TYPE: String = "BitstringStatusListEntry"
+public const val DEFAULT_STATUS_LIST_CONTEXT: String = "https://w3id.org/vc/status-list/2021/v1"
 private fun getObjectMapper(): ObjectMapper = jacksonObjectMapper().apply {
   registerKotlinModule()
   setSerializationInclusion(JsonInclude.Include.NON_NULL)

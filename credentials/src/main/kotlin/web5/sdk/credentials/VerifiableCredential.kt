@@ -13,6 +13,9 @@ import com.nimbusds.jwt.JWTParser
 import com.nimbusds.jwt.SignedJWT
 import web5.sdk.credentials.model.BitstringStatusListEntry
 import web5.sdk.credentials.model.CredentialSubject
+import web5.sdk.credentials.model.DEFAULT_STATUS_LIST_CONTEXT
+import web5.sdk.credentials.model.DEFAULT_VC_CONTEXT
+import web5.sdk.credentials.model.DEFAULT_VC_TYPE
 import web5.sdk.credentials.model.VcDataModel
 import web5.sdk.credentials.util.JwtUtil
 import web5.sdk.dids.Did
@@ -134,15 +137,15 @@ public class VerifiableCredential internal constructor(public val vcDataModel: V
         additionalClaims = mapData
       )
 
-      val contexts = mutableListOf(URI.create("https://www.w3.org/2018/credentials/v1"))
+      val contexts = mutableListOf(URI.create(DEFAULT_VC_CONTEXT))
       if (credentialStatus != null) {
-        contexts.add(URI.create("https://w3id.org/vc/status-list/2021/v1"))
+        contexts.add(URI.create(DEFAULT_STATUS_LIST_CONTEXT))
       }
 
       val vcDataModel = VcDataModel(
         id = URI.create("urn:uuid:${UUID.randomUUID()}"),
         context = contexts,
-        type = mutableListOf("VerifiableCredential", type),
+        type = mutableListOf(DEFAULT_VC_TYPE, type),
         issuer = URI.create(issuer),
         issuanceDate = issuanceDate,
         expirationDate = expirationDate,
