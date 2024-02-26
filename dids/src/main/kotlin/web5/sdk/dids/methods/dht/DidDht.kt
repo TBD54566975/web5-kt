@@ -559,7 +559,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
                 .build()
             }
             // handle type indexing
-            name == "_typ._did." -> {
+            name.startsWith("_typ._did.") -> {
               if (rr.strings[0].isNotEmpty() && rr.strings.size == 1) {
                 types += rr.strings[0].removePrefix("id=").split(ARRAY_SEPARATOR).map {
                   DidDhtTypeIndexing.fromInt(it.toInt()) ?: throw IllegalArgumentException("invalid type index")
@@ -569,15 +569,15 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
               }
             }
             // handle root record
-            name == "_did." -> {
+            name.startsWith("_did.") -> {
               handleRootRecord(rr, keyLookup, doc)
             }
             // handle controller record
-            name == "_cnt._did." -> {
+            name.startsWith("_cnt._did.") -> {
               handleControllerRecord(rr, doc)
             }
             // handle alsoKnownAs record
-            name == "_aka._did." -> {
+            name.startsWith("_aka._did.") -> {
               handleAlsoKnownAsRecord(rr, doc)
             }
           }
