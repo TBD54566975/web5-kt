@@ -52,6 +52,7 @@ public object ZBase32 {
       val charIndex = (buffer shl BITS_PER_BASE32_CHAR - bufferLength) and MASK_BASE32
       result.append(ALPHABET[charIndex])
     }
+
     return result.toString()
   }
 

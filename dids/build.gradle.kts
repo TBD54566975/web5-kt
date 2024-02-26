@@ -5,39 +5,60 @@ plugins {
 
 repositories {
   mavenCentral()
+  // temp maven repo for danubetech
+  maven {
+    name = "tbd-danubetech-temp"
+    url = uri("https://blockxyz.jfrog.io/artifactory/danubetech-temp/")
+    mavenContent {
+      releasesOnly()
+    }
+  }
   maven("https://repo.danubetech.com/repository/maven-public")
   maven("https://jitpack.io")
   maven("https://jcenter.bintray.com/")
   maven("https://repository.jboss.org/nexus/content/repositories/thirdparty-releases/")
 }
 
-val ktor_version = "2.3.4"
-val jackson_version = "2.13.5"
-
 dependencies {
-  api("decentralized-identity:did-common-java:1.9.0")
 
+  /**
+   * Maintainers - please do not declare versioning here at the module level;
+   * versioning is centralized for the platform in $projectRoot/gradle/libs.versions.toml
+   *
+   * Deps are declared in alphabetical order.
+   */
+
+  // API
+  /*
+   * API Leak: https://github.com/TBD54566975/web5-kt/issues/231
+   *
+   * Change and move to "implementation" when completed
+   */
+  api(libs.decentralizedIdentityDidCommonJava)
+
+  // Project
   implementation(project(":common"))
   implementation(project(":crypto"))
-  implementation("com.fasterxml.jackson.module:jackson-module-kotlin:$jackson_version")
-  implementation("com.nimbusds:nimbus-jose-jwt:9.34")
-  implementation("com.github.multiformats:java-multibase:1.1.0")
-  implementation("io.github.oshai:kotlin-logging-jvm:6.0.2")
 
-  implementation("io.ktor:ktor-client-core:$ktor_version")
-  implementation("io.ktor:ktor-client-okhttp:$ktor_version")
-  implementation("io.ktor:ktor-client-content-negotiation:$ktor_version")
-  implementation("io.ktor:ktor-serialization-jackson:$ktor_version")
+  // Implementation
+  implementation(libs.comFasterXmlJacksonModuleKotlin)
+  implementation(libs.comNimbusdsJoseJwt)
+  implementation(libs.comGithubMultiformats)
+  implementation(libs.comSquareupOkhttp3)
+  implementation(libs.dnsJava)
+  implementation(libs.ioGithubErdtmanJavaJsonCanonicalization)
+  implementation(libs.ioGithubOshaiKotlinLogging)
+  implementation(libs.bundles.ioKtorForDids)
 
-  implementation("com.squareup.okhttp3:okhttp-dnsoverhttps:4.12.0")
-
-  implementation("io.github.erdtman:java-json-canonicalization:1.1")
-
+  // Test
+  /**
+   * Test dependencies may declare direct versions; they are not exported
+   * and therefore are within the remit of this module to self-define
+   * if desired.
+   */
   testImplementation(kotlin("test"))
-  testImplementation("io.ktor:ktor-client-mock:$ktor_version")
+  testImplementation(libs.ioKtorClientMock)
   testImplementation("org.mockito.kotlin:mockito-kotlin:5.1.0")
   testImplementation("commons-codec:commons-codec:1.16.0")
-
-  implementation("dnsjava:dnsjava:3.5.2")
   testImplementation(project(mapOf("path" to ":testing")))
 }

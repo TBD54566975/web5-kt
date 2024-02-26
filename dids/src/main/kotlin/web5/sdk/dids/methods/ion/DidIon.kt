@@ -1,12 +1,10 @@
 package web5.sdk.dids.methods.ion
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.nimbusds.jose.Algorithm
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.JWSHeader
 import com.nimbusds.jose.JWSObject
 import com.nimbusds.jose.Payload
-import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.JWK
 import com.nimbusds.jose.util.Base64URL
 import foundation.identity.did.DID
@@ -27,6 +25,7 @@ import kotlinx.coroutines.runBlocking
 import org.erdtman.jcs.JsonCanonicalizer
 import web5.sdk.common.Convert
 import web5.sdk.common.Varint
+import web5.sdk.crypto.AlgorithmId
 import web5.sdk.crypto.KeyGenOptions
 import web5.sdk.crypto.KeyManager
 import web5.sdk.dids.CreateDidOptions
@@ -357,7 +356,7 @@ public sealed class DidIonApi(
     }
     val updatePublicKey = keyManager.getPublicKey(options.updateKeyAlias)
 
-    val newUpdateKeyAlias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K)
+    val newUpdateKeyAlias = keyManager.generatePrivateKey(AlgorithmId.secp256k1)
     val newUpdatePublicKey = keyManager.getPublicKey(newUpdateKeyAlias)
 
     val reveal = updatePublicKey.reveal()
@@ -444,7 +443,7 @@ public sealed class DidIonApi(
 
   internal fun createOperation(keyManager: KeyManager, options: CreateDidIonOptions?)
     : Pair<SidetreeCreateOperation, KeyAliases> {
-    val updateKeyAlias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K)
+    val updateKeyAlias = keyManager.generatePrivateKey(AlgorithmId.secp256k1)
     val updatePublicJwk = keyManager.getPublicKey(updateKeyAlias)
 
     val publicKeyCommitment = updatePublicJwk.commitment()
@@ -460,7 +459,7 @@ public sealed class DidIonApi(
       updateCommitment = publicKeyCommitment
     )
 
-    val recoveryKeyAlias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K)
+    val recoveryKeyAlias = keyManager.generatePrivateKey(AlgorithmId.secp256k1)
     val recoveryPublicJwk = keyManager.getPublicKey(recoveryKeyAlias)
     val recoveryCommitment = recoveryPublicJwk.commitment()
 
@@ -485,7 +484,7 @@ public sealed class DidIonApi(
     if (options == null || options.verificationMethodsToAdd.count() == 0) {
       listOf<VerificationMethodSpec>(
         VerificationMethodCreationParams(
-          JWSAlgorithm.ES256K,
+          AlgorithmId.secp256k1,
           relationships = listOf(PublicKeyPurpose.AUTHENTICATION, PublicKeyPurpose.ASSERTION_METHOD)
         )
       ).toPublicKeys(keyManager)
@@ -546,11 +545,11 @@ public sealed class DidIonApi(
     val recoveryPublicKey = keyManager.getPublicKey(options.recoveryKeyAlias)
     val reveal = recoveryPublicKey.reveal()
 
-    val nextRecoveryKeyAlias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K)
+    val nextRecoveryKeyAlias = keyManager.generatePrivateKey(AlgorithmId.secp256k1)
     val nextRecoveryPublicKey = keyManager.getPublicKey(nextRecoveryKeyAlias)
     val nextRecoveryCommitment = nextRecoveryPublicKey.commitment()
 
-    val nextUpdateKeyAlias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K)
+    val nextUpdateKeyAlias = keyManager.generatePrivateKey(AlgorithmId.secp256k1)
     val nextUpdatePublicKey = keyManager.getPublicKey(nextUpdateKeyAlias)
     val nextUpdateCommitment = nextUpdatePublicKey.commitment()
 
@@ -799,13 +798,12 @@ private interface VerificationMethodGenerator {
 
 /**
  * A [VerificationMethodSpec] where a [KeyManager] will be used to generate the underlying verification method keys.
- * The parameters [algorithm], [curve], and [options] will be forwarded to the keyManager.
+ * The parameters [algorithmId] and [options] will be forwarded to the keyManager.
  *
  * [relationships] will be used to determine the verification relationships in the DID Document being created.
  * */
 public class VerificationMethodCreationParams(
-  public val algorithm: Algorithm,
-  public val curve: Curve? = null,
+  public val algorithmId: AlgorithmId,
   public val options: KeyGenOptions? = null,
   public val relationships: Iterable<PublicKeyPurpose>
 ) : VerificationMethodSpec {
@@ -853,8 +851,7 @@ internal class VerificationMethodKeyManagerGenerator(
 
   override fun generate(): Pair<String, PublicKey> {
     val alias = keyManager.generatePrivateKey(
-      algorithm = params.algorithm,
-      curve = params.curve,
+      algorithmId = params.algorithmId,
       options = params.options
     )
     val publicKeyJwk = keyManager.getPublicKey(alias)

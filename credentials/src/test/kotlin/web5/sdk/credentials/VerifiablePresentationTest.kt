@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import web5.sdk.credentials.model.InputDescriptorMapping
 import web5.sdk.credentials.model.PresentationSubmission
+import web5.sdk.crypto.AlgorithmId
 import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.dids.methods.ion.CreateDidIonOptions
 import web5.sdk.dids.methods.ion.DidIon
@@ -228,7 +229,7 @@ class VerifiablePresentationTest {
     val keyManager = InMemoryKeyManager()
 
     //Create an ION DID without an assertionMethod
-    val alias = keyManager.generatePrivateKey(JWSAlgorithm.ES256K)
+    val alias = keyManager.generatePrivateKey(AlgorithmId.secp256k1)
     val verificationJwk = keyManager.getPublicKey(alias)
     val key = JsonWebKeyVerificationMethod(
       id = UUID.randomUUID().toString(),

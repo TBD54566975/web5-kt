@@ -1,12 +1,9 @@
 package web5.sdk.crypto
 
-import com.nimbusds.jose.Algorithm
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.crypto.bc.BouncyCastleProviderSingleton
-import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.ECKey
 import com.nimbusds.jose.jwk.JWK
-import com.nimbusds.jose.jwk.KeyType
 import com.nimbusds.jose.jwk.KeyUse
 import com.nimbusds.jose.jwk.gen.ECKeyGenerator
 import com.nimbusds.jose.util.Base64URL
@@ -61,8 +58,9 @@ public object Secp256k1 : KeyGenerator, Signer {
     Security.addProvider(BouncyCastleProviderSingleton.getInstance())
   }
 
-  override val algorithm: Algorithm = JWSAlgorithm.ES256K
-  override val keyType: KeyType = KeyType.EC
+  override val algorithm: Jwa = Jwa.ES256K
+  override val curve: JwaCurve = JwaCurve.secp256k1
+  override val keyType: String = "EC"
 
   /** [reference](https://github.com/multiformats/multicodec/blob/master/table.csv#L92). */
   public const val PUB_MULTICODEC: Int = 0xe7
@@ -140,7 +138,7 @@ public object Secp256k1 : KeyGenerator, Signer {
    * @return A JWK representing the generated private key.
    */
   override fun generatePrivateKey(options: KeyGenOptions?): JWK {
-    return ECKeyGenerator(Curve.SECP256K1)
+    return ECKeyGenerator(com.nimbusds.jose.jwk.Curve.SECP256K1)
       .algorithm(JWSAlgorithm.ES256K)
       .provider(BouncyCastleProviderSingleton.getInstance())
       .keyIDFromThumbprint(true)
@@ -177,7 +175,7 @@ public object Secp256k1 : KeyGenerator, Signer {
     val rawX = pointQ.rawXCoord.encoded
     val rawY = pointQ.rawYCoord.encoded
 
-    return ECKey.Builder(Curve.SECP256K1, Base64URL.encode(rawX), Base64URL.encode(rawY))
+    return ECKey.Builder(com.nimbusds.jose.jwk.Curve.SECP256K1, Base64URL.encode(rawX), Base64URL.encode(rawY))
       .algorithm(JWSAlgorithm.ES256K)
       .keyIDFromThumbprint()
       .keyUse(KeyUse.SIGNATURE)
@@ -188,7 +186,7 @@ public object Secp256k1 : KeyGenerator, Signer {
     val xBytes = publicKeyBytes.sliceArray(1..32)
     val yBytes = publicKeyBytes.sliceArray(33..64)
 
-    return ECKey.Builder(Curve.SECP256K1, Base64URL.encode(xBytes), Base64URL.encode(yBytes))
+    return ECKey.Builder(com.nimbusds.jose.jwk.Curve.SECP256K1, Base64URL.encode(xBytes), Base64URL.encode(yBytes))
       .algorithm(JWSAlgorithm.ES256K)
       .keyIDFromThumbprint()
       .keyUse(KeyUse.SIGNATURE)
@@ -247,6 +245,21 @@ public object Secp256k1 : KeyGenerator, Signer {
     return rBigint.toFixedByteArray(SIG_SIZE / 2) + sBigint.toFixedByteArray(SIG_SIZE / 2)
   }
 
+  /**
+   * Verifies a signature against a given payload using the ECDSA (Elliptic Curve Digital Signature Algorithm)
+   * with the curve `secp256k1`. This function supports deterministic k-value generation
+   * through HMAC and SHA-256, ensuring consistent verification outcomes for identical payloads
+   * and signatures.
+   *
+   * @param publicKey The public key used for verification, provided as a `JWK` (JSON Web Key).
+   * @param signedPayload The byte array containing the data that was signed.
+   * @param signature The byte array representing the signature to be verified against the payload.
+   * @param options Optional parameter to provide additional configuration for the verification process.
+   * @throws SignatureException If the signature does not validly correspond to the provided payload
+   *                            and public key, indicating either a data integrity issue
+   * @throws IllegalArgumentException If the provided public key or signature format is invalid or not
+   *                                  supported by the implementation.
+   */
   override fun verify(publicKey: JWK, signedPayload: ByteArray, signature: ByteArray, options: VerifyOptions?) {
     val publicKeyBytes = publicKeyToBytes(publicKey)
     val publicKeyPoint = spec.curve.decodePoint(publicKeyBytes)
@@ -281,7 +294,6 @@ public object Secp256k1 : KeyGenerator, Signer {
    *
    * This function checks the following:
    * - The key must be an instance of [ECKey].
-   * - The key type (`kty`) must be [KeyType.EC] (Elliptic Curve).
    *
    * If any of these checks fail, this function throws an [IllegalArgumentException] with
    * a descriptive error message.
@@ -302,11 +314,10 @@ public object Secp256k1 : KeyGenerator, Signer {
    * to safeguard against invalid key usage and potential vulnerabilities.
    *
    * @param key The [JWK] to validate.
-   * @throws IllegalArgumentException if the key is not of type [ECKey] or if the key type is not [KeyType.EC].
+   * @throws IllegalArgumentException if the key is not of type [ECKey].
    */
   public fun validateKey(key: JWK) {
     require(key is ECKey) { "private key must be an ECKey (kty: EC)" }
-    require(key.keyType == keyType) { "private key key type must be EC" }
   }
 
   /**

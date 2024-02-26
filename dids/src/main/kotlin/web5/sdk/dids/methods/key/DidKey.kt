@@ -1,13 +1,11 @@
 package web5.sdk.dids.methods.key
 
-import com.nimbusds.jose.Algorithm
-import com.nimbusds.jose.JWSAlgorithm
-import com.nimbusds.jose.jwk.Curve
 import foundation.identity.did.DID
 import foundation.identity.did.DIDDocument
 import foundation.identity.did.VerificationMethod
 import io.ipfs.multibase.Multibase
 import web5.sdk.common.Varint
+import web5.sdk.crypto.AlgorithmId
 import web5.sdk.crypto.Crypto
 import web5.sdk.crypto.KeyManager
 import web5.sdk.crypto.Secp256k1
@@ -22,12 +20,9 @@ import java.net.URI
 /**
  * Specifies options for creating a new "did:key" Decentralized Identifier (DID).
  *
- * @property algorithm Specifies the algorithm to be used for key creation.
- *                     Defaults to ES256K (Elliptic Curve Digital Signature Algorithm with SHA-256 and secp256k1 curve).
- * @property curve Specifies the elliptic curve to be used with the algorithm.
- *                 Optional and can be null if the algorithm does not require an explicit curve specification.
- *
- * @constructor Creates an instance of [CreateDidKeyOptions] with the provided [algorithm] and [curve].
+ * @property algorithmId Specifies the algorithmId to be used for key creation.
+ *                       Defaults to ES256K (Elliptic Curve Digital Signature Algorithm with SHA-256 and secp256k1 curve).
+ * @constructor Creates an instance of [CreateDidKeyOptions] with the provided [algorithmId].
  *
  * ### Usage Example:
  * ```
@@ -36,8 +31,7 @@ import java.net.URI
  * ```
  */
 public class CreateDidKeyOptions(
-  public val algorithm: Algorithm = JWSAlgorithm.ES256K,
-  public val curve: Curve? = null
+  public val algorithmId: AlgorithmId = AlgorithmId.secp256k1,
 ) : CreateDidOptions
 
 /**
@@ -78,7 +72,7 @@ public class DidKey(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
      * **Note**: Defaults to ES256K if no options are provided
      *
      * @param keyManager A [KeyManager] instance where the new key will be stored.
-     * @param options Optional parameters ([CreateDidKeyOptions]) to specify algorithm and curve during key creation.
+     * @param options Optional parameters ([CreateDidKeyOptions]) to specify algorithmId during key creation.
      * @return A [DidKey] instance representing the newly created "did:key" DID.
      *
      * @throws UnsupportedOperationException if the specified curve is not supported.
@@ -86,16 +80,16 @@ public class DidKey(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
     override fun create(keyManager: KeyManager, options: CreateDidKeyOptions?): DidKey {
       val opts = options ?: CreateDidKeyOptions()
 
-      val keyAlias = keyManager.generatePrivateKey(opts.algorithm, opts.curve)
+      val keyAlias = keyManager.generatePrivateKey(opts.algorithmId)
       val publicKey = keyManager.getPublicKey(keyAlias)
       var publicKeyBytes = Crypto.publicKeyToBytes(publicKey)
 
-      if (opts.algorithm == JWSAlgorithm.ES256K) {
+      if (opts.algorithmId == AlgorithmId.secp256k1) {
         publicKeyBytes = Secp256k1.compressPublicKey(publicKeyBytes)
       }
 
-      val multiCodec = Crypto.getAlgorithmMultiCodec(opts.algorithm, opts.curve)
-        ?: throw UnsupportedOperationException("${opts.curve} curve not supported")
+      val multiCodec = Crypto.getAlgorithmMultiCodec(opts.algorithmId)
+        ?: throw UnsupportedOperationException("${opts.algorithmId.curveName} curve not supported")
 
       val multiCodecBytes = Varint.encode(multiCodec)
       val idBytes = multiCodecBytes + publicKeyBytes

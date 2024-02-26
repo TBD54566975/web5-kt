@@ -1,8 +1,5 @@
 package web5.sdk.dids.methods.jwk
 
-import com.nimbusds.jose.Algorithm
-import com.nimbusds.jose.JWSAlgorithm
-import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.JWK
 import com.nimbusds.jose.jwk.KeyUse
 import foundation.identity.did.DID
@@ -11,6 +8,7 @@ import foundation.identity.did.VerificationMethod
 import foundation.identity.did.parser.ParserException
 import web5.sdk.common.Convert
 import web5.sdk.common.EncodingFormat
+import web5.sdk.crypto.AlgorithmId
 import web5.sdk.crypto.KeyManager
 import web5.sdk.dids.CreateDidOptions
 import web5.sdk.dids.Did
@@ -26,11 +24,8 @@ import java.text.ParseException
 /**
  * Specifies options for creating a new "did:jwk" Decentralized Identifier (DID).
  *
- * @property algorithm Specifies the algorithm to be used for key creation.
+ * @property algorithmId Specifies the algorithmId to be used for key creation.
  *                     Defaults to ES256K (Elliptic Curve Digital Signature Algorithm with SHA-256 and secp256k1 curve).
- * @property curve Specifies the elliptic curve to be used with the algorithm.
- *                 Optional and can be null if the algorithm does not require an explicit curve specification.
- *
  * @constructor Creates an instance of [CreateDidJwkOptions] with the provided [algorithm] and [curve].
  *
  * ### Usage Example:
@@ -40,8 +35,7 @@ import java.text.ParseException
  * ```
  */
 public class CreateDidJwkOptions(
-  public val algorithm: Algorithm = JWSAlgorithm.ES256K,
-  public val curve: Curve? = null
+  public val algorithmId: AlgorithmId = AlgorithmId.secp256k1,
 ) : CreateDidOptions
 
 /**
@@ -83,7 +77,7 @@ public class DidJwk(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
      * **Note**: Defaults to ES256K if no options are provided
      *
      * @param keyManager A [KeyManager] instance where the new key will be stored.
-     * @param options Optional parameters ([CreateDidJwkOptions]) to specify algorithm and curve during key creation.
+     * @param options Optional parameters ([CreateDidJwkOptions]) to specify algorithmId during key creation.
      * @return A [DidJwk] instance representing the newly created "did:jwk" DID.
      *
      * @throws UnsupportedOperationException if the specified curve is not supported.
@@ -91,7 +85,7 @@ public class DidJwk(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
     override fun create(keyManager: KeyManager, options: CreateDidJwkOptions?): DidJwk {
       val opts = options ?: CreateDidJwkOptions()
 
-      val keyAlias = keyManager.generatePrivateKey(opts.algorithm, opts.curve)
+      val keyAlias = keyManager.generatePrivateKey(opts.algorithmId)
       val publicKey = keyManager.getPublicKey(keyAlias)
 
       val base64Encoded = Convert(publicKey.toJSONString()).toBase64Url(padding = false)

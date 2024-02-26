@@ -6,8 +6,8 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.net.URL
 
 plugins {
-  id("org.jetbrains.kotlin.jvm") version "1.9.+"
-  id("java-library")
+  id("org.jetbrains.kotlin.jvm") version "1.9.22"
+  id("base")
   id("io.gitlab.arturbosch.detekt") version "1.23.+"
   `maven-publish`
   id("org.jetbrains.dokka") version "1.9.+"
@@ -15,12 +15,42 @@ plugins {
   signing
   idea
   id("io.github.gradle-nexus.publish-plugin") version "1.3.0"
+  id("version-catalog")
 }
 
-configurations.all {
-  resolutionStrategy {
-    // Pin the transitive dep to a version that's not vulnerable.
-    force("com.fasterxml.woodstox:woodstox-core:6.4.0")
+allprojects {
+  configurations.all {
+    /**
+     * In this section we address build issues including security vulnerabilities
+     * in transitive dependencies we don't explicitly declare in
+     * `gradle/libs.versions.toml`. Forced actions taken here will override any
+     * declarations we make, so use with care. Also note: these are in place for a
+     * point in time. As we maintain this software, the manual forced resolution we do
+     * here may:
+     *
+     * 1) No longer be necessary (if we have removed a dependency path leading to dep)
+     * 2) Break an upgrade (if we upgrade a dependency and this forces a lower version
+     *    of a transitive dependency it brings in)
+     *
+     * So we need to exercise care here, and, when upgrading our deps, check to see if
+     * these forces aren't breaking things.
+     *
+     * When adding forces here, please reference the issue which explains why we
+     * needed to do this; it will help future maintainers understand if the force
+     * is still valid, should be removed, or handled in another way.
+     *
+     * When in doubt, ask! :)
+     */
+    resolutionStrategy {
+      // Pin the transitive dep to a version that's not vulnerable.
+      force("com.fasterxml.woodstox:woodstox-core:6.4.0")
+      // Addresss https://github.com/TBD54566975/web5-kt/issues/242
+      force("com.google.protobuf:protobuf-javalite:3.19.6")
+      // Addresss https://github.com/TBD54566975/web5-kt/issues/243
+      force("com.google.guava:guava:32.0.0-android")
+      // Addresses https://github.com/TBD54566975/web5-kt/issues/244
+      force("com.squareup.okio:okio:3.6.0")
+    }
   }
 }
 
@@ -54,7 +84,6 @@ subprojects {
     plugin("maven-publish")
     plugin("org.jetbrains.dokka")
     plugin("org.jetbrains.kotlinx.kover")
-    plugin("maven-publish")
     plugin("signing")
     plugin("idea")
   }
@@ -151,7 +180,7 @@ subprojects {
       create<MavenPublication>(publicationName) {
         groupId = project.group.toString()
         artifactId = name
-        description = "Kotlin SDK for web5 functionality"
+        description = name
         version = project.property("version").toString()
         from(components["java"])
       }
@@ -159,7 +188,7 @@ subprojects {
         pom {
           name = publicationName
           packaging = "jar"
-          description.set("web5 kotlin SDK")
+          description.set("Web5 SDK for the JVM")
           url.set("https://github.com/TBD54566975/web5-kt")
           inceptionYear.set("2023")
           licenses {
@@ -184,11 +213,13 @@ subprojects {
       }
     }
 
-    signing {
-      val signingKey: String? by project
-      val signingPassword: String? by project
-      useInMemoryPgpKeys(signingKey, signingPassword)
-      sign(publishing.publications[publicationName])
+    if (!project.hasProperty("skipSigning") || project.property("skipSigning") != "true") {
+      signing {
+        val signingKey: String? by project
+        val signingPassword: String? by project
+        useInMemoryPgpKeys(signingKey, signingPassword)
+        sign(publishing.publications[publicationName])
+      }
     }
   }
 
@@ -239,14 +270,14 @@ publishing {
     create<MavenPublication>("web5") {
       groupId = project.group.toString()
       artifactId = name
-      description = "Kotlin SDK for web5 functionality"
+      description = "Web5 SDK for the JVM"
       version = project.property("version").toString()
       from(components["java"])
 
       pom {
-        packaging = "jar"
-        name = project.name
-        description.set("web5 kotlin SDK")
+        packaging = "pom"
+        name = "Web5 SDK for the JVM"
+        description.set("Web5 SDK for the JVM")
         url.set("https://github.com/TBD54566975/web5-kt")
         inceptionYear.set("2023")
         licenses {
@@ -272,11 +303,13 @@ publishing {
   }
 }
 
-signing {
-  val signingKey: String? by project
-  val signingPassword: String? by project
-  useInMemoryPgpKeys(signingKey, signingPassword)
-  sign(publishing.publications["web5"])
+if (!project.hasProperty("skipSigning") || project.property("skipSigning") != "true") {
+  signing {
+    val signingKey: String? by project
+    val signingPassword: String? by project
+    useInMemoryPgpKeys(signingKey, signingPassword)
+    sign(publishing.publications["web5"])
+  }
 }
 
 nexusPublishing {
