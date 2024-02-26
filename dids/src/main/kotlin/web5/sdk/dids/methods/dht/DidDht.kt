@@ -460,9 +460,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
               add("id=${verificationMethod.id}")
               add("t=$keyType")
               add("k=$base64UrlEncodedKey")
-              if (verificationMethod.controller != null) {
-                add("c=${verificationMethod.controller}")
-              }
+              add("c=${verificationMethod.controller}")
             }.joinToString(PROPERTY_SEPARATOR)
           ), Section.ANSWER
         )

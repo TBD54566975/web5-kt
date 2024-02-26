@@ -25,13 +25,3 @@ public enum class PublicKeyPurpose(@get:JsonValue public val code: String) {
   CAPABILITY_INVOCATION("capabilityInvocation"),
 }
 
-public class DocumentMetadata(
-  public val created: String,
-  public val updated: String,
-  public val deactivated: Boolean,
-  public val versionId: String,
-  public val nextUpdate: String,
-  public val nextVersionId: String,
-  public val equivalentId: String,
-  public val canonicalId: String
-)

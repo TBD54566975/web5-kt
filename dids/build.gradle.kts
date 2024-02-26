@@ -28,13 +28,6 @@ dependencies {
    * Deps are declared in alphabetical order.
    */
 
-  // API
-  /*
-   * API Leak: https://github.com/TBD54566975/web5-kt/issues/231
-   *
-   * Change and move to "implementation" when completed
-   */
-//  api(libs.decentralizedIdentityDidCommonJava)
 
   // Project
   implementation(project(":common"))

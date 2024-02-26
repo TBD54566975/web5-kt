@@ -19,7 +19,7 @@ public class DidDocumentMetadata(
   public var versionId: String? = null,
   public var nextUpdate: String? = null,
   public var nextVersionId: String? = null,
-  public var equivalentId: List<String>? = null,
+  public var equivalentId: String? = null,
   public var canonicalId: String? = null,
   public val types: List<Int>? = null // todo this field does not exist in web5-go but diddht uses it
 )
