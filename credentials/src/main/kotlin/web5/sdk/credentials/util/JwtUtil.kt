@@ -11,6 +11,7 @@ import com.nimbusds.jwt.SignedJWT
 import foundation.identity.did.DIDURL
 import web5.sdk.common.Convert
 import web5.sdk.crypto.Crypto
+import web5.sdk.crypto.Jwa
 import web5.sdk.dids.Did
 import web5.sdk.dids.DidResolvers
 import web5.sdk.dids.exceptions.DidResolutionException
@@ -18,6 +19,7 @@ import web5.sdk.dids.findAssertionMethodById
 import java.security.SignatureException
 
 private const val JsonWebKey2020 = "JsonWebKey2020"
+private const val JsonWebKey = "JsonWebKey"
 
 /**
  * Util class for common shared JWT methods.
@@ -31,8 +33,8 @@ public object JwtUtil {
    * the [did]. The result is a String in a JWT format.
    *
    * @param did The [Did] used to sign the credential.
-   * @param assertionMethodId An optional identifier for the assertion method that will be used for verification of the
-   *        produces signature.
+   * @param assertionMethodId An optional identifier for the assertion method
+   *        that will be used for verification of the produced signature.
    * @param jwtPayload the payload that is getting signed by the [Did]
    * @return The JWT representing the signed verifiable credential.
    *
@@ -133,10 +135,11 @@ public object JwtUtil {
           "a DID Document Verification Method with an Assertion verification relationship"
       )
 
-    require(assertionMethod.isType(JsonWebKey2020) && assertionMethod.publicKeyJwk != null) {
+    require((assertionMethod.isType(JsonWebKey2020) || assertionMethod.isType(JsonWebKey))  &&
+      assertionMethod.publicKeyJwk != null) {
       throw SignatureException(
         "Signature verification failed: Expected kid in JWS header to dereference " +
-          "a DID Document Verification Method of type $JsonWebKey2020 with a publicKeyJwk"
+          "a DID Document Verification Method of type $JsonWebKey2020 or $JsonWebKey with a publicKeyJwk"
       )
     }
 
@@ -146,6 +149,10 @@ public object JwtUtil {
     val toVerifyBytes = jwt.signingInput
     val signatureBytes = jwt.signature.decode()
 
-    Crypto.verify(publicKeyJwk, toVerifyBytes, signatureBytes, jwt.header.algorithm)
+    Crypto.verify(
+      publicKeyJwk,
+      toVerifyBytes,
+      signatureBytes
+    )
   }
 }

@@ -5,37 +5,56 @@ plugins {
 
 repositories {
   mavenCentral()
-
+  // temp maven repo for danubetech
+  maven {
+    name = "tbd-danubetech-temp"
+    url = uri("https://blockxyz.jfrog.io/artifactory/danubetech-temp/")
+    mavenContent {
+      releasesOnly()
+    }
+  }
   maven("https://jitpack.io")
   maven("https://repo.danubetech.com/repository/maven-public/")
   maven("https://repository.jboss.org/nexus/content/repositories/thirdparty-releases/")
 }
 
-val ktor_version = "2.3.4"
-val jackson_version = "2.14.2"
-
 dependencies {
-  api("com.danubetech:verifiable-credentials-java:1.6.0")
+  /**
+   * Maintainers - please do not declare versioning here at the module level;
+   * versioning is centralized for the platform in $projectRoot/gradle/libs.versions.toml
+   *
+   * Deps are declared in alphabetical order.
+   */
 
+  // API
+  /*
+   * API Leak: https://github.com/TBD54566975/web5-kt/issues/228
+   *
+   * Change and move to "implementation" when completed
+   */
+  api(libs.comDanubetechVerifiableCredentials)
+
+  // Project
   implementation(project(":dids"))
   implementation(project(":common"))
   implementation(project(":crypto"))
-  implementation("com.fasterxml.jackson.module:jackson-module-kotlin:$jackson_version")
-  implementation("com.nfeld.jsonpathkt:jsonpathkt:2.0.1")
-  implementation("com.nimbusds:nimbus-jose-jwt:9.34")
-  implementation("decentralized-identity:did-common-java:1.9.0")
-  implementation("com.networknt:json-schema-validator:1.0.87")
 
-  implementation("io.ktor:ktor-client-core:$ktor_version")
-  implementation("io.ktor:ktor-client-okhttp:$ktor_version")
-  implementation("io.ktor:ktor-client-content-negotiation:$ktor_version")
-  implementation("io.ktor:ktor-serialization-jackson:$ktor_version")
-  implementation("io.ktor:ktor-serialization-kotlinx-json:$ktor_version")
-  implementation("io.ktor:ktor-client-logging:$ktor_version")
+  // Implementation
+  implementation(libs.comFasterXmlJacksonModuleKotlin)
+  implementation(libs.comNetworkntJsonSchemaValidator)
+  implementation(libs.comNfeldJsonpathkt)
+  implementation(libs.comNimbusdsJoseJwt)
+  implementation(libs.decentralizedIdentityDidCommonJava)
+  implementation(libs.bundles.ioKtorForCredentials)
 
-  testImplementation("io.ktor:ktor-client-mock:$ktor_version")
-
+  // Test
+  /**
+   * Test dependencies may declare direct versions; they are not exported
+   * and therefore are within the remit of this module to self-define
+   * if desired.
+   */
+  testImplementation(libs.ioKtorClientMock)
   testImplementation(kotlin("test"))
-  testImplementation("com.willowtreeapps.assertk:assertk:0.27.0")
+  testImplementation(libs.comWillowtreeappsAssertk)
   testImplementation(project(":testing"))
 }
