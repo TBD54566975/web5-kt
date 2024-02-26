@@ -21,8 +21,7 @@ class DidMethodTest {
     val manager = InMemoryKeyManager()
     val did = DidKey.create(manager)
 
-    // todo wat is what am i supposed to pass in
-    val verificationMethod = did.resolve().didDocument!!.findAssertionMethodById("todo")
+    val verificationMethod = did.resolve().didDocument!!.findAssertionMethodById()
     assertEquals("${did.uri}#${DID.parse(did.uri).id}", verificationMethod.id)
   }
 

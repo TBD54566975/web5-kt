@@ -152,19 +152,19 @@ public class DidJwk(uri: String, keyManager: KeyManager) : BaseDid(uri, keyManag
         .type("JsonWebKey2020")
         .build()
 
-      val verificationMethodRef = VerificationMethod.builder()
-        .id(verificationMethodId)
-        .build()
+//      val verificationMethodRef = VerificationMethod.builder()
+//        .id(verificationMethodId)
+//        .build()
 
       val didDocumentBuilder = DIDDocument.builder()
         .context("https://w3id.org/security/suites/jws-2020/v1")
         .id(did)
-        .verificationMethod(verificationMethod)
+//        .verificationMethod(verificationMethod)
 
       if (publicKeyJwk.keyUse != KeyUse.ENCRYPTION) {
         didDocumentBuilder
-          .verificationMethodOfPurpose(
-            verificationMethodRef,
+          .verificationMethodForPurposes(
+            verificationMethod,
             listOf(
               Purpose.AssertionMethod,
               Purpose.Authentication,
@@ -174,7 +174,7 @@ public class DidJwk(uri: String, keyManager: KeyManager) : BaseDid(uri, keyManag
           )
       }
       if (publicKeyJwk.keyUse != KeyUse.SIGNATURE) {
-        didDocumentBuilder.verificationMethodOfPurpose(verificationMethodRef, listOf(Purpose.KeyAgreement))
+        didDocumentBuilder.verificationMethodForPurposes(verificationMethod, listOf(Purpose.KeyAgreement))
       }
       val didDocument = didDocumentBuilder.build()
 

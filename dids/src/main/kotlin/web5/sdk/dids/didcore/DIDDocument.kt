@@ -1,7 +1,7 @@
 package web5.sdk.dids.didcore
 
 import com.fasterxml.jackson.annotation.JsonProperty
-import com.nimbusds.jose.jwk.JWK
+import java.security.SignatureException
 
 
 /**
@@ -42,22 +42,14 @@ public class DIDDocument(
   public val context: String? = null,
   public val alsoKnownAs: List<String> = emptyList(),
   public val controller: List<String> = emptyList(),
-  public val verificationMethod: MutableList<VerificationMethod> = mutableListOf(),
-  public val service: MutableList<Service> = mutableListOf(),
-  public val assertionMethod: MutableList<String> = mutableListOf(),
-  public val authentication: MutableList<String> = mutableListOf(),
-  public val keyAgreement: MutableList<String> = mutableListOf(),
-  public val capabilityDelegation: MutableList<String> = mutableListOf(),
-  public val capabilityInvocation: MutableList<String> = mutableListOf()
+  public val verificationMethod: List<VerificationMethod> = listOf(),
+  public val service: List<Service> = listOf(),
+  public val assertionMethod: List<String> = listOf(),
+  public val authentication: List<String> = listOf(),
+  public val keyAgreement: List<String> = listOf(),
+  public val capabilityDelegation: List<String> = listOf(),
+  public val capabilityInvocation: List<String> = listOf()
 ) {
-
-  // todo these are fields not passed in via the constructor and only used in diddht and didkey tests
-  // can i get rid of them?
-  public val assertionMethodVerificationMethods: List<String>? = null
-  public val authenticationVerificationMethods: List<String>? = null
-  public val capabilityDelegationVerificationMethods: List<String>? = null
-  public val capabilityInvocationVerificationMethods: List<String>? = null
-  public val keyAgreementVerificationMethods: List<String>? = null
 
   // todo what are these for? diddhtapi#toDnsPacket asks for these
   public val authenticationVerificationMethodsDereferenced: List<VerificationMethod>? = null
@@ -65,28 +57,6 @@ public class DIDDocument(
   public val keyAgreementVerificationMethodsDereferenced: List<VerificationMethod>? = null
   public val capabilityInvocationVerificationMethodsDereferenced: List<VerificationMethod>? = null
   public val capabilityDelegationVerificationMethodsDereferenced: List<VerificationMethod>? = null
-
-
-  /**
-   * Add verification method adds a verification method to the document.
-   * If Purposes are provided, the verification method's ID will be added to the corresponding list of purposes.
-   *
-   * @param method VerificationMethod to be added to the document
-   * @param purposes List of purposes to which the verification method will be added
-   */
-  // todo maybe i don't need this in the regular class coz i have it in builder method.
-  public fun addVerificationMethod(method: VerificationMethod, purposes: List<Purpose> = emptyList()) {
-    this.verificationMethod.add(method)
-    purposes.forEach { purpose ->
-      when (purpose) {
-        Purpose.AssertionMethod -> this.assertionMethod.add(method.id)
-        Purpose.Authentication -> this.authentication.add(method.id)
-        Purpose.KeyAgreement -> this.keyAgreement.add(method.id)
-        Purpose.CapabilityDelegation -> this.capabilityDelegation.add(method.id)
-        Purpose.CapabilityInvocation -> this.capabilityInvocation.add(method.id)
-      }
-    }
-  }
 
   /**
    * Select verification method takes a selector that can be used to select a specific verification
@@ -126,19 +96,27 @@ public class DIDDocument(
     return vm
   }
 
-  public fun addService(service: Service) {
-    this.service.add(service)
-  }
-
   public fun getAbsoluteResourceID(id: String): String {
     return if (id.startsWith("#")) "$this.id$id" else id
   }
 
-  // todo fill this method out
-  public fun findAssertionMethodById(assertionMethodId: String?): VerificationMethod {
-    return VerificationMethod(
-      "id", "type", "JsonWebKey", JWK.parse("...")
-    )
+  /**
+   * Finds the first available assertion method from the [DIDDocument]. When [assertionMethodId]
+   * is null, the function will return the first available assertion method.
+   */
+  public fun findAssertionMethodById(assertionMethodId: String? = null): VerificationMethod {
+    require(!assertionMethodVerificationMethodsDereferenced.isNullOrEmpty()) {
+      throw SignatureException("No assertion methods found in DID document")
+    }
+
+    val assertionMethod: VerificationMethod = when {
+      assertionMethodId != null -> assertionMethodVerificationMethodsDereferenced.find {
+        it.id == assertionMethodId
+      }
+
+      else -> assertionMethodVerificationMethodsDereferenced.firstOrNull()
+    } ?: throw SignatureException("assertion method \"$assertionMethodId\" not found")
+    return assertionMethod
   }
 
   public companion object Builder {
@@ -165,14 +143,15 @@ public class DIDDocument(
     public fun controllers(controllers: List<String>): Builder = apply { this.controller = controllers }
     public fun alsoKnownAses(alsoKnownAses: List<String>): Builder = apply { this.alsoKnownAs = alsoKnownAses }
 
-    // todo a couple places ask for either adding a list or just one.
-    // how should the API respond to list adding? add to existing list or replace?
-    public fun verificationMethods(verificationMethods: List<VerificationMethod>): Builder = apply {
-      this.verificationMethod = verificationMethods.toMutableList()
-    }
-
-    // todo also terrible name
-    public fun verificationMethodOfPurpose(method: VerificationMethod, purposes: List<Purpose> = emptyList()): Builder =
+    /**
+     * Add verification method adds a verification method to the document.
+     * If Purposes are provided, the verification method's ID will be added to the corresponding list of purposes.
+     *
+     * @param method VerificationMethod to be added to the document
+     * @param purposes List of purposes to which the verification method will be added
+     */
+    // todo fix terrible name
+    public fun verificationMethodForPurposes(method: VerificationMethod, purposes: List<Purpose> = emptyList()): Builder =
       apply {
         this.verificationMethod.add(method)
         purposes.forEach { purpose ->
@@ -186,17 +165,13 @@ public class DIDDocument(
         }
       }
 
-    // todo terrible name
-    public fun verificationMethodsOfPurpose(methods: MutableList<VerificationMethod>?, purpose: Purpose): Builder =
+    // todo fix terrible name
+    public fun verificationMethodsForPurpose(methods: MutableList<VerificationMethod>?, purpose: Purpose): Builder =
       apply {
         methods?.forEach { method ->
-          verificationMethodOfPurpose(method, listOf(purpose))
+          verificationMethodForPurposes(method, listOf(purpose))
         }
       }
-
-    public fun verificationMethod(verificationMethod: VerificationMethod): Builder = apply {
-      this.verificationMethod.add(verificationMethod)
-    }
 
     public fun services(services: List<Service>?): Builder = apply { this.service = services?.toMutableList() }
 

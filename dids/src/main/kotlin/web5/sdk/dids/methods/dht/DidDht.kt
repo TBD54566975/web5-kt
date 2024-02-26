@@ -91,7 +91,7 @@ private class DidDhtApiImpl(configuration: DidDhtConfiguration) : DidDhtApi(conf
  * @property alsoKnownAses A list of also known as identifiers to add to the DID Document.
  */
 public class CreateDidDhtOptions(
-  public val verificationMethods: Iterable<Triple<JWK, Array<Purpose>, String?>>? = null,
+  public val verificationMethods: Iterable<Triple<JWK, List<Purpose>, String?>>? = null,
   public val services: Iterable<Service>? = null,
   public val publish: Boolean = true,
   public val controllers: Iterable<String>? = null,
@@ -139,6 +139,27 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
     // build DID Document
     val id = DidDht.getDidIdentifier(publicKey)
 
+    // map to the DID object model's services
+    val services = opts.services?.map { service ->
+      requireNotNull(service.id) { "Service id cannot be null" }
+      requireNotNull(service.type) { "Service type cannot be null" }
+      requireNotNull(service.serviceEndpoint) { "Service serviceEndpoint cannot be null" }
+
+      Service(
+        id = URI.create("$id#${service.id}").toString(),
+        type = service.type,
+        serviceEndpoint = service.serviceEndpoint
+      )
+    }
+
+    // build DID Document
+    val didDocumentBuilder = DIDDocument.builder()
+      .id(id)
+      .services(services)
+
+    opts.controllers?.let { didDocumentBuilder.controllers(it.toList()) }
+    opts.alsoKnownAses?.let { didDocumentBuilder.alsoKnownAses(it.toList()) }
+
     // add identity key to relationships map
     val identityVerificationMethod =
       VerificationMethod(
@@ -148,70 +169,29 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
         publicKeyJwk = publicKey.toPublicJWK()
       )
 
-    // add all other keys to the verificationMethod and relationships arrays
-    val relationshipsMap = mutableMapOf<Purpose, MutableList<VerificationMethod>>().apply {
-      val identityVerificationMethodRef = VerificationMethod(
-        id = identityVerificationMethod.id,
-        type = identityVerificationMethod.type,
-        controller = identityVerificationMethod.controller,
-        publicKeyJwk = identityVerificationMethod.publicKeyJwk
-      )
+    didDocumentBuilder.verificationMethodForPurposes(
+      identityVerificationMethod,
       listOf(
         Purpose.AssertionMethod,
         Purpose.Authentication,
         Purpose.KeyAgreement,
         Purpose.CapabilityDelegation,
-        Purpose.CapabilityDelegation
-      ).forEach { purpose ->
-        getOrPut(purpose) { mutableListOf() }.add(identityVerificationMethodRef)
-      }
-    }
-
-    // map to the DID object model's verification methods
-    val verificationMethods =
-      listOf(identityVerificationMethod) + (opts.verificationMethods?.map { (key, purposes, controller) ->
-        VerificationMethod.builder()
-          .id(URI.create("$id#${key.keyID}").toString())
-          .type("JsonWebKey")
-          .controller(controller ?: id)
-          .publicKeyJwk(key.toPublicJWK())
-          .build().also { verificationMethod ->
-            purposes.forEach { relationship ->
-              relationshipsMap.getOrPut(relationship) { mutableListOf() }.add(
-                VerificationMethod.builder().id(verificationMethod.id).build()
-              )
-            }
-          }
-      } ?: emptyList())
-    opts.services?.forEach { service ->
-      requireNotNull(service.id) { "Service id cannot be null" }
-      requireNotNull(service.type) { "Service type cannot be null" }
-      requireNotNull(service.serviceEndpoint) { "Service serviceEndpoint cannot be null" }
-    }
-    // map to the DID object model's services
-    val services = opts.services?.map { service ->
-      Service(
-        id = URI.create("$id#${service.id}").toString(),
-        type = service.type,
-        serviceEndpoint = service.serviceEndpoint
+        Purpose.CapabilityInvocation
       )
+    )
+
+    opts.verificationMethods?.map { (key, purposes, controller) ->
+      VerificationMethod.builder()
+        .id(URI.create("$id#${key.keyID}").toString())
+        .type("JsonWebKey")
+        .controller(controller ?: id)
+        .publicKeyJwk(key.toPublicJWK())
+        .build().also { verificationMethod ->
+          didDocumentBuilder.verificationMethodForPurposes(verificationMethod, purposes.toList())
+
+        }
     }
 
-    // build DID Document
-    val didDocumentBuilder =
-      // run the test in did-common-java with defaultcontext to true or false
-      DIDDocument.builder()
-        .id(id)
-        .verificationMethods(verificationMethods)
-        .services(services)
-        .verificationMethodsOfPurpose(relationshipsMap[Purpose.AssertionMethod], Purpose.AssertionMethod)
-        .verificationMethodsOfPurpose(relationshipsMap[Purpose.Authentication], Purpose.Authentication)
-        .verificationMethodsOfPurpose(relationshipsMap[Purpose.KeyAgreement], Purpose.KeyAgreement)
-        .verificationMethodsOfPurpose(relationshipsMap[Purpose.CapabilityDelegation], Purpose.CapabilityDelegation)
-        .verificationMethodsOfPurpose(relationshipsMap[Purpose.CapabilityInvocation], Purpose.CapabilityInvocation)
-
-    opts.controllers?.let { didDocumentBuilder.controllers(it.toList()) }
-    opts.alsoKnownAses?.let { didDocumentBuilder.alsoKnownAses(it.toList()) }
 
     val didDocument = didDocumentBuilder.build()
 
@@ -545,6 +525,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
           val name = rr.name.toString()
           when {
             // handle verification methods
+            // todo: no guarantee that this block will run first and fill in the keyLookup
             name.startsWith("_k") -> {
               handleVerificationMethods(rr, verificationMethods, did, keyLookup, name)
             }
@@ -584,8 +565,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
       }
     }
 
-    // add verification methods and services
-    doc.verificationMethods(verificationMethods)
+    // add services
     doc.services(services)
 
     return doc.build() to types
@@ -648,9 +628,9 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
   ) {
     val rootData = rr.strings.joinToString(PROPERTY_SEPARATOR).split(PROPERTY_SEPARATOR)
 
-    val lists = mapOf<String, MutableList<VerificationMethod>>(
-      "auth" to mutableListOf(),
+    val purposeToVerificationMethod = mapOf<String, MutableList<VerificationMethod>>(
       "asm" to mutableListOf(),
+      "auth" to mutableListOf(),
       "agm" to mutableListOf(),
       "inv" to mutableListOf(),
       "del" to mutableListOf()
@@ -661,16 +641,16 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
       val valueItems = values.split(ARRAY_SEPARATOR)
 
       valueItems.forEach {
-        lists[key]?.add(VerificationMethod.builder().id(keyLookup[it]!!).build())
+        purposeToVerificationMethod[key]?.add(VerificationMethod.builder().id(keyLookup[it]!!).build())
       }
     }
 
     // add verification relationships
-    doc.verificationMethodsOfPurpose(lists["asm"], Purpose.AssertionMethod)
-    doc.verificationMethodsOfPurpose(lists["auth"], Purpose.Authentication)
-    doc.verificationMethodsOfPurpose(lists["agm"], Purpose.KeyAgreement)
-    doc.verificationMethodsOfPurpose(lists["agm"], Purpose.CapabilityDelegation)
-    doc.verificationMethodsOfPurpose(lists["agm"], Purpose.CapabilityInvocation)
+    doc.verificationMethodsForPurpose(purposeToVerificationMethod["asm"], Purpose.AssertionMethod)
+    doc.verificationMethodsForPurpose(purposeToVerificationMethod["auth"], Purpose.Authentication)
+    doc.verificationMethodsForPurpose(purposeToVerificationMethod["agm"], Purpose.KeyAgreement)
+    doc.verificationMethodsForPurpose(purposeToVerificationMethod["del"], Purpose.CapabilityDelegation)
+    doc.verificationMethodsForPurpose(purposeToVerificationMethod["inv"], Purpose.CapabilityInvocation)
   }
 
   /**
