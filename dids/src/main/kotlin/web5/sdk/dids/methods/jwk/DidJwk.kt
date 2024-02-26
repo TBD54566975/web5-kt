@@ -15,6 +15,7 @@ import web5.sdk.dids.ResolutionError
 import web5.sdk.dids.ResolveDidOptions
 import web5.sdk.dids.didcore.DID
 import web5.sdk.dids.didcore.DIDDocument
+import web5.sdk.dids.didcore.Purpose
 import web5.sdk.dids.didcore.VerificationMethod
 import web5.sdk.dids.exceptions.ParserException
 import web5.sdk.dids.validateKeyMaterialInsideKeyManager
@@ -162,13 +163,18 @@ public class DidJwk(uri: String, keyManager: KeyManager) : BaseDid(uri, keyManag
 
       if (publicKeyJwk.keyUse != KeyUse.ENCRYPTION) {
         didDocumentBuilder
-          .assertionMethod(verificationMethodRef)
-          .authenticationMethod(verificationMethodRef)
-          .capabilityDelegationMethods(listOf(verificationMethodRef).toMutableList())
-          .capabilityInvocationMethod(verificationMethodRef)
+          .verificationMethodOfPurpose(
+            verificationMethodRef,
+            listOf(
+              Purpose.AssertionMethod,
+              Purpose.Authentication,
+              Purpose.CapabilityDelegation,
+              Purpose.CapabilityInvocation
+            )
+          )
       }
       if (publicKeyJwk.keyUse != KeyUse.SIGNATURE) {
-        didDocumentBuilder.keyAgreementMethod(verificationMethodRef)
+        didDocumentBuilder.verificationMethodOfPurpose(verificationMethodRef, listOf(Purpose.KeyAgreement))
       }
       val didDocument = didDocumentBuilder.build()
 

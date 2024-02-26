@@ -27,7 +27,7 @@ import web5.sdk.dids.ResolveDidOptions
 import web5.sdk.dids.didcore.DID
 import web5.sdk.dids.didcore.DIDDocument
 import web5.sdk.dids.didcore.DidDocumentMetadata
-import web5.sdk.dids.didcore.PublicKeyPurpose
+import web5.sdk.dids.didcore.Purpose
 import web5.sdk.dids.didcore.Service
 import web5.sdk.dids.didcore.VerificationMethod
 import web5.sdk.dids.exceptions.InvalidIdentifierException
@@ -91,7 +91,7 @@ private class DidDhtApiImpl(configuration: DidDhtConfiguration) : DidDhtApi(conf
  * @property alsoKnownAses A list of also known as identifiers to add to the DID Document.
  */
 public class CreateDidDhtOptions(
-  public val verificationMethods: Iterable<Triple<JWK, Array<PublicKeyPurpose>, String?>>? = null,
+  public val verificationMethods: Iterable<Triple<JWK, Array<Purpose>, String?>>? = null,
   public val services: Iterable<Service>? = null,
   public val publish: Boolean = true,
   public val controllers: Iterable<String>? = null,
@@ -149,7 +149,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
       )
 
     // add all other keys to the verificationMethod and relationships arrays
-    val relationshipsMap = mutableMapOf<PublicKeyPurpose, MutableList<VerificationMethod>>().apply {
+    val relationshipsMap = mutableMapOf<Purpose, MutableList<VerificationMethod>>().apply {
       val identityVerificationMethodRef = VerificationMethod(
         id = identityVerificationMethod.id,
         type = identityVerificationMethod.type,
@@ -157,10 +157,11 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
         publicKeyJwk = identityVerificationMethod.publicKeyJwk
       )
       listOf(
-        PublicKeyPurpose.AUTHENTICATION,
-        PublicKeyPurpose.ASSERTION_METHOD,
-        PublicKeyPurpose.CAPABILITY_DELEGATION,
-        PublicKeyPurpose.CAPABILITY_INVOCATION
+        Purpose.AssertionMethod,
+        Purpose.Authentication,
+        Purpose.KeyAgreement,
+        Purpose.CapabilityDelegation,
+        Purpose.CapabilityDelegation
       ).forEach { purpose ->
         getOrPut(purpose) { mutableListOf() }.add(identityVerificationMethodRef)
       }
@@ -203,11 +204,11 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
         .id(id)
         .verificationMethods(verificationMethods)
         .services(services)
-        .assertionMethods(relationshipsMap[PublicKeyPurpose.ASSERTION_METHOD])
-        .authenticationMethods(relationshipsMap[PublicKeyPurpose.AUTHENTICATION])
-        .keyAgreementMethods(relationshipsMap[PublicKeyPurpose.KEY_AGREEMENT])
-        .capabilityDelegationMethods(relationshipsMap[PublicKeyPurpose.CAPABILITY_DELEGATION])
-        .capabilityInvocationMethods(relationshipsMap[PublicKeyPurpose.CAPABILITY_INVOCATION])
+        .verificationMethodsOfPurpose(relationshipsMap[Purpose.AssertionMethod], Purpose.AssertionMethod)
+        .verificationMethodsOfPurpose(relationshipsMap[Purpose.Authentication], Purpose.Authentication)
+        .verificationMethodsOfPurpose(relationshipsMap[Purpose.KeyAgreement], Purpose.KeyAgreement)
+        .verificationMethodsOfPurpose(relationshipsMap[Purpose.CapabilityDelegation], Purpose.CapabilityDelegation)
+        .verificationMethodsOfPurpose(relationshipsMap[Purpose.CapabilityInvocation], Purpose.CapabilityInvocation)
 
     opts.controllers?.let { didDocumentBuilder.controllers(it.toList()) }
     opts.alsoKnownAses?.let { didDocumentBuilder.alsoKnownAses(it.toList()) }
@@ -665,11 +666,11 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
     }
 
     // add verification relationships
-    doc.authenticationMethods(lists["auth"])
-    doc.assertionMethods(lists["asm"])
-    doc.keyAgreementMethods(lists["agm"])
-    doc.capabilityInvocationMethods(lists["inv"])
-    doc.capabilityDelegationMethods(lists["del"])
+    doc.verificationMethodsOfPurpose(lists["asm"], Purpose.AssertionMethod)
+    doc.verificationMethodsOfPurpose(lists["auth"], Purpose.Authentication)
+    doc.verificationMethodsOfPurpose(lists["agm"], Purpose.KeyAgreement)
+    doc.verificationMethodsOfPurpose(lists["agm"], Purpose.CapabilityDelegation)
+    doc.verificationMethodsOfPurpose(lists["agm"], Purpose.CapabilityInvocation)
   }
 
   /**

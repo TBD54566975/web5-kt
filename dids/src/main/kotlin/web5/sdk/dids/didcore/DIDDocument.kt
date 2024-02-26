@@ -53,11 +53,11 @@ public class DIDDocument(
 
   // todo these are fields not passed in via the constructor and only used in diddht and didkey tests
   // can i get rid of them?
-  public val assertionMethodVerificationMethods: List<VerificationMethod>? = null
-  public val authenticationVerificationMethods: List<VerificationMethod>? = null
-  public val capabilityDelegationVerificationMethods: List<VerificationMethod>? = null
-  public val capabilityInvocationVerificationMethods: List<VerificationMethod>? = null
-  public val keyAgreementVerificationMethods: List<VerificationMethod>? = null
+  public val assertionMethodVerificationMethods: List<String>? = null
+  public val authenticationVerificationMethods: List<String>? = null
+  public val capabilityDelegationVerificationMethods: List<String>? = null
+  public val capabilityInvocationVerificationMethods: List<String>? = null
+  public val keyAgreementVerificationMethods: List<String>? = null
 
   // todo what are these for? diddhtapi#toDnsPacket asks for these
   public val authenticationVerificationMethodsDereferenced: List<VerificationMethod>? = null
@@ -74,6 +74,7 @@ public class DIDDocument(
    * @param method VerificationMethod to be added to the document
    * @param purposes List of purposes to which the verification method will be added
    */
+  // todo maybe i don't need this in the regular class coz i have it in builder method.
   public fun addVerificationMethod(method: VerificationMethod, purposes: List<Purpose> = emptyList()) {
     this.verificationMethod.add(method)
     purposes.forEach { purpose ->
@@ -140,7 +141,6 @@ public class DIDDocument(
     )
   }
 
-
   public companion object Builder {
 
     private var id: String? = null
@@ -150,11 +150,12 @@ public class DIDDocument(
 
     private var verificationMethod: MutableList<VerificationMethod> = mutableListOf()
     private var service: MutableList<Service>? = mutableListOf()
-    private var assertionMethod: MutableList<VerificationMethod>? = mutableListOf()
-    private var authenticationMethod: MutableList<VerificationMethod>? = mutableListOf()
-    private var keyAgreementMethod: MutableList<VerificationMethod>? = mutableListOf()
-    private var capabilityDelegationMethod: MutableList<VerificationMethod>? = mutableListOf()
-    private var capabilityInvocationMethod: MutableList<VerificationMethod>? = mutableListOf()
+
+    private var assertionMethod: MutableList<String>? = mutableListOf()
+    private var authenticationMethod: MutableList<String>? = mutableListOf()
+    private var keyAgreementMethod: MutableList<String>? = mutableListOf()
+    private var capabilityDelegationMethod: MutableList<String>? = mutableListOf()
+    private var capabilityInvocationMethod: MutableList<String>? = mutableListOf()
 
     public fun id(id: String): Builder = apply { this.id = id }
     public fun context(context: String): Builder = apply {
@@ -170,50 +171,34 @@ public class DIDDocument(
       this.verificationMethod = verificationMethods.toMutableList()
     }
 
+    // todo also terrible name
+    public fun verificationMethodOfPurpose(method: VerificationMethod, purposes: List<Purpose> = emptyList()): Builder =
+      apply {
+        this.verificationMethod.add(method)
+        purposes.forEach { purpose ->
+          when (purpose) {
+            Purpose.AssertionMethod -> this.assertionMethod?.add(method.id)
+            Purpose.Authentication -> this.authenticationMethod?.add(method.id)
+            Purpose.KeyAgreement -> this.keyAgreementMethod?.add(method.id)
+            Purpose.CapabilityDelegation -> this.capabilityDelegationMethod?.add(method.id)
+            Purpose.CapabilityInvocation -> this.capabilityInvocationMethod?.add(method.id)
+          }
+        }
+      }
+
+    // todo terrible name
+    public fun verificationMethodsOfPurpose(methods: MutableList<VerificationMethod>?, purpose: Purpose): Builder =
+      apply {
+        methods?.forEach { method ->
+          verificationMethodOfPurpose(method, listOf(purpose))
+        }
+      }
+
     public fun verificationMethod(verificationMethod: VerificationMethod): Builder = apply {
       this.verificationMethod.add(verificationMethod)
     }
 
     public fun services(services: List<Service>?): Builder = apply { this.service = services?.toMutableList() }
-    public fun assertionMethods(assertionMethodVerificationMethods: MutableList<VerificationMethod>?): Builder =
-      apply {
-        this.assertionMethod = assertionMethodVerificationMethods
-      }
-
-    public fun authenticationMethods(authenticationMethods: MutableList<VerificationMethod>?): Builder = apply {
-      this.authenticationMethod = authenticationMethods
-    }
-
-    public fun keyAgreementMethods(verificationMethods: MutableList<VerificationMethod>?): Builder = apply {
-      this.keyAgreementMethod = verificationMethods
-    }
-
-    public fun capabilityDelegationMethods(capabilityDelegationMethods: MutableList<VerificationMethod>?): Builder = apply {
-      this.capabilityDelegationMethod = capabilityDelegationMethods
-    }
-
-    public fun capabilityInvocationMethods(capabilityInvocationMethods: MutableList<VerificationMethod>?): Builder = apply {
-      this.capabilityInvocationMethod = capabilityInvocationMethods
-    }
-
-    // todo a couple places ask for either adding a list or just one.
-    // how should the API respond to list adding? add to existing list or replace?
-    public fun assertionMethod(assertionMethod: VerificationMethod): Builder = apply {
-      // todo why do i have to assert !! ? the default is empty mutableListOf()...
-      this.assertionMethod!!.add(assertionMethod)
-    }
-
-    public fun authenticationMethod(authenticationMethod: VerificationMethod): Builder = apply {
-      this.authenticationMethod!!.add(authenticationMethod)
-    }
-
-    public fun keyAgreementMethod(keyAgreementMethod: VerificationMethod): Builder = apply {
-      this.keyAgreementMethod!!.add(keyAgreementMethod)
-    }
-
-    public fun capabilityInvocationMethod(capabilityInvocationMethod: VerificationMethod): Builder = apply {
-      this.capabilityInvocationMethod!!.add(capabilityInvocationMethod)
-    }
 
     public fun build(): DIDDocument {
       val localId = id ?: throw IllegalStateException("ID is required")
@@ -224,11 +209,10 @@ public class DIDDocument(
         controller,
         verificationMethod,
         service!!,
-        // todo assertionMethod required by constructor is List<String> but i have methods passing in List<VerificationMethod>
-        assertionMethod!!.map { it.id }.toMutableList(),
-        authenticationMethod!!.map { it.id }.toMutableList(),
-        capabilityDelegationMethod!!.map { it.id }.toMutableList(),
-        capabilityInvocationMethod!!.map { it.id }.toMutableList()
+        assertionMethod!!,
+        authenticationMethod!!,
+        capabilityDelegationMethod!!,
+        capabilityInvocationMethod!!
       )
     }
 

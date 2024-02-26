@@ -13,6 +13,7 @@ import web5.sdk.dids.DidResolutionResult
 import web5.sdk.dids.ResolveDidOptions
 import web5.sdk.dids.didcore.DID
 import web5.sdk.dids.didcore.DIDDocument
+import web5.sdk.dids.didcore.Purpose
 import web5.sdk.dids.didcore.VerificationMethod
 import web5.sdk.dids.validateKeyMaterialInsideKeyManager
 
@@ -155,14 +156,19 @@ public class DidKey(uri: String, keyManager: KeyManager) : BaseDid(uri, keyManag
         .id(verificationMethodId)
         .build()
 
+
       val didDocument = DIDDocument.builder()
         .id(did)
         .verificationMethod(verificationMethod)
-        .assertionMethod(verificationMethodRef)
-        .authenticationMethod(verificationMethodRef)
-        .capabilityDelegationMethods(listOf(verificationMethodRef).toMutableList())
-        .capabilityInvocationMethod(verificationMethodRef)
-        .keyAgreementMethod(verificationMethodRef)
+        .verificationMethodOfPurpose(
+          verificationMethodRef,
+          listOf(
+            Purpose.AssertionMethod,
+            Purpose.Authentication,
+            Purpose.KeyAgreement,
+            Purpose.CapabilityDelegation,
+            Purpose.CapabilityInvocation
+          ))
         .build()
 
       return DidResolutionResult(didDocument = didDocument, context = "https://w3id.org/did-resolution/v1")
