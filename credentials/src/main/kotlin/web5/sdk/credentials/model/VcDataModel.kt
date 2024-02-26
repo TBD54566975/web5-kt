@@ -19,6 +19,9 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.TimeZone
 
+public const val DEFAULT_VC_CONTEXT: String = "https://www.w3.org/2018/credentials/v1"
+public const val DEFAULT_VC_TYPE: String = "VerifiableCredential"
+
 /**
  * Global date format used for formatting the issuance and expiration dates of credentials.
  * The value of the issuanceDate property MUST be a string value of an [XMLSCHEMA11-2] combined date-time
@@ -98,25 +101,25 @@ private fun getObjectMapper(): ObjectMapper {
  *
  * @see {@link https://www.w3.org/TR/vc-data-model/#credentials | VC Data Model}
  */
-public data class VcDataModel(
-  val id: URI? = null,
+public class VcDataModel(
+  public val id: URI? = null,
   @JsonProperty("@context")
-  val context: MutableList<URI> = mutableListOf(),
-  val type: MutableList<String> = mutableListOf(),
-  val issuer: URI,
-  val issuanceDate: Date,
-  val expirationDate: Date? = null,
-  val credentialSubject: CredentialSubject,
-  val credentialSchema: CredentialSchema? = null,
-  val credentialStatus: BitstringStatusListEntry? = null
+  public val context: MutableList<URI> = mutableListOf(),
+  public val type: MutableList<String> = mutableListOf(),
+  public val issuer: URI,
+  public val issuanceDate: Date,
+  public val expirationDate: Date? = null,
+  public val credentialSubject: CredentialSubject,
+  public val credentialSchema: CredentialSchema? = null,
+  public val credentialStatus: BitstringStatusListEntry? = null
 ) {
   init {
-    if(context.isEmpty() || context[0].toString() != "https://www.w3.org/2018/credentials/v1") {
-      context.add(0, URI.create("https://www.w3.org/2018/credentials/v1"))
+    if(context.isEmpty() || context[0].toString() != DEFAULT_VC_CONTEXT) {
+      context.add(0, URI.create(DEFAULT_VC_CONTEXT))
     }
 
-    if(type.isEmpty() || type[0] != "VerifiableCredential") {
-      type.add(0, "VerifiableCredential")
+    if(type.isEmpty() || type[0] != DEFAULT_VC_TYPE) {
+      type.add(0, DEFAULT_VC_TYPE)
     }
 
     require(id == null || id.toString().isNotBlank()) { "ID URI cannot be blank" }
@@ -179,9 +182,9 @@ public data class VcDataModel(
  * The [CredentialSubject] represents the value of the credentialSubject property as a set of objects containing
  * properties related to the subject of the verifiable credential.
  */
-public data class CredentialSubject(
-  val id: URI? = null,
-  val additionalClaims: Map<String, Any> = emptyMap()
+public class CredentialSubject(
+  public val id: URI? = null,
+  public val additionalClaims: Map<String, Any> = emptyMap()
 ) {
   init {
     require(id == null || id.toString().isNotBlank()) { "ID URI cannot be blank" }
@@ -191,9 +194,9 @@ public data class CredentialSubject(
 /**
  * The [CredentialSchema] Represents the schema defining the structure of a credential.
  */
-public data class CredentialSchema(
-  val id: String,
-  val type: String? = null
+public class CredentialSchema(
+  public val id: String,
+  public val type: String? = null
 ) {
   init {
     require(type == null || type.isNotBlank()) { "Type cannot be blank" }

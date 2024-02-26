@@ -7,6 +7,7 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import java.net.URI
 
+public const val DEFAULT_BITSTRING_STATUS_LIST_ENTRY_TYPE: String = "BitstringStatusListEntry"
 private fun getObjectMapper(): ObjectMapper = jacksonObjectMapper().apply {
   registerKotlinModule()
   setSerializationInclusion(JsonInclude.Include.NON_NULL)
@@ -15,12 +16,12 @@ private fun getObjectMapper(): ObjectMapper = jacksonObjectMapper().apply {
 /**
  * BitstringStatusListEntry.
  */
-public data class BitstringStatusListEntry(
-  val id: URI,
-  val type: String = "BitstringStatusListEntry",
-  val statusListIndex: String,
-  val statusListCredential: URI,
-  val statusPurpose: String,
+public class BitstringStatusListEntry(
+  public val id: URI,
+  public val type: String = DEFAULT_BITSTRING_STATUS_LIST_ENTRY_TYPE,
+  public val statusListIndex: String,
+  public val statusListCredential: URI,
+  public val statusPurpose: String,
 ) {
 
   init {

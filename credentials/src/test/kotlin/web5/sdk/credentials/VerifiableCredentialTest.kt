@@ -13,6 +13,9 @@ import com.nimbusds.jwt.SignedJWT
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
+import web5.sdk.credentials.model.CredentialSchema
+import web5.sdk.credentials.model.CredentialSubject
+import web5.sdk.credentials.model.VcDataModel
 import web5.sdk.crypto.AlgorithmId
 import web5.sdk.crypto.AwsKeyManager
 import web5.sdk.crypto.InMemoryKeyManager
@@ -24,13 +27,18 @@ import web5.sdk.dids.methods.ion.JsonWebKey2020VerificationMethod
 import web5.sdk.dids.methods.key.DidKey
 import web5.sdk.testing.TestVectors
 import java.io.File
+import java.net.URI
 import java.security.SignatureException
 import java.text.ParseException
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.TimeZone
 import java.util.UUID
 import kotlin.test.Ignore
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
 import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 data class StreetCredibility(val localRespect: String, val legit: Boolean)
 class VerifiableCredentialTest {
@@ -224,6 +232,126 @@ class VerifiableCredentialTest {
     assertEquals(vc.type, parsedVc.type)
     assertEquals(vc.issuer, parsedVc.issuer)
     assertEquals(vc.subject, parsedVc.subject)
+  }
+
+  @Test
+  fun `vcDataModel should fail with empty id`() {
+    var exception = assertThrows(IllegalArgumentException::class.java) {
+      VcDataModel(
+        id = URI.create(""),
+        context = mutableListOf(URI.create("https://www.w3.org/2018/credentials/v1")),
+        type = mutableListOf("VerifiableCredential"),
+        issuer = URI.create("did:example:issuer"),
+        issuanceDate = Date(),
+        credentialSubject = CredentialSubject(
+          id = URI.create("did:example:subject"),
+          additionalClaims = mapOf("claimKey" to "claimValue")
+        ),
+      )
+    }
+
+    assertTrue(exception.message!!.contains("ID URI cannot be blank"))
+  }
+
+  @Test
+  fun `vcDataModel should fail with empty issuer`() {
+    var exception = assertThrows(IllegalArgumentException::class.java) {
+      VcDataModel(
+        id = URI.create("123"),
+        context = mutableListOf(URI.create("https://www.w3.org/2018/credentials/v1")),
+        type = mutableListOf("VerifiableCredential"),
+        issuer = URI.create(""),
+        issuanceDate = Date(),
+        credentialSubject = CredentialSubject(
+          id = URI.create("did:example:subject"),
+          additionalClaims = mapOf("claimKey" to "claimValue")
+        ),
+      )
+    }
+
+    assertTrue(exception.message!!.contains("Issuer URI cannot be blank"))
+  }
+
+  @Test
+  fun `vcDataModel should fail with issuance date before expiration date`() {
+    var exception = assertThrows(IllegalArgumentException::class.java) {
+      VcDataModel(
+        id = URI.create("123"),
+        context = mutableListOf(URI.create("https://www.w3.org/2018/credentials/v1")),
+        type = mutableListOf("VerifiableCredential"),
+        issuer = URI.create("did:example:issuer"),
+        issuanceDate = Date(),
+        expirationDate = Date(Date().time - 100),
+        credentialSubject = CredentialSubject(
+          id = URI.create("did:example:subject"),
+          additionalClaims = mapOf("claimKey" to "claimValue")
+        ),
+      )
+    }
+
+    assertTrue(exception.message!!.contains("Issuance date must be before expiration date"))
+  }
+
+  @Test
+  fun `vcDataModel should add default context and type`() {
+
+    val vcDataModel = VcDataModel(
+      id = URI.create("123"),
+      context = mutableListOf(),
+      type = mutableListOf(),
+      issuer = URI.create("http://example.com/issuer"),
+      issuanceDate = Date(),
+      credentialSubject = CredentialSubject(
+        id = URI.create("http://example.com/subject"),
+        additionalClaims = mapOf("claimKey" to "claimValue")
+      ),
+    )
+
+
+    assertEquals("https://www.w3.org/2018/credentials/v1", vcDataModel.context[0].toString())
+    assertEquals("VerifiableCredential", vcDataModel.type[0])
+  }
+
+  @Test
+  fun `vcDataModel fromJsonObject should correctly parse JSON into VcDataModel`() {
+    val dateFormat: SimpleDateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").apply {
+      timeZone = TimeZone.getTimeZone("UTC")
+    }
+    val issuanceDate = Date()
+    val json = """
+            {
+              "id": "http://example.com/credential",
+              "@context": ["https://www.w3.org/2018/credentials/v1"],
+              "type": ["VerifiableCredential"],
+              "issuer": "http://example.com/issuer",
+              "issuanceDate": "${dateFormat.format(issuanceDate)}",
+              "credentialSubject": {
+                "id": "http://example.com/subject",
+                "additionalClaims": {}
+              }
+            }
+        """.trimIndent()
+
+    val vcDataModel = VcDataModel.fromJsonObject(json)
+
+    assertEquals(URI("http://example.com/credential"), vcDataModel.id)
+    assertEquals(listOf(URI("https://www.w3.org/2018/credentials/v1")), vcDataModel.context)
+    assertEquals(listOf("VerifiableCredential"), vcDataModel.type)
+    assertEquals(URI("http://example.com/issuer"), vcDataModel.issuer)
+    assertEquals(dateFormat.format(issuanceDate), dateFormat.format(vcDataModel.issuanceDate))
+    assertEquals(URI("http://example.com/subject"), vcDataModel.credentialSubject.id)
+  }
+
+  @Test
+  fun `vcDataModel credentialSchema should fail with empty type`() {
+    var exception = assertThrows(IllegalArgumentException::class.java) {
+      CredentialSchema(
+        id = "did:example:122",
+        type = ""
+        )
+    }
+
+    assertTrue(exception.message!!.contains("Type cannot be blank"))
   }
 }
 
