@@ -16,7 +16,9 @@ private fun getObjectMapper(): ObjectMapper = jacksonObjectMapper().apply {
 }
 
 /**
- * BitstringStatusListEntry.
+ * The [BitstringStatusListEntry] instance representing the core data model of a bitstring status list entry.
+ *
+ * @see {@link https://www.w3.org/TR/vc-bitstring-status-list/ | Bitstring Status List }
  */
 public class BitstringStatusListEntry(
   public val id: URI,

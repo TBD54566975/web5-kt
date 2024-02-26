@@ -227,7 +227,7 @@ class StatusListCredentialTest {
     val credentialStatus1 = BitstringStatusListEntry(
       id = URI.create("cred-with-status-id"),
       statusPurpose = "revocation",
-      statusListIndex = "-1", // Note the negative index value
+      statusListIndex = "-1",
       statusListCredential = URI.create("https://example.com/credentials/status/3"),
     )
 
@@ -315,7 +315,7 @@ class StatusListCredentialTest {
     val credentialStatus2 = BitstringStatusListEntry(
       id = URI.create("cred-with-status-id"),
       statusPurpose = "revocation",
-      statusListIndex = "124", // Note the different index from credentialStatus1
+      statusListIndex = "124",
       statusListCredential = URI.create("https://example.com/credentials/status/3"),
     )
 

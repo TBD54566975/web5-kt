@@ -36,7 +36,6 @@ private class DateSerializer : JsonSerializer<Date>() {
   }
 }
 
-
 private class DateDeserializer : JsonDeserializer<Date>() {
   override fun deserialize(p: JsonParser?, ctxt: DeserializationContext?): Date {
     return DATE_FORMAT.parse(p?.text ?: "")
@@ -48,7 +47,6 @@ private class CredentialSubjectSerializer : JsonSerializer<CredentialSubject>() 
     gen.writeStartObject()
     // Write the id field. If id is null, write an empty string; otherwise, write its string representation.
     gen.writeStringField("id", value.id?.toString() ?: "")
-    // Write additional claims directly into the JSON object
     value.additionalClaims.forEach { (key, claimValue) ->
       gen.writeObjectField(key, claimValue)
     }
