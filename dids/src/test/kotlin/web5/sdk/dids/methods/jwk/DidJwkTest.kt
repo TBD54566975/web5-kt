@@ -86,15 +86,19 @@ class DidJwkTest {
       val encodedPrivateJwk = Convert(privateJwk.toJSONString()).toBase64Url(padding = false)
 
       val did = "did:jwk:$encodedPrivateJwk"
-      assertThrows<IllegalArgumentException>("decoded jwk value cannot be a private key") { DidJwk.resolve(did) }
+      assertThrows<IllegalArgumentException>(
+        "decoded jwk value cannot be a private key"
+      ) { DidJwk.resolve(did) }
     }
 
+    // todo this one fails but need to check size of verificationMethod (1 or 2?)
     @Test
     fun `test vector 1`() {
       // test vector taken from: https://github.com/quartzjer/did-jwk/blob/main/spec.md#p-256
-      @Suppress("MaxLineLength")
       val did =
-        "did:jwk:eyJjcnYiOiJQLTI1NiIsImt0eSI6IkVDIiwieCI6ImFjYklRaXVNczNpOF91c3pFakoydHBUdFJNNEVVM3l6OTFQSDZDZEgyVjAiLCJ5IjoiX0tjeUxqOXZXTXB0bm1LdG00NkdxRHo4d2Y3NEk1TEtncmwyR3pIM25TRSJ9"
+        "did:jwk:eyJjcnYiOiJQLTI1NiIsImt0eSI6IkVDIiwieCI6ImFjYklRaXVNczNpOF91c3pFa" +
+          "koydHBUdFJNNEVVM3l6OTFQSDZDZEgyVjAiLCJ5IjoiX0tjeUxqOXZXTXB0bm1LdG00Nkdx" +
+          "RHo4d2Y3NEk1TEtncmwyR3pIM25TRSJ9"
       val result = DidJwk.resolve(did)
       assertNotNull(result)
 
@@ -111,9 +115,9 @@ class DidJwkTest {
     @Test
     fun `test vector 2`() {
       // test vector taken from: https://github.com/quartzjer/did-jwk/blob/main/spec.md#x25519
-      @Suppress("MaxLineLength")
       val did =
-        "did:jwk:eyJrdHkiOiJPS1AiLCJjcnYiOiJYMjU1MTkiLCJ1c2UiOiJlbmMiLCJ4IjoiM3A3YmZYdDl3YlRUVzJIQzdPUTFOei1EUThoYmVHZE5yZngtRkctSUswOCJ9"
+        "did:jwk:eyJrdHkiOiJPS1AiLCJjcnYiOiJYMjU1MTkiLCJ1c2UiOiJlbmMiLCJ4IjoiM3A3YmZY" +
+          "dDl3YlRUVzJIQzdPUTFOei1EUThoYmVHZE5yZngtRkctSUswOCJ9"
       val result = DidJwk.resolve(did)
       assertNotNull(result)
 

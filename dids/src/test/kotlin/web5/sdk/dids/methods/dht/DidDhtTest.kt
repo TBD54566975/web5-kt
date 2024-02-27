@@ -1,6 +1,8 @@
 package web5.sdk.dids.methods.dht
 
 import com.fasterxml.jackson.core.type.TypeReference
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize
+import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.JWK
@@ -21,7 +23,10 @@ import web5.sdk.common.ZBase32
 import web5.sdk.crypto.AlgorithmId
 import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.dids.DidResolutionResult
+import web5.sdk.dids.JWKSerializer
 import web5.sdk.dids.Json
+import web5.sdk.dids.JwkDeserializer
+import web5.sdk.dids.PurposesDeserializer
 import web5.sdk.dids.didcore.DIDDocument
 import web5.sdk.dids.didcore.Purpose
 import web5.sdk.dids.didcore.Service
@@ -83,7 +88,7 @@ class DidDhtTest {
         DidDht.validateIdentityKey("did:dht:1bxdi3tbf1ud6cpk3ef9pz83erk9c6mmh877qfhfcd7ppzbgh7co7", manager)
       }
       assertEquals(
-        "expected size of decoded identifier \"1bxdi3tbf1ud6cpk3ef9pz83erk9c6mmh877qfhfcd7ppzbgh7co7\" to be 32",
+        "expected size of decoded identifier 1bxdi3tbf1ud6cpk3ef9pz83erk9c6mmh877qfhfcd7ppzbgh7co7 to be 32",
         exception.message
       )
     }
@@ -101,7 +106,6 @@ class DidDhtTest {
       assertNotNull(did)
       assertNotNull(did.didDocument)
       assertEquals(1, did.didDocument!!.verificationMethod?.size)
-      val verificationMethodId = did.didDocument!!.verificationMethod?.get(0)?.id
       assertContains(did.didDocument!!.verificationMethod?.get(0)?.id!!, "#0")
       assertEquals(1, did.didDocument!!.assertionMethod?.size)
       assertEquals(1, did.didDocument!!.authentication?.size)
@@ -177,6 +181,7 @@ class DidDhtTest {
       assertEquals(indexes, docTypesPair.second)
     }
 
+    // todo this test passes when i run it by itself, but fails when i run the whole suite
     @Test
     fun `create with publishing`() {
       val manager = InMemoryKeyManager()
@@ -191,7 +196,7 @@ class DidDhtTest {
       assertEquals(1, did.didDocument!!.authentication?.size)
       assertEquals(1, did.didDocument!!.capabilityDelegation?.size)
       assertEquals(1, did.didDocument!!.capabilityInvocation?.size)
-      assertNull(did.didDocument!!.keyAgreement)
+      assertEquals(0, did.didDocument!!.keyAgreement?.size)
       assertNull(did.didDocument!!.service)
     }
 
@@ -232,6 +237,8 @@ class DidDhtTest {
 
   @Nested
   inner class DnsPacketTest {
+
+    // todo this test passes when i run it by itself, but fails when i run the whole suite
     @Test
     fun `to and from DNS packet - simple DID`() {
       val manager = InMemoryKeyManager()
@@ -249,6 +256,7 @@ class DidDhtTest {
       assertEquals(did.didDocument.toString(), didFromPacket.first.toString())
     }
 
+    // todo this test passes when i run it by itself, but fails when i run the whole suite
     @Test
     fun `to and from DNS packet - DID with types`() {
       val manager = InMemoryKeyManager()
@@ -265,10 +273,12 @@ class DidDhtTest {
       assertNotNull(didFromPacket.first)
       assertNotNull(didFromPacket.second)
 
-      assertEquals(did.didDocument.toString(), didFromPacket.first.toString())
+      assertEquals(did.didDocument, didFromPacket.first)
       assertEquals(indexes, didFromPacket.second)
     }
 
+    // throwing "text too long" exception from DNS record library
+    // in message.addRecord() DidDht.kt:453
     @Test
     fun `to and from DNS packet - complex DID`() {
       val manager = InMemoryKeyManager()
@@ -354,7 +364,9 @@ class Web5TestVectorsDidDht {
   )
 
   data class VerificationMethodInput(
-    val jwk: Map<String, Any>,
+    @JsonDeserialize(using = JwkDeserializer::class)
+    val jwk: JWK,
+    @JsonDeserialize(using = PurposesDeserializer::class)
     val purposes: List<Purpose>
   )
 
@@ -370,9 +382,9 @@ class Web5TestVectorsDidDht {
       doReturn(identityKeyId).whenever(keyManager).generatePrivateKey(AlgorithmId.Ed25519)
 
       val verificationMethods = vector.input.additionalVerificationMethods?.map { verificationMethodInput ->
-        val jwk = JWK.parse(verificationMethodInput.jwk)
-        Triple(jwk, verificationMethodInput.purposes.toList(), null)
-      }
+        Triple(verificationMethodInput.jwk, verificationMethodInput.purposes.toList(), null)
+      }?.asIterable()
+
       val options = CreateDidDhtOptions(
         verificationMethods = verificationMethods,
         publish = false,
@@ -383,7 +395,7 @@ class Web5TestVectorsDidDht {
       val didDht = DidDht.create(keyManager, options)
       assertEquals(
         JsonCanonicalizer(Json.stringify(vector.output!!)).encodedString,
-        JsonCanonicalizer(didDht.didDocument!!.toCustomJson()).encodedString,
+        JsonCanonicalizer(Json.stringify(didDht.didDocument!!)).encodedString,
         vector.description
       )
     }
@@ -408,20 +420,4 @@ class Web5TestVectorsDidDht {
       assertEquals(vector.output, result, vector.description)
     }
   }
-}
-
-// The test vectors assume the property "controller" is rendered as a string (vs. an array of strings) when there is
-// only one controller.
-private fun DIDDocument.toCustomJson(): String {
-  val jsonObject = Json.jsonMapper.readTree(Json.stringify(this))
-  val controller = jsonObject.get("controller")
-  var modifiedObject: ObjectNode? = null
-
-  if (controller.isArray && controller.size() == 1) {
-    val singleController = controller.get(0).asText()
-    modifiedObject = jsonObject.deepCopy()
-    modifiedObject.put("controller", singleController)
-  }
-
-  return Json.stringify(modifiedObject ?: jsonObject)
 }

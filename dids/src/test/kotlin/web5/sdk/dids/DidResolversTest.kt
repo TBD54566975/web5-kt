@@ -14,7 +14,7 @@ class DidResolversTest {
   }
 
   @Test
-  fun `resolving a default ion did contains assertion method`() {
+  fun `resolving a default dht did contains assertion method`() {
     val dhtDid = DidDht.create(InMemoryKeyManager())
 
     val resolutionResult = DidResolvers.resolve(dhtDid.uri)

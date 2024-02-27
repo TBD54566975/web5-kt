@@ -110,7 +110,7 @@ private val logger = KotlinLogging.logger {}
 public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<DidDht, CreateDidDhtOptions> {
 
   private val engine: HttpClientEngine = configuration.engine
-  private val dht = DhtClient(configuration.gateway, engine)
+  private val dhtClient = DhtClient(configuration.gateway, engine)
   private val ttl: Long = 7200
 
   override val methodName: String = "dht"
@@ -153,7 +153,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
     }
 
     // build DID Document
-    val didDocumentBuilder = DIDDocument.builder()
+    val didDocumentBuilder = DIDDocument.Builder()
       .id(id)
       .services(services)
 
@@ -174,7 +174,6 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
       listOf(
         Purpose.AssertionMethod,
         Purpose.Authentication,
-        Purpose.KeyAgreement,
         Purpose.CapabilityDelegation,
         Purpose.CapabilityInvocation
       )
@@ -236,7 +235,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
     }
     val getId = DidDht.suffix(did)
     val bep44Message = try {
-      dht.pkarrGet(getId)
+      dhtClient.pkarrGet(getId)
     } catch (_: PkarrRecordNotFoundException) {
       return DidResolutionResult.fromResolutionError(ResolutionError.NOT_FOUND)
     }
@@ -262,9 +261,10 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
   public fun publish(manager: KeyManager, didDocument: DIDDocument, types: List<DidDhtTypeIndexing>? = null) {
     validate(didDocument.id)
     val publishId = DidDht.suffix(didDocument.id)
+
     val dnsPacket = toDnsPacket(didDocument, types)
     val bep44Message = DhtClient.createBep44PutRequest(manager, getIdentityKid(didDocument), dnsPacket)
-    dht.pkarrPut(publishId, bep44Message)
+    dhtClient.pkarrPut(publishId, bep44Message)
   }
 
   /**
@@ -383,8 +383,8 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
       serviceIds += sId
     }
 
-    addControllerRecord(didDocument, message)
-    addAlsoKnownAsRecord(didDocument, message)
+    didDocument.controller?.let { addControllerRecord(didDocument, message) }
+    didDocument.alsoKnownAs?.let { addAlsoKnownAsRecord(didDocument, message) }
 
     // Construct top-level Resource Record
     val rootRecordText = mutableListOf<String>().apply {
@@ -510,7 +510,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
    * @throws IllegalArgumentException if the provided DID does not conform to the "did:dht" method.
    */
   internal fun fromDnsPacket(did: String, msg: Message): Pair<DIDDocument, List<DidDhtTypeIndexing>> {
-    val doc = DIDDocument.builder().id(did)
+    val doc = DIDDocument.Builder().id(did)
 
     val verificationMethods = mutableListOf<VerificationMethod>()
     val services = mutableListOf<Service>()
@@ -530,11 +530,12 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
             // handle services
             name.startsWith("_s") -> {
               val data = parseTxtData(rr.strings.joinToString(ARRAY_SEPARATOR))
-              services += Service.builder()
+              val service = Service.builder()
                 .id("$did#${data["id"]!!}")
                 .type(data["t"]!!)
                 .serviceEndpoint(data["se"]!!.split(ARRAY_SEPARATOR))
                 .build()
+              services.add(service)
             }
             // handle type indexing
             name == "_typ._did." -> {
@@ -636,10 +637,12 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
 
     rootData.forEach { item ->
       val (key, values) = item.split("=")
-      val valueItems = values.split(ARRAY_SEPARATOR)
+      val valuesList = values.split(ARRAY_SEPARATOR)
 
-      valueItems.forEach {
-        purposeToVerificationMethod[key]?.add(VerificationMethod.builder().id(keyLookup[it]!!).build())
+      if (valuesList.size == 2) {
+        valuesList.forEach {
+          purposeToVerificationMethod[key]?.add(VerificationMethod.builder().id(keyLookup[it]!!).build())
+        }
       }
     }
 

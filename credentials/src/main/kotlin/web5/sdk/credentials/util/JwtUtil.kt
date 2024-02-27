@@ -143,7 +143,11 @@ public object JwtUtil {
     }
 
     // TODO: this will be cleaned up as part of BearerDid PR
-    val assertionVerificationMethod = didResolutionResult.didDocument?.verificationMethod?.find { verificationMethodIds.contains(it.id) }
+    val assertionVerificationMethod = didResolutionResult
+      .didDocument
+      ?.verificationMethod
+      ?.find { verificationMethodIds.contains(it.id) }
+
     if (assertionVerificationMethod == null) {
       throw SignatureException(
         "Signature verification failed: Expected kid in JWS header to dereference " +
@@ -161,7 +165,8 @@ public object JwtUtil {
       )
     }
 
-    val publicKeyJwk = assertionVerificationMethod.publicKeyJwk ?: throw PublicKeyJwkMissingException("publicKeyJwk is null")
+    val publicKeyJwk =
+      assertionVerificationMethod.publicKeyJwk ?: throw PublicKeyJwkMissingException("publicKeyJwk is null")
     val toVerifyBytes = jwt.signingInput
     val signatureBytes = jwt.signature.decode()
 

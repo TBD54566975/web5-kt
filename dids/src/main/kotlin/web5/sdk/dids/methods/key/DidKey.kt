@@ -152,13 +152,8 @@ public class DidKey(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
         .type("JsonWebKey2020")
         .build()
 
-//      val verificationMethodRef = VerificationMethod.builder()
-//        .id(verificationMethodId)
-//        .build()
-
-      val didDocument = DIDDocument.builder()
+      val didDocument = DIDDocument.Builder()
         .id(did)
-//        .verificationMethod(verificationMethod)
         .verificationMethodForPurposes(
           verificationMethod,
           listOf(

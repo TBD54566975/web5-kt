@@ -17,11 +17,23 @@ public class ID(public val value: String) : VMSelector
 /**
  * Enum representing the purpose of a public key.
  */
-public enum class Purpose : VMSelector {
-  AssertionMethod,
-  Authentication,
-  CapabilityDelegation,
-  CapabilityInvocation,
-  KeyAgreement
+public enum class Purpose(public val value: String) : VMSelector {
+  AssertionMethod("assertionMethod"),
+  Authentication("authentication"),
+  CapabilityDelegation("capabilityDelegation"),
+  CapabilityInvocation("capabilityInvocation"),
+  KeyAgreement("keyAgreement");
+
+  public companion object {
+    private val map = entries.associateBy(Purpose::value)
+
+    /**
+     * Retrieve Purpose enum from String value.
+     *
+     * @param value of the purpose
+     * @return Purpose enum
+     */
+    public fun fromValue(value: String): Purpose? = map[value]
+  }
 }
 

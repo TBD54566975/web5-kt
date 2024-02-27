@@ -2,30 +2,21 @@
   "@context": "https://w3id.org/did-resolution/v1",
   "didDocument": {
     "id": "did:ion:EiBjzeKiW7WSyjEGmj-Issed5hMefmM2_HwybK7dSrD_XA:eyJkZWx0YSI6eyJwYXRjaGVzIjpbeyJhY3Rpb24iOiJyZXBsYWNlIiwiZG9jdW1lbnQiOnsicHVibGljS2V5cyI6W3siaWQiOiJzaWdfMjQzOGNiMmQiLCJwdWJsaWNLZXlKd2siOnsiY3J2Ijoic2VjcDI1NmsxIiwia3R5IjoiRUMiLCJ4IjoiVERGUmlOU3dGcG10cTVXX3k5RHhoMDh0ZUJ6SFZLVzlDand1RHR5NllJVSIsInkiOiJfV3c1cDRWcERobDF2aU5JeUtfM1dVbjVidHJ0OGVrejZnN0pHWUZUUUY4In0sInB1cnBvc2VzIjpbImF1dGhlbnRpY2F0aW9uIiwiYXNzZXJ0aW9uTWV0aG9kIl0sInR5cGUiOiJFY2RzYVNlY3AyNTZrMVZlcmlmaWNhdGlvbktleTIwMTkifV0sInNlcnZpY2VzIjpbeyJpZCI6ImxpbmtlZGRvbWFpbnMiLCJzZXJ2aWNlRW5kcG9pbnQiOnsib3JpZ2lucyI6WyJodHRwczovL2xpbmtlZGluLmNvbS8iXX0sInR5cGUiOiJMaW5rZWREb21haW5zIn0seyJpZCI6Imh1YiIsInNlcnZpY2VFbmRwb2ludCI6eyJpbnN0YW5jZXMiOlsiaHR0cHM6Ly9iZXRhLmh1Yi5tc2lkZW50aXR5LmNvbS92MS4wLzU4OWQ1M2I1LWRlZjUtNDIzNS1iNjQyLThlMWM0MWU4YmNhMSJdfSwidHlwZSI6IklkZW50aXR5SHViIn1dfX1dLCJ1cGRhdGVDb21taXRtZW50IjoiRWlBbTUtaE5tVnhSUVdOZm13QzZWMTZhN0c3Sm5rTzM4aUdUUFY2N3F4Q3NDdyJ9LCJzdWZmaXhEYXRhIjp7ImRlbHRhSGFzaCI6IkVpQjFPQkhnaktjakpkLVFQei1RYWZQbldBemRucmh5WVB2UElfVnJzTm5Xd0EiLCJyZWNvdmVyeUNvbW1pdG1lbnQiOiJFaUM2NnNYSGVGMklydnhIS3pCcWVETGwzVENSS2pVZEJsdmRfbkZKMFp3YTRnIn19",
-    "@context": [
-      "https://www.w3.org/ns/did/v1",
-      {
-        "@base": "did:ion:EiBjzeKiW7WSyjEGmj-Issed5hMefmM2_HwybK7dSrD_XA:eyJkZWx0YSI6eyJwYXRjaGVzIjpbeyJhY3Rpb24iOiJyZXBsYWNlIiwiZG9jdW1lbnQiOnsicHVibGljS2V5cyI6W3siaWQiOiJzaWdfMjQzOGNiMmQiLCJwdWJsaWNLZXlKd2siOnsiY3J2Ijoic2VjcDI1NmsxIiwia3R5IjoiRUMiLCJ4IjoiVERGUmlOU3dGcG10cTVXX3k5RHhoMDh0ZUJ6SFZLVzlDand1RHR5NllJVSIsInkiOiJfV3c1cDRWcERobDF2aU5JeUtfM1dVbjVidHJ0OGVrejZnN0pHWUZUUUY4In0sInB1cnBvc2VzIjpbImF1dGhlbnRpY2F0aW9uIiwiYXNzZXJ0aW9uTWV0aG9kIl0sInR5cGUiOiJFY2RzYVNlY3AyNTZrMVZlcmlmaWNhdGlvbktleTIwMTkifV0sInNlcnZpY2VzIjpbeyJpZCI6ImxpbmtlZGRvbWFpbnMiLCJzZXJ2aWNlRW5kcG9pbnQiOnsib3JpZ2lucyI6WyJodHRwczovL2xpbmtlZGluLmNvbS8iXX0sInR5cGUiOiJMaW5rZWREb21haW5zIn0seyJpZCI6Imh1YiIsInNlcnZpY2VFbmRwb2ludCI6eyJpbnN0YW5jZXMiOlsiaHR0cHM6Ly9iZXRhLmh1Yi5tc2lkZW50aXR5LmNvbS92MS4wLzU4OWQ1M2I1LWRlZjUtNDIzNS1iNjQyLThlMWM0MWU4YmNhMSJdfSwidHlwZSI6IklkZW50aXR5SHViIn1dfX1dLCJ1cGRhdGVDb21taXRtZW50IjoiRWlBbTUtaE5tVnhSUVdOZm13QzZWMTZhN0c3Sm5rTzM4aUdUUFY2N3F4Q3NDdyJ9LCJzdWZmaXhEYXRhIjp7ImRlbHRhSGFzaCI6IkVpQjFPQkhnaktjakpkLVFQei1RYWZQbldBemRucmh5WVB2UElfVnJzTm5Xd0EiLCJyZWNvdmVyeUNvbW1pdG1lbnQiOiJFaUM2NnNYSGVGMklydnhIS3pCcWVETGwzVENSS2pVZEJsdmRfbkZKMFp3YTRnIn19"
-      }
-    ],
+    "@context": "https://www.w3.org/ns/did/v1",
     "service": [
       {
         "id": "#linkeddomains",
         "type": "LinkedDomains",
-        "serviceEndpoint": {
-          "origins": [
-            "https://www.linkedin.com/"
-          ]
-        }
+        "serviceEndpoint": [
+          "https://www.linkedin.com/"
+        ]
       },
       {
         "id": "#hub",
         "type": "IdentityHub",
-        "serviceEndpoint": {
-          "instances": [
-            "https://beta.hub.msidentity.com/v1.0/589d53b5-def5-4235-b642-8e1c41e8bca1"
-          ]
-        }
+        "serviceEndpoint": [
+          "https://beta.hub.msidentity.com/v1.0/589d53b5-def5-4235-b642-8e1c41e8bca1"
+        ]
       }
     ],
     "verificationMethod": [
@@ -49,14 +40,7 @@
     ]
   },
   "didDocumentMetadata": {
-    "method": {
-      "published": true,
-      "recoveryCommitment": "EiC66sXHeF2IrvxHKzBqeDLl3TCRKjUdBlvd_nFJ0Zwa4g",
-      "updateCommitment": "EiBRKW5GwU-Z8GViwsuBdvZ3CYIuMEi7UGZT4Xds-cUT2Q"
-    },
-    "equivalentId": [
-      "did:ion:EiBjzeKiW7WSyjEGmj-Issed5hMefmM2_HwybK7dSrD_XA"
-    ],
+    "equivalentId": "did:ion:EiBjzeKiW7WSyjEGmj-Issed5hMefmM2_HwybK7dSrD_XA",
     "canonicalId": "did:ion:EiBjzeKiW7WSyjEGmj-Issed5hMefmM2_HwybK7dSrD_XA"
   },
   "didResolutionMetadata": {}

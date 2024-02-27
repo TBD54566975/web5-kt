@@ -1,5 +1,6 @@
 package web5.sdk.dids.didcore
 
+import web5.sdk.dids.exceptions.ParserException
 import java.util.regex.Pattern
 
 /**
@@ -86,7 +87,7 @@ public class DidUri(
     public fun parse(didUri: String): DidUri {
       val matcher = DID_URI_PATTERN.matcher(didUri)
       if (!matcher.matches()) {
-        throw IllegalArgumentException("Invalid DID URI")
+        throw ParserException("Invalid DID URI")
       }
 
       val method = matcher.group(1)

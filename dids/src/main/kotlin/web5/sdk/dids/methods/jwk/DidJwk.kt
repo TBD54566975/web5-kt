@@ -152,14 +152,9 @@ public class DidJwk(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
         .type("JsonWebKey2020")
         .build()
 
-//      val verificationMethodRef = VerificationMethod.builder()
-//        .id(verificationMethodId)
-//        .build()
-
-      val didDocumentBuilder = DIDDocument.builder()
-        .context("https://w3id.org/security/suites/jws-2020/v1")
+      val didDocumentBuilder = DIDDocument.Builder()
+        .context("https://www.w3.org/ns/did/v1")
         .id(did)
-//        .verificationMethod(verificationMethod)
 
       if (publicKeyJwk.keyUse != KeyUse.ENCRYPTION) {
         didDocumentBuilder
@@ -173,6 +168,7 @@ public class DidJwk(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
             )
           )
       }
+      // todo do we want to add verificationMethod again here?
       if (publicKeyJwk.keyUse != KeyUse.SIGNATURE) {
         didDocumentBuilder.verificationMethodForPurposes(verificationMethod, listOf(Purpose.KeyAgreement))
       }

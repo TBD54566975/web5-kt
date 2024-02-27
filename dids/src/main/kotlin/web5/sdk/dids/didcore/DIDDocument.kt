@@ -39,15 +39,15 @@ public class DIDDocument(
   public val id: String,
   @JsonProperty("@context")
   public val context: String? = null,
-  public val alsoKnownAs: List<String>? = emptyList(),
-  public val controller: List<String>? = emptyList(),
-  public val verificationMethod: List<VerificationMethod>? = listOf(),
-  public val service: List<Service>? = listOf(),
-  public val assertionMethod: List<String>? = listOf(),
-  public val authentication: List<String>? = listOf(),
-  public val keyAgreement: List<String>? = listOf(),
-  public val capabilityDelegation: List<String>? = listOf(),
-  public val capabilityInvocation: List<String>? = listOf()
+  public val alsoKnownAs: List<String>? = null,
+  public val controller: List<String>? = null,
+  public val verificationMethod: List<VerificationMethod>? = null,
+  public val service: List<Service>? = null,
+  public val assertionMethod: List<String>? = null,
+  public val authentication: List<String>? = null,
+  public val keyAgreement: List<String>? = null,
+  public val capabilityDelegation: List<String>? = null,
+  public val capabilityInvocation: List<String>? = null
 ) {
 
   /**
@@ -113,12 +113,18 @@ public class DIDDocument(
       throw SignatureException("No assertion methods found in DID document")
     }
 
-    require(assertionMethod.contains(assertionMethodId)) {
-      throw SignatureException("assertion method \"$assertionMethodId\" not found in list of assertion methods")
+    if (assertionMethodId != null) {
+      require(assertionMethod.contains(assertionMethodId)) {
+        throw SignatureException("assertion method \"$assertionMethodId\" not found in list of assertion methods")
+      }
     }
 
-    val assertionMethod: VerificationMethod = verificationMethod?.find { it.id == assertionMethodId }
-      ?: throw SignatureException("assertion method \"$assertionMethodId\" not found")
+    val assertionMethod: VerificationMethod =
+      verificationMethod
+        ?.find {
+          it.id == (assertionMethodId ?: assertionMethod.first())
+        }
+        ?: throw SignatureException("assertion method \"$assertionMethodId\" not found")
 
     return assertionMethod
   }
@@ -126,21 +132,21 @@ public class DIDDocument(
   /**
    * Builder object to build a DIDDocument.
    */
-  public companion object Builder {
+  public class Builder {
 
     private var id: String? = null
     private var context: String? = null
-    private var alsoKnownAs: List<String> = emptyList()
-    private var controller: List<String> = emptyList()
+    private var alsoKnownAs: List<String>? = null
+    private var controller: List<String>? = null
 
-    private var verificationMethod: MutableList<VerificationMethod> = mutableListOf()
-    private var service: MutableList<Service>? = mutableListOf()
+    private var verificationMethod: MutableList<VerificationMethod>? = null
+    private var service: List<Service>? = null
 
-    private var assertionMethod: MutableList<String>? = mutableListOf()
-    private var authenticationMethod: MutableList<String>? = mutableListOf()
-    private var keyAgreementMethod: MutableList<String>? = mutableListOf()
-    private var capabilityDelegationMethod: MutableList<String>? = mutableListOf()
-    private var capabilityInvocationMethod: MutableList<String>? = mutableListOf()
+    private var assertionMethod: MutableList<String>? = null
+    private var authenticationMethod: MutableList<String>? = null
+    private var keyAgreementMethod: MutableList<String>? = null
+    private var capabilityDelegationMethod: MutableList<String>? = null
+    private var capabilityInvocationMethod: MutableList<String>? = null
 
     /**
      * Adds Id to the DIDDocument.
@@ -177,6 +183,14 @@ public class DIDDocument(
     public fun alsoKnownAses(alsoKnownAses: List<String>): Builder = apply { this.alsoKnownAs = alsoKnownAses }
 
     /**
+     * Adds Services.
+     *
+     * @param services to be added to DIDDocument
+     * @return Builder object
+     */
+    public fun services(services: List<Service>?): Builder = apply { this.service = services }
+
+    /**
      * Add verification method adds a verification method to the document.
      * If Purposes are provided, the verification method's ID will be added to the corresponding list of purposes.
      *
@@ -189,14 +203,23 @@ public class DIDDocument(
       method: VerificationMethod,
       purposes: List<Purpose> = emptyList()): Builder =
       apply {
-        this.verificationMethod.add(method)
+        this.verificationMethod = (this.verificationMethod ?: mutableListOf()).apply { add(method) }
         purposes.forEach { purpose ->
           when (purpose) {
-            Purpose.AssertionMethod -> this.assertionMethod?.add(method.id)
-            Purpose.Authentication -> this.authenticationMethod?.add(method.id)
-            Purpose.KeyAgreement -> this.keyAgreementMethod?.add(method.id)
-            Purpose.CapabilityDelegation -> this.capabilityDelegationMethod?.add(method.id)
-            Purpose.CapabilityInvocation -> this.capabilityInvocationMethod?.add(method.id)
+            Purpose.AssertionMethod -> this.assertionMethod =
+              (this.assertionMethod ?: mutableListOf()).apply { add(method.id) }
+
+            Purpose.Authentication -> this.authenticationMethod =
+              (this.authenticationMethod ?: mutableListOf()).apply { add(method.id) }
+
+            Purpose.KeyAgreement -> this.keyAgreementMethod =
+              (this.keyAgreementMethod ?: mutableListOf()).apply { add(method.id) }
+
+            Purpose.CapabilityDelegation -> this.capabilityDelegationMethod =
+              (this.capabilityDelegationMethod ?: mutableListOf()).apply { add(method.id) }
+
+            Purpose.CapabilityInvocation -> this.capabilityInvocationMethod =
+              (this.capabilityInvocationMethod ?: mutableListOf()).apply { add(method.id) }
           }
         }
       }
@@ -217,14 +240,6 @@ public class DIDDocument(
       }
 
     /**
-     * Adds Services.
-     *
-     * @param services to be added to DIDDocument
-     * @return Builder object
-     */
-    public fun services(services: List<Service>?): Builder = apply { this.service = services?.toMutableList() }
-
-    /**
      * Builds DIDDocument after validating the required fields.
      *
      * @return DIDDocument
@@ -240,19 +255,27 @@ public class DIDDocument(
         service,
         assertionMethod,
         authenticationMethod,
+        keyAgreementMethod,
         capabilityDelegationMethod,
         capabilityInvocationMethod
       )
     }
-
-    /**
-     * Builder method to use when creating a new instance of the DIDDocument.
-     *
-     * @return Builder object
-     */
-    public fun builder(): Builder {
-      return Builder
-    }
   }
+
+  override fun toString(): String {
+    return "DIDDocument(" +
+      "id='$id', " +
+      "context='$context', " +
+      "alsoKnownAs=$alsoKnownAs, " +
+      "controller=$controller, " +
+      "verificationMethod=$verificationMethod, " +
+      "service=$service, " +
+      "assertionMethod=$assertionMethod, " +
+      "authentication=$authentication, " +
+      "keyAgreement=$keyAgreement, " +
+      "capabilityDelegation=$capabilityDelegation, " +
+      "capabilityInvocation=$capabilityInvocation)"
+  }
+
 }
 

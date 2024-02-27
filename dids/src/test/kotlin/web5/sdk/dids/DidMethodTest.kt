@@ -13,6 +13,7 @@ import web5.sdk.dids.didcore.DidUri
 import web5.sdk.dids.methods.key.DidKey
 import web5.sdk.dids.methods.web.DidWebApi
 import java.security.SignatureException
+import kotlin.test.assertContains
 import kotlin.test.assertEquals
 
 class DidMethodTest {
@@ -43,7 +44,7 @@ class DidMethodTest {
     val exception = assertThrows<SignatureException> {
       did.resolve().didDocument!!.findAssertionMethodById("made up assertion method id")
     }
-    assertEquals("assertion method \"made up assertion method id\" not found", exception.message)
+    assertContains(exception.message!!, "assertion method \"made up assertion method id\" not found")
   }
 
   @Test
