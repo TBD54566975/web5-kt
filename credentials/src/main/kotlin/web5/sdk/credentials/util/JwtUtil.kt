@@ -121,7 +121,10 @@ public object JwtUtil {
     // create a set of possible id matches. the DID spec allows for an id to be the entire `did#fragment`
     // or just `#fragment`. See: https://www.w3.org/TR/did-core/#relative-did-urls.
     // using a set for fast string comparison. DIDs can be lonnng.
-    val verificationMethodIds = setOf(verificationMethodIdParseResult.didUrlString, "#${verificationMethodIdParseResult.fragment}")
+    val verificationMethodIds = setOf(
+      verificationMethodIdParseResult.didUrlString,
+      "#${verificationMethodIdParseResult.fragment}"
+    )
     val assertionMethods = didResolutionResult.didDocument?.assertionMethodVerificationMethodsDereferenced
     val assertionMethod = assertionMethods?.firstOrNull {
       val id = it.id
@@ -132,8 +135,10 @@ public object JwtUtil {
           "a DID Document Verification Method with an Assertion verification relationship"
       )
 
-    require((assertionMethod.isType(JSON_WEB_KEY_2020) || assertionMethod.isType(JSON_WEB_KEY))  &&
-      assertionMethod.publicKeyJwk != null) {
+    require(
+      (assertionMethod.isType(JSON_WEB_KEY_2020) || assertionMethod.isType(JSON_WEB_KEY)) &&
+        assertionMethod.publicKeyJwk != null
+    ) {
       throw SignatureException(
         "Signature verification failed: Expected kid in JWS header to dereference " +
           "a DID Document Verification Method of type $JSON_WEB_KEY_2020 or $JSON_WEB_KEY with a publicKeyJwk"

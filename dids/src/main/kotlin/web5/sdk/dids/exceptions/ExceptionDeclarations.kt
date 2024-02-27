@@ -42,14 +42,14 @@ public class InvalidIdentifierException(message: String, cause: Throwable) : Run
 public class DidResolutionException(message: String) : RuntimeException(message)
 
 /**
- * Parser exception
+ * Parser exception.
  *
  * @param message the exception message detailing the error
  */
 public class ParserException(message: String) : RuntimeException(message)
 
 /**
- * PublicKeyJwkMissingException
+ * PublicKeyJwkMissingException.
  *
  * @param message the exception message detailing the error
  */

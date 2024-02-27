@@ -41,14 +41,28 @@ public class DID(
     return url
   }
 
+  /**
+   * Marshal text into byteArray.
+   *
+   * @return ByteArray of the DID object
+   */
   public fun marshalText(): ByteArray {
     return this.toString().toByteArray(Charsets.UTF_8)
   }
 
-  public fun unmarshalText(text: ByteArray): DID {
-    return parse(text.toString(Charsets.UTF_8))
+  /**
+   * Unmarshal byteArray into a DID.
+   *
+   * @param byteArray
+   * @return DID object
+   */
+  public fun unmarshalText(byteArray: ByteArray): DID {
+    return parse(byteArray.toString(Charsets.UTF_8))
   }
 
+  /**
+   * Parser object used to Parse a DID URI into a DID object.
+   */
   public companion object Parser {
     private const val PCT_ENCODED_PATTERN = """(?:%[0-9a-fA-F]{2})"""
     private const val ID_CHAR_PATTERN = """(?:[a-zA-Z0-9._-]|$PCT_ENCODED_PATTERN)"""
@@ -65,8 +79,14 @@ public class DID(
         """^did:$METHOD_PATTERN:$METHOD_ID_PATTERN$PARAMS_PATTERN$PATH_PATTERN$QUERY_PATTERN$FRAGMENT_PATTERN$"""
       )
 
-    public fun parse(input: String): DID {
-      val matcher = didUriPattern.matcher(input)
+    /**
+     * Parse a DID URI into a DID object.
+     *
+     * @param didUri The DID URI to parse.
+     * @return DID object
+     */
+    public fun parse(didUri: String): DID {
+      val matcher = didUriPattern.matcher(didUri)
       if (!matcher.matches()) {
         throw IllegalArgumentException("Invalid DID URI")
       }
@@ -87,7 +107,7 @@ public class DID(
 
       return DID(
         uri = "did:$method:$id",
-        url = input,
+        url = didUri,
         method = method,
         id = id,
         params = params,

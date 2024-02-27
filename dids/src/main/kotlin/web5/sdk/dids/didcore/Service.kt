@@ -20,25 +20,58 @@ public class Service(
   public val serviceEndpoint: List<String>
 ) {
 
+  /**
+   * Builder object to build a Service.
+   */
   public companion object Builder {
     private var id: String? = null
     private var type: String? = null
     private var serviceEndpoint: List<String>? = null
 
 
+    /**
+     * Adds Id to the Service.
+     *
+     * @param id of the Service
+     * @return Builder object
+     */
     public fun id(id: String): Builder = apply { this.id = id }
+
+    /**
+     * Adds Type to the Service.
+     *
+     * @param type of the Service
+     * @return Builder object
+     */
     public fun type(type: String): Builder = apply { this.type = type }
+
+    /**
+     * Adds ServiceEndpoint to the Service.
+     *
+     * @param serviceEndpoint of the Service
+     * @return Builder object
+     */
     public fun serviceEndpoint(serviceEndpoint: List<String>?): Builder = apply {
       this.serviceEndpoint = serviceEndpoint
     }
 
+    /**
+     * Builds Service after validating the required fields.
+     *
+     * @return Service
+     */
     public fun build(): Service {
-      val localId = id ?: throw IllegalStateException("ID is required")
-      val localType = type ?: throw IllegalStateException("Type is required")
-      val localServiceEndpoint = serviceEndpoint ?: throw IllegalStateException("ServiceEndpoint is required")
-      return Service(localId, localType, localServiceEndpoint)
+      check(id != null) { "ID is required" }
+      check(type != null) { "Type is required" }
+      check(serviceEndpoint != null) { "ServiceEndpoint is required" }
+      return Service(id!!, type!!, serviceEndpoint!!)
     }
 
+    /**
+     * Builder method to use when creating a new instance of the Service.
+     *
+     * @return Builder object
+     */
     public fun builder(): Builder {
       return Builder
 

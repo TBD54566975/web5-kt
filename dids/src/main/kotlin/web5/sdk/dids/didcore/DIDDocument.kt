@@ -3,7 +3,6 @@ package web5.sdk.dids.didcore
 import com.fasterxml.jackson.annotation.JsonProperty
 import java.security.SignatureException
 
-
 /**
  * DIDDocument represents a set of data describing the DID subject including mechanisms such as:
  * - cryptographic public keys - used to authenticate itself and prove association with the DID
@@ -96,6 +95,14 @@ public class DIDDocument(
     return vm
   }
 
+  /**
+   * GetAbsoluteResourceID returns a fully qualified ID for a document resource (e.g. service, verification method)
+   * Document Resource IDs are allowed to be relative DID URLs as a means to reduce storage size of DID Documents.
+   * More info here: https://www.w3.org/TR/did-core/#relative-did-urls
+   *
+   * @param id of the resource
+   * @return fully qualified ID for a document resource
+   */
   public fun getAbsoluteResourceID(id: String): String {
     return if (id.startsWith("#")) "$this.id$id" else id
   }
@@ -103,7 +110,11 @@ public class DIDDocument(
   /**
    * Finds the first available assertion method from the [DIDDocument]. When [assertionMethodId]
    * is null, the function will return the first available assertion method.
+   *
+   * @param assertionMethodId The ID of the assertion method to be found
+   * @return VerificationMethod with purpose of Assertion
    */
+  @JvmOverloads
   public fun findAssertionMethodById(assertionMethodId: String? = null): VerificationMethod {
     require(!assertionMethodVerificationMethodsDereferenced.isNullOrEmpty()) {
       throw SignatureException("No assertion methods found in DID document")
@@ -119,6 +130,9 @@ public class DIDDocument(
     return assertionMethod
   }
 
+  /**
+   * Builder object to build a DIDDocument.
+   */
   public companion object Builder {
 
     private var id: String? = null
@@ -135,12 +149,38 @@ public class DIDDocument(
     private var capabilityDelegationMethod: MutableList<String>? = mutableListOf()
     private var capabilityInvocationMethod: MutableList<String>? = mutableListOf()
 
+    /**
+     * Adds Id to the DIDDocument.
+     *
+     * @param id of the DIDDocument
+     * @return Builder object
+     */
     public fun id(id: String): Builder = apply { this.id = id }
+
+    /**
+     * Adds Context to the DIDDocument.
+     *
+     * @param context of the DIDDocument
+     * @return Builder object
+     */
     public fun context(context: String): Builder = apply {
       this.context = context
     }
 
+    /**
+     * Adds Controllers.
+     *
+     * @param controllers to be added to DIDDocument
+     * @return Builder object
+     */
     public fun controllers(controllers: List<String>): Builder = apply { this.controller = controllers }
+
+    /**
+     * Adds AlsoknownAses.
+     *
+     * @param alsoKnownAses to be added to DIDDocument
+     * @return Builder object
+     */
     public fun alsoKnownAses(alsoKnownAses: List<String>): Builder = apply { this.alsoKnownAs = alsoKnownAses }
 
     /**
@@ -151,7 +191,10 @@ public class DIDDocument(
      * @param purposes List of purposes to which the verification method will be added
      */
     // todo fix terrible name
-    public fun verificationMethodForPurposes(method: VerificationMethod, purposes: List<Purpose> = emptyList()): Builder =
+    @JvmOverloads
+    public fun verificationMethodForPurposes(
+      method: VerificationMethod,
+      purposes: List<Purpose> = emptyList()): Builder =
       apply {
         this.verificationMethod.add(method)
         purposes.forEach { purpose ->
@@ -165,6 +208,13 @@ public class DIDDocument(
         }
       }
 
+    /**
+     * Adds VerificationMethods for a single purpose.
+     *
+     * @param methods a list of VerificationMethods to be added to the DIDDocument
+     * @param purpose a single purpose to be associated with the list of VerificationMethods
+     * @return Builder object
+     */
     // todo fix terrible name
     public fun verificationMethodsForPurpose(methods: MutableList<VerificationMethod>?, purpose: Purpose): Builder =
       apply {
@@ -173,12 +223,23 @@ public class DIDDocument(
         }
       }
 
+    /**
+     * Adds Services.
+     *
+     * @param services to be added to DIDDocument
+     * @return Builder object
+     */
     public fun services(services: List<Service>?): Builder = apply { this.service = services?.toMutableList() }
 
+    /**
+     * Builds DIDDocument after validating the required fields.
+     *
+     * @return DIDDocument
+     */
     public fun build(): DIDDocument {
-      val localId = id ?: throw IllegalStateException("ID is required")
+      check(id != null) { "ID is required" }
       return DIDDocument(
-        localId,
+        id!!,
         context,
         alsoKnownAs,
         controller,
@@ -191,6 +252,11 @@ public class DIDDocument(
       )
     }
 
+    /**
+     * Builder method to use when creating a new instance of the DIDDocument.
+     *
+     * @return Builder object
+     */
     public fun builder(): Builder {
       return Builder
     }
