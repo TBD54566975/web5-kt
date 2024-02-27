@@ -11,7 +11,7 @@ import web5.sdk.dids.Did
 import web5.sdk.dids.DidMethod
 import web5.sdk.dids.DidResolutionResult
 import web5.sdk.dids.ResolveDidOptions
-import web5.sdk.dids.didcore.DID
+import web5.sdk.dids.didcore.DidUri
 import web5.sdk.dids.didcore.DIDDocument
 import web5.sdk.dids.didcore.Purpose
 import web5.sdk.dids.didcore.VerificationMethod
@@ -127,11 +127,11 @@ public class DidKey(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
      * @throws IllegalArgumentException if the provided DID does not conform to the "did:key" method.
      */
     override fun resolve(did: String, options: ResolveDidOptions?): DidResolutionResult {
-      val parsedDid = DID.parse(did)
+      val parsedDidUri = DidUri.parse(did)
 
-      require(parsedDid.method == methodName) { throw IllegalArgumentException("expected did:key") }
+      require(parsedDidUri.method == methodName) { throw IllegalArgumentException("expected did:key") }
 
-      val id = parsedDid.id
+      val id = parsedDidUri.id
       val idBytes = Multibase.decode(id)
       val (multiCodec, numBytes) = Varint.decode(idBytes)
 

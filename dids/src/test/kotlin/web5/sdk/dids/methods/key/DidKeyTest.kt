@@ -29,9 +29,9 @@ class DidKeyTest {
       val didResolutionResult = DidResolvers.resolve(did.uri)
 
       assertNotNull(didResolutionResult.didDocument)
-      val verificationMethod = didResolutionResult.didDocument!!.verificationMethod[0]
+      val verificationMethod = didResolutionResult.didDocument!!.verificationMethod?.get(0)
 
-      val jwk = verificationMethod.publicKeyJwk
+      val jwk = verificationMethod?.publicKeyJwk
       assertNotNull(jwk)
 
       val keyAlias = did.keyManager.getDeterministicAlias(jwk)
@@ -82,14 +82,14 @@ class DidKeyTest {
       val didDocument = result.didDocument
       assertNotNull(didDocument)
       assertEquals(did, didDocument.id)
-      assertEquals(1, didDocument.verificationMethod.size)
-      assertEquals(1, didDocument.assertionMethodVerificationMethods?.size)
-      assertEquals(1, didDocument.authenticationVerificationMethods?.size)
-      assertEquals(1, didDocument.capabilityDelegationVerificationMethods?.size)
-      assertEquals(1, didDocument.capabilityInvocationVerificationMethods?.size)
-      assertEquals(1, didDocument.keyAgreementVerificationMethods?.size)
+      assertEquals(1, didDocument.verificationMethod?.size)
+      assertEquals(1, didDocument.assertionMethod?.size)
+      assertEquals(1, didDocument.authentication?.size)
+      assertEquals(1, didDocument.capabilityDelegation?.size)
+      assertEquals(1, didDocument.capabilityInvocation?.size)
+      assertEquals(1, didDocument.keyAgreement?.size)
 
-      val verificationMethod = didDocument.verificationMethod.first()
+      val verificationMethod = didDocument.verificationMethod?.first()
       assertNotNull(verificationMethod)
 
       assertEquals(

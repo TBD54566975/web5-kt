@@ -26,7 +26,7 @@ import web5.sdk.dids.DidMethod
 import web5.sdk.dids.DidResolutionResult
 import web5.sdk.dids.ResolutionError
 import web5.sdk.dids.ResolveDidOptions
-import web5.sdk.dids.didcore.DID
+import web5.sdk.dids.didcore.DidUri
 import web5.sdk.dids.didcore.DIDDocument
 import web5.sdk.dids.exceptions.ParserException
 import web5.sdk.dids.validateKeyMaterialInsideKeyManager
@@ -132,16 +132,16 @@ public sealed class DidWebApi(
   }
 
   private fun resolveInternal(did: String, options: ResolveDidOptions?): DidResolutionResult {
-    val parsedDid = try {
-      DID.parse(did)
+    val parsedDidUri = try {
+      DidUri.parse(did)
     } catch (_: ParserException) {
       return DidResolutionResult.fromResolutionError(ResolutionError.INVALID_DID)
     }
 
-    if (parsedDid.method != methodName) {
+    if (parsedDidUri.method != methodName) {
       return DidResolutionResult.fromResolutionError(ResolutionError.METHOD_NOT_SUPPORTED)
     }
-    val docURL = getDocURL(parsedDid)
+    val docURL = getDocURL(parsedDidUri)
 
     val resp: HttpResponse = try {
       runBlocking {
@@ -168,8 +168,8 @@ public sealed class DidWebApi(
     return DidWeb(uri, keyManager, this)
   }
 
-  private fun getDocURL(parsedDid: DID): String {
-    val domainNameWithPath = parsedDid.id.replace(":", "/")
+  private fun getDocURL(parsedDidUri: DidUri): String {
+    val domainNameWithPath = parsedDidUri.id.replace(":", "/")
     val decodedDomain = URLDecoder.decode(domainNameWithPath, UTF_8)
 
     val targetUrl = StringBuilder("https://$decodedDomain")

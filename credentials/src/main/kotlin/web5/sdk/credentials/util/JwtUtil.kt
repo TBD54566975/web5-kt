@@ -125,19 +125,35 @@ public object JwtUtil {
       verificationMethodIdParseResult.didUrlString,
       "#${verificationMethodIdParseResult.fragment}"
     )
-    val assertionMethods = didResolutionResult.didDocument?.assertionMethodVerificationMethodsDereferenced
-    val assertionMethod = assertionMethods?.firstOrNull {
-      val id = it.id
-      verificationMethodIds.contains(id)
+    val assertionMethodIds = didResolutionResult.didDocument?.assertionMethod
+
+    var assertionMethodFound = false
+    for (id in assertionMethodIds ?: emptyList()) {
+      if (verificationMethodIds.contains(id)) {
+        assertionMethodFound = true
+        break
+      }
     }
-      ?: throw SignatureException(
+
+    if (!assertionMethodFound) {
+      throw SignatureException(
         "Signature verification failed: Expected kid in JWS header to dereference " +
           "a DID Document Verification Method with an Assertion verification relationship"
       )
+    }
+
+    // TODO: this will be cleaned up as part of BearerDid PR
+    val assertionVerificationMethod = didResolutionResult.didDocument?.verificationMethod?.find { verificationMethodIds.contains(it.id) }
+    if (assertionVerificationMethod == null) {
+      throw SignatureException(
+        "Signature verification failed: Expected kid in JWS header to dereference " +
+          "a DID Document Verification Method with an Assertion verification relationship"
+      )
+    }
 
     require(
-      (assertionMethod.isType(JSON_WEB_KEY_2020) || assertionMethod.isType(JSON_WEB_KEY)) &&
-        assertionMethod.publicKeyJwk != null
+      (assertionVerificationMethod.isType(JSON_WEB_KEY_2020) || assertionVerificationMethod.isType(JSON_WEB_KEY)) &&
+        assertionVerificationMethod.publicKeyJwk != null
     ) {
       throw SignatureException(
         "Signature verification failed: Expected kid in JWS header to dereference " +
@@ -145,7 +161,7 @@ public object JwtUtil {
       )
     }
 
-    val publicKeyJwk = assertionMethod.publicKeyJwk ?: throw PublicKeyJwkMissingException("publicKeyJwk is null")
+    val publicKeyJwk = assertionVerificationMethod.publicKeyJwk ?: throw PublicKeyJwkMissingException("publicKeyJwk is null")
     val toVerifyBytes = jwt.signingInput
     val signatureBytes = jwt.signature.decode()
 

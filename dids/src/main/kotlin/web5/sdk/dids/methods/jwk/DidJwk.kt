@@ -13,7 +13,7 @@ import web5.sdk.dids.DidResolutionMetadata
 import web5.sdk.dids.DidResolutionResult
 import web5.sdk.dids.ResolutionError
 import web5.sdk.dids.ResolveDidOptions
-import web5.sdk.dids.didcore.DID
+import web5.sdk.dids.didcore.DidUri
 import web5.sdk.dids.didcore.DIDDocument
 import web5.sdk.dids.didcore.Purpose
 import web5.sdk.dids.didcore.VerificationMethod
@@ -107,8 +107,8 @@ public class DidJwk(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
      * @throws IllegalArgumentException if the provided DID does not conform to the "did:jwk" method.
      */
     override fun resolve(did: String, options: ResolveDidOptions?): DidResolutionResult {
-      val parsedDid = try {
-        DID.parse(did)
+      val parsedDidUri = try {
+        DidUri.parse(did)
       } catch (_: ParserException) {
         return DidResolutionResult(
           context = "https://w3id.org/did-resolution/v1",
@@ -118,7 +118,7 @@ public class DidJwk(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
         )
       }
 
-      if (parsedDid.method != methodName) {
+      if (parsedDidUri.method != methodName) {
         return DidResolutionResult(
           context = "https://w3id.org/did-resolution/v1",
           didResolutionMetadata = DidResolutionMetadata(
@@ -127,7 +127,7 @@ public class DidJwk(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
         )
       }
 
-      val id = parsedDid.id
+      val id = parsedDidUri.id
       val decodedKey = Convert(id, EncodingFormat.Base64Url).toStr()
       val publicKeyJwk = try {
         JWK.parse(decodedKey)

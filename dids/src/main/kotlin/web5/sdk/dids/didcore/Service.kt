@@ -17,6 +17,8 @@ package web5.sdk.dids.didcore
 public class Service(
   public val id: String,
   public val type: String,
+  // todo: is serviceEndpoint a List<String> or String for all DIDs
+  // did dht assumes this is List<String> in diddht#fromDnsPacket
   public val serviceEndpoint: List<String>
 ) {
 

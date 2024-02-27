@@ -141,7 +141,7 @@ class DhtTest {
 
       require(did.didDocument != null)
 
-      val kid = did.didDocument!!.verificationMethod.first().publicKeyJwk?.keyID?.toString()
+      val kid = did.didDocument!!.verificationMethod?.first()?.publicKeyJwk?.keyID?.toString()
       assertNotNull(kid)
 
       val message = did.didDocument?.let { DidDht.toDnsPacket(it) }
@@ -164,7 +164,7 @@ class DhtTest {
 
       require(did.didDocument != null)
 
-      val kid = did.didDocument!!.verificationMethod.first().publicKeyJwk?.keyID?.toString()
+      val kid = did.didDocument!!.verificationMethod?.first()?.publicKeyJwk?.keyID?.toString()
       assertNotNull(kid)
 
       val message = did.didDocument?.let { DidDht.toDnsPacket(it) }
@@ -187,7 +187,7 @@ class DhtTest {
 
       require(did.didDocument != null)
 
-      val kid = did.didDocument!!.verificationMethod.first().publicKeyJwk?.keyID?.toString()
+      val kid = did.didDocument!!.verificationMethod?.first()?.publicKeyJwk?.keyID?.toString()
       assertNotNull(kid)
 
       val message = did.didDocument?.let { DidDht.toDnsPacket(it) }

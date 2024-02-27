@@ -39,23 +39,16 @@ public class DIDDocument(
   public val id: String,
   @JsonProperty("@context")
   public val context: String? = null,
-  public val alsoKnownAs: List<String> = emptyList(),
-  public val controller: List<String> = emptyList(),
-  public val verificationMethod: List<VerificationMethod> = listOf(),
-  public val service: List<Service> = listOf(),
-  public val assertionMethod: List<String> = listOf(),
-  public val authentication: List<String> = listOf(),
-  public val keyAgreement: List<String> = listOf(),
-  public val capabilityDelegation: List<String> = listOf(),
-  public val capabilityInvocation: List<String> = listOf()
+  public val alsoKnownAs: List<String>? = emptyList(),
+  public val controller: List<String>? = emptyList(),
+  public val verificationMethod: List<VerificationMethod>? = listOf(),
+  public val service: List<Service>? = listOf(),
+  public val assertionMethod: List<String>? = listOf(),
+  public val authentication: List<String>? = listOf(),
+  public val keyAgreement: List<String>? = listOf(),
+  public val capabilityDelegation: List<String>? = listOf(),
+  public val capabilityInvocation: List<String>? = listOf()
 ) {
-
-  // todo what are these for? diddhtapi#toDnsPacket asks for these
-  public val authenticationVerificationMethodsDereferenced: List<VerificationMethod>? = null
-  public val assertionMethodVerificationMethodsDereferenced: List<VerificationMethod>? = null
-  public val keyAgreementVerificationMethodsDereferenced: List<VerificationMethod>? = null
-  public val capabilityInvocationVerificationMethodsDereferenced: List<VerificationMethod>? = null
-  public val capabilityDelegationVerificationMethodsDereferenced: List<VerificationMethod>? = null
 
   /**
    * Select verification method takes a selector that can be used to select a specific verification
@@ -69,7 +62,7 @@ public class DIDDocument(
    * @return VerificationMethod matching the selector criteria
    */
   public fun selectVerificationMethod(selector: VMSelector?): VerificationMethod {
-    if (verificationMethod.isEmpty()) throw Exception("No verification methods found")
+    if (verificationMethod.isNullOrEmpty()) throw Exception("No verification methods found")
 
     if (selector == null) return verificationMethod.first()
 
@@ -82,7 +75,7 @@ public class DIDDocument(
           Purpose.CapabilityInvocation -> capabilityInvocation
           Purpose.KeyAgreement -> keyAgreement
         }
-        purposeList.firstOrNull()
+        purposeList?.firstOrNull()
           ?: throw Exception("No verification method found for purpose: ${selector.name}")
       }
 
@@ -116,17 +109,17 @@ public class DIDDocument(
    */
   @JvmOverloads
   public fun findAssertionMethodById(assertionMethodId: String? = null): VerificationMethod {
-    require(!assertionMethodVerificationMethodsDereferenced.isNullOrEmpty()) {
+    require(!assertionMethod.isNullOrEmpty()) {
       throw SignatureException("No assertion methods found in DID document")
     }
 
-    val assertionMethod: VerificationMethod = when {
-      assertionMethodId != null -> assertionMethodVerificationMethodsDereferenced.find {
-        it.id == assertionMethodId
-      }
+    require(assertionMethod.contains(assertionMethodId)) {
+      throw SignatureException("assertion method \"$assertionMethodId\" not found in list of assertion methods")
+    }
 
-      else -> assertionMethodVerificationMethodsDereferenced.firstOrNull()
-    } ?: throw SignatureException("assertion method \"$assertionMethodId\" not found")
+    val assertionMethod: VerificationMethod = verificationMethod?.find { it.id == assertionMethodId }
+      ?: throw SignatureException("assertion method \"$assertionMethodId\" not found")
+
     return assertionMethod
   }
 
@@ -244,11 +237,11 @@ public class DIDDocument(
         alsoKnownAs,
         controller,
         verificationMethod,
-        service!!,
-        assertionMethod!!,
-        authenticationMethod!!,
-        capabilityDelegationMethod!!,
-        capabilityInvocationMethod!!
+        service,
+        assertionMethod,
+        authenticationMethod,
+        capabilityDelegationMethod,
+        capabilityInvocationMethod
       )
     }
 

@@ -21,5 +21,6 @@ public class DidDocumentMetadata(
   public var nextVersionId: String? = null,
   public var equivalentId: String? = null,
   public var canonicalId: String? = null,
-  public val types: List<Int>? = null // todo this field does not exist in web5-go but diddht uses it
+  // todo only did dht uses this field?
+  public val types: List<Int>? = null
 )

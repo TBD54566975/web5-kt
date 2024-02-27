@@ -103,14 +103,15 @@ val opts = CreateDidIonOptions(
   verificationMethodsToAdd = listOf(
     VerificationMethodCreationParams(
       JWSAlgorithm.ES256K,
-      relationships = listOf(PublicKeyPurpose.AUTHENTICATION, PublicKeyPurpose.ASSERTION_METHOD)
+      relationships = listOf(Purpose.Authentication, Purpose.AssertionMethod)
     ),
     VerificationMethodCreationParams(
       JWSAlgorithm.ES256K,
-      relationships = listOf(PublicKeyPurpose.ASSERTION_METHOD)
+      relationships = listOf(Purpose.Authentication)
     ),
   )
-  val did = DidIon . create (keyManager, opts)
+)
+  val did = DidIon.create(keyManager, opts)
 ```
 
 ## Resolution

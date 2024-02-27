@@ -23,7 +23,7 @@ import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.dids.DidResolutionResult
 import web5.sdk.dids.Json
 import web5.sdk.dids.didcore.DIDDocument
-import web5.sdk.dids.didcore.PublicKeyPurpose
+import web5.sdk.dids.didcore.Purpose
 import web5.sdk.dids.didcore.Service
 import web5.sdk.dids.exceptions.InvalidIdentifierException
 import web5.sdk.dids.exceptions.InvalidIdentifierSizeException
@@ -100,13 +100,14 @@ class DidDhtTest {
       assertDoesNotThrow { did.validate() }
       assertNotNull(did)
       assertNotNull(did.didDocument)
-      assertEquals(1, did.didDocument!!.verificationMethod.size)
-      assertContains(did.didDocument!!.verificationMethod[0].id, "#0")
-      assertEquals(1, did.didDocument!!.assertionMethodVerificationMethods?.size)
-      assertEquals(1, did.didDocument!!.authenticationVerificationMethods?.size)
-      assertEquals(1, did.didDocument!!.capabilityDelegationVerificationMethods?.size)
-      assertEquals(1, did.didDocument!!.capabilityInvocationVerificationMethods?.size)
-      assertNull(did.didDocument!!.keyAgreementVerificationMethods)
+      assertEquals(1, did.didDocument!!.verificationMethod?.size)
+      val verificationMethodId = did.didDocument!!.verificationMethod?.get(0)?.id
+      assertContains(did.didDocument!!.verificationMethod?.get(0)?.id!!, "#0")
+      assertEquals(1, did.didDocument!!.assertionMethod?.size)
+      assertEquals(1, did.didDocument!!.authentication?.size)
+      assertEquals(1, did.didDocument!!.capabilityDelegation?.size)
+      assertEquals(1, did.didDocument!!.capabilityInvocation?.size)
+      assertNull(did.didDocument!!.keyAgreement)
       assertNull(did.didDocument!!.service)
     }
 
@@ -117,15 +118,15 @@ class DidDhtTest {
       val otherKey = manager.generatePrivateKey(AlgorithmId.secp256k1)
       val publicKeyJwk = manager.getPublicKey(otherKey).toPublicJWK()
       val publicKeyJwk2 = ECKeyGenerator(Curve.P_256).generate().toPublicJWK()
-      val verificationMethodsToAdd: Iterable<Triple<JWK, Array<PublicKeyPurpose>, String?>> = listOf(
+      val verificationMethodsToAdd: Iterable<Triple<JWK, List<Purpose>, String?>> = listOf(
         Triple(
           publicKeyJwk,
-          arrayOf(PublicKeyPurpose.AUTHENTICATION, PublicKeyPurpose.ASSERTION_METHOD),
+          listOf(Purpose.Authentication, Purpose.AssertionMethod),
           "did:web:tbd.website"
         ),
         Triple(
           publicKeyJwk2,
-          arrayOf(PublicKeyPurpose.AUTHENTICATION, PublicKeyPurpose.ASSERTION_METHOD),
+          listOf(Purpose.Authentication, Purpose.AssertionMethod),
           "did:web:tbd.website"
         )
       )
@@ -144,15 +145,15 @@ class DidDhtTest {
 
       assertNotNull(did)
       assertNotNull(did.didDocument)
-      assertEquals(3, did.didDocument!!.verificationMethod.size)
-      assertEquals(3, did.didDocument!!.assertionMethodVerificationMethods?.size)
-      assertEquals(3, did.didDocument!!.authenticationVerificationMethods?.size)
-      assertEquals(1, did.didDocument!!.capabilityDelegationVerificationMethods?.size)
-      assertEquals(1, did.didDocument!!.capabilityInvocationVerificationMethods?.size)
-      assertNull(did.didDocument!!.keyAgreementVerificationMethods)
+      assertEquals(3, did.didDocument!!.verificationMethod?.size)
+      assertEquals(3, did.didDocument!!.assertionMethod?.size)
+      assertEquals(3, did.didDocument!!.authentication?.size)
+      assertEquals(1, did.didDocument!!.capabilityDelegation?.size)
+      assertEquals(1, did.didDocument!!.capabilityInvocation?.size)
+      assertNull(did.didDocument!!.keyAgreement)
       assertNotNull(did.didDocument!!.service)
-      assertEquals(1, did.didDocument!!.service.size)
-      assertContains(did.didDocument!!.service[0].id, "test-service")
+      assertEquals(1, did.didDocument!!.service?.size)
+      assertContains(did.didDocument!!.service?.get(0)?.id!!, "test-service")
     }
 
     @Test
@@ -184,13 +185,13 @@ class DidDhtTest {
 
       assertNotNull(did)
       assertNotNull(did.didDocument)
-      assertEquals(1, did.didDocument!!.verificationMethod.size)
-      assertContains(did.didDocument!!.verificationMethod[0].id, "#0")
-      assertEquals(1, did.didDocument!!.assertionMethodVerificationMethods?.size)
-      assertEquals(1, did.didDocument!!.authenticationVerificationMethods?.size)
-      assertEquals(1, did.didDocument!!.capabilityDelegationVerificationMethods?.size)
-      assertEquals(1, did.didDocument!!.capabilityInvocationVerificationMethods?.size)
-      assertNull(did.didDocument!!.keyAgreementVerificationMethods)
+      assertEquals(1, did.didDocument!!.verificationMethod?.size)
+      assertContains(did.didDocument!!.verificationMethod?.get(0)?.id!!, "#0")
+      assertEquals(1, did.didDocument!!.assertionMethod?.size)
+      assertEquals(1, did.didDocument!!.authentication?.size)
+      assertEquals(1, did.didDocument!!.capabilityDelegation?.size)
+      assertEquals(1, did.didDocument!!.capabilityInvocation?.size)
+      assertNull(did.didDocument!!.keyAgreement)
       assertNull(did.didDocument!!.service)
     }
 
@@ -274,8 +275,8 @@ class DidDhtTest {
 
       val otherKey = manager.generatePrivateKey(AlgorithmId.secp256k1)
       val publicKeyJwk = manager.getPublicKey(otherKey).toPublicJWK()
-      val verificationMethodsToAdd: Iterable<Triple<JWK, Array<PublicKeyPurpose>, String?>> = listOf(
-        Triple(publicKeyJwk, arrayOf(PublicKeyPurpose.AUTHENTICATION, PublicKeyPurpose.ASSERTION_METHOD), null)
+      val verificationMethodsToAdd: Iterable<Triple<JWK, List<Purpose>, String?>> = listOf(
+        Triple(publicKeyJwk, listOf(Purpose.Authentication, Purpose.Authentication), null)
       )
 
       val serviceToAdd = Service.builder()
@@ -354,7 +355,7 @@ class Web5TestVectorsDidDht {
 
   data class VerificationMethodInput(
     val jwk: Map<String, Any>,
-    val purposes: List<PublicKeyPurpose>
+    val purposes: List<Purpose>
   )
 
 
@@ -370,7 +371,7 @@ class Web5TestVectorsDidDht {
 
       val verificationMethods = vector.input.additionalVerificationMethods?.map { verificationMethodInput ->
         val jwk = JWK.parse(verificationMethodInput.jwk)
-        Triple(jwk, verificationMethodInput.purposes.toTypedArray(), null)
+        Triple(jwk, verificationMethodInput.purposes.toList(), null)
       }
       val options = CreateDidDhtOptions(
         verificationMethods = verificationMethods,

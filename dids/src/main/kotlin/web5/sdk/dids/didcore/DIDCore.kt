@@ -13,9 +13,9 @@ public interface VMSelector
  */
 public class ID(public val value: String) : VMSelector
 
+
 /**
- * A set of Purpose for VerificationMethod.
- *
+ * Enum representing the purpose of a public key.
  */
 public enum class Purpose : VMSelector {
   AssertionMethod,
@@ -23,16 +23,5 @@ public enum class Purpose : VMSelector {
   CapabilityDelegation,
   CapabilityInvocation,
   KeyAgreement
-}
-
-/**
- * Enum representing the purpose of a public key.
- */
-public enum class PublicKeyPurpose(@get:JsonValue public val code: String) {
-  AUTHENTICATION("authentication"),
-  KEY_AGREEMENT("keyAgreement"),
-  ASSERTION_METHOD("assertionMethod"),
-  CAPABILITY_DELEGATION("capabilityDelegation"),
-  CAPABILITY_INVOCATION("capabilityInvocation"),
 }
 

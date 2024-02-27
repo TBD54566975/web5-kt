@@ -18,6 +18,6 @@ class DidResolversTest {
     val dhtDid = DidDht.create(InMemoryKeyManager())
 
     val resolutionResult = DidResolvers.resolve(dhtDid.uri)
-    assertNotNull(resolutionResult.didDocument!!.assertionMethodVerificationMethodsDereferenced)
+    assertNotNull(resolutionResult.didDocument!!.assertionMethod)
   }
 }

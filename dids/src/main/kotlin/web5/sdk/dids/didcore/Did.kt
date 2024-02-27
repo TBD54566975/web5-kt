@@ -27,7 +27,7 @@ import java.util.regex.Pattern
  * 	         a specific part of a DID document.
  * 	         Spec: https://www.w3.org/TR/did-core/#fragment
  */
-public class DID(
+public class DidUri(
   public val uri: String,
   public val url: String,
   public val method: String,
@@ -56,7 +56,7 @@ public class DID(
    * @param byteArray
    * @return DID object
    */
-  public fun unmarshalText(byteArray: ByteArray): DID {
+  public fun unmarshalText(byteArray: ByteArray): DidUri {
     return parse(byteArray.toString(Charsets.UTF_8))
   }
 
@@ -71,22 +71,20 @@ public class DID(
     private const val PARAM_CHAR_PATTERN = """[a-zA-Z0-9_.:%-]"""
     private const val PARAM_PATTERN = """;$PARAM_CHAR_PATTERN+=$PARAM_CHAR_PATTERN*"""
     private const val PARAMS_PATTERN = """(($PARAM_PATTERN)*)"""
-    private const val PATH_PATTERN = """/[^#?]*"""
-    private const val QUERY_PATTERN = """(\?[^#]*)?"""
+    private const val PATH_PATTERN = """(/[^#?]*)?"""
+    private const val QUERY_PATTERN = """(\?[^\#]*)?"""
     private const val FRAGMENT_PATTERN = """(\#.*)?"""
-    private val didUriPattern =
-      Pattern.compile(
-        """^did:$METHOD_PATTERN:$METHOD_ID_PATTERN$PARAMS_PATTERN$PATH_PATTERN$QUERY_PATTERN$FRAGMENT_PATTERN$"""
-      )
-
+    private val DID_URI_PATTERN = Pattern.compile(
+      """^did:$METHOD_PATTERN:$METHOD_ID_PATTERN$PARAMS_PATTERN$PATH_PATTERN$QUERY_PATTERN$FRAGMENT_PATTERN$"""
+    )
     /**
      * Parse a DID URI into a DID object.
      *
      * @param didUri The DID URI to parse.
      * @return DID object
      */
-    public fun parse(didUri: String): DID {
-      val matcher = didUriPattern.matcher(didUri)
+    public fun parse(didUri: String): DidUri {
+      val matcher = DID_URI_PATTERN.matcher(didUri)
       if (!matcher.matches()) {
         throw IllegalArgumentException("Invalid DID URI")
       }
@@ -96,16 +94,20 @@ public class DID(
       val params = matcher.group(4)
         ?.drop(1)
         ?.split(";")
-        ?.associate {
-          val (key, value) = it.split("=")
-          key to value
-        } ?: emptyMap()
+        ?.mapNotNull {
+          it.split("=")
+            .takeIf { parts -> parts.size == 2 }
+            ?.let { parts -> parts[0] to parts[1] }
+        }
+        ?.takeIf { it.isNotEmpty() }
+        ?.associate { it }
+        ?: emptyMap()
 
       val path = matcher.group(6)?.takeIf { it.isNotEmpty() }
       val query = matcher.group(7)?.drop(1)
       val fragment = matcher.group(8)?.drop(1)
 
-      return DID(
+      return DidUri(
         uri = "did:$method:$id",
         url = didUri,
         method = method,

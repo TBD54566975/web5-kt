@@ -9,7 +9,7 @@ import io.ktor.utils.io.ByteReadChannel
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import web5.sdk.crypto.InMemoryKeyManager
-import web5.sdk.dids.didcore.DID
+import web5.sdk.dids.didcore.DidUri
 import web5.sdk.dids.methods.key.DidKey
 import web5.sdk.dids.methods.web.DidWebApi
 import java.security.SignatureException
@@ -22,7 +22,7 @@ class DidMethodTest {
     val did = DidKey.create(manager)
 
     val verificationMethod = did.resolve().didDocument!!.findAssertionMethodById()
-    assertEquals("${did.uri}#${DID.parse(did.uri).id}", verificationMethod.id)
+    assertEquals("${did.uri}#${DidUri.parse(did.uri).id}", verificationMethod.id)
   }
 
   @Test
@@ -30,7 +30,7 @@ class DidMethodTest {
     val manager = InMemoryKeyManager()
     val did = DidKey.create(manager)
 
-    val assertionMethodId = "${did.uri}#${DID.parse(did.uri).id}"
+    val assertionMethodId = "${did.uri}#${DidUri.parse(did.uri).id}"
     val verificationMethod = did.resolve().didDocument!!.findAssertionMethodById(assertionMethodId)
     assertEquals(assertionMethodId, verificationMethod.id)
   }

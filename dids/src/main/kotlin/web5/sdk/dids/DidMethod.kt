@@ -1,7 +1,7 @@
 package web5.sdk.dids
 
 import web5.sdk.crypto.KeyManager
-import web5.sdk.dids.didcore.DID
+import web5.sdk.dids.didcore.DidUri
 import web5.sdk.dids.exceptions.PublicKeyJwkMissingException
 
 /**
@@ -171,12 +171,12 @@ public interface DidMethod<T : Did, O : CreateDidOptions> {
 
 internal fun <T : Did, O : CreateDidOptions> DidMethod<T, O>.validateKeyMaterialInsideKeyManager(
   did: String, keyManager: KeyManager) {
-  require(DID.parse(did).method == methodName) {
+  require(DidUri.parse(did).method == methodName) {
     "did must start with the prefix \"did:$methodName\", but got $did"
   }
   val didResolutionResult = resolve(did)
 
-  didResolutionResult.didDocument!!.verificationMethod.forEach {
+  didResolutionResult.didDocument!!.verificationMethod?.forEach {
     val publicKeyJwk = it.publicKeyJwk ?: throw PublicKeyJwkMissingException("publicKeyJwk is null")
     val keyAlias = keyManager.getDeterministicAlias(publicKeyJwk)
     keyManager.getPublicKey(keyAlias)
