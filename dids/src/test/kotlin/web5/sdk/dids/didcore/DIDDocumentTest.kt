@@ -227,7 +227,14 @@ class DIDDocumentTest {
       val doc = DIDDocument.Builder()
         .id("did:ex:foo")
         .context("https://www.w3.org/ns/did/v1")
-        .verificationMethodForPurposes(vm, listOf(Purpose.AssertionMethod, Purpose.Authentication, Purpose.KeyAgreement, Purpose.CapabilityDelegation, Purpose.CapabilityInvocation))
+        .verificationMethodForPurposes(vm,
+          listOf(
+            Purpose.AssertionMethod,
+            Purpose.Authentication,
+            Purpose.KeyAgreement,
+            Purpose.CapabilityDelegation,
+            Purpose.CapabilityInvocation)
+        )
         .build()
 
       assertEquals(1, doc.verificationMethod?.size)
@@ -249,7 +256,7 @@ class DIDDocumentTest {
       val doc = DIDDocument.Builder()
         .id("did:ex:foo")
         .context("https://www.w3.org/ns/did/v1")
-        .verificationMethodsForPurpose(mutableListOf(vm),Purpose.Authentication)
+        .verificationMethodForPurposes(vm,listOf(Purpose.Authentication))
         .build()
 
       assertEquals(1, doc.verificationMethod?.size)
@@ -270,7 +277,7 @@ class DIDDocumentTest {
       val doc = DIDDocument.Builder()
         .id("did:ex:foo")
         .context("https://www.w3.org/ns/did/v1")
-        .verificationMethodsForPurpose(mutableListOf(vm))
+        .verificationMethodForPurposes(vm)
         .build()
 
       assertEquals(1, doc.verificationMethod?.size)

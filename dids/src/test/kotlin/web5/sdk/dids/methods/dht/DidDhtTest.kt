@@ -178,7 +178,7 @@ class DidDhtTest {
       assertNotNull(docTypesPair)
       assertNotNull(docTypesPair.first)
       assertNotNull(docTypesPair.second)
-      assertEquals(did.didDocument, docTypesPair.first)
+      assertEquals(did.didDocument.toString(), docTypesPair.first.toString())
       assertEquals(indexes, docTypesPair.second)
     }
 
@@ -197,7 +197,7 @@ class DidDhtTest {
       assertEquals(1, did.didDocument!!.authentication?.size)
       assertEquals(1, did.didDocument!!.capabilityDelegation?.size)
       assertEquals(1, did.didDocument!!.capabilityInvocation?.size)
-      assertEquals(0, did.didDocument!!.keyAgreement?.size)
+      assertNull(did.didDocument!!.keyAgreement)
       assertNull(did.didDocument!!.service)
     }
 
@@ -274,7 +274,7 @@ class DidDhtTest {
       assertNotNull(didFromPacket.first)
       assertNotNull(didFromPacket.second)
 
-      assertEquals(did.didDocument, didFromPacket.first)
+      assertEquals(did.didDocument.toString(), didFromPacket.first.toString())
       assertEquals(indexes, didFromPacket.second)
     }
 

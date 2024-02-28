@@ -139,7 +139,7 @@ public class DIDDocument(
     private var alsoKnownAs: List<String>? = null
     private var controller: List<String>? = null
 
-    private var verificationMethod: MutableList<VerificationMethod>? = null
+    private var verificationMethod: MutableSet<VerificationMethod>? = null
     private var service: List<Service>? = null
 
     private var assertionMethod: MutableList<String>? = null
@@ -202,7 +202,7 @@ public class DIDDocument(
       method: VerificationMethod,
       purposes: List<Purpose> = emptyList()): Builder =
       apply {
-        this.verificationMethod = (this.verificationMethod ?: mutableListOf()).apply { add(method) }
+        this.verificationMethod = (this.verificationMethod ?: mutableSetOf()).apply { add(method) }
         purposes.forEach { purpose ->
           when (purpose) {
             Purpose.AssertionMethod -> this.assertionMethod =
@@ -226,17 +226,31 @@ public class DIDDocument(
     /**
      * Adds VerificationMethods for a single purpose.
      *
-     * @param methods a list of VerificationMethods to be added to the DIDDocument
+     * @param methodIds a list of VerificationMethodIds to be added to the DIDDocument
      * @param purpose a single purpose to be associated with the list of VerificationMethods
      * @return Builder object
      */
-    @JvmOverloads
-    public fun verificationMethodsForPurpose(
-      methods: MutableList<VerificationMethod>?,
-      purpose: Purpose? = null): Builder =
+    public fun verificationMethodIdsForPurpose(
+      methodIds: MutableList<String>?,
+      purpose: Purpose): Builder =
       apply {
-        methods?.forEach { method ->
-          verificationMethodForPurposes(method, if (purpose != null) listOf(purpose) else emptyList())
+        methodIds?.forEach { id ->
+          when (purpose) {
+            Purpose.AssertionMethod -> this.assertionMethod =
+              (this.assertionMethod ?: mutableListOf()).apply { add(id) }
+
+            Purpose.Authentication -> this.authenticationMethod =
+              (this.authenticationMethod ?: mutableListOf()).apply { add(id) }
+
+            Purpose.KeyAgreement -> this.keyAgreementMethod =
+              (this.keyAgreementMethod ?: mutableListOf()).apply { add(id) }
+
+            Purpose.CapabilityDelegation -> this.capabilityDelegationMethod =
+              (this.capabilityDelegationMethod ?: mutableListOf()).apply { add(id) }
+
+            Purpose.CapabilityInvocation -> this.capabilityInvocationMethod =
+              (this.capabilityInvocationMethod ?: mutableListOf()).apply { add(id) }
+          }
         }
       }
 
@@ -252,7 +266,7 @@ public class DIDDocument(
         context,
         alsoKnownAs,
         controller,
-        verificationMethod,
+        verificationMethod?.toList(),
         service,
         assertionMethod,
         authenticationMethod,
@@ -277,6 +291,5 @@ public class DIDDocument(
       "capabilityDelegation=$capabilityDelegation, " +
       "capabilityInvocation=$capabilityInvocation)"
   }
-
 }
 

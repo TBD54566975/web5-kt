@@ -168,7 +168,7 @@ public class DidJwk(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
             )
           )
       }
-      // todo do we want to add verificationMethod again here?
+
       if (publicKeyJwk.keyUse != KeyUse.SIGNATURE) {
         didDocumentBuilder.verificationMethodForPurposes(verificationMethod, listOf(Purpose.KeyAgreement))
       }

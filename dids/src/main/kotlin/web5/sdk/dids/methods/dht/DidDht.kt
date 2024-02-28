@@ -512,7 +512,6 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
   internal fun fromDnsPacket(did: String, msg: Message): Pair<DIDDocument, List<DidDhtTypeIndexing>> {
     val doc = DIDDocument.Builder().id(did)
 
-    val verificationMethods = mutableListOf<VerificationMethod>()
     val services = mutableListOf<Service>()
     val types = mutableListOf<DidDhtTypeIndexing>()
     val keyLookup = mutableMapOf<String, String>()
@@ -525,7 +524,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
             // handle verification methods
             // todo: no guarantee that this block will run first and fill in the keyLookup
             name.startsWith("_k") -> {
-              handleVerificationMethods(rr, verificationMethods, did, keyLookup, name, doc)
+              handleVerificationMethods(rr, did, keyLookup, name, doc)
             }
             // handle services
             name.startsWith("_s") -> {
@@ -550,7 +549,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
             }
             // handle root record
             name.startsWith("_did.") -> {
-              handleRootRecord(rr, keyLookup, doc, did)
+              handleRootRecord(rr, keyLookup, doc)
             }
             // handle controller record
             name.startsWith("_cnt._did.") -> {
@@ -580,7 +579,6 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
 
   private fun handleVerificationMethods(
     rr: TXTRecord,
-    verificationMethods: MutableList<VerificationMethod>,
     did: String,
     keyLookup: MutableMap<String, String>,
     name: String,
@@ -598,7 +596,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
     }
 
     val vmBuilder = VerificationMethod.Builder()
-      .id("$did#$verificationMethodId")
+      .id(verificationMethodId)
       .type("JsonWebKey")
       .publicKeyJwk(publicKeyJwk.toPublicJWK())
 
@@ -615,21 +613,19 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
     }
 
     val vm = vmBuilder.build()
-    verificationMethods.add(vm)
-    didDocBuilder.verificationMethodsForPurpose(verificationMethods)
+    didDocBuilder.verificationMethodForPurposes(vm)
 
-    keyLookup[name.split(".")[0].drop(1)] = "$did#$verificationMethodId"
+    keyLookup[name.split(".")[0].drop(1)] = verificationMethodId
   }
 
   private fun handleRootRecord(
     rr: TXTRecord,
     keyLookup: Map<String, String>,
     doc: DIDDocument.Builder,
-    did: String
   ) {
     val rootData = rr.strings.joinToString(PROPERTY_SEPARATOR).split(PROPERTY_SEPARATOR)
 
-    val purposeToVerificationMethod = mapOf<String, MutableList<VerificationMethod>>(
+    val purposeToVmIds = mapOf<String, MutableList<String>>(
       "asm" to mutableListOf(),
       "auth" to mutableListOf(),
       "agm" to mutableListOf(),
@@ -642,23 +638,16 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
       val valuesList = values.split(ARRAY_SEPARATOR)
 
       valuesList.forEach {
-        // todo what the heck is my publicJwk???
-        val vm = VerificationMethod
-          .Builder()
-          .id(keyLookup[it]!!)
-          .type("JsonWebKey")
-          .controller(did)
-          .build()
-        purposeToVerificationMethod[key]?.add(vm)
+        purposeToVmIds[key]?.add(keyLookup[it]!!)
       }
     }
 
-    // add verification relationships
-    doc.verificationMethodsForPurpose(purposeToVerificationMethod["asm"], Purpose.AssertionMethod)
-    doc.verificationMethodsForPurpose(purposeToVerificationMethod["auth"], Purpose.Authentication)
-    doc.verificationMethodsForPurpose(purposeToVerificationMethod["agm"], Purpose.KeyAgreement)
-    doc.verificationMethodsForPurpose(purposeToVerificationMethod["del"], Purpose.CapabilityDelegation)
-    doc.verificationMethodsForPurpose(purposeToVerificationMethod["inv"], Purpose.CapabilityInvocation)
+    // add vmIds to purpose lists
+    doc.verificationMethodIdsForPurpose(purposeToVmIds["asm"], Purpose.AssertionMethod)
+    doc.verificationMethodIdsForPurpose(purposeToVmIds["auth"], Purpose.Authentication)
+    doc.verificationMethodIdsForPurpose(purposeToVmIds["agm"], Purpose.KeyAgreement)
+    doc.verificationMethodIdsForPurpose(purposeToVmIds["del"], Purpose.CapabilityDelegation)
+    doc.verificationMethodIdsForPurpose(purposeToVmIds["inv"], Purpose.CapabilityInvocation)
   }
 
   /**
