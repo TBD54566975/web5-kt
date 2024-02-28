@@ -25,7 +25,7 @@ public class Service(
   /**
    * Builder object to build a Service.
    */
-  public companion object Builder {
+  public class Builder {
     private var id: String? = null
     private var type: String? = null
     private var serviceEndpoint: List<String>? = null
@@ -69,14 +69,5 @@ public class Service(
       return Service(id!!, type!!, serviceEndpoint!!)
     }
 
-    /**
-     * Builder method to use when creating a new instance of the Service.
-     *
-     * @return Builder object
-     */
-    public fun builder(): Builder {
-      return Builder
-
-    }
   }
 }

@@ -197,7 +197,6 @@ public class DIDDocument(
      * @param method VerificationMethod to be added to the document
      * @param purposes List of purposes to which the verification method will be added
      */
-    // todo fix terrible name
     @JvmOverloads
     public fun verificationMethodForPurposes(
       method: VerificationMethod,
@@ -231,11 +230,13 @@ public class DIDDocument(
      * @param purpose a single purpose to be associated with the list of VerificationMethods
      * @return Builder object
      */
-    // todo fix terrible name
-    public fun verificationMethodsForPurpose(methods: MutableList<VerificationMethod>?, purpose: Purpose): Builder =
+    @JvmOverloads
+    public fun verificationMethodsForPurpose(
+      methods: MutableList<VerificationMethod>?,
+      purpose: Purpose? = null): Builder =
       apply {
         methods?.forEach { method ->
-          verificationMethodForPurposes(method, listOf(purpose))
+          verificationMethodForPurposes(method, if (purpose != null) listOf(purpose) else emptyList())
         }
       }
 

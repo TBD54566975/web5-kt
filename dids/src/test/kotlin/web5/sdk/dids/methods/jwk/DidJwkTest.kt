@@ -91,7 +91,7 @@ class DidJwkTest {
       ) { DidJwk.resolve(did) }
     }
 
-    // todo this one fails but need to check size of verificationMethod (1 or 2?)
+    // todo this test fails but need to check size of verificationMethod (1 or 2?)
     @Test
     fun `test vector 1`() {
       // test vector taken from: https://github.com/quartzjer/did-jwk/blob/main/spec.md#p-256

@@ -180,7 +180,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
     )
 
     opts.verificationMethods?.map { (key, purposes, controller) ->
-      VerificationMethod.builder()
+      VerificationMethod.Builder()
         .id(URI.create("$id#${key.keyID}").toString())
         .type("JsonWebKey")
         .controller(controller ?: id)
@@ -525,17 +525,18 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
             // handle verification methods
             // todo: no guarantee that this block will run first and fill in the keyLookup
             name.startsWith("_k") -> {
-              handleVerificationMethods(rr, verificationMethods, did, keyLookup, name)
+              handleVerificationMethods(rr, verificationMethods, did, keyLookup, name, doc)
             }
             // handle services
             name.startsWith("_s") -> {
               val data = parseTxtData(rr.strings.joinToString(ARRAY_SEPARATOR))
-              val service = Service.builder()
+              val service = Service.Builder()
                 .id("$did#${data["id"]!!}")
                 .type(data["t"]!!)
                 .serviceEndpoint(data["se"]!!.split(ARRAY_SEPARATOR))
                 .build()
               services.add(service)
+              doc.services(services)
             }
             // handle type indexing
             name.startsWith("_typ._did.") -> {
@@ -549,7 +550,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
             }
             // handle root record
             name.startsWith("_did.") -> {
-              handleRootRecord(rr, keyLookup, doc)
+              handleRootRecord(rr, keyLookup, doc, did)
             }
             // handle controller record
             name.startsWith("_cnt._did.") -> {
@@ -563,9 +564,6 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
         }
       }
     }
-
-    // add services
-    doc.services(services)
 
     return doc.build() to types
   }
@@ -585,7 +583,8 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
     verificationMethods: MutableList<VerificationMethod>,
     did: String,
     keyLookup: MutableMap<String, String>,
-    name: String
+    name: String,
+    didDocBuilder: DIDDocument.Builder
   ) {
     val data = parseTxtData(rr.strings.joinToString(""))
     val verificationMethodId = data["id"]!!
@@ -598,15 +597,15 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
       else -> throw IllegalArgumentException("Unknown key type: ${data["t"]}")
     }
 
-    val builder = VerificationMethod.builder()
+    val vmBuilder = VerificationMethod.Builder()
       .id("$did#$verificationMethodId")
       .type("JsonWebKey")
       .publicKeyJwk(publicKeyJwk.toPublicJWK())
 
     if (data.containsKey("c")) {
-      builder.controller(data["c"]!!)
+      vmBuilder.controller(data["c"]!!)
     } else {
-      builder.controller(
+      vmBuilder.controller(
         when (verificationMethodId) {
           "0" -> did
           else -> ""
@@ -615,7 +614,9 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
       )
     }
 
-    verificationMethods += builder.build()
+    val vm = vmBuilder.build()
+    verificationMethods.add(vm)
+    didDocBuilder.verificationMethodsForPurpose(verificationMethods)
 
     keyLookup[name.split(".")[0].drop(1)] = "$did#$verificationMethodId"
   }
@@ -623,7 +624,8 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
   private fun handleRootRecord(
     rr: TXTRecord,
     keyLookup: Map<String, String>,
-    doc: DIDDocument.Builder
+    doc: DIDDocument.Builder,
+    did: String
   ) {
     val rootData = rr.strings.joinToString(PROPERTY_SEPARATOR).split(PROPERTY_SEPARATOR)
 
@@ -639,10 +641,15 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
       val (key, values) = item.split("=")
       val valuesList = values.split(ARRAY_SEPARATOR)
 
-      if (valuesList.size == 2) {
-        valuesList.forEach {
-          purposeToVerificationMethod[key]?.add(VerificationMethod.builder().id(keyLookup[it]!!).build())
-        }
+      valuesList.forEach {
+        // todo what the heck is my publicJwk???
+        val vm = VerificationMethod
+          .Builder()
+          .id(keyLookup[it]!!)
+          .type("JsonWebKey")
+          .controller(did)
+          .build()
+        purposeToVerificationMethod[key]?.add(vm)
       }
     }
 

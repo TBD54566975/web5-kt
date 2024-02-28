@@ -51,7 +51,7 @@ public class VerificationMethod(
   /**
    * Builder object to build a VerificationMethod.
    */
-  public companion object Builder {
+  public class Builder {
     private var id: String? = null
     private var type: String? = null
     private var controller: String? = null
@@ -104,13 +104,5 @@ public class VerificationMethod(
       return VerificationMethod(id!!, type!!, controller!!, publicKeyJwk!!)
     }
 
-    /**
-     * Builder method to use when creating a new instance of the VerificationMethod.
-     *
-     * @return Builder object
-     */
-    public fun builder(): Builder {
-      return Builder
-    }
   }
 }

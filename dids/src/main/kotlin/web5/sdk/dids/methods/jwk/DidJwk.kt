@@ -145,7 +145,7 @@ public class DidJwk(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
       }
 
       val verificationMethodId = "$did#0"
-      val verificationMethod = VerificationMethod.builder()
+      val verificationMethod = VerificationMethod.Builder()
         .id(verificationMethodId)
         .publicKeyJwk(publicKeyJwk)
         .controller(did)

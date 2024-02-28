@@ -134,7 +134,6 @@ class DhtTest {
 
   @Nested
   inner class DhtTest {
-    // todo this test passes when i run it by itself, but fails when i run the whole suite
     @Test
     fun `create and parse a bep44 put request`() {
       print("WITCHCRAFT")
@@ -159,7 +158,6 @@ class DhtTest {
       assertEquals(message.toString(), parsedMessage.toString())
     }
 
-    // todo this test passes when i run it by itself, but fails when i run the whole suite
     @Test
     fun `put and get a bep44 message to a pkarr relay`() {
       val dhtClient = DhtClient()

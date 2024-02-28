@@ -31,7 +31,7 @@ import foundation.identity.did.Service
 val keyManager = InMemoryKeyManager()
 
 // Add a service to the DID Document
-val service = Service.builder()
+val service = Service.Builder()
   .id(URI("test-service"))
   .type("HubService")
   .serviceEndpoint("https://example.com/service)")
