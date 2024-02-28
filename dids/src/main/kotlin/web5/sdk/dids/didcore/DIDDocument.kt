@@ -97,7 +97,7 @@ public class DIDDocument(
    * @return fully qualified ID for a document resource
    */
   public fun getAbsoluteResourceID(id: String): String {
-    return if (id.startsWith("#")) "$this.id$id" else id
+    return if (id.startsWith("#")) "${this.id}$id" else id
   }
 
   /**
