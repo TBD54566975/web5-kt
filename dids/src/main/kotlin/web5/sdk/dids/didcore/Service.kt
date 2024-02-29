@@ -22,6 +22,13 @@ public class Service(
   public val serviceEndpoint: List<String>
 ) {
 
+  override fun toString(): String {
+    return "Service(" +
+      "id='$id', " +
+      "type='$type', " +
+      "serviceEndpoint=$serviceEndpoint)"
+  }
+
   /**
    * Builder object to build a Service.
    */

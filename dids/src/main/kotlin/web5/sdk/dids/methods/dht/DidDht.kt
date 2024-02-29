@@ -35,6 +35,7 @@ import web5.sdk.dids.exceptions.InvalidIdentifierSizeException
 import web5.sdk.dids.exceptions.InvalidMethodNameException
 import web5.sdk.dids.exceptions.PkarrRecordNotFoundException
 import web5.sdk.dids.exceptions.PublicKeyJwkMissingException
+import web5.sdk.dids.methods.DidUtil
 import web5.sdk.dids.validateKeyMaterialInsideKeyManager
 import java.net.URI
 
@@ -146,7 +147,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
       requireNotNull(service.serviceEndpoint) { "Service serviceEndpoint cannot be null" }
 
       Service(
-        id = URI.create("$id#${service.id}").toString(),
+        id = "$id#${service.id}",
         type = service.type,
         serviceEndpoint = service.serviceEndpoint
       )
@@ -165,7 +166,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
       VerificationMethod(
         id = "$id#0",
         type = "JsonWebKey",
-        controller = URI.create(id).toString(),
+        controller = id,
         publicKeyJwk = publicKey.toPublicJWK()
       )
 
@@ -181,7 +182,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
 
     opts.verificationMethods?.map { (key, purposes, controller) ->
       VerificationMethod.Builder()
-        .id(URI.create("$id#${key.keyID}").toString())
+        .id("$id#${key.keyID}")
         .type("JsonWebKey")
         .controller(controller ?: id)
         .publicKeyJwk(key.toPublicJWK())
@@ -457,10 +458,13 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
             DClass.IN,
             ttl,
             buildList {
-              add("id=${verificationMethod.id}")
+              val fragment = DidUtil.parseVerificationMethodId(verificationMethod.id).fragment
+              add("id=$fragment")
               add("t=$keyType")
               add("k=$base64UrlEncodedKey")
-              add("c=${verificationMethod.controller}")
+              if (verificationMethod.controller != didDocument.id) {
+                add("c=${verificationMethod.controller}")
+              }
             }.joinToString(PROPERTY_SEPARATOR)
           ), Section.ANSWER
         )
@@ -529,10 +533,11 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
             // handle services
             name.startsWith("_s") -> {
               val data = parseTxtData(rr.strings.joinToString(ARRAY_SEPARATOR))
+              val serviceEndpoints = data["se"]!!.slice(IntRange(1, data["se"]!!.length - 2)).split(ARRAY_SEPARATOR)
               val service = Service.Builder()
-                .id("$did#${data["id"]!!}")
+                .id(data["id"]!!)
                 .type(data["t"]!!)
-                .serviceEndpoint(data["se"]!!.split(ARRAY_SEPARATOR))
+                .serviceEndpoint(serviceEndpoints)
                 .build()
               services.add(service)
               doc.services(services)
@@ -596,7 +601,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
     }
 
     val vmBuilder = VerificationMethod.Builder()
-      .id(verificationMethodId)
+      .id("$did#$verificationMethodId")
       .type("JsonWebKey")
       .publicKeyJwk(publicKeyJwk.toPublicJWK())
 
@@ -604,6 +609,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
       vmBuilder.controller(data["c"]!!)
     } else {
       vmBuilder.controller(
+        // todo this one is making the tests fail
         when (verificationMethodId) {
           "0" -> did
           else -> ""
@@ -615,7 +621,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
     val vm = vmBuilder.build()
     didDocBuilder.verificationMethodForPurposes(vm)
 
-    keyLookup[name.split(".")[0].drop(1)] = verificationMethodId
+    keyLookup[name.split(".")[0].drop(1)] = "$did#$verificationMethodId"
   }
 
   private fun handleRootRecord(

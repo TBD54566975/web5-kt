@@ -287,7 +287,7 @@ class DidDhtTest {
       val otherKey = manager.generatePrivateKey(AlgorithmId.secp256k1)
       val publicKeyJwk = manager.getPublicKey(otherKey).toPublicJWK()
       val verificationMethodsToAdd: Iterable<Triple<JWK, List<Purpose>, String?>> = listOf(
-        Triple(publicKeyJwk, listOf(Purpose.Authentication, Purpose.Authentication), null)
+        Triple(publicKeyJwk, listOf(Purpose.Authentication, Purpose.AssertionMethod), null)
       )
 
       val serviceToAdd = Service.Builder()

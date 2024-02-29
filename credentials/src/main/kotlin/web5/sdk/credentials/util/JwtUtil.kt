@@ -13,6 +13,7 @@ import web5.sdk.dids.Did
 import web5.sdk.dids.DidResolvers
 import web5.sdk.dids.exceptions.DidResolutionException
 import web5.sdk.dids.exceptions.PublicKeyJwkMissingException
+import web5.sdk.dids.methods.DidUtil
 import java.net.URI
 import java.security.SignatureException
 
@@ -107,7 +108,7 @@ public object JwtUtil {
     }
 
     val verificationMethodId = jwt.header.keyID
-    val verificationMethodIdParseResult = parseVerificationMethodId(verificationMethodId)
+    val verificationMethodIdParseResult = DidUtil.parseVerificationMethodId(verificationMethodId)
 
     val didResolutionResult = DidResolvers.resolve(verificationMethodIdParseResult.didUrlString)
     if (didResolutionResult.didResolutionMetadata.error != null) {
@@ -177,15 +178,5 @@ public object JwtUtil {
     )
   }
 
-  private fun parseVerificationMethodId(verificationMethodId: String): ParsedVerificationMethodId {
-
-    val verificationMethodIdArray = verificationMethodId.split("#")
-    require(verificationMethodIdArray.size == 2) {
-      "Invalid verification method id: $verificationMethodId"
-    }
-    return ParsedVerificationMethodId(verificationMethodIdArray[0], verificationMethodIdArray[1])
-  }
-
-  private data class ParsedVerificationMethodId(val didUrlString: String, val fragment: String)
 
 }
