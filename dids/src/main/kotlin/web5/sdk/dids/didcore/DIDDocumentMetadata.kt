@@ -21,6 +21,6 @@ public class DidDocumentMetadata(
   public var nextVersionId: String? = null,
   public var equivalentId: String? = null,
   public var canonicalId: String? = null,
-  // todo only did dht uses this field?
+  // todo only did dht uses this field? pull out into DidDhtDocumentMetadata?
   public val types: List<Int>? = null
 )

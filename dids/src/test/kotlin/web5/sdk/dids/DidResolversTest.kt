@@ -13,7 +13,6 @@ class DidResolversTest {
     DidResolvers.resolve("did:key:z6MkiTBz1ymuepAQ4HEHYSF1H8quG5GLVVQR3djdX3mDooWp", null)
   }
 
-  // todo this test fails - didDocument is null
   @Test
   fun `resolving a default dht did contains assertion method`() {
     val dhtDid = DidDht.create(InMemoryKeyManager())

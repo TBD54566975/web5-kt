@@ -377,7 +377,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
           listOf(
             "id=${service.id}",
             "t=${service.type}",
-            "se=${serviceRecordValue(service)}"
+            "se=${service.serviceEndpoint.joinToString(ARRAY_SEPARATOR)}"
           ).joinToString(PROPERTY_SEPARATOR)
         ), Section.ANSWER
       )
@@ -500,10 +500,6 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
     )
   }
 
-  private fun serviceRecordValue(service: Service): List<String> {
-    return service.serviceEndpoint
-  }
-
   /**
    * Converts a DNS packet to a [DIDDocument] according to the did:dht spec
    * https://tbd54566975.github.io/did-dht-method/#dids-as-a-dns-packet
@@ -533,11 +529,10 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
             // handle services
             name.startsWith("_s") -> {
               val data = parseTxtData(rr.strings.joinToString(ARRAY_SEPARATOR))
-              val serviceEndpoints = data["se"]!!.slice(IntRange(1, data["se"]!!.length - 2)).split(ARRAY_SEPARATOR)
               val service = Service.Builder()
                 .id(data["id"]!!)
                 .type(data["t"]!!)
-                .serviceEndpoint(serviceEndpoints)
+                .serviceEndpoint(data["se"]!!.split(ARRAY_SEPARATOR))
                 .build()
               services.add(service)
               doc.services(services)
@@ -609,7 +604,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
       vmBuilder.controller(data["c"]!!)
     } else {
       vmBuilder.controller(
-        // todo this one is making the tests fail
+        // todo this one is making the test "to and from dns packet" fail
         when (verificationMethodId) {
           "0" -> did
           else -> ""

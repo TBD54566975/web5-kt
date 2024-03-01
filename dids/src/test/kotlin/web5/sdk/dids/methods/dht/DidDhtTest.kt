@@ -160,7 +160,6 @@ class DidDhtTest {
       assertContains(did.didDocument!!.service?.get(0)?.id!!, "test-service")
     }
 
-    // todo this test fails - the vm method lists are ALL empty
     @Test
     fun `create and transform to packet with types`() {
       val manager = InMemoryKeyManager()
@@ -182,7 +181,6 @@ class DidDhtTest {
       assertEquals(indexes, docTypesPair.second)
     }
 
-    // todo this test fails - the vm method lists are ALL empty
     @Test
     fun `create with publishing`() {
       val manager = InMemoryKeyManager()
@@ -239,7 +237,6 @@ class DidDhtTest {
   @Nested
   inner class DnsPacketTest {
 
-    // todo this test fails - the vm method lists are ALL empty
     @Test
     fun `to and from DNS packet - simple DID`() {
       val manager = InMemoryKeyManager()
@@ -257,7 +254,6 @@ class DidDhtTest {
       assertEquals(did.didDocument.toString(), didFromPacket.first.toString())
     }
 
-    // todo this test fails - the vm method lists are ALL empty
     @Test
     fun `to and from DNS packet - DID with types`() {
       val manager = InMemoryKeyManager()
@@ -278,8 +274,6 @@ class DidDhtTest {
       assertEquals(indexes, didFromPacket.second)
     }
 
-    // todo this test fails throwing "text too long" exception from DNS record library
-    // in message.addRecord() DidDht.kt:453
     @Test
     fun `to and from DNS packet - complex DID`() {
       val manager = InMemoryKeyManager()
