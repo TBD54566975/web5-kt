@@ -244,7 +244,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
     fromDnsPacket(did, dnsPacket).let { (didDocument, types) ->
       return DidResolutionResult(
         didDocument = didDocument,
-        didDocumentMetadata = DidDocumentMetadata(types = types.map { it.index })
+        didDocumentMetadata = DidDhtDocumentMetadata(types = types.map { it.index })
       )
     }
   }

@@ -12,7 +12,7 @@ package web5.sdk.dids.didcore
  * @property equivalentId Alternative ID that can be used interchangeably with the canonical DID.
  * @property canonicalId The canonical ID of the DID as per method-specific rules.
  */
-public class DidDocumentMetadata(
+public open class DidDocumentMetadata(
   public var created: String? = null,
   public var updated: String? = null,
   public var deactivated: Boolean? = null,
@@ -21,6 +21,4 @@ public class DidDocumentMetadata(
   public var nextVersionId: String? = null,
   public var equivalentId: String? = null,
   public var canonicalId: String? = null,
-  // todo only did dht uses this field? pull out into DidDhtDocumentMetadata?
-  public val types: List<Int>? = null
 )
