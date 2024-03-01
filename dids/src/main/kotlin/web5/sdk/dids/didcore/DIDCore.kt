@@ -1,7 +1,5 @@
 package web5.sdk.dids.didcore
 
-import com.fasterxml.jackson.annotation.JsonValue
-
 /**
  * VerificationMethod Selector.
  */
