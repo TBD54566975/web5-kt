@@ -609,7 +609,6 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
           "0" -> did
           else -> ""
         }
-
       )
     }
 
