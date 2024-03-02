@@ -76,8 +76,9 @@ public class DidUri(
     private const val QUERY_PATTERN = """(\?[^\#]*)?"""
     private const val FRAGMENT_PATTERN = """(\#.*)?"""
     private val DID_URI_PATTERN = Pattern.compile(
-      """^did:$METHOD_PATTERN:$METHOD_ID_PATTERN$PARAMS_PATTERN$PATH_PATTERN$QUERY_PATTERN$FRAGMENT_PATTERN$"""
+      "^did:$METHOD_PATTERN:$METHOD_ID_PATTERN$PARAMS_PATTERN$PATH_PATTERN$QUERY_PATTERN$FRAGMENT_PATTERN$"
     )
+
     /**
      * Parse a DID URI into a DID object.
      *
@@ -86,12 +87,19 @@ public class DidUri(
      */
     public fun parse(didUri: String): DidUri {
       val matcher = DID_URI_PATTERN.matcher(didUri)
+      matcher.find()
       if (!matcher.matches()) {
         throw ParserException("Invalid DID URI")
       }
 
       val method = matcher.group(1)
       val id = matcher.group(2)
+      println("group 3 " + matcher.group(3))
+
+      println("group 4 " + matcher.group(4))
+      println("group 5 " + matcher.group(5))
+      println("group 6 " + matcher.group(6))
+
       val params = matcher.group(4)
         ?.drop(1)
         ?.split(";")
