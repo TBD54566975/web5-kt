@@ -94,11 +94,6 @@ public class DidUri(
 
       val method = matcher.group(1)
       val id = matcher.group(2)
-      println("group 3 " + matcher.group(3))
-
-      println("group 4 " + matcher.group(4))
-      println("group 5 " + matcher.group(5))
-      println("group 6 " + matcher.group(6))
 
       val params = matcher.group(4)
         ?.drop(1)
