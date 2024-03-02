@@ -22,10 +22,23 @@ class DidUriTest {
 
   @Test
   fun `Parser throws exception with invalid did`() {
-    val exception = assertThrows<ParserException> {
-      DidUri.Parser.parse("not-a-did")
+    val invalidDids = listOf(
+      "",
+      "did:",
+      "did:uport",
+      "did:uport:",
+      "did:uport:1234_12313***",
+      "2nQtiQG6Cgm1GYTBaaKAgr76uY7iSexUkqX",
+      "did:method:%12%1",
+      "did:method:%1233%Ay",
+      "did:CAP:id",
+      "did:method:id::anotherid%r9")
+    for (did in invalidDids) {
+      val exception = assertThrows<ParserException> {
+        DidUri.Parser.parse(did)
+      }
+      assertEquals("Invalid DID URI", exception.message)
     }
-    assertEquals("Invalid DID URI", exception.message)
   }
 
   @Test
