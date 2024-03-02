@@ -603,13 +603,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
     if (data.containsKey("c")) {
       vmBuilder.controller(data["c"]!!)
     } else {
-      vmBuilder.controller(
-        // todo this one is making the test "to and from dns packet" fail
-        when (verificationMethodId) {
-          "0" -> did
-          else -> ""
-        }
-      )
+      vmBuilder.controller(did)
     }
 
     val vm = vmBuilder.build()
