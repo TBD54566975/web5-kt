@@ -19,15 +19,19 @@ public object DidUtil {
     require(verificationMethodIdArray.size == 2) {
       "Invalid verification method id: $verificationMethodId"
     }
-    return SimpleDid(verificationMethodIdArray[0], verificationMethodIdArray[1])
+    return SimpleDid(
+      didUriString = verificationMethodIdArray[0],
+      fragment = verificationMethodIdArray[1],
+      didUrlString = verificationMethodId)
   }
 
   /**
    * Simple did.
    *
-   * @property didUrlString The did url string
+   * @property didUriString The did uri string
    * @property fragment The fragment.
+   * @property didUrlString The did url string, in the format of didUriString#fragment`
    * @constructor Create empty Simple did
    */
-  public class SimpleDid(public val didUrlString: String, public val fragment: String)
+  public class SimpleDid(public val didUriString: String, public val fragment: String, public val didUrlString: String)
 }

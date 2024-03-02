@@ -119,7 +119,7 @@ class VerifiableCredentialTest {
   fun `verify handles DIDs without an assertionMethod`() {
     val keyManager = InMemoryKeyManager()
 
-    //Create an ION DID without an assertionMethod
+    // Create a DHT DID without an assertionMethod
     val alias = keyManager.generatePrivateKey(AlgorithmId.secp256k1)
     val verificationJwk = keyManager.getPublicKey(alias)
 
@@ -247,6 +247,7 @@ class Web5TestVectorsCredentials {
     val testVectors = mapper.readValue(File("../web5-spec/test-vectors/credentials/create.json"), typeRef)
 
     testVectors.vectors.filterNot { it.errors ?: false }.forEach { vector ->
+      println(vector.description)
       val vc = VerifiableCredential.fromJson(mapper.writeValueAsString(vector.input.credential))
 
       val keyManager = InMemoryKeyManager()

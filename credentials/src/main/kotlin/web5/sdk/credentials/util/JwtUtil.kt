@@ -11,9 +11,9 @@ import web5.sdk.common.Convert
 import web5.sdk.crypto.Crypto
 import web5.sdk.dids.Did
 import web5.sdk.dids.DidResolvers
+import web5.sdk.dids.didcore.DidUri
 import web5.sdk.dids.exceptions.DidResolutionException
 import web5.sdk.dids.exceptions.PublicKeyJwkMissingException
-import web5.sdk.dids.methods.DidUtil
 import java.net.URI
 import java.security.SignatureException
 
@@ -108,13 +108,13 @@ public object JwtUtil {
     }
 
     val verificationMethodId = jwt.header.keyID
-    val verificationMethodIdParseResult = DidUtil.parseVerificationMethodId(verificationMethodId)
+    val didUri = DidUri.Parser.parse(verificationMethodId)
 
-    val didResolutionResult = DidResolvers.resolve(verificationMethodIdParseResult.didUrlString)
+    val didResolutionResult = DidResolvers.resolve(didUri.url)
     if (didResolutionResult.didResolutionMetadata.error != null) {
       throw SignatureException(
         "Signature verification failed: " +
-          "Failed to resolve DID ${verificationMethodIdParseResult}. " +
+          "Failed to resolve DID ${didUri.url}. " +
           "Error: ${didResolutionResult.didResolutionMetadata.error}"
       )
     }
@@ -123,25 +123,16 @@ public object JwtUtil {
     // or just `#fragment`. See: https://www.w3.org/TR/did-core/#relative-did-urls.
     // using a set for fast string comparison. DIDs can be lonnng.
     val verificationMethodIds = setOf(
-      verificationMethodIdParseResult.didUrlString,
-      "#${verificationMethodIdParseResult.fragment}"
+      didUri.url,
+      "#${didUri.fragment}"
     )
-    val assertionMethodIds = didResolutionResult.didDocument?.assertionMethod
 
-    var assertionMethodFound = false
-    for (id in assertionMethodIds ?: emptyList()) {
-      if (verificationMethodIds.contains(id)) {
-        assertionMethodFound = true
-        break
-      }
-    }
-
-    if (!assertionMethodFound) {
-      throw SignatureException(
-        "Signature verification failed: Expected kid in JWS header to dereference " +
-          "a DID Document Verification Method with an Assertion verification relationship"
-      )
-    }
+    didResolutionResult.didDocument?.assertionMethod?.firstOrNull {
+      verificationMethodIds.contains(it)
+    } ?: throw SignatureException(
+      "Signature verification failed: Expected kid in JWS header to dereference " +
+        "a DID Document Verification Method with an Assertion verification relationship"
+    )
 
     // TODO: this will be cleaned up as part of BearerDid PR
     val assertionVerificationMethod = didResolutionResult

@@ -144,7 +144,7 @@ public class DidJwk(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
         throw IllegalArgumentException("decoded jwk value cannot be a private key")
       }
 
-      val verificationMethodId = "$did#0"
+      val verificationMethodId = "${parsedDidUri.uri}#0"
       val verificationMethod = VerificationMethod.Builder()
         .id(verificationMethodId)
         .publicKeyJwk(publicKeyJwk)

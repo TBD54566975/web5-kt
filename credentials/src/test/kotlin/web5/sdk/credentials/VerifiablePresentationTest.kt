@@ -227,7 +227,7 @@ class VerifiablePresentationTest {
   fun `verify throws exception for DIDs without an assertionMethod`() {
     val keyManager = InMemoryKeyManager()
 
-    //Create an ION DID without an assertionMethod
+    //Create a DHT DID without an assertionMethod
     val alias = keyManager.generatePrivateKey(AlgorithmId.secp256k1)
     val verificationJwk = keyManager.getPublicKey(alias)
     val verificationMethodsToAdd = listOf(Triple(

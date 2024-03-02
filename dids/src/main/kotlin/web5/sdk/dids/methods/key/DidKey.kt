@@ -144,7 +144,7 @@ public class DidKey(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
 
       val publicKeyJwk = keyGenerator.bytesToPublicKey(publicKeyBytes)
 
-      val verificationMethodId = "$did#$id"
+      val verificationMethodId = "${parsedDidUri.uri}#$id"
       val verificationMethod = VerificationMethod.Builder()
         .id(verificationMethodId)
         .publicKeyJwk(publicKeyJwk)

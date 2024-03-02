@@ -47,6 +47,7 @@ class DidUriTest {
     // to be addressed via gh issue https://github.com/TBD54566975/web5-spec/issues/120
     val didUri = DidUri.Parser.parse("did:example:123456789abcdefghi;foo=bar;baz=qux?foo=bar&baz=qux#keys-1")
     assertEquals("did:example:123456789abcdefghi", didUri.uri)
+    assertEquals("123456789abcdefghi", didUri.id)
     assertEquals("did:example:123456789abcdefghi;foo=bar;baz=qux?foo=bar&baz=qux#keys-1", didUri.url)
     assertEquals("example", didUri.method)
     assertEquals("123456789abcdefghi", didUri.id)
