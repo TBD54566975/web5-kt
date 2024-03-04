@@ -15,12 +15,17 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: true
-      - uses: gradle/wrapper-validation-action@v1
+
+      # https://cashapp.github.io/hermit/usage/ci/
+      - name: Init Hermit
+        uses: cashapp/activate-hermit@v1
+
       - name: Set up Java
         uses: actions/setup-java@v3
         with:
           distribution: 'corretto'
           java-version: '11'
+
       - uses: actions/cache@v3
         with:
           path: ~/.gradle/caches
@@ -29,9 +34,9 @@ jobs:
       - name: Sonatype Publish Close And Release
         run: |
           if [ -n "${{ github.event.inputs.version }}" ]; then
-            ./gradlew -Pversion=${{ github.event.inputs.version }} publishToSonatype closeAndReleaseSonatypeStagingRepository
+            gradlew -Pversion=${{ github.event.inputs.version }} publishToSonatype closeAndReleaseSonatypeStagingRepository
           else
-            ./gradlew -Pversion=$(echo "${{ github.ref_name }}" | cut -c2-) publishToSonatype closeAndReleaseSonatypeStagingRepository
+            gradlew -Pversion=$(echo "${{ github.ref_name }}" | cut -c2-) publishToSonatype closeAndReleaseSonatypeStagingRepository
           fi
         env:
           ORG_GRADLE_PROJECT_signingKey: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGKEY }}
