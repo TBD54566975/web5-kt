@@ -21,11 +21,13 @@ import web5.sdk.dids.extensions.load
 import web5.sdk.dids.methods.ion.CreateDidIonOptions
 import web5.sdk.dids.methods.ion.DidIon
 import web5.sdk.dids.methods.ion.JsonWebKey2020VerificationMethod
+import web5.sdk.dids.methods.jwk.DidJwk
 import web5.sdk.dids.methods.key.DidKey
 import web5.sdk.testing.TestVectors
 import java.io.File
 import java.security.SignatureException
 import java.text.ParseException
+import java.util.Date
 import java.util.UUID
 import kotlin.test.Ignore
 import kotlin.test.assertEquals
@@ -77,7 +79,14 @@ class VerifiableCredentialTest {
       subject = holderDid.uri,
       data = StreetCredibility(localRespect = "high", legit = true)
     )
+
     assertNotNull(vc)
+    assertEquals(vc.type, "StreetCred")
+    assertEquals(vc.subject, holderDid.uri)
+    assertEquals(vc.issuer, issuerDid.uri)
+    assertEquals(vc.vcDataModel.credentialSubject.id.toString(), holderDid.uri)
+    assertEquals(vc.vcDataModel.credentialSubject.claims.get("localRespect"), "high")
+    assertEquals(vc.vcDataModel.credentialSubject.claims.get("legit"), true)
   }
 
   @Test
@@ -102,14 +111,34 @@ class VerifiableCredentialTest {
   @Test
   fun `verify does not throw an exception if vc is legit`() {
     val keyManager = InMemoryKeyManager()
-    val issuerDid = DidKey.create(keyManager)
-    val holderDid = DidKey.create(keyManager)
+    val issuerDid = DidJwk.create(keyManager)
+    val holderDid = DidJwk.create(keyManager)
 
     val vc = VerifiableCredential.create(
       type = "StreetCred",
       issuer = issuerDid.uri,
       subject = holderDid.uri,
       data = StreetCredibility(localRespect = "high", legit = true)
+    )
+
+    val vcJwt = vc.sign(issuerDid)
+    VerifiableCredential.verify(vcJwt)
+  }
+
+
+  data class KnowYourCustomerCred(val country: String)
+  @Test
+  fun `kyc credential verify does not throw an exception if vc is legit`() {
+    val keyManager = InMemoryKeyManager()
+    val issuerDid = DidJwk.create(keyManager)
+    val subjectDid = DidJwk.create(keyManager)
+
+    val vc = VerifiableCredential.create(
+      type = "KnowYourCustomerCred",
+      issuer = issuerDid.uri,
+      subject = subjectDid.uri,
+      expirationDate = Date(2055,11,21),
+      data = KnowYourCustomerCred(country = "us")
     )
 
     val vcJwt = vc.sign(issuerDid)
