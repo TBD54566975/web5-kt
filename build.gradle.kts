@@ -50,6 +50,8 @@ allprojects {
       force("com.google.guava:guava:32.0.0-android")
       // Addresses https://github.com/TBD54566975/web5-kt/issues/244
       force("com.squareup.okio:okio:3.6.0")
+      // Addresses https://github.com/TBD54566975/web5-kt/issues/257
+      force("com.nimbusds:nimbus-jose-jwt:9.37.2")
     }
   }
 }
