@@ -143,7 +143,7 @@ class DidWebTest {
   }
 }
 
-class Web5TestVectorsDidWebTest {
+class Web5TestVectorsDidWeb {
   data class ResolveTestInput(
     val didUri: String,
     val mockServer: Map<String, JsonNode>?,
