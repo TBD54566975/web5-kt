@@ -11,6 +11,7 @@ import java.security.SignatureException
  * Examples include discovery services, agent services, social networking services, file storage services,
  * and verifiable credential repository services.
  * A DID Document can be retrieved by resolving a DID URI.
+ * DID Core spec: https://www.w3.org/TR/did-core/#core-properties
  *
  * @property id the DID URI for a particular DID subject, expressed using the id property in the DID document.
  * @property context a URI that defines the schema version used in the document.
@@ -167,25 +168,25 @@ public class DIDDocument(
     }
 
     /**
-     * Adds Controllers.
+     * Sets Controllers.
      *
-     * @param controllers to be added to DIDDocument
+     * @param controllers to be set on the DIDDocument
      * @return Builder object
      */
     public fun controllers(controllers: List<String>): Builder = apply { this.controller = controllers }
 
     /**
-     * Adds AlsoknownAses.
+     * Sets AlsoknownAses.
      *
-     * @param alsoKnownAses to be added to DIDDocument
+     * @param alsoKnownAses to be set on the DIDDocument
      * @return Builder object
      */
     public fun alsoKnownAses(alsoKnownAses: List<String>): Builder = apply { this.alsoKnownAs = alsoKnownAses }
 
     /**
-     * Adds Services.
+     * Sets Services.
      *
-     * @param services to be added to DIDDocument
+     * @param services to be set on the DIDDocument
      * @return Builder object
      */
     public fun services(services: List<Service>?): Builder = apply { this.service = services }

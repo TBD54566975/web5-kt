@@ -4,6 +4,7 @@ package web5.sdk.dids.didcore
  * Service is used in DID documents to express ways of communicating with
  * the DID subject or associated entities.
  * A service can be any type of service the DID subject wants to advertise.
+ * Service spec: https://www.w3.org/TR/did-core/#services
  *
  * @property id is the value of the id property and MUST be a URI conforming to RFC3986.
  * 	         A conforming producer MUST NOT produce multiple service entries with

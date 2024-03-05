@@ -26,7 +26,7 @@ import web5.sdk.dids.ResolutionError
 import web5.sdk.dids.ResolveDidOptions
 import web5.sdk.dids.didcore.DidUri
 import web5.sdk.dids.didcore.DIDDocument
-import web5.sdk.dids.didcore.DidDocumentMetadata
+import web5.sdk.dids.didcore.DIDDocumentMetadata
 import web5.sdk.dids.didcore.Purpose
 import web5.sdk.dids.didcore.Service
 import web5.sdk.dids.didcore.VerificationMethod
@@ -35,9 +35,7 @@ import web5.sdk.dids.exceptions.InvalidIdentifierSizeException
 import web5.sdk.dids.exceptions.InvalidMethodNameException
 import web5.sdk.dids.exceptions.PkarrRecordNotFoundException
 import web5.sdk.dids.exceptions.PublicKeyJwkMissingException
-import web5.sdk.dids.methods.DidUtil
 import web5.sdk.dids.validateKeyMaterialInsideKeyManager
-import java.net.URI
 
 /**
  * Configuration for the [DidDhtApi].
@@ -213,7 +211,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
    *
    * @param did The "did:dht" DID that needs to be resolved.
    * @return A [DidResolutionResult] instance containing the DID Document and related context, including types
-   * as part of the [DidDocumentMetadata], if available.
+   * as part of the [DIDDocumentMetadata], if available.
    */
   override fun resolve(did: String, options: ResolveDidOptions?): DidResolutionResult {
     return try {
@@ -244,7 +242,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
     fromDnsPacket(did, dnsPacket).let { (didDocument, types) ->
       return DidResolutionResult(
         didDocument = didDocument,
-        didDocumentMetadata = DidDhtDocumentMetadata(types = types.map { it.index })
+        didDocumentMetadata = DIDDhtDocumentMetadata(types = types.map { it.index })
       )
     }
   }
@@ -458,7 +456,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
             DClass.IN,
             ttl,
             buildList {
-              val fragment = DidUtil.parseVerificationMethodId(verificationMethod.id).fragment
+              val fragment = DidUri.parse(verificationMethod.id).fragment
               add("id=$fragment")
               add("t=$keyType")
               add("k=$base64UrlEncodedKey")

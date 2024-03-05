@@ -136,7 +136,6 @@ class DhtTest {
   inner class DhtTest {
     @Test
     fun `create and parse a bep44 put request`() {
-      print("WITCHCRAFT")
       val manager = InMemoryKeyManager()
       val diddht = DidDhtApi {}
       val did = diddht.create(manager)

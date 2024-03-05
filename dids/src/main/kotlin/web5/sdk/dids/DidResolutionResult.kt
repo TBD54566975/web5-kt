@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import web5.sdk.dids.didcore.DIDDocument
-import web5.sdk.dids.didcore.DidDocumentMetadata
+import web5.sdk.dids.didcore.DIDDocumentMetadata
 import java.util.Objects.hash
 
 /**
@@ -21,7 +21,7 @@ public class DidResolutionResult(
   @JsonProperty("@context")
   public val context: String? = null,
   public val didDocument: DIDDocument? = null,
-  public val didDocumentMetadata: DidDocumentMetadata = DidDocumentMetadata(),
+  public val didDocumentMetadata: DIDDocumentMetadata = DIDDocumentMetadata(),
   public val didResolutionMetadata: DidResolutionMetadata = DidResolutionMetadata(),
 ) {
   override fun toString(): String {
