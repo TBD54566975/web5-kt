@@ -54,7 +54,7 @@ in [GitHub Pages](https://tbd54566975.github.io/web5-kt/docs/htmlMultiModule/cre
 ## Testing with local builds
 If you want to build an artifact locally, you can do so by running the following command - either at the top level or in any of the subprojects:
 ```sh
-./gradlew publishToMavenLocal -PskipSigning=true -Pversion={your-local-version-name}
+gradle publishToMavenLocal -PskipSigning=true -Pversion={your-local-version-name}
 ```
 
 ## Dependency Management
@@ -98,7 +98,7 @@ git -C web5-spec sparse-checkout set test-vectors
 To build and run test just run:
 
 ```bash
-./gradlew build --console=rich
+gradle build --console=rich
 ```
 
 ## Releasing
@@ -121,7 +121,7 @@ If you want to do a manual release, you have two options:
      page.
   2. Run the following command (you can change `samplebranch` to any branch name):
      ```bash
-     ./gradlew -Pversion=samplebranch-SNAPSHOT publishToSonatype closeAndReleaseSonatypeStagingRepository
+     gradle -Pversion=samplebranch-SNAPSHOT publishToSonatype closeAndReleaseSonatypeStagingRepository
      ```
 
 ## Working with the `web5-spec` submodule
