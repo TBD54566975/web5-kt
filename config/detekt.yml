@@ -48,6 +48,7 @@ complexity:
   CyclomaticComplexMethod:
     active: true
     ignoreSingleWhenExpression: true
+    threshold: 25
   LongParameterList:
     constructorThreshold: 10
   MethodOverloading:
@@ -82,7 +83,7 @@ formatting:
   MaximumLineLength:
     active: true
   ImportOrdering:
-    active: true
+    active: false
 
 naming:
   MemberNameEqualsClassName:

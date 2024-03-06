@@ -21,6 +21,7 @@ dependencies {
   // Project
 
   // Implementation
+  implementation(libs.comFasterXmlJacksonModuleKotlin)
 
   // Test
   /**

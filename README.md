@@ -51,54 +51,64 @@ in [GitHub Pages](https://tbd54566975.github.io/web5-kt/docs/htmlMultiModule/cre
 
 # Development
 
-## Testing with local builds
-If you want to build an artifact locally, you can do so by running the following command - either at the top level or in any of the subprojects:
+## Prerequisites
+
+### Cloning
+
+This repository uses git submodules. To clone this repo with submodules
+
 ```sh
-./gradlew publishToMavenLocal -PskipSigning=true -Pversion={your-local-version-name}
+git clone --recurse-submodules git@github.com:TBD54566975/web5-kt.git
+```
+
+Or to add submodules after cloning
+
+```sh
+git submodule update --init
+```
+
+We recommend this config which will only checkout the files relevant to web5-kt
+
+```sh
+git -C web5-spec sparse-checkout set test-vectors
+```
+
+### Hermit
+
+This project uses hermit to manage tooling like gradle and java verions.
+See [this page](https://cashapp.github.io/hermit/usage/get-started/) to set up Hermit on your machine - make sure to
+download the open source build and activate it for the project.
+
+## Testing with local builds
+
+If you want to build an artifact locally, you can do so by running the following command - either at the top level or in
+any of the subprojects:
+
+```sh
+gradle publishToMavenLocal -PskipSigning=true -Pversion={your-local-version-name}
 ```
 
 ## Dependency Management
-As Web5 is a platform intended to run in a single `ClassLoader`, 
+
+As Web5 is a platform intended to run in a single `ClassLoader`,
 versions and dependencies must be aligned among the subprojects
 (sometimes called modules) of this project. To address, we declare
 versions in `gradle/libs.versions.toml` and import references defined
-there in the subproject `build.gradle.kts` files. More docs on this 
+there in the subproject `build.gradle.kts` files. More docs on this
 approach using Gradle Version Catalogs is at the top of `gradle/libs.versions.toml`.
 
 We have a secondary mechanism to force dependency upgrades of transitive
 deps in the case we encounter security vulnerabilities we do not directly
-depend upon. That config is located in the `resolutionStrategy` section of 
+depend upon. That config is located in the `resolutionStrategy` section of
 `./build.gradle.kts`. Notes for applying fixes for security vulnerabilities
 are documented there.
-
-## Prerequisites
-
-Install java version 11. If you're installing a higher version, it must be compatible with Gradle 8.2.
-
-If you want to have multiple version of Java installed in your machine, we recommend using [jenv](https://www.jenv.be/).
-
-> [!NOTE]: Restart your shell after installation.
-
-### Cloning
-This repository uses git submodules. To clone this repo with submodules
-```sh
-git clone --recurse-submodules git@github.com:TBD54566975/web5-kt.git
-```
-Or to add submodules after cloning
-```sh
-git submodule update --init
-```
-We recommend this config which will only checkout the files relevant to web5-kt
-```sh
-git -C web5-spec sparse-checkout set test-vectors
-```
 
 ## Build
 
 To build and run test just run:
 
 ```bash
-./gradlew build --console=rich
+gradle build --console=rich
 ```
 
 ## Releasing
@@ -116,25 +126,30 @@ If you want to do a manual release, you have two options:
 1. Dispatch the [publish workflow](./.github/workflows/publish.yml) workflow from the Github UI. Go to the [publish
    Actions](https://github.com/TBD54566975/web5-kt/actions) > "Run workflow".
 2. Setup your local environment to publish to Central Repository. This is more involved. You'll need to:
-  1. Define all the environment variables described in the [publish workflow](./.github/workflows/publish.yml) file. You
-     can find the values in the [secrets and variable](https://github.com/TBD54566975/web5-kt/settings/secrets/actions)
-     page.
-  2. Run the following command (you can change `samplebranch` to any branch name):
-     ```bash
-     ./gradlew -Pversion=samplebranch-SNAPSHOT publishToSonatype closeAndReleaseSonatypeStagingRepository
-     ```
+1. Define all the environment variables described in the [publish workflow](./.github/workflows/publish.yml) file. You
+   can find the values in the [secrets and variable](https://github.com/TBD54566975/web5-kt/settings/secrets/actions)
+   page.
+2. Run the following command (you can change `samplebranch` to any branch name):
+   ```bash
+   gradle -Pversion=samplebranch-SNAPSHOT publishToSonatype closeAndReleaseSonatypeStagingRepository
+   ```
 
 ## Working with the `web5-spec` submodule
 
 ### Pulling
+
 You may need to update the `web5-spec` submodule after pulling.
+
 ```sh
 git pull
 git submodule update
 ```
 
 ### Pushing
-If you have made changes to the `web5-spec` submodule, you should push your changes to the `web5-spec` remote as well as pushing changes to `web5-kt`.
+
+If you have made changes to the `web5-spec` submodule, you should push your changes to the `web5-spec` remote as well as
+pushing changes to `web5-kt`.
+
 ```sh
 cd web5-spec
 git push
