@@ -78,6 +78,19 @@ class DidJwkTest {
 
   @Nested
   inner class ResolveTest {
+
+    @Test
+    fun `throws exception if did cannot be parsed`() {
+      val result = DidJwk.resolve("did:jwk:invalid")
+      assertEquals("invalidDid", result.didResolutionMetadata.error)
+    }
+
+    @Test
+    fun `throws exception if did method is not jwk`() {
+      val result = DidJwk.resolve("did:example:123")
+      assertEquals("methodNotSupported", result.didResolutionMetadata.error)
+    }
+
     @Test
     fun `private key throws exception`() {
       val manager = InMemoryKeyManager()

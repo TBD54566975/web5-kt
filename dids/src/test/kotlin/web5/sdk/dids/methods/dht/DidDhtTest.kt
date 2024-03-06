@@ -397,6 +397,12 @@ class Web5TestVectorsDidDht {
   }
 
   @Test
+  fun `resolve fails when identifier size is incorrect`() {
+    val result = DidDht.resolve("did:dht:foo")
+    assertEquals("invalidDid", result.didResolutionMetadata.error)
+  }
+
+  @Test
   fun resolve() {
     val typeRef = object : TypeReference<TestVectors<ResolveTestInput, DidResolutionResult>>() {}
     val testVectors = mapper.readValue(File("../web5-spec/test-vectors/did_dht/resolve.json"), typeRef)

@@ -287,5 +287,21 @@ class DIDDocumentTest {
       assertNull(doc.capabilityDelegation)
       assertNull(doc.assertionMethod)
     }
+
+    @Test
+    fun `verificationMethodIdsForPurpose builds list for one purpose`() {
+      val doc = DIDDocument.Builder()
+        .id("did:ex:foo")
+        .context("https://www.w3.org/ns/did/v1")
+        .verificationMethodIdsForPurpose(mutableListOf("keyagreementId"), Purpose.KeyAgreement)
+        .build()
+
+      assertEquals(1, doc.keyAgreement?.size)
+      assertNull(doc.verificationMethod)
+      assertNull(doc.authentication)
+      assertNull(doc.capabilityInvocation)
+      assertNull(doc.capabilityDelegation)
+      assertNull(doc.assertionMethod)
+    }
   }
 }
