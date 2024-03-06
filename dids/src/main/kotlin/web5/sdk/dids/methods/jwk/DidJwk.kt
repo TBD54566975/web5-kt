@@ -153,7 +153,7 @@ public class DidJwk(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
         .build()
 
       val didDocumentBuilder = DIDDocument.Builder()
-        .context("https://www.w3.org/ns/did/v1")
+        .context(listOf("https://www.w3.org/ns/did/v1"))
         .id(did)
 
       if (publicKeyJwk.keyUse != KeyUse.ENCRYPTION) {

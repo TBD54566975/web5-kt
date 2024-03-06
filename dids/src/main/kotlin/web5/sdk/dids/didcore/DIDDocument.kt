@@ -14,7 +14,7 @@ import java.security.SignatureException
  * DID Core spec: https://www.w3.org/TR/did-core/#core-properties
  *
  * @property id the DID URI for a particular DID subject, expressed using the id property in the DID document.
- * @property context a URI that defines the schema version used in the document.
+ * @property context a list of URI that defines the schema version used in the document.
  * @property alsoKnownAs AlsoKnownAs can contain multiple identifiers for different purposes,
  *           or at different times for the same DID subject. The assertion that two or more DIDs
  *           (or other types of URI) refer to the same DID subject can be made using the alsoKnownAs property.
@@ -39,7 +39,7 @@ import java.security.SignatureException
 public class DIDDocument(
   public val id: String,
   @JsonProperty("@context")
-  public val context: String? = null,
+  public val context: List<String>? = null,
   public val alsoKnownAs: List<String>? = null,
   public val controller: List<String>? = null,
   public val verificationMethod: List<VerificationMethod>? = null,
@@ -136,7 +136,7 @@ public class DIDDocument(
   public class Builder {
 
     private var id: String? = null
-    private var context: String? = null
+    private var context: List<String>? = null
     private var alsoKnownAs: List<String>? = null
     private var controller: List<String>? = null
 
@@ -158,12 +158,12 @@ public class DIDDocument(
     public fun id(id: String): Builder = apply { this.id = id }
 
     /**
-     * Adds Context to the DIDDocument.
+     * Sets Context to the DIDDocument.
      *
      * @param context of the DIDDocument
      * @return Builder object
      */
-    public fun context(context: String): Builder = apply {
+    public fun context(context: List<String>): Builder = apply {
       this.context = context
     }
 

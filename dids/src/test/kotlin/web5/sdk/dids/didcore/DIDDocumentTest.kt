@@ -204,14 +204,14 @@ class DIDDocumentTest {
 
       val doc = DIDDocument.Builder()
         .id("did:ex:foo")
-        .context("https://www.w3.org/ns/did/v1")
+        .context(listOf("https://www.w3.org/ns/did/v1"))
         .controllers(listOf("did:ex:foo"))
         .alsoKnownAses(listOf("did:ex:bar"))
         .services(listOf(svc))
         .build()
 
       assertEquals("did:ex:foo", doc.id)
-      assertEquals("https://www.w3.org/ns/did/v1", doc.context)
+      assertEquals("https://www.w3.org/ns/did/v1", doc.context!!.first())
       assertEquals(listOf("did:ex:foo"), doc.controller)
       assertEquals(listOf("did:ex:bar"), doc.alsoKnownAs)
       assertEquals(listOf(svc), doc.service)
@@ -226,7 +226,7 @@ class DIDDocumentTest {
 
       val doc = DIDDocument.Builder()
         .id("did:ex:foo")
-        .context("https://www.w3.org/ns/did/v1")
+        .context(listOf("https://www.w3.org/ns/did/v1"))
         .verificationMethodForPurposes(vm,
           listOf(
             Purpose.AssertionMethod,
@@ -255,7 +255,7 @@ class DIDDocumentTest {
 
       val doc = DIDDocument.Builder()
         .id("did:ex:foo")
-        .context("https://www.w3.org/ns/did/v1")
+        .context(listOf("https://www.w3.org/ns/did/v1"))
         .verificationMethodForPurposes(vm,listOf(Purpose.Authentication))
         .build()
 
@@ -276,7 +276,7 @@ class DIDDocumentTest {
 
       val doc = DIDDocument.Builder()
         .id("did:ex:foo")
-        .context("https://www.w3.org/ns/did/v1")
+        .context(listOf("https://www.w3.org/ns/did/v1"))
         .verificationMethodForPurposes(vm)
         .build()
 
@@ -292,7 +292,7 @@ class DIDDocumentTest {
     fun `verificationMethodIdsForPurpose builds list for one purpose`() {
       val doc = DIDDocument.Builder()
         .id("did:ex:foo")
-        .context("https://www.w3.org/ns/did/v1")
+        .context(listOf("https://www.w3.org/ns/did/v1"))
         .verificationMethodIdsForPurpose(mutableListOf("keyagreementId"), Purpose.KeyAgreement)
         .build()
 
