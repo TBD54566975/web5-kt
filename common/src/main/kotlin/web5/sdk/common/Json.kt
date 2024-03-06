@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.ObjectWriter
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 
-
 /**
  * A singleton for json serialization/deserialization, shared across the SDK as ObjectMapper instantiation
  * is an expensive operation.

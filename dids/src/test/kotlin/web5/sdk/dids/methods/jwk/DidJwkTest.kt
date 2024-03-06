@@ -9,11 +9,11 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import web5.sdk.common.Convert
+import web5.sdk.common.Json
 import web5.sdk.crypto.AlgorithmId
 import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.dids.DidResolutionResult
 import web5.sdk.dids.DidResolvers
-import web5.sdk.dids.Json
 import web5.sdk.testing.TestVectors
 import java.io.File
 import kotlin.test.assertEquals

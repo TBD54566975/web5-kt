@@ -19,12 +19,11 @@ import org.junit.jupiter.api.assertThrows
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.spy
 import org.mockito.kotlin.whenever
+import web5.sdk.common.Json
 import web5.sdk.common.ZBase32
 import web5.sdk.crypto.AlgorithmId
 import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.dids.DidResolutionResult
-import web5.sdk.dids.JWKSerializer
-import web5.sdk.dids.Json
 import web5.sdk.dids.JwkDeserializer
 import web5.sdk.dids.PurposesDeserializer
 import web5.sdk.dids.didcore.DIDDocument

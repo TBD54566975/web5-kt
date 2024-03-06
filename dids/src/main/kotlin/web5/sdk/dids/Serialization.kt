@@ -12,7 +12,6 @@ import com.nimbusds.jose.jwk.JWK
 import web5.sdk.dids.didcore.Purpose
 import java.io.IOException
 
-
 /**
  * Serialize JWK into String.
  */
