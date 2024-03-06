@@ -31,10 +31,11 @@ public typealias VpDataModel = com.danubetech.verifiablecredentials.VerifiablePr
  *
  * @property vpDataModel The [vpDataModel] instance representing the core data model of a verifiable presentation.
  */
+@Suppress("UNCHECKED_CAST")
 public class VerifiablePresentation internal constructor(public val vpDataModel: VpDataModel) {
 
   public val verifiableCredential: List<String>
-    get() = vpDataModel.toMap().get("verifiableCredential") as List<String>
+    get() = vpDataModel.toMap()["verifiableCredential"] as List<String>
 
     public val holder: String
     get() = vpDataModel.holder.toString()

@@ -1,19 +1,17 @@
 package web5.sdk.dids.methods.web
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import foundation.identity.did.DID
-import foundation.identity.did.DIDDocument
-import foundation.identity.did.parser.ParserException
 import io.github.oshai.kotlinlogging.KotlinLogging
-import io.ktor.client.HttpClient
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.okhttp.OkHttp
+import io.ktor.client.HttpClient
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.plugins.ResponseException
 import io.ktor.client.request.get
-import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
-import io.ktor.http.ContentType
+import io.ktor.client.statement.HttpResponse
 import io.ktor.http.contentType
+import io.ktor.http.ContentType
 import io.ktor.http.isSuccess
 import io.ktor.serialization.jackson.jackson
 import kotlinx.coroutines.runBlocking
@@ -23,12 +21,14 @@ import okhttp3.OkHttpClient
 import okhttp3.dnsoverhttps.DnsOverHttps
 import web5.sdk.crypto.KeyManager
 import web5.sdk.dids.CreateDidOptions
+import web5.sdk.dids.didcore.DidUri
+import web5.sdk.dids.didcore.DIDDocument
 import web5.sdk.dids.Did
 import web5.sdk.dids.DidMethod
 import web5.sdk.dids.DidResolutionResult
+import web5.sdk.dids.exceptions.ParserException
 import web5.sdk.dids.ResolutionError
 import web5.sdk.dids.ResolveDidOptions
-import web5.sdk.dids.methods.ion.InvalidStatusException
 import web5.sdk.dids.validateKeyMaterialInsideKeyManager
 import java.io.File
 import java.net.InetAddress
@@ -87,8 +87,8 @@ public fun DidWebApi(blockConfiguration: DidWebApiConfiguration.() -> Unit): Did
 
 private class DidWebApiImpl(configuration: DidWebApiConfiguration) : DidWebApi(configuration)
 
-private const val wellKnownURLPath = "/.well-known"
-private const val didDocFilename = "/did.json"
+private const val WELL_KNOWN_URL_PATH = "/.well-known"
+private const val DID_DOC_FILE_NAME = "/did.json"
 
 /**
  * Implements [resolve] and [create] according to https://w3c-ccg.github.io/did-method-web/
@@ -132,16 +132,16 @@ public sealed class DidWebApi(
   }
 
   private fun resolveInternal(did: String, options: ResolveDidOptions?): DidResolutionResult {
-    val parsedDid = try {
-      DID.fromString(did)
+    val parsedDidUri = try {
+      DidUri.parse(did)
     } catch (_: ParserException) {
       return DidResolutionResult.fromResolutionError(ResolutionError.INVALID_DID)
     }
 
-    if (parsedDid.methodName != methodName) {
+    if (parsedDidUri.method != methodName) {
       return DidResolutionResult.fromResolutionError(ResolutionError.METHOD_NOT_SUPPORTED)
     }
-    val docURL = getDocURL(parsedDid)
+    val docURL = getDocURL(parsedDidUri)
 
     val resp: HttpResponse = try {
       runBlocking {
@@ -156,7 +156,7 @@ public sealed class DidWebApi(
     val body = runBlocking { resp.bodyAsText() }
 
     if (!resp.status.isSuccess()) {
-      throw InvalidStatusException(resp.status.value, "resolution error response: '$body'")
+      throw ResponseException(resp, "resolution error response: '$body'")
     }
     return DidResolutionResult(
       didDocument = mapper.readValue(body, DIDDocument::class.java),
@@ -168,17 +168,17 @@ public sealed class DidWebApi(
     return DidWeb(uri, keyManager, this)
   }
 
-  private fun getDocURL(parsedDid: DID): String {
-    val domainNameWithPath = parsedDid.methodSpecificId.replace(":", "/")
+  private fun getDocURL(parsedDidUri: DidUri): String {
+    val domainNameWithPath = parsedDidUri.id.replace(":", "/")
     val decodedDomain = URLDecoder.decode(domainNameWithPath, UTF_8)
 
     val targetUrl = StringBuilder("https://$decodedDomain")
 
     val url = URL(targetUrl.toString())
     if (url.path.isEmpty()) {
-      targetUrl.append(wellKnownURLPath)
+      targetUrl.append(WELL_KNOWN_URL_PATH)
     }
-    targetUrl.append(didDocFilename)
+    targetUrl.append(DID_DOC_FILE_NAME)
     return targetUrl.toString()
   }
 

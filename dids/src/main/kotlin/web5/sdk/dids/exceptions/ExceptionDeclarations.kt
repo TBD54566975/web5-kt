@@ -40,3 +40,17 @@ public class InvalidIdentifierException(message: String, cause: Throwable) : Run
  * @param message the exception message detailing the error
  */
 public class DidResolutionException(message: String) : RuntimeException(message)
+
+/**
+ * Parser exception.
+ *
+ * @param message the exception message detailing the error
+ */
+public class ParserException(message: String) : RuntimeException(message)
+
+/**
+ * PublicKeyJwkMissingException.
+ *
+ * @param message the exception message detailing the error
+ */
+public class PublicKeyJwkMissingException(message: String) : RuntimeException(message)

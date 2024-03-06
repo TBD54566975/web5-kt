@@ -15,13 +15,12 @@ import web5.sdk.credentials.model.InputDescriptorMapping
 import web5.sdk.credentials.model.PresentationSubmission
 import web5.sdk.crypto.AlgorithmId
 import web5.sdk.crypto.InMemoryKeyManager
-import web5.sdk.dids.methods.ion.CreateDidIonOptions
-import web5.sdk.dids.methods.ion.DidIon
-import web5.sdk.dids.methods.ion.JsonWebKey2020VerificationMethod
+import web5.sdk.dids.didcore.Purpose
+import web5.sdk.dids.methods.dht.CreateDidDhtOptions
+import web5.sdk.dids.methods.dht.DidDht
 import web5.sdk.dids.methods.key.DidKey
 import java.security.SignatureException
 import java.text.ParseException
-import java.util.UUID
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 
@@ -228,17 +227,17 @@ class VerifiablePresentationTest {
   fun `verify throws exception for DIDs without an assertionMethod`() {
     val keyManager = InMemoryKeyManager()
 
-    //Create an ION DID without an assertionMethod
+    //Create a DHT DID without an assertionMethod
     val alias = keyManager.generatePrivateKey(AlgorithmId.secp256k1)
     val verificationJwk = keyManager.getPublicKey(alias)
-    val key = JsonWebKey2020VerificationMethod(
-      id = UUID.randomUUID().toString(),
-      publicKeyJwk = verificationJwk,
-      relationships = emptyList() //No assertionMethod
-    )
-    val issuerDid = DidIon.create(
+    val verificationMethodsToAdd = listOf(Triple(
+      verificationJwk,
+      emptyList<Purpose>(),
+      "did:web:tbd.website"
+    ))
+    val issuerDid = DidDht.create(
       InMemoryKeyManager(),
-      CreateDidIonOptions(verificationMethodsToAdd = listOf(key))
+      CreateDidDhtOptions(verificationMethods = verificationMethodsToAdd)
     )
 
     val header = JWSHeader.Builder(JWSAlgorithm.ES256K)

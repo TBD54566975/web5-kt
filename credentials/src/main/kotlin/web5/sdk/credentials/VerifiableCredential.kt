@@ -55,7 +55,7 @@ public class VerifiableCredential internal constructor(public val vcDataModel: V
    *
    * @param did The [Did] used to sign the credential.
    * @param assertionMethodId An optional identifier for the assertion method that will be used for verification of the
-   *        produces signature.
+   *        produced signature.
    * @return The JWT representing the signed verifiable credential.
    *
    * Example:

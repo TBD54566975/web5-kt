@@ -2,10 +2,6 @@ package web5.sdk.dids.methods.jwk
 
 import com.nimbusds.jose.jwk.JWK
 import com.nimbusds.jose.jwk.KeyUse
-import foundation.identity.did.DID
-import foundation.identity.did.DIDDocument
-import foundation.identity.did.VerificationMethod
-import foundation.identity.did.parser.ParserException
 import web5.sdk.common.Convert
 import web5.sdk.common.EncodingFormat
 import web5.sdk.crypto.AlgorithmId
@@ -17,8 +13,12 @@ import web5.sdk.dids.DidResolutionMetadata
 import web5.sdk.dids.DidResolutionResult
 import web5.sdk.dids.ResolutionError
 import web5.sdk.dids.ResolveDidOptions
+import web5.sdk.dids.didcore.DidUri
+import web5.sdk.dids.didcore.DIDDocument
+import web5.sdk.dids.didcore.Purpose
+import web5.sdk.dids.didcore.VerificationMethod
+import web5.sdk.dids.exceptions.ParserException
 import web5.sdk.dids.validateKeyMaterialInsideKeyManager
-import java.net.URI
 import java.text.ParseException
 
 /**
@@ -26,7 +26,7 @@ import java.text.ParseException
  *
  * @property algorithmId Specifies the algorithmId to be used for key creation.
  *                     Defaults to ES256K (Elliptic Curve Digital Signature Algorithm with SHA-256 and secp256k1 curve).
- * @constructor Creates an instance of [CreateDidJwkOptions] with the provided [algorithm] and [curve].
+ * @constructor Creates an instance of [CreateDidJwkOptions] with the provided [algorithmId]
  *
  * ### Usage Example:
  * ```
@@ -107,8 +107,8 @@ public class DidJwk(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
      * @throws IllegalArgumentException if the provided DID does not conform to the "did:jwk" method.
      */
     override fun resolve(did: String, options: ResolveDidOptions?): DidResolutionResult {
-      val parsedDid = try {
-        DID.fromString(did)
+      val parsedDidUri = try {
+        DidUri.parse(did)
       } catch (_: ParserException) {
         return DidResolutionResult(
           context = "https://w3id.org/did-resolution/v1",
@@ -118,7 +118,7 @@ public class DidJwk(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
         )
       }
 
-      if (parsedDid.methodName != methodName) {
+      if (parsedDidUri.method != methodName) {
         return DidResolutionResult(
           context = "https://w3id.org/did-resolution/v1",
           didResolutionMetadata = DidResolutionMetadata(
@@ -127,7 +127,7 @@ public class DidJwk(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
         )
       }
 
-      val id = parsedDid.methodSpecificId
+      val id = parsedDidUri.id
       val decodedKey = Convert(id, EncodingFormat.Base64Url).toStr()
       val publicKeyJwk = try {
         JWK.parse(decodedKey)
@@ -144,36 +144,33 @@ public class DidJwk(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
         throw IllegalArgumentException("decoded jwk value cannot be a private key")
       }
 
-      val verificationMethodId = URI.create("$did#0")
-      val verificationMethod = VerificationMethod.builder()
+      val verificationMethodId = "${parsedDidUri.uri}#0"
+      val verificationMethod = VerificationMethod.Builder()
         .id(verificationMethodId)
-        .publicKeyJwk(publicKeyJwk.toJSONObject())
-        .controller(URI(did))
-        .type("JsonWebKey2020")
+        .publicKeyJwk(publicKeyJwk)
+        .controller(did)
+        .type("JsonWebKey")
         .build()
 
-      val verificationMethodRef = VerificationMethod.builder()
-        .id(verificationMethodId)
-        .build()
-
-      val didDocumentBuilder = DIDDocument.builder()
-        .contexts(
-          mutableListOf(
-            URI.create("https://w3id.org/security/suites/jws-2020/v1")
-          )
-        )
-        .id(URI(did))
-        .verificationMethod(verificationMethod)
+      val didDocumentBuilder = DIDDocument.Builder()
+        .context(listOf("https://www.w3.org/ns/did/v1"))
+        .id(did)
 
       if (publicKeyJwk.keyUse != KeyUse.ENCRYPTION) {
         didDocumentBuilder
-          .assertionMethodVerificationMethod(verificationMethodRef)
-          .authenticationVerificationMethod(verificationMethodRef)
-          .capabilityDelegationVerificationMethods(listOf(verificationMethodRef))
-          .capabilityInvocationVerificationMethod(verificationMethodRef)
+          .verificationMethodForPurposes(
+            verificationMethod,
+            listOf(
+              Purpose.AssertionMethod,
+              Purpose.Authentication,
+              Purpose.CapabilityDelegation,
+              Purpose.CapabilityInvocation
+            )
+          )
       }
+
       if (publicKeyJwk.keyUse != KeyUse.SIGNATURE) {
-        didDocumentBuilder.keyAgreementVerificationMethod(verificationMethodRef)
+        didDocumentBuilder.verificationMethodForPurposes(verificationMethod, listOf(Purpose.KeyAgreement))
       }
       val didDocument = didDocumentBuilder.build()
 
