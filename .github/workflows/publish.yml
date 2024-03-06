@@ -5,9 +5,7 @@ on:
       version:
         description: 'Version to publish. For example "0.0.1"'
         required: true
-        default: '0.0.0'
-  release:
-    types: [ published ]
+        default: "0.0.0"
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -41,9 +39,9 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         # skips snapshot releases
-        if: contains(github.event.inputs.version, 'SNAPSHOT') == false 
+        if: contains(github.event.inputs.version, 'SNAPSHOT') == false
         with:
-          tag_name: ${{ github.event.inputs.version }}
+          tag_name: v${{ github.event.inputs.version }}
           draft: false
           prerelease: true
           generate_release_notes: true
