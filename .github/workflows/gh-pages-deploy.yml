@@ -18,9 +18,6 @@ jobs:
       # https://cashapp.github.io/hermit/usage/ci/
       - name: Init Hermit
         uses: cashapp/activate-hermit@v1
-      - uses: gradle/gradle-build-action@v2
-        with:
-          gradle-home-cache-cleanup: true
       - name: Build html
         run: gradle dokkaHtmlMultiModule --no-daemon --stacktrace
         working-directory: .
