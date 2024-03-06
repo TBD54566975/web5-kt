@@ -64,7 +64,10 @@ private class CredentialSubjectDeserializer : JsonDeserializer<CredentialSubject
     val additionalClaims = node.fields().asSequence().filterNot { it.key == "id" }
       .associate { it.key to it.value.asText() } // Assuming all values are stored as text
 
-    return CredentialSubject(id, additionalClaims)
+    return CredentialSubject.Builder()
+      .id(id)
+      .additionalClaims(additionalClaims)
+      .build()
   }
 }
 
@@ -89,31 +92,121 @@ private fun getObjectMapper(): ObjectMapper {
  * @see {@link https://www.w3.org/TR/vc-data-model/#credentials | VC Data Model}
  */
 public class VcDataModel(
-  public val id: URI? = null,
+  public val id: URI?,
   @JsonProperty("@context")
-  public val context: MutableList<URI> = mutableListOf(),
-  public val type: MutableList<String> = mutableListOf(),
+  public val context: List<URI>,
+  public val type: List<String>,
   public val issuer: URI,
   public val issuanceDate: Date,
-  public val expirationDate: Date? = null,
+  public val expirationDate: Date?,
   public val credentialSubject: CredentialSubject,
-  public val credentialSchema: CredentialSchema? = null,
-  public val credentialStatus: BitstringStatusListEntry? = null
+  public val credentialSchema: CredentialSchema?,
+  public val credentialStatus: BitstringStatusListEntry?
 ) {
-  init {
-    if(context.isEmpty() || context[0].toString() != DEFAULT_VC_CONTEXT) {
-      context.add(0, URI.create(DEFAULT_VC_CONTEXT))
-    }
+  /**
+   * Builder class for creating [VcDataModel] instances.
+   */
+  public class Builder {
+    private var id: URI? = null
+    private var context: MutableList<URI> = mutableListOf()
+    private var type: MutableList<String> = mutableListOf()
+    private lateinit var issuer: URI
+    private lateinit var issuanceDate: Date
+    private var expirationDate: Date? = null
+    private lateinit var credentialSubject: CredentialSubject
+    private var credentialSchema: CredentialSchema? = null
+    private var credentialStatus: BitstringStatusListEntry? = null
 
-    if(type.isEmpty() || type[0] != DEFAULT_VC_TYPE) {
-      type.add(0, DEFAULT_VC_TYPE)
-    }
+    /**
+     * Sets the ID URI for the [VcDataModel].
+     * @param id The unique identifier URI of the credential.
+     * @return Returns this builder to allow for chaining.
+     */
+    public fun id(id: URI?): Builder = apply { this.id = id }
 
-    require(id == null || id.toString().isNotBlank()) { "ID URI cannot be blank" }
-    require(issuer.toString().isNotBlank()) { "Issuer URI cannot be blank" }
+    /**
+     * Sets the context URIs for the [VcDataModel].
+     * @param context A list of context URIs.
+     * @return Returns this builder to allow for chaining.
+     */
+    public fun context(context: MutableList<URI>): Builder = apply { this.context = context }
 
-    if (expirationDate != null) {
-      require(issuanceDate.before(expirationDate)) { "Issuance date must be before expiration date" }
+    /**
+     * Sets the type(s) for the [VcDataModel].
+     * @param type A list of types.
+     * @return Returns this builder to allow for chaining.
+     */
+    public fun type(type: MutableList<String>): Builder = apply { this.type = type }
+
+    /**
+     * Sets the issuer URI for the [VcDataModel].
+     * @param issuer The issuer URI of the credential.
+     * @return Returns this builder to allow for chaining.
+     */
+    public fun issuer(issuer: URI): Builder = apply { this.issuer = issuer }
+
+    /**
+     * Sets the issuance date for the [VcDataModel].
+     * @param issuanceDate The date when the credential was issued.
+     * @return Returns this builder to allow for chaining.
+     */
+    public fun issuanceDate(issuanceDate: Date): Builder = apply { this.issuanceDate = issuanceDate }
+
+    /**
+     * Sets the expiration date for the [VcDataModel].
+     * @param expirationDate The date when the credential expires.
+     * @return Returns this builder to allow for chaining.
+     */
+    public fun expirationDate(expirationDate: Date?): Builder = apply { this.expirationDate = expirationDate }
+
+    /**
+     * Sets the credential subject for the [VcDataModel].
+     * @param credentialSubject The subject of the credential.
+     * @return Returns this builder to allow for chaining.
+     */
+    public fun credentialSubject(credentialSubject: CredentialSubject): Builder =
+      apply { this.credentialSubject = credentialSubject }
+
+    /**
+     * Sets the credential schema for the [VcDataModel].
+     * @param credentialSchema The schema of the credential.
+     * @return Returns this builder to allow for chaining.
+     */
+    public fun credentialSchema(credentialSchema: CredentialSchema?): Builder =
+      apply { this.credentialSchema = credentialSchema }
+
+    /**
+     * Sets the credential status for the [VcDataModel].
+     * @param credentialStatus The status of the credential.
+     * @return Returns this builder to allow for chaining.
+     */
+    public fun credentialStatus(credentialStatus: BitstringStatusListEntry?): Builder =
+      apply { this.credentialStatus = credentialStatus }
+
+    /**
+     * Builds and returns the [VcDataModel] object.
+     * @return The constructed [VcDataModel] object.
+     * @throws IllegalStateException If the issuer or issuance date are not set, or other validation fails.
+     */
+    public fun build(): VcDataModel {
+      require(issuer.toString().isNotBlank()) { "Issuer URI cannot be blank" }
+      require(id == null || id.toString().isNotBlank()) { "ID URI cannot be blank" }
+
+      if (expirationDate != null) {
+        require(issuanceDate.before(expirationDate)) { "Issuance date must be before expiration date" }
+      }
+
+      // Default context and type handling
+      if (context.isEmpty() || context[0].toString() != DEFAULT_VC_CONTEXT) {
+        context.add(0, URI.create(DEFAULT_VC_CONTEXT))
+      }
+
+      if (type.isEmpty() || type[0] != DEFAULT_VC_TYPE) {
+        type.add(0, DEFAULT_VC_TYPE)
+      }
+
+      return VcDataModel(id, context.toList(), type.toList(), issuer, issuanceDate, expirationDate,
+        credentialSubject, credentialSchema, credentialStatus)
     }
   }
 
@@ -170,22 +263,84 @@ public class VcDataModel(
  * properties related to the subject of the verifiable credential.
  */
 public class CredentialSubject(
-  public val id: URI? = null,
-  public val additionalClaims: Map<String, Any> = emptyMap()
+  public val id: URI?,
+  public val additionalClaims: Map<String, Any>
 ) {
-  init {
-    require(id == null || id.toString().isNotBlank()) { "ID URI cannot be blank" }
+  /**
+   * Builder class for creating [CredentialSubject] instances.
+   */
+  public class Builder {
+    private var id: URI? = null
+    private var additionalClaims: Map<String, Any> = emptyMap()
+
+    /**
+     * Sets the ID URI for the credential subject.
+     * @param id The unique identifier URI of the credential subject.
+     * @return Returns this builder to allow for chaining.
+     */
+    public fun id(id: URI?): Builder = apply { this.id = id }
+
+    /**
+     * Sets the additional claims for the credential subject.
+     * Additional claims provide more information about the credential subject.
+     * @param additionalClaims A map of claim names to claim values.
+     * @return Returns this builder to allow for chaining.
+     */
+    public fun additionalClaims(additionalClaims: Map<String, Any>): Builder =
+      apply { this.additionalClaims = additionalClaims }
+
+    /**
+     * Builds and returns the [CredentialSubject] object.
+     * @return The constructed [CredentialSubject] object.
+     * @throws IllegalStateException If the ID URI is not valid.
+     */
+    public fun build(): CredentialSubject {
+      require(id == null || id.toString().isNotBlank()) { "ID URI cannot be blank" }
+
+      return CredentialSubject(id, additionalClaims)
+    }
   }
 }
+
 
 /**
  * The [CredentialSchema] Represents the schema defining the structure of a credential.
  */
 public class CredentialSchema(
   public val id: String,
-  public val type: String? = null
+  public val type: String?
 ) {
-  init {
-    require(type == null || type.isNotBlank()) { "Type cannot be blank" }
+  /**
+   * Builder class for creating [CredentialSchema] instances.
+   */
+  public class Builder {
+    private var id: String? = null
+    private var type: String? = null
+
+    /**
+     * Sets the ID for the credential schema.
+     * @param id The unique identifier of the credential schema.
+     * @return Returns this builder to allow for chaining.
+     */
+    public fun id(id: String): Builder = apply { this.id = id }
+
+    /**
+     * Sets the type for the credential schema.
+     * @param type The type of the credential schema.
+     * @return Returns this builder to allow for chaining.
+     */
+    public fun type(type: String?): Builder = apply { this.type = type }
+
+    /**
+     * Builds and returns the [CredentialSchema] object.
+     * @return The constructed [CredentialSchema] object.
+     * @throws IllegalStateException If the id is not set.
+     */
+    public fun build(): CredentialSchema {
+      require(!id.isNullOrBlank()) { "ID cannot be blank" }
+      require(type == null || type!!.isNotBlank()) { "Type cannot be blank" }
+
+      return CredentialSchema(id!!, type)
+    }
   }
 }

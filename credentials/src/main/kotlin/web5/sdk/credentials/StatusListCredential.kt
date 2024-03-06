@@ -115,20 +115,19 @@ public object StatusListCredential {
       STATUS_PURPOSE to statusPurpose.toString().lowercase(),
       ENCODED_LIST to bitString)
 
-    val credSubject = CredentialSubject(
-      id = URI.create(statusListCredentialId),
-      additionalClaims = claims
-    )
+    val credSubject = CredentialSubject.Builder()
+      .id(URI.create(statusListCredentialId))
+      .additionalClaims(claims)
+      .build()
 
-    val vcDataModel = VcDataModel(
-      id = URI.create(statusListCredentialId),
-      context = mutableListOf(URI.create(DEFAULT_VC_CONTEXT),
-        URI.create(DEFAULT_STATUS_LIST_CONTEXT)),
-      type = mutableListOf(DEFAULT_VC_TYPE, DEFAULT_BITSTRING_STATUS_LIST_VC_TYPE),
-      issuer = URI.create(issuer),
-      issuanceDate = Date(),
-      credentialSubject = credSubject,
-    )
+    val vcDataModel = VcDataModel.Builder()
+      .id(URI.create(statusListCredentialId))
+      .context(mutableListOf(URI.create(DEFAULT_VC_CONTEXT), URI.create(DEFAULT_STATUS_LIST_CONTEXT)))
+      .type(mutableListOf(DEFAULT_VC_TYPE, DEFAULT_BITSTRING_STATUS_LIST_VC_TYPE))
+      .issuer(URI.create(issuer))
+      .issuanceDate(Date())
+      .credentialSubject(credSubject)
+      .build()
 
     return VerifiableCredential(vcDataModel)
   }

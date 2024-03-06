@@ -51,12 +51,13 @@ class StatusListCredentialTest {
     val issuerDid = DidKey.create(keyManager)
     val holderDid = DidKey.create(keyManager)
 
-    val credentialStatus = BitstringStatusListEntry(
-      id = URI.create("cred-with-status-id"),
-      statusPurpose = "revocation",
-      statusListIndex = "123",
-      statusListCredential = URI.create("https://example.com/credentials/status/3"),
-    )
+    val credentialStatus = BitstringStatusListEntry.Builder()
+      .id(URI.create("cred-with-status-id"))
+      .statusPurpose("revocation")
+      .statusListIndex("123")
+      .statusListCredential(URI.create("https://example.com/credentials/status/3"))
+      .build()
+
 
     val credWithCredStatus = VerifiableCredential.create(
       type = "StreetCred",
@@ -97,12 +98,12 @@ class StatusListCredentialTest {
     val issuerDid = DidKey.create(keyManager)
     val holderDid = DidKey.create(keyManager)
 
-    val credentialStatus1 = BitstringStatusListEntry(
-      id = URI.create("cred-with-status-id"),
-      statusPurpose = "revocation",
-      statusListIndex = "123",
-      statusListCredential = URI.create("https://example.com/credentials/status/3"),
-    )
+    val credentialStatus1 = BitstringStatusListEntry.Builder()
+      .id(URI.create("cred-with-status-id"))
+      .statusPurpose("revocation")
+      .statusListIndex("123")
+      .statusListCredential(URI.create("https://example.com/credentials/status/3"))
+      .build()
 
     val vc1 = VerifiableCredential.create(
       type = "StreetCred",
@@ -112,12 +113,12 @@ class StatusListCredentialTest {
       credentialStatus = credentialStatus1
     )
 
-    val credentialStatus2 = BitstringStatusListEntry(
-      id = URI.create("cred-with-status-id"),
-      statusPurpose = "revocation",
-      statusListIndex = "124",
-      statusListCredential = URI.create("https://example.com/credentials/status/3"),
-    )
+    val credentialStatus2 = BitstringStatusListEntry.Builder()
+      .id(URI.create("cred-with-status-id"))
+      .statusPurpose("revocation")
+      .statusListIndex("124")
+      .statusListCredential(URI.create("https://example.com/credentials/status/3"))
+      .build()
 
     val vc2 = VerifiableCredential.create(
       type = "StreetCred",
@@ -173,12 +174,12 @@ class StatusListCredentialTest {
     val issuerDid = DidKey.create(keyManager)
     val holderDid = DidKey.create(keyManager)
 
-    val credentialStatus1 = BitstringStatusListEntry(
-      id = URI.create("cred-with-status-id"),
-      statusPurpose = "revocation",
-      statusListIndex = "123",
-      statusListCredential = URI.create("https://example.com/credentials/status/3")
-    )
+    val credentialStatus1 = BitstringStatusListEntry.Builder()
+      .id(URI.create("cred-with-status-id"))
+      .statusPurpose("revocation")
+      .statusListIndex("123")
+      .statusListCredential(URI.create("https://example.com/credentials/status/3"))
+      .build()
 
     val vc1 = VerifiableCredential.create(
       type = "StreetCred",
@@ -188,12 +189,12 @@ class StatusListCredentialTest {
       credentialStatus = credentialStatus1
     )
 
-    val credentialStatus2 = BitstringStatusListEntry(
-      id = URI.create("cred-with-status-id"),
-      statusPurpose = "revocation",
-      statusListIndex = "123",
-      statusListCredential = URI.create("https://example.com/credentials/status/3")
-    )
+    val credentialStatus2 = BitstringStatusListEntry.Builder()
+      .id(URI.create("cred-with-status-id"))
+      .statusPurpose("revocation")
+      .statusListIndex("123")
+      .statusListCredential(URI.create("https://example.com/credentials/status/3"))
+      .build()
 
     val vc2 = VerifiableCredential.create(
       type = "StreetCred",
@@ -224,12 +225,13 @@ class StatusListCredentialTest {
     val issuerDid = DidKey.create(keyManager)
     val holderDid = DidKey.create(keyManager)
 
-    val credentialStatus1 = BitstringStatusListEntry(
-      id = URI.create("cred-with-status-id"),
-      statusPurpose = "revocation",
-      statusListIndex = "-1",
-      statusListCredential = URI.create("https://example.com/credentials/status/3"),
-    )
+    val credentialStatus1 = BitstringStatusListEntry.Builder()
+      .id(URI.create("cred-with-status-id"))
+      .statusPurpose("revocation")
+      .statusListIndex("-1")
+      .statusListCredential(URI.create("https://example.com/credentials/status/3"))
+      .build()
+
 
     val vc1 = VerifiableCredential.create(
       type = "StreetCred",
@@ -260,13 +262,12 @@ class StatusListCredentialTest {
     val issuerDid = DidKey.create(keyManager)
     val holderDid = DidKey.create(keyManager)
 
-    val credentialStatus1 = BitstringStatusListEntry(
-      id = URI.create("cred-with-status-id"),
-      statusPurpose = "revocation",
-      statusListIndex = Int.MAX_VALUE.toString(),
-      statusListCredential = URI.create("https://example.com/credentials/status/3")
-    )
-
+    val credentialStatus1 = BitstringStatusListEntry.Builder()
+      .id(URI.create("cred-with-status-id"))
+      .statusPurpose("revocation")
+      .statusListIndex(Int.MAX_VALUE.toString())
+      .statusListCredential(URI.create("https://example.com/credentials/status/3"))
+      .build()
 
     val vc1 = VerifiableCredential.create(
       type = "StreetCred",
@@ -297,12 +298,12 @@ class StatusListCredentialTest {
     val issuerDid = DidKey.create(keyManager)
     val holderDid = DidKey.create(keyManager)
 
-    val credentialStatus1 = BitstringStatusListEntry(
-      id = URI.create("cred-with-status-id"),
-      statusPurpose = "revocation",
-      statusListIndex = "123",
-      statusListCredential = URI.create("https://example.com/credentials/status/3"),
-    )
+    val credentialStatus1 = BitstringStatusListEntry.Builder()
+      .id(URI.create("cred-with-status-id"))
+      .statusPurpose("revocation")
+      .statusListIndex("123")
+      .statusListCredential(URI.create("https://example.com/credentials/status/3"))
+      .build()
 
     val vc1 = VerifiableCredential.create(
       type = "StreetCred",
@@ -312,12 +313,13 @@ class StatusListCredentialTest {
       credentialStatus = credentialStatus1
     )
 
-    val credentialStatus2 = BitstringStatusListEntry(
-      id = URI.create("cred-with-status-id"),
-      statusPurpose = "revocation",
-      statusListIndex = "124",
-      statusListCredential = URI.create("https://example.com/credentials/status/3"),
-    )
+    val credentialStatus2 = BitstringStatusListEntry.Builder()
+      .id(URI.create("cred-with-status-id"))
+      .statusPurpose("revocation")
+      .statusListIndex("124")
+      .statusListCredential(URI.create("https://example.com/credentials/status/3"))
+      .build()
+
 
     val vc2 = VerifiableCredential.create(
       type = "StreetCred",
@@ -327,12 +329,12 @@ class StatusListCredentialTest {
       credentialStatus2
     )
 
-    val credentialStatus3 = BitstringStatusListEntry(
-      id = URI.create("cred-with-status-id"),
-      statusPurpose = "revocation",
-      statusListIndex = "125",
-      statusListCredential = URI.create("https://example.com/credentials/status/3"),
-    )
+    val credentialStatus3 = BitstringStatusListEntry.Builder()
+      .id(URI.create("cred-with-status-id"))
+      .statusPurpose("revocation")
+      .statusListIndex("125")
+      .statusListCredential(URI.create("https://example.com/credentials/status/3"))
+      .build()
 
     val vc3 = VerifiableCredential.create(
       type = "StreetCred",
@@ -366,12 +368,12 @@ class StatusListCredentialTest {
     val issuerDid = DidKey.create(keyManager)
     val holderDid = DidKey.create(keyManager)
 
-    val credentialStatus1 = BitstringStatusListEntry(
-      id = URI.create("cred-with-status-id"),
-      statusPurpose = "revocation",
-      statusListIndex = "123",
-      statusListCredential = URI.create("https://example.com/credentials/status/3"),
-    )
+    val credentialStatus1 = BitstringStatusListEntry.Builder()
+      .id(URI.create("cred-with-status-id"))
+      .statusPurpose("revocation")
+      .statusListIndex("123")
+      .statusListCredential(URI.create("https://example.com/credentials/status/3"))
+      .build()
 
     val vc1 = VerifiableCredential.create(
       type = "StreetCred",
@@ -381,12 +383,12 @@ class StatusListCredentialTest {
       credentialStatus = credentialStatus1
     )
 
-    val credentialStatus2 = BitstringStatusListEntry(
-      id = URI.create("cred-with-status-id"),
-      statusPurpose = "revocation",
-      statusListIndex = "124",
-      statusListCredential = URI.create("https://example.com/credentials/status/3"),
-    )
+    val credentialStatus2 = BitstringStatusListEntry.Builder()
+      .id(URI.create("cred-with-status-id"))
+      .statusPurpose("revocation")
+      .statusListIndex("124")
+      .statusListCredential(URI.create("https://example.com/credentials/status/3"))
+      .build()
 
     val vc2 = VerifiableCredential.create(
       type = "StreetCred",
@@ -436,12 +438,12 @@ class StatusListCredentialTest {
     val issuerDid = DidKey.create(keyManager)
     val holderDid = DidKey.create(keyManager)
 
-    val credentialStatus1 = BitstringStatusListEntry(
-      id = URI.create("cred-with-status-id"),
-      statusPurpose = "revocation",
-      statusListIndex = "123",
-      statusListCredential = URI.create("https://example.com/credentials/status/3"),
-    )
+    val credentialStatus1 = BitstringStatusListEntry.Builder()
+      .id(URI.create("cred-with-status-id"))
+      .statusPurpose("revocation")
+      .statusListIndex("123")
+      .statusListCredential(URI.create("https://example.com/credentials/status/3"))
+      .build()
 
     val credToValidate = VerifiableCredential.create(
       type = "StreetCred",

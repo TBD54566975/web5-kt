@@ -132,26 +132,26 @@ public class VerifiableCredential internal constructor(public val vcDataModel: V
         false -> throw IllegalArgumentException("expected data to be parseable into a JSON object")
       }
 
-      val credentialSubject = CredentialSubject(
-        id = URI.create(subject),
-        additionalClaims = mapData
-      )
+      val credentialSubject = CredentialSubject.Builder()
+        .id(URI.create(subject))
+        .additionalClaims(mapData)
+        .build()
 
       val contexts = mutableListOf(URI.create(DEFAULT_VC_CONTEXT))
       if (credentialStatus != null) {
         contexts.add(URI.create(DEFAULT_STATUS_LIST_CONTEXT))
       }
 
-      val vcDataModel = VcDataModel(
-        id = URI.create("urn:uuid:${UUID.randomUUID()}"),
-        context = contexts,
-        type = mutableListOf(DEFAULT_VC_TYPE, type),
-        issuer = URI.create(issuer),
-        issuanceDate = issuanceDate,
-        expirationDate = expirationDate,
-        credentialSubject = credentialSubject,
-        credentialStatus = credentialStatus
-      )
+      val vcDataModel = VcDataModel.Builder()
+        .id(URI.create("urn:uuid:${UUID.randomUUID()}"))
+        .context(contexts)
+        .type(mutableListOf(DEFAULT_VC_TYPE, type))
+        .issuer(URI.create(issuer))
+        .issuanceDate(issuanceDate)
+        .expirationDate(expirationDate)
+        .credentialSubject(credentialSubject)
+        .credentialStatus(credentialStatus)
+        .build()
 
       // This should be a no-op just to make sure we've set all the correct fields.
       validateDataModel(vcDataModel.toMap())
