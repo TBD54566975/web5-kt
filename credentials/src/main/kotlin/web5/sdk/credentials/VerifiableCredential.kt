@@ -11,11 +11,11 @@ import com.nfeld.jsonpathkt.extension.read
 import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jwt.JWTParser
 import com.nimbusds.jwt.SignedJWT
-import web5.sdk.credentials.model.BitstringStatusListEntry
 import web5.sdk.credentials.model.CredentialSubject
 import web5.sdk.credentials.model.DEFAULT_STATUS_LIST_CONTEXT
 import web5.sdk.credentials.model.DEFAULT_VC_CONTEXT
 import web5.sdk.credentials.model.DEFAULT_VC_TYPE
+import web5.sdk.credentials.model.StatusList2021Entry
 import web5.sdk.credentials.model.VcDataModel
 import web5.sdk.credentials.util.JwtUtil
 import web5.sdk.dids.Did
@@ -121,7 +121,7 @@ public class VerifiableCredential internal constructor(public val vcDataModel: V
       issuer: String,
       subject: String,
       data: T,
-      credentialStatus: BitstringStatusListEntry? = null,
+      credentialStatus: StatusList2021Entry? = null,
       issuanceDate: Date = Date(),
       expirationDate: Date? = null
     ): VerifiableCredential {

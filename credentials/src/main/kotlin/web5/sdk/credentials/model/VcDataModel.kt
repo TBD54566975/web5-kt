@@ -101,7 +101,7 @@ public class VcDataModel(
   public val expirationDate: Date?,
   public val credentialSubject: CredentialSubject,
   public val credentialSchema: CredentialSchema?,
-  public val credentialStatus: BitstringStatusListEntry?
+  public val credentialStatus: StatusList2021Entry?
 ) {
   /**
    * Builder class for creating [VcDataModel] instances.
@@ -115,7 +115,7 @@ public class VcDataModel(
     private var expirationDate: Date? = null
     private lateinit var credentialSubject: CredentialSubject
     private var credentialSchema: CredentialSchema? = null
-    private var credentialStatus: BitstringStatusListEntry? = null
+    private var credentialStatus: StatusList2021Entry? = null
 
     /**
      * Sets the ID URI for the [VcDataModel].
@@ -180,7 +180,7 @@ public class VcDataModel(
      * @param credentialStatus The status of the credential.
      * @return Returns this builder to allow for chaining.
      */
-    public fun credentialStatus(credentialStatus: BitstringStatusListEntry?): Builder =
+    public fun credentialStatus(credentialStatus: StatusList2021Entry?): Builder =
       apply { this.credentialStatus = credentialStatus }
 
     /**

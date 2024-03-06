@@ -8,7 +8,7 @@ import io.ktor.http.fullPath
 import io.ktor.http.headersOf
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.assertThrows
-import web5.sdk.credentials.model.BitstringStatusListEntry
+import web5.sdk.credentials.model.StatusList2021Entry
 import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.dids.methods.key.DidKey
 import java.io.File
@@ -35,11 +35,11 @@ class StatusListCredentialTest {
     assertEquals(specExampleRevocableVc.subject, "did:example:6789")
     assertEquals(specExampleRevocableVc.vcDataModel.credentialSubject.additionalClaims["type"], "Person")
 
-    val credentialStatus: BitstringStatusListEntry =
-      BitstringStatusListEntry.fromJsonObject(specExampleRevocableVc.vcDataModel.credentialStatus!!.toJson())
+    val credentialStatus: StatusList2021Entry =
+      StatusList2021Entry.fromJsonObject(specExampleRevocableVc.vcDataModel.credentialStatus!!.toJson())
 
     assertEquals(credentialStatus.id.toString(), "https://example.com/credentials/status/3#94567")
-    assertEquals(credentialStatus.toMap()["type"].toString(), "BitStringStatusListEntry")
+    assertEquals(credentialStatus.toMap()["type"].toString(), "StatusList2021Entry")
     assertEquals(credentialStatus.statusPurpose.toString(), StatusPurpose.REVOCATION.toString().lowercase())
     assertEquals(credentialStatus.statusListIndex, "94567")
     assertEquals(credentialStatus.statusListCredential.toString(), "https://example.com/credentials/status/3")
@@ -51,7 +51,7 @@ class StatusListCredentialTest {
     val issuerDid = DidKey.create(keyManager)
     val holderDid = DidKey.create(keyManager)
 
-    val credentialStatus = BitstringStatusListEntry.Builder()
+    val credentialStatus = StatusList2021Entry.Builder()
       .id(URI.create("cred-with-status-id"))
       .statusPurpose("revocation")
       .statusListIndex("123")
@@ -82,11 +82,12 @@ class StatusListCredentialTest {
     assertNotNull(credWithCredStatus.vcDataModel.credentialStatus)
     assertEquals(credWithCredStatus.vcDataModel.credentialSubject.additionalClaims["localRespect"], "high")
 
-    val credStatus: BitstringStatusListEntry =
-      BitstringStatusListEntry.fromJsonObject(credWithCredStatus.vcDataModel.credentialStatus!!.toJson())
+    val credStatus: StatusList2021Entry =
+      StatusList2021Entry.fromJsonObject(credWithCredStatus.vcDataModel.credentialStatus!!.toJson())
 
     assertEquals(credStatus.id.toString(), "cred-with-status-id")
-    assertEquals(credStatus.toMap()["type"], "BitstringStatusListEntry")
+    assertEquals(credStatus.toMap()["type"], "StatusList2021Entry" +
+      "")
     assertEquals(credStatus.statusPurpose.toString(), StatusPurpose.REVOCATION.toString().lowercase())
     assertEquals(credStatus.statusListIndex, "123")
     assertEquals(credStatus.statusListCredential.toString(), "https://example.com/credentials/status/3")
@@ -98,7 +99,7 @@ class StatusListCredentialTest {
     val issuerDid = DidKey.create(keyManager)
     val holderDid = DidKey.create(keyManager)
 
-    val credentialStatus1 = BitstringStatusListEntry.Builder()
+    val credentialStatus1 = StatusList2021Entry.Builder()
       .id(URI.create("cred-with-status-id"))
       .statusPurpose("revocation")
       .statusListIndex("123")
@@ -113,7 +114,7 @@ class StatusListCredentialTest {
       credentialStatus = credentialStatus1
     )
 
-    val credentialStatus2 = BitstringStatusListEntry.Builder()
+    val credentialStatus2 = StatusList2021Entry.Builder()
       .id(URI.create("cred-with-status-id"))
       .statusPurpose("revocation")
       .statusListIndex("124")
@@ -148,13 +149,13 @@ class StatusListCredentialTest {
       statusListCredential.vcDataModel.type.containsAll(
         listOf(
           "VerifiableCredential",
-          "BitstringStatusListCredential"
+          "StatusList2021"
         )
       )
     )
     assertEquals(statusListCredential.subject, "revocation-id")
     assertEquals(statusListCredential.vcDataModel.credentialSubject
-      .additionalClaims["type"], "BitstringStatusListEntry")
+      .additionalClaims["type"], "StatusList2021Entry")
     assertEquals(
       "revocation",
       statusListCredential.vcDataModel.credentialSubject.additionalClaims["statusPurpose"] as? String?
@@ -174,7 +175,7 @@ class StatusListCredentialTest {
     val issuerDid = DidKey.create(keyManager)
     val holderDid = DidKey.create(keyManager)
 
-    val credentialStatus1 = BitstringStatusListEntry.Builder()
+    val credentialStatus1 = StatusList2021Entry.Builder()
       .id(URI.create("cred-with-status-id"))
       .statusPurpose("revocation")
       .statusListIndex("123")
@@ -189,7 +190,7 @@ class StatusListCredentialTest {
       credentialStatus = credentialStatus1
     )
 
-    val credentialStatus2 = BitstringStatusListEntry.Builder()
+    val credentialStatus2 = StatusList2021Entry.Builder()
       .id(URI.create("cred-with-status-id"))
       .statusPurpose("revocation")
       .statusListIndex("123")
@@ -225,7 +226,7 @@ class StatusListCredentialTest {
     val issuerDid = DidKey.create(keyManager)
     val holderDid = DidKey.create(keyManager)
 
-    val credentialStatus1 = BitstringStatusListEntry.Builder()
+    val credentialStatus1 = StatusList2021Entry.Builder()
       .id(URI.create("cred-with-status-id"))
       .statusPurpose("revocation")
       .statusListIndex("-1")
@@ -262,7 +263,7 @@ class StatusListCredentialTest {
     val issuerDid = DidKey.create(keyManager)
     val holderDid = DidKey.create(keyManager)
 
-    val credentialStatus1 = BitstringStatusListEntry.Builder()
+    val credentialStatus1 = StatusList2021Entry.Builder()
       .id(URI.create("cred-with-status-id"))
       .statusPurpose("revocation")
       .statusListIndex(Int.MAX_VALUE.toString())
@@ -298,7 +299,7 @@ class StatusListCredentialTest {
     val issuerDid = DidKey.create(keyManager)
     val holderDid = DidKey.create(keyManager)
 
-    val credentialStatus1 = BitstringStatusListEntry.Builder()
+    val credentialStatus1 = StatusList2021Entry.Builder()
       .id(URI.create("cred-with-status-id"))
       .statusPurpose("revocation")
       .statusListIndex("123")
@@ -313,7 +314,7 @@ class StatusListCredentialTest {
       credentialStatus = credentialStatus1
     )
 
-    val credentialStatus2 = BitstringStatusListEntry.Builder()
+    val credentialStatus2 = StatusList2021Entry.Builder()
       .id(URI.create("cred-with-status-id"))
       .statusPurpose("revocation")
       .statusListIndex("124")
@@ -329,7 +330,7 @@ class StatusListCredentialTest {
       credentialStatus2
     )
 
-    val credentialStatus3 = BitstringStatusListEntry.Builder()
+    val credentialStatus3 = StatusList2021Entry.Builder()
       .id(URI.create("cred-with-status-id"))
       .statusPurpose("revocation")
       .statusListIndex("125")
@@ -368,7 +369,7 @@ class StatusListCredentialTest {
     val issuerDid = DidKey.create(keyManager)
     val holderDid = DidKey.create(keyManager)
 
-    val credentialStatus1 = BitstringStatusListEntry.Builder()
+    val credentialStatus1 = StatusList2021Entry.Builder()
       .id(URI.create("cred-with-status-id"))
       .statusPurpose("revocation")
       .statusListIndex("123")
@@ -383,7 +384,7 @@ class StatusListCredentialTest {
       credentialStatus = credentialStatus1
     )
 
-    val credentialStatus2 = BitstringStatusListEntry.Builder()
+    val credentialStatus2 = StatusList2021Entry.Builder()
       .id(URI.create("cred-with-status-id"))
       .statusPurpose("revocation")
       .statusListIndex("124")
@@ -438,7 +439,7 @@ class StatusListCredentialTest {
     val issuerDid = DidKey.create(keyManager)
     val holderDid = DidKey.create(keyManager)
 
-    val credentialStatus1 = BitstringStatusListEntry.Builder()
+    val credentialStatus1 = StatusList2021Entry.Builder()
       .id(URI.create("cred-with-status-id"))
       .statusPurpose("revocation")
       .statusListIndex("123")

@@ -12,13 +12,13 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.http.isSuccess
 import io.ktor.serialization.jackson.jackson
 import kotlinx.coroutines.runBlocking
-import web5.sdk.credentials.model.BitstringStatusListEntry
 import web5.sdk.credentials.model.CredentialSubject
-import web5.sdk.credentials.model.DEFAULT_BITSTRING_STATUS_LIST_ENTRY_TYPE
-import web5.sdk.credentials.model.DEFAULT_BITSTRING_STATUS_LIST_VC_TYPE
+import web5.sdk.credentials.model.DEFAULT_STATUS_LIST_2021_ENTRY_TYPE
+import web5.sdk.credentials.model.DEFAULT_STATUS_LIST_2021_VC_TYPE
 import web5.sdk.credentials.model.DEFAULT_STATUS_LIST_CONTEXT
 import web5.sdk.credentials.model.DEFAULT_VC_CONTEXT
 import web5.sdk.credentials.model.DEFAULT_VC_TYPE
+import web5.sdk.credentials.model.StatusList2021Entry
 import web5.sdk.credentials.model.VcDataModel
 import web5.sdk.dids.DidResolvers
 import java.io.ByteArrayInputStream
@@ -27,7 +27,6 @@ import java.net.URI
 import java.util.Base64
 import java.util.BitSet
 import java.util.Date
-import java.util.UUID
 import java.util.zip.GZIPInputStream
 import java.util.zip.GZIPOutputStream
 
@@ -111,7 +110,7 @@ public object StatusListCredential {
       throw IllegalArgumentException("issuer: $issuer not resolvable", e)
     }
 
-    val claims = mapOf(TYPE to DEFAULT_BITSTRING_STATUS_LIST_ENTRY_TYPE,
+    val claims = mapOf(TYPE to DEFAULT_STATUS_LIST_2021_ENTRY_TYPE,
       STATUS_PURPOSE to statusPurpose.toString().lowercase(),
       ENCODED_LIST to bitString)
 
@@ -123,7 +122,7 @@ public object StatusListCredential {
     val vcDataModel = VcDataModel.Builder()
       .id(URI.create(statusListCredentialId))
       .context(mutableListOf(URI.create(DEFAULT_VC_CONTEXT), URI.create(DEFAULT_STATUS_LIST_CONTEXT)))
-      .type(mutableListOf(DEFAULT_VC_TYPE, DEFAULT_BITSTRING_STATUS_LIST_VC_TYPE))
+      .type(mutableListOf(DEFAULT_VC_TYPE, DEFAULT_STATUS_LIST_2021_VC_TYPE))
       .issuer(URI.create(issuer))
       .issuanceDate(Date())
       .credentialSubject(credSubject)
@@ -150,8 +149,8 @@ public object StatusListCredential {
     credentialToValidate: VerifiableCredential,
     statusListCredential: VerifiableCredential
   ): Boolean {
-    val statusListEntryValue: BitstringStatusListEntry =
-      BitstringStatusListEntry.fromJsonObject(credentialToValidate.vcDataModel.credentialStatus!!.toJson())
+    val statusListEntryValue: StatusList2021Entry =
+      StatusList2021Entry.fromJsonObject(credentialToValidate.vcDataModel.credentialStatus!!.toJson())
 
     val credentialSubject = statusListCredential.vcDataModel.credentialSubject
 
@@ -212,8 +211,8 @@ public object StatusListCredential {
       val client = httpClient ?: defaultHttpClient().also { isDefaultClient = true }
 
       try {
-        val statusListEntryValue: BitstringStatusListEntry =
-          BitstringStatusListEntry.fromJsonObject(credentialToValidate.vcDataModel.credentialStatus!!.toJson())
+        val statusListEntryValue: StatusList2021Entry =
+          StatusList2021Entry.fromJsonObject(credentialToValidate.vcDataModel.credentialStatus!!.toJson())
         val statusListCredential =
           client.fetchStatusListCredential(statusListEntryValue.statusListCredential.toString())
 
@@ -270,8 +269,8 @@ public object StatusListCredential {
     for (vc in credentials) {
       requireNotNull(vc.vcDataModel.credentialStatus) { "no credential status found in credential" }
 
-      val statusListEntry: BitstringStatusListEntry =
-        BitstringStatusListEntry.fromJsonObject(vc.vcDataModel.credentialStatus.toJson())
+      val statusListEntry: StatusList2021Entry =
+        StatusList2021Entry.fromJsonObject(vc.vcDataModel.credentialStatus.toJson())
 
       require(statusListEntry.statusPurpose == statusPurpose.toString().lowercase()) {
         "status purpose mismatch"
