@@ -409,7 +409,7 @@ class StatusListCredentialTest {
         addHandler { request ->
           when (request.url.fullPath) {
             "/credentials/status/3" -> {
-              val responseBody = slcJwt
+              val responseBody = slcJwt.verifiableCredentialJwt
               respond(responseBody, headers = headersOf("Content-Type", "application/json"))
             }
 

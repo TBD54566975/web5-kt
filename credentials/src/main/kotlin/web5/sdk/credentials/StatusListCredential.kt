@@ -229,7 +229,7 @@ public object StatusListCredential {
       val response: HttpResponse = this.get(url)
       if (response.status.isSuccess()) {
         val body = response.bodyAsText()
-        return VerifiableCredential.parseJwt(body)
+        return VerifiableCredentialJwt(body).verifyAndParse()
       } else {
         throw ClientRequestException(
           response,
