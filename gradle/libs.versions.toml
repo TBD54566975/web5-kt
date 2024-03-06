@@ -24,7 +24,7 @@
 ###
 
 [versions]
-com_amazonaws_aws_kms = "1.12.538"
+com_amazonaws_aws_kms = "1.12.668"
 com_danubetech_verifiable-credentials = "1.6.0"
 com_fasterxml_jackson_module = "2.14.2"
 com_github_multiformats = "1.1.0"
