@@ -111,28 +111,39 @@ To build and run test just run:
 gradle build --console=rich
 ```
 
-## Releasing
+## Release Guidelines
 
-In order to release to Central Repository, simply cut a new release tag in the Github UI. There is a configured [Github
-Action](./.github/workflows/publish.yml) that will automatically publish the release to Central Repository. You can cut
-the release by going to the [create a new releases page](https://github.com/TBD54566975/web5-kt/releases/new). When
-creating a new tag, the name should be in the format `vX.Y.Z`. Please note that once a release is made, it is immutable
-and cannot be deleted.
+### Pre-releases
 
-### Manual Release
+In Kotlin we use the SNAPSHOT convention to build and publish a pre-release package that can be consumed for preview/tests purposes.
 
-If you want to do a manual release, you have two options:
+To kick that off:
 
-1. Dispatch the [publish workflow](./.github/workflows/publish.yml) workflow from the Github UI. Go to the [publish
-   Actions](https://github.com/TBD54566975/web5-kt/actions) > "Run workflow".
-2. Setup your local environment to publish to Central Repository. This is more involved. You'll need to:
-1. Define all the environment variables described in the [publish workflow](./.github/workflows/publish.yml) file. You
-   can find the values in the [secrets and variable](https://github.com/TBD54566975/web5-kt/settings/secrets/actions)
-   page.
-2. Run the following command (you can change `samplebranch` to any branch name):
-   ```bash
-   gradle -Pversion=samplebranch-SNAPSHOT publishToSonatype closeAndReleaseSonatypeStagingRepository
-   ```
+1. Open the [Publish workflow](https://github.com/TBD54566975/web5-kt/actions/workflows/publish.yml), press the **Run workflow button** selecting the branch you want to generate the snapshot from.
+
+2. In the version field, insert the current version, a short meaningful identifier and the `-SNAPSHOT` prefix, ie:
+
+   - 0.11.0.pr123-SNAPSHOT
+   - 0.11.0.shortsha-SNAPSHOT
+   - 0.11.0.fixsomething-SNAPSHOT
+
+3. Run workflow!
+
+**DON'T FORGET THE `-SNAPSHOT` SUFFIX**, otherwise it will generate publish a new official release to maven registry.
+
+### Releasing New Versions
+
+To release a new version, just execute the following steps:
+
+1. Open the [Publish workflow](https://github.com/TBD54566975/tbdex-kt/actions/workflows/publish.yaml), press the **Run workflow button** and leave the main branch selected (unless its a rare case where you don't want to build the main branch for the release).
+
+2. In the version field, insert the new version to be released, ie: 0.12.3-beta
+
+3. Run workflow! The package will be built and **published to maven central**, **docs will be published** (see below) and **the GitHub release will be automatically generated**!
+
+## Publishing Docs
+
+API reference documentation is automatically updated are available at [https://tbd54566975.github.io/web5-kt/docs/htmlMultiModule/](https://tbd54566975.github.io/web5-kt/docs/htmlMultiModule/) following each automatically generated release.
 
 ## Working with the `web5-spec` submodule
 
