@@ -60,3 +60,11 @@ public interface KeyManager {
    */
   public fun getDeterministicAlias(publicKey: JWK): String
 }
+
+public interface KeyExporter {
+  public fun exportKey(keyId: String): JWK
+}
+
+public interface KeyImporter {
+  public fun importKey(jwk: JWK): String
+}
