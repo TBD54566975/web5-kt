@@ -5,13 +5,14 @@ import com.nimbusds.jose.jwk.KeyUse
 import web5.sdk.common.Convert
 import web5.sdk.common.EncodingFormat
 import web5.sdk.crypto.AlgorithmId
+import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.crypto.KeyManager
 import web5.sdk.dids.CreateDidOptions
-import web5.sdk.dids.ChangemeDid
 import web5.sdk.dids.DidResolutionMetadata
 import web5.sdk.dids.DidResolutionResult
 import web5.sdk.dids.ResolutionError
 import web5.sdk.dids.ResolveDidOptions
+import web5.sdk.dids.did.BearerDID
 import web5.sdk.dids.didcore.Did
 import web5.sdk.dids.didcore.DIDDocument
 import web5.sdk.dids.didcore.Purpose
@@ -33,8 +34,13 @@ import java.text.ParseException
  * ```
  */
 public class CreateDidJwkOptions(
-  public val algorithmId: AlgorithmId = AlgorithmId.secp256k1,
+  public var keyManager: KeyManager = InMemoryKeyManager(),
+  public var algorithmId: AlgorithmId = AlgorithmId.Ed25519,
 ) : CreateDidOptions
+
+public fun interface CreateOption {
+  public fun apply(options: CreateDidJwkOptions)
+}
 
 /**
  * Provides a specific implementation for creating and resolving "did:jwk" method Decentralized Identifiers (DIDs).
@@ -45,11 +51,12 @@ public class CreateDidJwkOptions(
  * Further specifics and technical details are outlined in [the DID Jwk Spec](https://example.org/did-method-jwk/).
  *
  * @property uri The URI of the "did:jwk" which conforms to the DID standard.
- * @property keyManager A [KeyManager] instance utilized to manage the cryptographic keys associated with the DID.
+ * @property keyManager A [keyManager] instance utilized to manage the cryptographic keys associated with the DID.
  *
  * @constructor Initializes a new instance of [DidJwk] with the provided [uri] and [keyManager].
  */
-public class DidJwk(uri: String, keyManager: KeyManager) : ChangemeDid(uri, keyManager) {
+public class DidJwk(public val uri: String, public val keyManager: KeyManager) {
+
   /**
    * Resolves the current instance's [uri] to a [DidResolutionResult], which contains the DID Document
    * and possible related metadata.
@@ -62,35 +69,47 @@ public class DidJwk(uri: String, keyManager: KeyManager) : ChangemeDid(uri, keyM
     return resolve(this.uri, null)
   }
 
+  // todo these are in go impl but not sure what they're used for
+  public fun keyManager(keyManager: KeyManager): CreateOption = CreateOption { options ->
+    options.keyManager = keyManager
+  }
+
+  public fun algorithmId(algorithmId: AlgorithmId): CreateOption = CreateOption { options ->
+    options.algorithmId = algorithmId
+  }
+
   public companion object {
     public const val methodName: String = "jwk"
 
     /**
      * Creates a new "did:jwk" DID, derived from a public key, and stores the associated private key in the
-     * provided [KeyManager].
+     * provided [keyManager].
      *
      * The method-specific identifier of a "did:jwk" DID is a base64url encoded json web key serialized as a UTF-8
      * string.
      *
      * **Note**: Defaults to ES256K if no options are provided
      *
-     * @param keyManager A [KeyManager] instance where the new key will be stored.
+     * @param keyManager A [keyManager] instance where the new key will be stored.
      * @param options Optional parameters ([CreateDidJwkOptions]) to specify algorithmId during key creation.
      * @return A [DidJwk] instance representing the newly created "did:jwk" DID.
      *
      * @throws UnsupportedOperationException if the specified curve is not supported.
      */
-    public fun create(keyManager: KeyManager, options: CreateDidJwkOptions?): DidJwk {
+    public fun create(keyManager: KeyManager, options: CreateDidJwkOptions?): BearerDID {
       val opts = options ?: CreateDidJwkOptions()
 
       val keyAlias = keyManager.generatePrivateKey(opts.algorithmId)
-      val publicKey = keyManager.getPublicKey(keyAlias)
+      val publicKeyJwk = keyManager.getPublicKey(keyAlias)
 
-      val base64Encoded = Convert(publicKey.toJSONString()).toBase64Url(padding = false)
+      val base64Encoded = Convert(publicKeyJwk.toJSONString()).toBase64Url(padding = false)
 
-      val did = "did:jwk:$base64Encoded"
+      val didUri = "did:jwk:$base64Encoded"
 
-      return DidJwk(did, keyManager)
+      val did = Did(method = methodName, uri = didUri, url = didUri, id = base64Encoded)
+
+      return BearerDID(did, keyManager, createDocument(did, publicKeyJwk))
+
     }
 
     /**
@@ -142,18 +161,26 @@ public class DidJwk(uri: String, keyManager: KeyManager) : ChangemeDid(uri, keyM
         throw IllegalArgumentException("decoded jwk value cannot be a private key")
       }
 
-      val verificationMethodId = "${parsedDid.uri}#0"
+      val didDocument = createDocument(parsedDid, publicKeyJwk)
+
+      return DidResolutionResult(didDocument = didDocument, context = "https://w3id.org/did-resolution/v1")
+    }
+
+    private fun createDocument(did: Did, publicKeyJwk: JWK): DIDDocument {
+      val verificationMethodId = "${did.uri}#0"
       val verificationMethod = VerificationMethod.Builder()
         .id(verificationMethodId)
         .publicKeyJwk(publicKeyJwk)
-        .controller(did)
-        .type("JsonWebKey")
+        .controller(did.url)
+        .type("JsonWebKey") // todo go impl says JsonWebKey2020 but opting for the new name
         .build()
 
       val didDocumentBuilder = DIDDocument.Builder()
         .context(listOf("https://www.w3.org/ns/did/v1"))
-        .id(did)
+        .id(did.url)
 
+      // todo noticed that this was already in kotlin impl of building did doc
+      // but it's not in go impl?
       if (publicKeyJwk.keyUse != KeyUse.ENCRYPTION) {
         didDocumentBuilder
           .verificationMethodForPurposes(
@@ -170,9 +197,7 @@ public class DidJwk(uri: String, keyManager: KeyManager) : ChangemeDid(uri, keyM
       if (publicKeyJwk.keyUse != KeyUse.SIGNATURE) {
         didDocumentBuilder.verificationMethodForPurposes(verificationMethod, listOf(Purpose.KeyAgreement))
       }
-      val didDocument = didDocumentBuilder.build()
-
-      return DidResolutionResult(didDocument = didDocument, context = "https://w3id.org/did-resolution/v1")
+      return didDocumentBuilder.build()
     }
 
   }
