@@ -20,7 +20,6 @@ import web5.sdk.crypto.KeyManager
 import web5.sdk.crypto.Secp256k1
 import web5.sdk.dids.CreateDidOptions
 import web5.sdk.dids.ChangemeDid
-import web5.sdk.dids.DidMethod
 import web5.sdk.dids.DidResolutionResult
 import web5.sdk.dids.ResolutionError
 import web5.sdk.dids.ResolveDidOptions
@@ -35,7 +34,6 @@ import web5.sdk.dids.exceptions.InvalidIdentifierSizeException
 import web5.sdk.dids.exceptions.InvalidMethodNameException
 import web5.sdk.dids.exceptions.PkarrRecordNotFoundException
 import web5.sdk.dids.exceptions.PublicKeyJwkMissingException
-import web5.sdk.dids.validateKeyMaterialInsideKeyManager
 
 /**
  * Configuration for the [DidDhtApi].
@@ -106,13 +104,13 @@ private val logger = KotlinLogging.logger {}
 /**
  * Base class for managing DID DHT operations. Uses the given [DidDhtConfiguration].
  */
-public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<DidDht, CreateDidDhtOptions> {
+public sealed class DidDhtApi(configuration: DidDhtConfiguration) {
 
   private val engine: HttpClientEngine = configuration.engine
   private val dhtClient = DhtClient(configuration.gateway, engine)
   private val ttl: Long = 7200
 
-  override val methodName: String = "dht"
+  public val methodName: String = "dht"
 
   /**
    * Creates a new "did:dht" DID, derived from an initial identity key, and stores the associated private key in the
@@ -127,7 +125,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
    * publishing during creation.
    * @return A [DidDht] instance representing the newly created "did:dht" DID.
    */
-  override fun create(keyManager: KeyManager, options: CreateDidDhtOptions?): DidDht {
+  public fun create(keyManager: KeyManager, options: CreateDidDhtOptions?): DidDht {
     // TODO(gabe): enforce that provided keys are of supported types according to the did:dht spec
     val opts = options ?: CreateDidDhtOptions()
 
@@ -213,7 +211,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
    * @return A [DidResolutionResult] instance containing the DID Document and related context, including types
    * as part of the [DIDDocumentMetadata], if available.
    */
-  override fun resolve(did: String, options: ResolveDidOptions?): DidResolutionResult {
+  public fun resolve(did: String, options: ResolveDidOptions?): DidResolutionResult {
     return try {
       resolveInternal(did)
     } catch (e: Exception) {
@@ -289,12 +287,6 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
     val publicKeyJwk = didDocument.verificationMethod?.first()?.publicKeyJwk
       ?: throw PublicKeyJwkMissingException("publicKeyJwk is null")
     return publicKeyJwk.keyID
-  }
-
-  override fun load(uri: String, keyManager: KeyManager): DidDht {
-    validateKeyMaterialInsideKeyManager(uri, keyManager)
-    validateIdentityKey(uri, keyManager)
-    return DidDht(uri, keyManager, null, this)
   }
 
   internal fun validateIdentityKey(did: String, keyManager: KeyManager) {

@@ -8,7 +8,6 @@ import web5.sdk.crypto.AlgorithmId
 import web5.sdk.crypto.KeyManager
 import web5.sdk.dids.CreateDidOptions
 import web5.sdk.dids.ChangemeDid
-import web5.sdk.dids.DidMethod
 import web5.sdk.dids.DidResolutionMetadata
 import web5.sdk.dids.DidResolutionResult
 import web5.sdk.dids.ResolutionError
@@ -18,7 +17,6 @@ import web5.sdk.dids.didcore.DIDDocument
 import web5.sdk.dids.didcore.Purpose
 import web5.sdk.dids.didcore.VerificationMethod
 import web5.sdk.dids.exceptions.ParserException
-import web5.sdk.dids.validateKeyMaterialInsideKeyManager
 import java.text.ParseException
 
 /**
@@ -61,11 +59,11 @@ public class DidJwk(uri: String, keyManager: KeyManager) : ChangemeDid(uri, keyM
    * @throws IllegalArgumentException if the provided DID does not conform to the "did:jwk" method.
    */
   public fun resolve(): DidResolutionResult {
-    return resolve(this.uri)
+    return resolve(this.uri, null)
   }
 
-  public companion object : DidMethod<DidJwk, CreateDidJwkOptions> {
-    override val methodName: String = "jwk"
+  public companion object {
+    public const val methodName: String = "jwk"
 
     /**
      * Creates a new "did:jwk" DID, derived from a public key, and stores the associated private key in the
@@ -82,7 +80,7 @@ public class DidJwk(uri: String, keyManager: KeyManager) : ChangemeDid(uri, keyM
      *
      * @throws UnsupportedOperationException if the specified curve is not supported.
      */
-    override fun create(keyManager: KeyManager, options: CreateDidJwkOptions?): DidJwk {
+    public fun create(keyManager: KeyManager, options: CreateDidJwkOptions?): DidJwk {
       val opts = options ?: CreateDidJwkOptions()
 
       val keyAlias = keyManager.generatePrivateKey(opts.algorithmId)
@@ -106,7 +104,7 @@ public class DidJwk(uri: String, keyManager: KeyManager) : ChangemeDid(uri, keyM
      *
      * @throws IllegalArgumentException if the provided DID does not conform to the "did:jwk" method.
      */
-    override fun resolve(did: String, options: ResolveDidOptions?): DidResolutionResult {
+    public fun resolve(did: String, options: ResolveDidOptions?): DidResolutionResult {
       val parsedDid = try {
         Did.parse(did)
       } catch (_: ParserException) {
@@ -177,20 +175,5 @@ public class DidJwk(uri: String, keyManager: KeyManager) : ChangemeDid(uri, keyM
       return DidResolutionResult(didDocument = didDocument, context = "https://w3id.org/did-resolution/v1")
     }
 
-
-    /**
-     * Instantiates a [DidJwk] instance from [uri] (which has to start with "did:jwk:"), and validates that the
-     * associated key material exists in the provided [keyManager].
-     *
-     * ### Usage Example:
-     * ```kotlin
-     * val keyManager = InMemoryKeyManager()
-     * val did = DidJwk.load("did:jwk:example", keyManager)
-     * ```
-     */
-    override fun load(uri: String, keyManager: KeyManager): DidJwk {
-      validateKeyMaterialInsideKeyManager(uri, keyManager)
-      return DidJwk(uri, keyManager)
-    }
   }
 }

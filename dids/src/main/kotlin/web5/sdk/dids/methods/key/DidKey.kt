@@ -8,14 +8,12 @@ import web5.sdk.crypto.KeyManager
 import web5.sdk.crypto.Secp256k1
 import web5.sdk.dids.CreateDidOptions
 import web5.sdk.dids.ChangemeDid
-import web5.sdk.dids.DidMethod
 import web5.sdk.dids.DidResolutionResult
 import web5.sdk.dids.ResolveDidOptions
 import web5.sdk.dids.didcore.Did
 import web5.sdk.dids.didcore.DIDDocument
 import web5.sdk.dids.didcore.Purpose
 import web5.sdk.dids.didcore.VerificationMethod
-import web5.sdk.dids.validateKeyMaterialInsideKeyManager
 
 /**
  * Specifies options for creating a new "did:key" Decentralized Identifier (DID).
@@ -57,11 +55,11 @@ public class DidKey(uri: String, keyManager: KeyManager) : ChangemeDid(uri, keyM
    * @throws IllegalArgumentException if the provided DID does not conform to the "did:key" method.
    */
   public fun resolve(): DidResolutionResult {
-    return resolve(this.uri)
+    return resolve(this.uri, null)
   }
 
-  public companion object : DidMethod<DidKey, CreateDidKeyOptions> {
-    override val methodName: String = "key"
+  public companion object {
+    public val methodName: String = "key"
 
     /**
      * Creates a new "did:key" DID, derived from a public key, and stores the associated private key in the
@@ -77,7 +75,7 @@ public class DidKey(uri: String, keyManager: KeyManager) : ChangemeDid(uri, keyM
      *
      * @throws UnsupportedOperationException if the specified curve is not supported.
      */
-    override fun create(keyManager: KeyManager, options: CreateDidKeyOptions?): DidKey {
+    public fun create(keyManager: KeyManager, options: CreateDidKeyOptions?): DidKey {
       val opts = options ?: CreateDidKeyOptions()
 
       val keyAlias = keyManager.generatePrivateKey(opts.algorithmId)
@@ -101,21 +99,6 @@ public class DidKey(uri: String, keyManager: KeyManager) : ChangemeDid(uri, keyM
     }
 
     /**
-     * Instantiates a [DidKey] instance from [uri] (which has to start with "did:key:"), and validates that the
-     * associated key material exists in the provided [keyManager].
-     *
-     * ### Usage Example:
-     * ```kotlin
-     * val keyManager = InMemoryKeyManager()
-     * val did = DidKey.load("did:key:example", keyManager)
-     * ```
-     */
-    override fun load(uri: String, keyManager: KeyManager): DidKey {
-      validateKeyMaterialInsideKeyManager(uri, keyManager)
-      return DidKey(uri, keyManager)
-    }
-
-    /**
      * Resolves a "did:key" DID into a [DidResolutionResult], which contains the DID Document and possible related metadata.
      *
      * This implementation primarily constructs a DID Document with a single verification method derived
@@ -126,7 +109,7 @@ public class DidKey(uri: String, keyManager: KeyManager) : ChangemeDid(uri, keyM
      *
      * @throws IllegalArgumentException if the provided DID does not conform to the "did:key" method.
      */
-    override fun resolve(did: String, options: ResolveDidOptions?): DidResolutionResult {
+    public fun resolve(did: String, options: ResolveDidOptions?): DidResolutionResult {
       val parsedDid = Did.parse(did)
 
       require(parsedDid.method == methodName) { throw IllegalArgumentException("expected did:key") }

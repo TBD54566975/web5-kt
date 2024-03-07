@@ -24,12 +24,10 @@ import web5.sdk.dids.CreateDidOptions
 import web5.sdk.dids.didcore.Did
 import web5.sdk.dids.didcore.DIDDocument
 import web5.sdk.dids.ChangemeDid
-import web5.sdk.dids.DidMethod
 import web5.sdk.dids.DidResolutionResult
 import web5.sdk.dids.exceptions.ParserException
 import web5.sdk.dids.ResolutionError
 import web5.sdk.dids.ResolveDidOptions
-import web5.sdk.dids.validateKeyMaterialInsideKeyManager
 import java.io.File
 import java.net.InetAddress
 import java.net.URL
@@ -95,7 +93,7 @@ private const val DID_DOC_FILE_NAME = "/did.json"
  */
 public sealed class DidWebApi(
   configuration: DidWebApiConfiguration
-) : DidMethod<DidWeb, CreateDidOptions> {
+) {
 
   private val logger = KotlinLogging.logger {}
 
@@ -120,9 +118,9 @@ public sealed class DidWebApi(
     }
   }
 
-  override val methodName: String = "web"
+  public val methodName: String = "web"
 
-  override fun resolve(did: String, options: ResolveDidOptions?): DidResolutionResult {
+  public fun resolve(did: String, options: ResolveDidOptions?): DidResolutionResult {
     return try {
       resolveInternal(did, options)
     } catch (e: Exception) {
@@ -163,11 +161,6 @@ public sealed class DidWebApi(
     )
   }
 
-  override fun load(uri: String, keyManager: KeyManager): DidWeb {
-    validateKeyMaterialInsideKeyManager(uri, keyManager)
-    return DidWeb(uri, keyManager, this)
-  }
-
   private fun getDocURL(parsedDid: Did): String {
     val domainNameWithPath = parsedDid.id.replace(":", "/")
     val decodedDomain = URLDecoder.decode(domainNameWithPath, UTF_8)
@@ -182,7 +175,7 @@ public sealed class DidWebApi(
     return targetUrl.toString()
   }
 
-  public override fun create(keyManager: KeyManager, options: CreateDidOptions?): DidWeb {
+  public fun create(keyManager: KeyManager, options: CreateDidOptions?): DidWeb {
     throw UnsupportedOperationException("Create operation is not supported for did:web")
   }
 }
