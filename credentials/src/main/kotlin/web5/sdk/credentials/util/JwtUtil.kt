@@ -9,9 +9,9 @@ import com.nimbusds.jwt.JWTParser
 import com.nimbusds.jwt.SignedJWT
 import web5.sdk.common.Convert
 import web5.sdk.crypto.Crypto
-import web5.sdk.dids.Did
+import web5.sdk.dids.ChangemeDid
 import web5.sdk.dids.DidResolvers
-import web5.sdk.dids.didcore.DidUri
+import web5.sdk.dids.didcore.Did
 import web5.sdk.dids.exceptions.DidResolutionException
 import web5.sdk.dids.exceptions.PublicKeyJwkMissingException
 import java.net.URI
@@ -31,10 +31,10 @@ public object JwtUtil {
    * If the [assertionMethodId] is null, the function will attempt to use the first available verification method from
    * the [did]. The result is a String in a JWT format.
    *
-   * @param did The [Did] used to sign the credential.
+   * @param did The [ChangemeDid] used to sign the credential.
    * @param assertionMethodId An optional identifier for the assertion method
    *        that will be used for verification of the produced signature.
-   * @param jwtPayload the payload that is getting signed by the [Did]
+   * @param jwtPayload the payload that is getting signed by the [ChangemeDid]
    * @return The JWT representing the signed verifiable credential.
    *
    * Example:
@@ -42,7 +42,7 @@ public object JwtUtil {
    * val signedVc = verifiableCredential.sign(myDid)
    * ```
    */
-  public fun sign(did: Did, assertionMethodId: String?, jwtPayload: JWTClaimsSet): String {
+  public fun sign(did: ChangemeDid, assertionMethodId: String?, jwtPayload: JWTClaimsSet): String {
     val didResolutionResult = DidResolvers.resolve(did.uri)
     val didDocument = didResolutionResult.didDocument
     if (didResolutionResult.didResolutionMetadata.error != null || didDocument == null) {
@@ -108,13 +108,13 @@ public object JwtUtil {
     }
 
     val verificationMethodId = jwt.header.keyID
-    val didUri = DidUri.Parser.parse(verificationMethodId)
+    val did = Did.Parser.parse(verificationMethodId)
 
-    val didResolutionResult = DidResolvers.resolve(didUri.url)
+    val didResolutionResult = DidResolvers.resolve(did.url)
     if (didResolutionResult.didResolutionMetadata.error != null) {
       throw SignatureException(
         "Signature verification failed: " +
-          "Failed to resolve DID ${didUri.url}. " +
+          "Failed to resolve DID ${did.url}. " +
           "Error: ${didResolutionResult.didResolutionMetadata.error}"
       )
     }
@@ -123,8 +123,8 @@ public object JwtUtil {
     // or just `#fragment`. See: https://www.w3.org/TR/did-core/#relative-did-urls.
     // using a set for fast string comparison. DIDs can be lonnng.
     val verificationMethodIds = setOf(
-      didUri.url,
-      "#${didUri.fragment}"
+      did.url,
+      "#${did.fragment}"
     )
 
     didResolutionResult.didDocument?.assertionMethod?.firstOrNull {

@@ -19,12 +19,12 @@ import web5.sdk.crypto.Ed25519
 import web5.sdk.crypto.KeyManager
 import web5.sdk.crypto.Secp256k1
 import web5.sdk.dids.CreateDidOptions
-import web5.sdk.dids.Did
+import web5.sdk.dids.ChangemeDid
 import web5.sdk.dids.DidMethod
 import web5.sdk.dids.DidResolutionResult
 import web5.sdk.dids.ResolutionError
 import web5.sdk.dids.ResolveDidOptions
-import web5.sdk.dids.didcore.DidUri
+import web5.sdk.dids.didcore.Did
 import web5.sdk.dids.didcore.DIDDocument
 import web5.sdk.dids.didcore.DIDDocumentMetadata
 import web5.sdk.dids.didcore.Purpose
@@ -298,10 +298,10 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
   }
 
   internal fun validateIdentityKey(did: String, keyManager: KeyManager) {
-    val parsedDidUri = DidUri.parse(did)
-    val decodedId = ZBase32.decode(parsedDidUri.id)
+    val parsedDid = Did.parse(did)
+    val decodedId = ZBase32.decode(parsedDid.id)
     require(decodedId.size == 32) {
-      "expected size of decoded identifier ${parsedDidUri.id} to be 32"
+      "expected size of decoded identifier ${parsedDid.id} to be 32"
     }
 
     val publicKeyJwk = Ed25519.bytesToPublicKey(decodedId)
@@ -332,13 +332,13 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
    * @throws InvalidIdentifierException if decoded identifier length is not 32
    */
   internal fun validate(did: String) {
-    val parsedDidUri = DidUri.parse(did)
-    require(parsedDidUri.method == DidDht.methodName) {
+    val parsedDid = Did.parse(did)
+    require(parsedDid.method == DidDht.methodName) {
       throw InvalidMethodNameException("expected method to be dht")
     }
 
     val decodedId = try {
-      ZBase32.decode(parsedDidUri.id)
+      ZBase32.decode(parsedDid.id)
     } catch (e: IllegalArgumentException) {
       throw InvalidIdentifierException("expected method-specific identifier to be z-base-32 encoded", e)
     }
@@ -456,7 +456,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
             DClass.IN,
             ttl,
             buildList {
-              val fragment = DidUri.parse(verificationMethod.id).fragment
+              val fragment = Did.parse(verificationMethod.id).fragment
               add("id=$fragment")
               add("t=$keyType")
               add("k=$base64UrlEncodedKey")
@@ -670,7 +670,7 @@ public class DidDht(
   uri: String, keyManager: KeyManager,
   public val didDocument: DIDDocument? = null,
   private val didDhtApi: DidDhtApi
-) : Did(uri, keyManager) {
+) : ChangemeDid(uri, keyManager) {
 
   /**
    * Calls [DidDhtApi.create] with the provided [CreateDidDhtOptions] and returns the result.

@@ -1,7 +1,7 @@
 package web5.sdk.dids
 
 import web5.sdk.crypto.KeyManager
-import web5.sdk.dids.didcore.DidUri
+import web5.sdk.dids.didcore.Did
 import web5.sdk.dids.exceptions.PublicKeyJwkMissingException
 
 /**
@@ -26,7 +26,7 @@ import web5.sdk.dids.exceptions.PublicKeyJwkMissingException
  * Implementers should adhere to the respective DID method specifications ensuring both compliance
  * and interoperability across different DID networks.
  */
-public abstract class Did(public val uri: String, public val keyManager: KeyManager) {
+public abstract class ChangemeDid(public val uri: String, public val keyManager: KeyManager) {
   public companion object {
     // static helper methods here
   }
@@ -96,7 +96,7 @@ public interface ResolveDidOptions
  * Implementations of this interface should provide method-specific logic for
  * creating and resolving DIDs under a particular method.
  *
- * @param T The type of DID that this method can create and resolve, extending [Did].
+ * @param T The type of DID that this method can create and resolve, extending [ChangemeDid].
  *
  * ### Example of a Custom DID Method Implementation:
  * ```
@@ -119,7 +119,7 @@ public interface ResolveDidOptions
  * - Ensure that cryptographic operations utilize secure and tested libraries, ensuring
  *   the reliability and security of DIDs managed by this method.
  */
-public interface DidMethod<T : Did, O : CreateDidOptions> {
+public interface DidMethod<T : ChangemeDid, O : CreateDidOptions> {
   /**
    * A string that specifies the name of the DID method.
    *
@@ -169,9 +169,9 @@ public interface DidMethod<T : Did, O : CreateDidOptions> {
 }
 
 
-internal fun <T : Did, O : CreateDidOptions> DidMethod<T, O>.validateKeyMaterialInsideKeyManager(
+internal fun <T : ChangemeDid, O : CreateDidOptions> DidMethod<T, O>.validateKeyMaterialInsideKeyManager(
   did: String, keyManager: KeyManager) {
-  require(DidUri.parse(did).method == methodName) {
+  require(Did.parse(did).method == methodName) {
     "did must start with the prefix \"did:$methodName\", but got $did"
   }
   val didResolutionResult = resolve(did)

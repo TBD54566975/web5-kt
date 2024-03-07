@@ -16,7 +16,7 @@ import org.junit.jupiter.api.assertDoesNotThrow
 import web5.sdk.crypto.AlgorithmId
 import web5.sdk.crypto.AwsKeyManager
 import web5.sdk.crypto.InMemoryKeyManager
-import web5.sdk.dids.Did
+import web5.sdk.dids.ChangemeDid
 import web5.sdk.dids.didcore.Purpose
 import web5.sdk.dids.extensions.load
 import web5.sdk.dids.methods.dht.CreateDidDhtOptions
@@ -252,8 +252,8 @@ class Web5TestVectorsCredentials {
 
       val keyManager = InMemoryKeyManager()
       keyManager.import(listOf(vector.input.signerPrivateJwk!!))
-      val issuerDid = Did.load(vector.input.signerDidUri!!, keyManager)
-      val vcJwt = vc.sign(issuerDid)
+      val issuerChangemeDid = ChangemeDid.load(vector.input.signerDidUri!!, keyManager)
+      val vcJwt = vc.sign(issuerChangemeDid)
 
       assertEquals(vector.output, vcJwt, vector.description)
     }

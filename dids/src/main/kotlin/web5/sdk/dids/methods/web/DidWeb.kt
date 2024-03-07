@@ -21,9 +21,9 @@ import okhttp3.OkHttpClient
 import okhttp3.dnsoverhttps.DnsOverHttps
 import web5.sdk.crypto.KeyManager
 import web5.sdk.dids.CreateDidOptions
-import web5.sdk.dids.didcore.DidUri
+import web5.sdk.dids.didcore.Did
 import web5.sdk.dids.didcore.DIDDocument
-import web5.sdk.dids.Did
+import web5.sdk.dids.ChangemeDid
 import web5.sdk.dids.DidMethod
 import web5.sdk.dids.DidResolutionResult
 import web5.sdk.dids.exceptions.ParserException
@@ -56,7 +56,7 @@ public class DidWeb(
   uri: String,
   keyManager: KeyManager,
   private val didWebApi: DidWebApi
-) : Did(uri, keyManager) {
+) : ChangemeDid(uri, keyManager) {
   /**
    * Calls [DidWebApi.resolve] for this DID.
    */
@@ -132,16 +132,16 @@ public sealed class DidWebApi(
   }
 
   private fun resolveInternal(did: String, options: ResolveDidOptions?): DidResolutionResult {
-    val parsedDidUri = try {
-      DidUri.parse(did)
+    val parsedDid = try {
+      Did.parse(did)
     } catch (_: ParserException) {
       return DidResolutionResult.fromResolutionError(ResolutionError.INVALID_DID)
     }
 
-    if (parsedDidUri.method != methodName) {
+    if (parsedDid.method != methodName) {
       return DidResolutionResult.fromResolutionError(ResolutionError.METHOD_NOT_SUPPORTED)
     }
-    val docURL = getDocURL(parsedDidUri)
+    val docURL = getDocURL(parsedDid)
 
     val resp: HttpResponse = try {
       runBlocking {
@@ -168,8 +168,8 @@ public sealed class DidWebApi(
     return DidWeb(uri, keyManager, this)
   }
 
-  private fun getDocURL(parsedDidUri: DidUri): String {
-    val domainNameWithPath = parsedDidUri.id.replace(":", "/")
+  private fun getDocURL(parsedDid: Did): String {
+    val domainNameWithPath = parsedDid.id.replace(":", "/")
     val decodedDomain = URLDecoder.decode(domainNameWithPath, UTF_8)
 
     val targetUrl = StringBuilder("https://$decodedDomain")

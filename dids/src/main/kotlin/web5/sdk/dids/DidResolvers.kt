@@ -1,6 +1,6 @@
 package web5.sdk.dids
 
-import web5.sdk.dids.didcore.DidUri
+import web5.sdk.dids.didcore.Did
 import web5.sdk.dids.extensions.supportedMethods
 
 /**
@@ -32,9 +32,9 @@ public object DidResolvers {
    * @throws IllegalArgumentException if resolving the specified DID method is not supported.
    */
   public fun resolve(didUrl: String, options: ResolveDidOptions? = null): DidResolutionResult {
-    val parsedDidUri = DidUri.parse(didUrl)
-    val resolver = methodResolvers.getOrElse(parsedDidUri.method) {
-      throw IllegalArgumentException("Resolving did:${parsedDidUri.method} not supported")
+    val did = Did.parse(didUrl)
+    val resolver = methodResolvers.getOrElse(did.method) {
+      throw IllegalArgumentException("Resolving did:${did.method} not supported")
     }
 
     return resolver(didUrl, options)

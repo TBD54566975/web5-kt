@@ -7,13 +7,13 @@ import web5.sdk.common.EncodingFormat
 import web5.sdk.crypto.AlgorithmId
 import web5.sdk.crypto.KeyManager
 import web5.sdk.dids.CreateDidOptions
-import web5.sdk.dids.Did
+import web5.sdk.dids.ChangemeDid
 import web5.sdk.dids.DidMethod
 import web5.sdk.dids.DidResolutionMetadata
 import web5.sdk.dids.DidResolutionResult
 import web5.sdk.dids.ResolutionError
 import web5.sdk.dids.ResolveDidOptions
-import web5.sdk.dids.didcore.DidUri
+import web5.sdk.dids.didcore.Did
 import web5.sdk.dids.didcore.DIDDocument
 import web5.sdk.dids.didcore.Purpose
 import web5.sdk.dids.didcore.VerificationMethod
@@ -51,7 +51,7 @@ public class CreateDidJwkOptions(
  *
  * @constructor Initializes a new instance of [DidJwk] with the provided [uri] and [keyManager].
  */
-public class DidJwk(uri: String, keyManager: KeyManager) : Did(uri, keyManager) {
+public class DidJwk(uri: String, keyManager: KeyManager) : ChangemeDid(uri, keyManager) {
   /**
    * Resolves the current instance's [uri] to a [DidResolutionResult], which contains the DID Document
    * and possible related metadata.
@@ -107,8 +107,8 @@ public class DidJwk(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
      * @throws IllegalArgumentException if the provided DID does not conform to the "did:jwk" method.
      */
     override fun resolve(did: String, options: ResolveDidOptions?): DidResolutionResult {
-      val parsedDidUri = try {
-        DidUri.parse(did)
+      val parsedDid = try {
+        Did.parse(did)
       } catch (_: ParserException) {
         return DidResolutionResult(
           context = "https://w3id.org/did-resolution/v1",
@@ -118,7 +118,7 @@ public class DidJwk(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
         )
       }
 
-      if (parsedDidUri.method != methodName) {
+      if (parsedDid.method != methodName) {
         return DidResolutionResult(
           context = "https://w3id.org/did-resolution/v1",
           didResolutionMetadata = DidResolutionMetadata(
@@ -127,7 +127,7 @@ public class DidJwk(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
         )
       }
 
-      val id = parsedDidUri.id
+      val id = parsedDid.id
       val decodedKey = Convert(id, EncodingFormat.Base64Url).toStr()
       val publicKeyJwk = try {
         JWK.parse(decodedKey)
@@ -144,7 +144,7 @@ public class DidJwk(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
         throw IllegalArgumentException("decoded jwk value cannot be a private key")
       }
 
-      val verificationMethodId = "${parsedDidUri.uri}#0"
+      val verificationMethodId = "${parsedDid.uri}#0"
       val verificationMethod = VerificationMethod.Builder()
         .id(verificationMethodId)
         .publicKeyJwk(publicKeyJwk)

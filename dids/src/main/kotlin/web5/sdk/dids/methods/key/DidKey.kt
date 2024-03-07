@@ -7,11 +7,11 @@ import web5.sdk.crypto.Crypto
 import web5.sdk.crypto.KeyManager
 import web5.sdk.crypto.Secp256k1
 import web5.sdk.dids.CreateDidOptions
-import web5.sdk.dids.Did
+import web5.sdk.dids.ChangemeDid
 import web5.sdk.dids.DidMethod
 import web5.sdk.dids.DidResolutionResult
 import web5.sdk.dids.ResolveDidOptions
-import web5.sdk.dids.didcore.DidUri
+import web5.sdk.dids.didcore.Did
 import web5.sdk.dids.didcore.DIDDocument
 import web5.sdk.dids.didcore.Purpose
 import web5.sdk.dids.didcore.VerificationMethod
@@ -47,7 +47,7 @@ public class CreateDidKeyOptions(
  *
  * @constructor Initializes a new instance of [DidKey] with the provided [uri] and [keyManager].
  */
-public class DidKey(uri: String, keyManager: KeyManager) : Did(uri, keyManager) {
+public class DidKey(uri: String, keyManager: KeyManager) : ChangemeDid(uri, keyManager) {
   /**
    * Resolves the current instance's [uri] to a [DidResolutionResult], which contains the DID Document
    * and possible related metadata.
@@ -127,11 +127,11 @@ public class DidKey(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
      * @throws IllegalArgumentException if the provided DID does not conform to the "did:key" method.
      */
     override fun resolve(did: String, options: ResolveDidOptions?): DidResolutionResult {
-      val parsedDidUri = DidUri.parse(did)
+      val parsedDid = Did.parse(did)
 
-      require(parsedDidUri.method == methodName) { throw IllegalArgumentException("expected did:key") }
+      require(parsedDid.method == methodName) { throw IllegalArgumentException("expected did:key") }
 
-      val id = parsedDidUri.id
+      val id = parsedDid.id
       val idBytes = Multibase.decode(id)
       val (multiCodec, numBytes) = Varint.decode(idBytes)
 
@@ -144,7 +144,7 @@ public class DidKey(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
 
       val publicKeyJwk = keyGenerator.bytesToPublicKey(publicKeyBytes)
 
-      val verificationMethodId = "${parsedDidUri.uri}#$id"
+      val verificationMethodId = "${parsedDid.uri}#$id"
       val verificationMethod = VerificationMethod.Builder()
         .id(verificationMethodId)
         .publicKeyJwk(publicKeyJwk)

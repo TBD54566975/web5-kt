@@ -4,14 +4,14 @@ import com.nimbusds.jose.jwk.JWK
 import web5.sdk.crypto.KeyExporter
 import web5.sdk.crypto.KeyManager
 import web5.sdk.dids.didcore.DIDDocument
-import web5.sdk.dids.didcore.DidUri
+import web5.sdk.dids.didcore.Did
 import web5.sdk.dids.didcore.VMSelector
 import web5.sdk.dids.didcore.VerificationMethod
 
 public typealias DIDSigner = (payload: ByteArray) -> ByteArray
 
 public class BearerDID(
-  public val did: DidUri,
+  public val did: Did,
   public val keyManager: KeyManager,
   public val document: DIDDocument
 ) {

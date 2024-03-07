@@ -7,7 +7,7 @@ import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jwt.JWTParser
 import com.nimbusds.jwt.SignedJWT
 import web5.sdk.credentials.util.JwtUtil
-import web5.sdk.dids.Did
+import web5.sdk.dids.ChangemeDid
 import java.net.URI
 import java.security.SignatureException
 import java.util.Date
@@ -47,7 +47,7 @@ public class VerifiablePresentation internal constructor(public val vpDataModel:
    * If the [assertionMethodId] is null, the function will attempt to use the first available verification method from
    * the [did]. The result is a String in a JWT format.
    *
-   * @param did The [Did] used to sign the credential.
+   * @param did The [ChangemeDid] used to sign the credential.
    * @param assertionMethodId An optional identifier for the assertion method that will be used for verification of the
    *        produced signature.
    * @return The JWT representing the signed verifiable credential.
@@ -58,7 +58,7 @@ public class VerifiablePresentation internal constructor(public val vpDataModel:
    * ```
    */
   @JvmOverloads
-  public fun sign(did: Did, assertionMethodId: String? = null): String {
+  public fun sign(did: ChangemeDid, assertionMethodId: String? = null): String {
     val payload = JWTClaimsSet.Builder()
       .issuer(did.uri)
       .issueTime(Date())
