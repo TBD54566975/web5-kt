@@ -21,28 +21,6 @@ import web5.sdk.dids.exceptions.ParserException
 import java.text.ParseException
 
 /**
- * Specifies options for creating a new "did:jwk" Decentralized Identifier (DID).
- *
- * @property algorithmId Specifies the algorithmId to be used for key creation.
- *                     Defaults to ES256K (Elliptic Curve Digital Signature Algorithm with SHA-256 and secp256k1 curve).
- * @constructor Creates an instance of [CreateDidJwkOptions] with the provided [algorithmId]
- *
- * ### Usage Example:
- * ```
- * val options = CreateDidJwkOptions(algorithm = JWSAlgorithm.ES256K, curve = null)
- * val didJwk = DidJwk.create(keyManager, options)
- * ```
- */
-public class CreateDidJwkOptions(
-  public var keyManager: KeyManager = InMemoryKeyManager(),
-  public var algorithmId: AlgorithmId = AlgorithmId.Ed25519,
-) : CreateDidOptions
-
-public fun interface CreateOption {
-  public fun apply(options: CreateDidJwkOptions)
-}
-
-/**
  * Provides a specific implementation for creating and resolving "did:jwk" method Decentralized Identifiers (DIDs).
  *
  * A "did:jwk" DID is a special type of DID that is formulated directly from a single public key. It's utilized
@@ -55,28 +33,8 @@ public fun interface CreateOption {
  *
  * @constructor Initializes a new instance of [DidJwk] with the provided [uri] and [keyManager].
  */
-public class DidJwk(public val uri: String, public val keyManager: KeyManager) {
-
-  /**
-   * Resolves the current instance's [uri] to a [DidResolutionResult], which contains the DID Document
-   * and possible related metadata.
-   *
-   * @return A [DidResolutionResult] instance containing the DID Document and related context.
-   *
-   * @throws IllegalArgumentException if the provided DID does not conform to the "did:jwk" method.
-   */
-  public fun resolve(): DidResolutionResult {
-    return resolve(this.uri, null)
-  }
-
-  // todo these are in go impl but not sure what they're used for
-  public fun keyManager(keyManager: KeyManager): CreateOption = CreateOption { options ->
-    options.keyManager = keyManager
-  }
-
-  public fun algorithmId(algorithmId: AlgorithmId): CreateOption = CreateOption { options ->
-    options.algorithmId = algorithmId
-  }
+// todo can we make this an object
+public class DidJwk {
 
   public companion object {
     public const val methodName: String = "jwk"
@@ -91,15 +49,16 @@ public class DidJwk(public val uri: String, public val keyManager: KeyManager) {
      * **Note**: Defaults to ES256K if no options are provided
      *
      * @param keyManager A [keyManager] instance where the new key will be stored.
-     * @param options Optional parameters ([CreateDidJwkOptions]) to specify algorithmId during key creation.
      * @return A [DidJwk] instance representing the newly created "did:jwk" DID.
      *
      * @throws UnsupportedOperationException if the specified curve is not supported.
      */
-    public fun create(keyManager: KeyManager, options: CreateDidJwkOptions?): BearerDID {
-      val opts = options ?: CreateDidJwkOptions()
+    // todo look into whether params can be nullable if providing default values
+    public fun create(
+      keyManager: KeyManager = InMemoryKeyManager(),
+      algorithmId: AlgorithmId = AlgorithmId.Ed25519): BearerDID {
 
-      val keyAlias = keyManager.generatePrivateKey(opts.algorithmId)
+      val keyAlias = keyManager.generatePrivateKey(algorithmId)
       val publicKeyJwk = keyManager.getPublicKey(keyAlias)
 
       val base64Encoded = Convert(publicKeyJwk.toJSONString()).toBase64Url(padding = false)
@@ -123,7 +82,7 @@ public class DidJwk(public val uri: String, public val keyManager: KeyManager) {
      *
      * @throws IllegalArgumentException if the provided DID does not conform to the "did:jwk" method.
      */
-    public fun resolve(did: String, options: ResolveDidOptions?): DidResolutionResult {
+    public fun resolve(did: String): DidResolutionResult {
       val parsedDid = try {
         Did.parse(did)
       } catch (_: ParserException) {
@@ -172,7 +131,7 @@ public class DidJwk(public val uri: String, public val keyManager: KeyManager) {
         .id(verificationMethodId)
         .publicKeyJwk(publicKeyJwk)
         .controller(did.url)
-        .type("JsonWebKey") // todo go impl says JsonWebKey2020 but opting for the new name
+        .type("JsonWebKey2020") // todo go impl says JsonWebKey2020 but opting for the new name
         .build()
 
       val didDocumentBuilder = DIDDocument.Builder()
@@ -181,6 +140,8 @@ public class DidJwk(public val uri: String, public val keyManager: KeyManager) {
 
       // todo noticed that this was already in kotlin impl of building did doc
       // but it's not in go impl?
+      // ask frank. encryption not needed for tbdex use, so not considered in go impl
+      // keyUse is technically not required (per spec)
       if (publicKeyJwk.keyUse != KeyUse.ENCRYPTION) {
         didDocumentBuilder
           .verificationMethodForPurposes(
@@ -200,5 +161,6 @@ public class DidJwk(public val uri: String, public val keyManager: KeyManager) {
       return didDocumentBuilder.build()
     }
 
+    // todo write import() and call bearerdid.import()
   }
 }
