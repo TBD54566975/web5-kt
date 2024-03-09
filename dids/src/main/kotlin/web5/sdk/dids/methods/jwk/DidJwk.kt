@@ -13,6 +13,7 @@ import web5.sdk.dids.DidResolutionResult
 import web5.sdk.dids.ResolutionError
 import web5.sdk.dids.ResolveDidOptions
 import web5.sdk.dids.did.BearerDID
+import web5.sdk.dids.did.PortableDID
 import web5.sdk.dids.didcore.Did
 import web5.sdk.dids.didcore.DIDDocument
 import web5.sdk.dids.didcore.Purpose
@@ -125,13 +126,18 @@ public class DidJwk {
       return DidResolutionResult(didDocument = didDocument, context = "https://w3id.org/did-resolution/v1")
     }
 
+    // todo being able to call BearerDID.import() requires the function to be a companion object method
+    // or BearerDID to be an object?
+//    public fun import(portableDID: PortableDID) : BearerDID {
+//
+//    }
     private fun createDocument(did: Did, publicKeyJwk: JWK): DIDDocument {
       val verificationMethodId = "${did.uri}#0"
       val verificationMethod = VerificationMethod.Builder()
         .id(verificationMethodId)
         .publicKeyJwk(publicKeyJwk)
         .controller(did.url)
-        .type("JsonWebKey2020") // todo go impl says JsonWebKey2020 but opting for the new name
+        .type("JsonWebKey2020")
         .build()
 
       val didDocumentBuilder = DIDDocument.Builder()
@@ -161,6 +167,5 @@ public class DidJwk {
       return didDocumentBuilder.build()
     }
 
-    // todo write import() and call bearerdid.import()
   }
 }

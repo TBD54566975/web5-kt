@@ -75,7 +75,7 @@ public class DidKey(uri: String, keyManager: KeyManager) : ChangemeDid(uri, keyM
      *
      * @throws UnsupportedOperationException if the specified curve is not supported.
      */
-    public fun create(keyManager: KeyManager, options: CreateDidKeyOptions?): DidKey {
+    public fun create(keyManager: KeyManager, options: CreateDidKeyOptions? = null): DidKey {
       val opts = options ?: CreateDidKeyOptions()
 
       val keyAlias = keyManager.generatePrivateKey(opts.algorithmId)

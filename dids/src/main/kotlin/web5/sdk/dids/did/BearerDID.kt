@@ -1,7 +1,9 @@
 package web5.sdk.dids.did
 
 import com.nimbusds.jose.jwk.JWK
+import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.crypto.KeyExporter
+import web5.sdk.crypto.KeyImporter
 import web5.sdk.crypto.KeyManager
 import web5.sdk.dids.didcore.DIDDocument
 import web5.sdk.dids.didcore.Did
@@ -29,7 +31,7 @@ public class BearerDID(
     return Pair(signer, verificationMethod)
   }
 
-  public fun export() : PortableDID {
+  public fun export(): PortableDID {
 
     val keyExporter = keyManager as? KeyExporter
     val privateKeys = mutableListOf<JWK>()
@@ -52,5 +54,27 @@ public class BearerDID(
     )
   }
 
-  // todo swift doesn't have import() but go and js does. do i write that or nah
+  public fun import(portableDID: PortableDID): BearerDID {
+    check(portableDID.document.verificationMethod?.size != 0) {
+      "PortableDID must contain at least one verification method"
+    }
+
+    val allVerificationMethodsHavePublicKey =
+      portableDID.document.verificationMethod
+        ?.all { vm -> vm.publicKeyJwk != null }
+        ?: false
+
+    check(allVerificationMethodsHavePublicKey) {
+      "Each VerificationMethod must contain a public key in JWK format."
+    }
+
+    val did = Did.parse(portableDID.uri)
+
+    for (key in portableDID.privateKeys) {
+      val keyImporter = keyManager as? KeyImporter
+      keyImporter!!.importKey(key)
+    }
+
+    return BearerDID(did, keyManager, portableDID.document)
+  }
 }

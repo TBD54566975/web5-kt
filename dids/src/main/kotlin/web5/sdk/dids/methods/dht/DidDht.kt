@@ -19,10 +19,9 @@ import web5.sdk.crypto.Ed25519
 import web5.sdk.crypto.KeyManager
 import web5.sdk.crypto.Secp256k1
 import web5.sdk.dids.CreateDidOptions
-import web5.sdk.dids.ChangemeDid
 import web5.sdk.dids.DidResolutionResult
 import web5.sdk.dids.ResolutionError
-import web5.sdk.dids.ResolveDidOptions
+import web5.sdk.dids.did.BearerDID
 import web5.sdk.dids.didcore.Did
 import web5.sdk.dids.didcore.DIDDocument
 import web5.sdk.dids.didcore.DIDDocumentMetadata
@@ -35,16 +34,6 @@ import web5.sdk.dids.exceptions.InvalidMethodNameException
 import web5.sdk.dids.exceptions.PkarrRecordNotFoundException
 import web5.sdk.dids.exceptions.PublicKeyJwkMissingException
 
-/**
- * Configuration for the [DidDhtApi].
- *
- * @property gateway The DID DHT gateway URL.
- * @property engine The engine to use. When absent, a new one will be created from the [OkHttp] factory.
- */
-public class DidDhtConfiguration internal constructor(
-  public val gateway: String = "https://diddht.tbddev.org",
-  public var engine: HttpClientEngine = OkHttp.create {},
-)
 
 /**
  * Type indexing types as per https://tbd54566975.github.io/did-dht-method/#type-indexing
@@ -66,6 +55,17 @@ public enum class DidDhtTypeIndexing(public val index: Int) {
     public fun fromInt(value: Int): DidDhtTypeIndexing? = entries.find { it.index == value }
   }
 }
+
+/**
+ * Configuration for the [DidDhtApi].
+ *
+ * @property gateway The DID DHT gateway URL.
+ * @property engine The engine to use. When absent, a new one will be created from the [OkHttp] factory.
+ */
+public class DidDhtConfiguration internal constructor(
+  public val gateway: String = "https://diddht.tbddev.org",
+  public var engine: HttpClientEngine = OkHttp.create {},
+)
 
 /**
  * Returns a [DidDhtApi] after applying [configurationBlock] on the default [DidDhtConfiguration].
@@ -96,10 +96,9 @@ public class CreateDidDhtOptions(
 ) : CreateDidOptions
 
 private const val PROPERTY_SEPARATOR = ";"
-
 private const val ARRAY_SEPARATOR = ","
-
 private val logger = KotlinLogging.logger {}
+
 
 /**
  * Base class for managing DID DHT operations. Uses the given [DidDhtConfiguration].
@@ -125,7 +124,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) {
    * publishing during creation.
    * @return A [DidDht] instance representing the newly created "did:dht" DID.
    */
-  public fun create(keyManager: KeyManager, options: CreateDidDhtOptions?): DidDht {
+  public fun create(keyManager: KeyManager, options: CreateDidDhtOptions?): BearerDID {
     // TODO(gabe): enforce that provided keys are of supported types according to the did:dht spec
     val opts = options ?: CreateDidDhtOptions()
 
@@ -134,7 +133,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) {
     val publicKey = keyManager.getPublicKey(keyAlias)
 
     // build DID Document
-    val id = DidDht.getDidIdentifier(publicKey)
+    val didUrl = DidDht.getDidIdentifier(publicKey)
 
     // map to the DID object model's services
     val services = opts.services?.map { service ->
@@ -143,7 +142,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) {
       requireNotNull(service.serviceEndpoint) { "Service serviceEndpoint cannot be null" }
 
       Service(
-        id = "$id#${service.id}",
+        id = "$didUrl#${service.id}",
         type = service.type,
         serviceEndpoint = service.serviceEndpoint
       )
@@ -151,7 +150,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) {
 
     // build DID Document
     val didDocumentBuilder = DIDDocument.Builder()
-      .id(id)
+      .id(didUrl)
       .services(services)
 
     opts.controllers?.let { didDocumentBuilder.controllers(it.toList()) }
@@ -160,9 +159,9 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) {
     // add identity key to relationships map
     val identityVerificationMethod =
       VerificationMethod(
-        id = "$id#0",
+        id = "$didUrl#0",
         type = "JsonWebKey",
-        controller = id,
+        controller = didUrl,
         publicKeyJwk = publicKey.toPublicJWK()
       )
 
@@ -178,16 +177,15 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) {
 
     opts.verificationMethods?.map { (key, purposes, controller) ->
       VerificationMethod.Builder()
-        .id("$id#${key.keyID}")
+        .id("$didUrl#${key.keyID}")
         .type("JsonWebKey")
-        .controller(controller ?: id)
+        .controller(controller ?: didUrl)
         .publicKeyJwk(key.toPublicJWK())
         .build().also { verificationMethod ->
           didDocumentBuilder.verificationMethodForPurposes(verificationMethod, purposes.toList())
 
         }
     }
-
 
     val didDocument = didDocumentBuilder.build()
 
@@ -196,7 +194,9 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) {
       publish(keyManager, didDocument)
     }
 
-    return DidDht(id, keyManager, didDocument, this)
+    val id = this.suffix(didUrl)
+    val did = Did(method = methodName, uri = didUrl, url = didUrl, id = id)
+    return BearerDID(did, keyManager, didDocument)
   }
 
   /**
@@ -211,7 +211,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) {
    * @return A [DidResolutionResult] instance containing the DID Document and related context, including types
    * as part of the [DIDDocumentMetadata], if available.
    */
-  public fun resolve(did: String, options: ResolveDidOptions?): DidResolutionResult {
+  public fun resolve(did: String): DidResolutionResult {
     return try {
       resolveInternal(did)
     } catch (e: Exception) {
@@ -267,11 +267,11 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) {
   /**
    * Returns the suffix of the DID, which is the last part of the DID's method-specific identifier.
    *
-   * @param id The DID to get the suffix of.
+   * @param didUrl The DID to get the suffix of.
    * @return The suffix of the DID [String].
    */
-  public fun suffix(id: String): String {
-    return id.split(":").last()
+  public fun suffix(didUrl: String): String {
+    return didUrl.split(":").last()
   }
 
   /**
@@ -659,38 +659,22 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) {
  * @property didDocument The [DIDDocument] associated with the DID, created by the class.
  */
 public class DidDht(
-  uri: String, keyManager: KeyManager,
-  public val didDocument: DIDDocument? = null,
-  private val didDhtApi: DidDhtApi
-) : ChangemeDid(uri, keyManager) {
+  public val uri: String,
+  public val keyManager: KeyManager,
+  public val didDocument: DIDDocument? = null
+) {
 
   /**
-   * Calls [DidDhtApi.create] with the provided [CreateDidDhtOptions] and returns the result.
+   * Default companion object for creating a [DidDhtApi] with a default configuration.
    */
-  public fun create(createDidDhtOptions: CreateDidDhtOptions): DidDht {
-    return didDhtApi.create(keyManager, createDidDhtOptions)
-  }
-
-  /**
-   * Calls [DidDhtApi.resolve] with the provided [ResolveDidOptions] and returns the result.
-   */
-  public fun resolve(resolveDidOptions: ResolveDidOptions): DidResolutionResult {
-    return didDhtApi.resolve(uri, resolveDidOptions)
-  }
-
-  /**
-   * Calls [DidDhtApi.publish] with the provided [keyManager] and [didDocument].
-   */
-  public fun publish() {
-    didDhtApi.publish(keyManager, didDocument!!)
-  }
+  public companion object Default : DidDhtApi(DidDhtConfiguration())
 
   /**
    * Calls [DidDht.suffix] with the provided [id] and returns the result.
    */
   @JvmOverloads
   public fun suffix(id: String = this.uri): String {
-    return DidDht.suffix(id)
+    return suffix(id)
   }
 
   /**
@@ -717,8 +701,4 @@ public class DidDht(
     return DidDht.fromDnsPacket(did, msg)
   }
 
-  /**
-   * Default companion object for creating a [DidDhtApi] with a default configuration.
-   */
-  public companion object Default : DidDhtApi(DidDhtConfiguration())
 }
