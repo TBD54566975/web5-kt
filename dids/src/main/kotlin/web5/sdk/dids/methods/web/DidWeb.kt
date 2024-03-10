@@ -27,6 +27,7 @@ import web5.sdk.dids.DidResolutionResult
 import web5.sdk.dids.exceptions.ParserException
 import web5.sdk.dids.ResolutionError
 import web5.sdk.dids.did.BearerDID
+import web5.sdk.dids.did.PortableDID
 import java.io.File
 import java.net.InetAddress
 import java.net.URL
@@ -114,6 +115,10 @@ public sealed class DidWebApi(
       logger.warn(e) { "resolving DID $did failed, ${e.message}" }
       DidResolutionResult.fromResolutionError(ResolutionError.INTERNAL_ERROR)
     }
+  }
+
+  public fun import(portableDID: PortableDID, keyManager: KeyManager): BearerDID {
+    return BearerDID.import(portableDID, keyManager)
   }
 
   private fun resolveInternal(did: String): DidResolutionResult {

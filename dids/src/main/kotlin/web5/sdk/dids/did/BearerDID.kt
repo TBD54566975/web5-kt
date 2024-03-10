@@ -54,27 +54,36 @@ public class BearerDID(
     )
   }
 
-  public fun import(portableDID: PortableDID): BearerDID {
-    check(portableDID.document.verificationMethod?.size != 0) {
-      "PortableDID must contain at least one verification method"
+  public companion object {
+
+    public fun import(
+      portableDID: PortableDID,
+      keyManager: KeyManager = InMemoryKeyManager()
+    ):
+      BearerDID {
+      check(portableDID.document.verificationMethod?.size != 0) {
+        "PortableDID must contain at least one verification method"
+      }
+
+      val allVerificationMethodsHavePublicKey =
+        portableDID.document.verificationMethod
+          ?.all { vm -> vm.publicKeyJwk != null }
+          ?: false
+
+      check(allVerificationMethodsHavePublicKey) {
+        "Each VerificationMethod must contain a public key in JWK format."
+      }
+
+      val did = Did.parse(portableDID.uri)
+
+      for (key in portableDID.privateKeys) {
+        val keyImporter = keyManager as? KeyImporter
+        keyImporter!!.importKey(key)
+      }
+
+      return BearerDID(did, keyManager, portableDID.document)
     }
-
-    val allVerificationMethodsHavePublicKey =
-      portableDID.document.verificationMethod
-        ?.all { vm -> vm.publicKeyJwk != null }
-        ?: false
-
-    check(allVerificationMethodsHavePublicKey) {
-      "Each VerificationMethod must contain a public key in JWK format."
-    }
-
-    val did = Did.parse(portableDID.uri)
-
-    for (key in portableDID.privateKeys) {
-      val keyImporter = keyManager as? KeyImporter
-      keyImporter!!.importKey(key)
-    }
-
-    return BearerDID(did, keyManager, portableDID.document)
   }
+
 }
+

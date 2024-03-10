@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.dids.DidResolutionResult
+import web5.sdk.dids.did.PortableDID
 import web5.sdk.dids.methods.util.readKey
 import web5.sdk.testing.TestVectors
 import java.io.File
@@ -97,7 +98,7 @@ class DidWebTest {
     val exception = assertThrows<UnsupportedOperationException> {
       DidWebApi {
         engine = mockEngine()
-      }.create(InMemoryKeyManager())
+      }.create(InMemoryKeyManager(), null)
     }
     assertEquals("Create operation is not supported for did:web", exception.message)
   }

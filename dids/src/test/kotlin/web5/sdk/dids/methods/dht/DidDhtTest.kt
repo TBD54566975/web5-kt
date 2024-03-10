@@ -97,19 +97,19 @@ class DidDhtTest {
     @Test
     fun `create with no options`() {
       val manager = InMemoryKeyManager()
-      val did = DidDht.create(manager, CreateDidDhtOptions(publish = false))
+      val bearerDid = DidDht.create(manager, CreateDidDhtOptions(publish = false))
 
-      assertDoesNotThrow { did.validate() }
-      assertNotNull(did)
-      assertNotNull(did.document)
-      assertEquals(1, did.document.verificationMethod?.size)
-      assertContains(did.document.verificationMethod?.get(0)?.id!!, "#0")
-      assertEquals(1, did.document.assertionMethod?.size)
-      assertEquals(1, did.document.authentication?.size)
-      assertEquals(1, did.document.capabilityDelegation?.size)
-      assertEquals(1, did.document.capabilityInvocation?.size)
-      assertNull(did.document.keyAgreement)
-      assertNull(did.document.service)
+      assertDoesNotThrow { DidDht.validate(bearerDid.did.url) }
+      assertNotNull(bearerDid)
+      assertNotNull(bearerDid.document)
+      assertEquals(1, bearerDid.document.verificationMethod?.size)
+      assertContains(bearerDid.document.verificationMethod?.get(0)?.id!!, "#0")
+      assertEquals(1, bearerDid.document.assertionMethod?.size)
+      assertEquals(1, bearerDid.document.authentication?.size)
+      assertEquals(1, bearerDid.document.capabilityDelegation?.size)
+      assertEquals(1, bearerDid.document.capabilityInvocation?.size)
+      assertNull(bearerDid.document.keyAgreement)
+      assertNull(bearerDid.document.service)
     }
 
     @Test
@@ -160,21 +160,21 @@ class DidDhtTest {
     @Test
     fun `create and transform to packet with types`() {
       val manager = InMemoryKeyManager()
-      val did = DidDht.create(manager, CreateDidDhtOptions(publish = false))
+      val bearerDid = DidDht.create(manager, CreateDidDhtOptions(publish = false))
 
-      assertDoesNotThrow { did.validate() }
-      assertNotNull(did)
-      assertNotNull(did.document)
+      assertDoesNotThrow { DidDht.validate(bearerDid.did.url) }
+      assertNotNull(bearerDid)
+      assertNotNull(bearerDid.document)
 
       val indexes = listOf(DidDhtTypeIndexing.Corporation, DidDhtTypeIndexing.SoftwarePackage)
-      val packet = did.toDnsPacket(did.document, indexes)
+      val packet = DidDht.toDnsPacket(bearerDid.document, indexes)
       assertNotNull(packet)
 
-      val docTypesPair = did.fromDnsPacket(msg = packet)
+      val docTypesPair = DidDht.fromDnsPacket(bearerDid.did.url, packet)
       assertNotNull(docTypesPair)
       assertNotNull(docTypesPair.first)
       assertNotNull(docTypesPair.second)
-      assertEquals(did.document.toString(), docTypesPair.first.toString())
+      assertEquals(bearerDid.document.toString(), docTypesPair.first.toString())
       assertEquals(indexes, docTypesPair.second)
     }
 

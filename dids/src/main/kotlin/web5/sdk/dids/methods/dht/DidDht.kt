@@ -16,12 +16,14 @@ import web5.sdk.common.ZBase32
 import web5.sdk.crypto.AlgorithmId
 import web5.sdk.crypto.Crypto
 import web5.sdk.crypto.Ed25519
+import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.crypto.KeyManager
 import web5.sdk.crypto.Secp256k1
 import web5.sdk.dids.CreateDidOptions
 import web5.sdk.dids.DidResolutionResult
 import web5.sdk.dids.ResolutionError
 import web5.sdk.dids.did.BearerDID
+import web5.sdk.dids.did.PortableDID
 import web5.sdk.dids.didcore.Did
 import web5.sdk.dids.didcore.DIDDocument
 import web5.sdk.dids.didcore.DIDDocumentMetadata
@@ -218,6 +220,23 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) {
       logger.warn(e) { "resolving DID $did failed" }
       DidResolutionResult.fromResolutionError(ResolutionError.INTERNAL_ERROR)
     }
+  }
+
+  public fun import(portableDID: PortableDID, keyManager: KeyManager = InMemoryKeyManager()): BearerDID {
+    val parsedDid = Did.parse(portableDID.uri)
+    if (parsedDid.method != methodName) {
+      throw InvalidMethodNameException("Method not supported")
+    }
+    val bearerDid = BearerDID.import(portableDID, keyManager)
+
+    if (bearerDid.document.verificationMethod
+        ?.none { vm ->
+          vm.id.split("#").last() == "0"
+        } == true
+    ) {
+      throw IllegalStateException("DidDht DID document must contain at least one verification method with fragment of 0")
+    }
+    return bearerDid
   }
 
   private fun resolveInternal(did: String): DidResolutionResult {

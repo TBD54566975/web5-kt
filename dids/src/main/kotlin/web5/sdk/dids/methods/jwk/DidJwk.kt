@@ -6,6 +6,7 @@ import web5.sdk.common.Convert
 import web5.sdk.common.EncodingFormat
 import web5.sdk.crypto.AlgorithmId
 import web5.sdk.crypto.InMemoryKeyManager
+import web5.sdk.crypto.KeyImporter
 import web5.sdk.crypto.KeyManager
 import web5.sdk.dids.CreateDidOptions
 import web5.sdk.dids.DidResolutionMetadata
@@ -18,6 +19,7 @@ import web5.sdk.dids.didcore.Did
 import web5.sdk.dids.didcore.DIDDocument
 import web5.sdk.dids.didcore.Purpose
 import web5.sdk.dids.didcore.VerificationMethod
+import web5.sdk.dids.exceptions.InvalidMethodNameException
 import web5.sdk.dids.exceptions.ParserException
 import java.text.ParseException
 
@@ -70,6 +72,18 @@ public class DidJwk {
 
       return BearerDID(did, keyManager, createDocument(did, publicKeyJwk))
 
+    }
+    public fun import(portableDID: PortableDID, keyManager: KeyManager = InMemoryKeyManager()): BearerDID {
+      val parsedDid = Did.parse(portableDID.uri)
+      if (parsedDid.method != methodName) {
+        throw InvalidMethodNameException("Method not supported")
+      }
+      val bearerDid = BearerDID.import(portableDID, keyManager)
+
+      if (bearerDid.document.verificationMethod?.size == 0) {
+        throw IllegalStateException("DidJwk DID document must contain exactly one verification method")
+      }
+      return bearerDid
     }
 
     /**
@@ -126,11 +140,6 @@ public class DidJwk {
       return DidResolutionResult(didDocument = didDocument, context = "https://w3id.org/did-resolution/v1")
     }
 
-    // todo being able to call BearerDID.import() requires the function to be a companion object method
-    // or BearerDID to be an object?
-//    public fun import(portableDID: PortableDID) : BearerDID {
-//
-//    }
     private fun createDocument(did: Did, publicKeyJwk: JWK): DIDDocument {
       val verificationMethodId = "${did.uri}#0"
       val verificationMethod = VerificationMethod.Builder()
