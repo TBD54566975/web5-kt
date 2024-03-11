@@ -299,24 +299,49 @@ class VerifiableCredentialTest {
   }
 
   @Test
-  fun `vcDataModel should add default context and type`() {
+  fun `vcDataModel should add default context`() {
 
-    val vcDataModel = VcDataModel.Builder()
-      .id(URI.create("123"))
-      .context(mutableListOf()) // Assuming default context is handled by the Builder if necessary
-      .type(mutableListOf()) // Assuming default type is handled by the Builder if necessary
-      .issuer(URI.create("http://example.com/issuer"))
-      .issuanceDate(Date())
-      .credentialSubject(
-        CredentialSubject.Builder()
-          .id(URI.create("http://example.com/subject"))
-          .additionalClaims(mapOf("claimKey" to "claimValue"))
+    val exception =
+      assertThrows(IllegalArgumentException::class.java) {
+        VcDataModel.Builder()
+          .id(URI.create("123"))
+          .context(mutableListOf())
+          .type(mutableListOf())
+          .issuer(URI.create("http://example.com/issuer"))
+          .issuanceDate(Date())
+          .credentialSubject(
+            CredentialSubject.Builder()
+              .id(URI.create("http://example.com/subject"))
+              .additionalClaims(mapOf("claimKey" to "claimValue"))
+              .build()
+          )
           .build()
-      )
-      .build()
+      }
 
-    assertEquals("https://www.w3.org/2018/credentials/v1", vcDataModel.context[0].toString())
-    assertEquals("VerifiableCredential", vcDataModel.type[0])
+    assertTrue(exception.message!!.contains("context must include at least: https://www.w3.org/2018/credentials/v1" ))
+  }
+
+  @Test
+  fun `vcDataModel should add default type`() {
+
+    val exception =
+      assertThrows(IllegalArgumentException::class.java) {
+        VcDataModel.Builder()
+          .id(URI.create("123"))
+          .context(mutableListOf(URI.create("https://www.w3.org/2018/credentials/v1")))
+          .type(mutableListOf())
+          .issuer(URI.create("http://example.com/issuer"))
+          .issuanceDate(Date())
+          .credentialSubject(
+            CredentialSubject.Builder()
+              .id(URI.create("http://example.com/subject"))
+              .additionalClaims(mapOf("claimKey" to "claimValue"))
+              .build()
+          )
+          .build()
+      }
+
+    assertTrue(exception.message!!.contains("type must include at least: VerifiableCredential" ))
   }
 
   @Test
@@ -350,15 +375,15 @@ class VerifiableCredentialTest {
   }
 
   @Test
-  fun `vcDataModel credentialSchema should fail with empty type`() {
+  fun `vcDataModel credentialSchema should fail with wrong type`() {
     val exception = assertThrows(IllegalArgumentException::class.java) {
       CredentialSchema.Builder()
         .id("did:example:123")
-        .type("")
+        .type("otherType")
         .build()
     }
 
-    assertTrue(exception.message!!.contains("Type cannot be blank"))
+    assertTrue(exception.message!!.contains("Type must be: JsonSchema"))
   }
 }
 
@@ -382,7 +407,6 @@ class Web5TestVectorsCredentials {
     val testVectors = mapper.readValue(File("../web5-spec/test-vectors/credentials/create.json"), typeRef)
 
     testVectors.vectors.filterNot { it.errors ?: false }.forEach { vector ->
-      println(vector.description)
       val vc = VerifiableCredential.fromJson(mapper.writeValueAsString(vector.input.credential))
 
       val keyManager = InMemoryKeyManager()
@@ -409,7 +433,6 @@ class Web5TestVectorsCredentials {
     val testVectors = mapper.readValue(File("../web5-spec/test-vectors/credentials/verify.json"), typeRef)
 
     testVectors.vectors.filterNot { it.errors ?: false }.forEach { vector ->
-      println(vector.description)
       assertDoesNotThrow {
         VerifiableCredential.verify(vector.input.vcJwt)
       }
