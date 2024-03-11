@@ -11,10 +11,10 @@ import web5.sdk.dids.CreateDidOptions
 import web5.sdk.dids.ChangemeDid
 import web5.sdk.dids.DidResolutionResult
 import web5.sdk.dids.ResolveDidOptions
-import web5.sdk.dids.did.BearerDID
-import web5.sdk.dids.did.PortableDID
+import web5.sdk.dids.did.BearerDid
+import web5.sdk.dids.did.PortableDid
 import web5.sdk.dids.didcore.Did
-import web5.sdk.dids.didcore.DIDDocument
+import web5.sdk.dids.didcore.DidDocument
 import web5.sdk.dids.didcore.Purpose
 import web5.sdk.dids.didcore.VerificationMethod
 
@@ -78,7 +78,7 @@ public class DidKey(uri: String, keyManager: KeyManager) : ChangemeDid(uri, keyM
      *
      * @throws UnsupportedOperationException if the specified curve is not supported.
      */
-    public fun create(keyManager: KeyManager, options: CreateDidKeyOptions? = null): BearerDID {
+    public fun create(keyManager: KeyManager, options: CreateDidKeyOptions? = null): BearerDid {
       val opts = options ?: CreateDidKeyOptions()
 
       val keyAlias = keyManager.generatePrivateKey(opts.algorithmId)
@@ -103,7 +103,7 @@ public class DidKey(uri: String, keyManager: KeyManager) : ChangemeDid(uri, keyM
       if (resolutionResult.didDocument == null) {
         throw IllegalStateException("DidDocument not found")
       }
-      return BearerDID(did, keyManager, resolutionResult.didDocument)
+      return BearerDid(did, keyManager, resolutionResult.didDocument)
     }
 
     /**
@@ -143,7 +143,7 @@ public class DidKey(uri: String, keyManager: KeyManager) : ChangemeDid(uri, keyM
         .type("JsonWebKey2020")
         .build()
 
-      val didDocument = DIDDocument.Builder()
+      val didDocument = DidDocument.Builder()
         .id(did)
         .verificationMethodForPurposes(
           verificationMethod,
@@ -159,13 +159,13 @@ public class DidKey(uri: String, keyManager: KeyManager) : ChangemeDid(uri, keyM
       return DidResolutionResult(didDocument = didDocument, context = "https://w3id.org/did-resolution/v1")
     }
 
-    public fun import(portableDID: PortableDID, keyManager: KeyManager): BearerDID {
+    public fun import(portableDID: PortableDid, keyManager: KeyManager): BearerDid {
       val parsedDid = Did.parse(portableDID.uri)
       if (parsedDid.method != methodName) {
         throw MethodNotSupportedException("Method not supported")
       }
 
-      val bearerDid = BearerDID.import(portableDID, keyManager)
+      val bearerDid = BearerDid.import(portableDID, keyManager)
 
       if (bearerDid.document.verificationMethod?.size != 1) {
         throw IllegalStateException("DidKey DID document must contain exactly one verification method")

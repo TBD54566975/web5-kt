@@ -5,33 +5,33 @@ import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.crypto.KeyExporter
 import web5.sdk.crypto.KeyImporter
 import web5.sdk.crypto.KeyManager
-import web5.sdk.dids.didcore.DIDDocument
+import web5.sdk.dids.didcore.DidDocument
 import web5.sdk.dids.didcore.Did
 import web5.sdk.dids.didcore.VMSelector
 import web5.sdk.dids.didcore.VerificationMethod
 
-public typealias DIDSigner = (payload: ByteArray) -> ByteArray
+public typealias DidSigner = (payload: ByteArray) -> ByteArray
 
-public class BearerDID(
+public class BearerDid(
   public val did: Did,
   public val keyManager: KeyManager,
-  public val document: DIDDocument
+  public val document: DidDocument
 ) {
 
-  public fun getSigner(selector: VMSelector): Pair<DIDSigner?, VerificationMethod?> {
+  public fun getSigner(selector: VMSelector? = null): Pair<DidSigner, VerificationMethod> {
     val verificationMethod = document.selectVerificationMethod(selector)
 
     val keyAliasResult = runCatching { verificationMethod.publicKeyJwk?.computeThumbprint() }
     val keyAlias = keyAliasResult.getOrNull() ?: throw Exception("Failed to compute key alias")
 
-    val signer: DIDSigner = { payload ->
+    val signer: DidSigner = { payload ->
       keyManager.sign(keyAlias.toString(), payload)
     }
 
     return Pair(signer, verificationMethod)
   }
 
-  public fun export(): PortableDID {
+  public fun export(): PortableDid {
 
     val keyExporter = keyManager as? KeyExporter
     val privateKeys = mutableListOf<JWK>()
@@ -46,7 +46,7 @@ public class BearerDID(
       }
     }
 
-    return PortableDID(
+    return PortableDid(
       uri = this.did.uri,
       document = this.document,
       privateKeys = privateKeys,
@@ -57,10 +57,9 @@ public class BearerDID(
   public companion object {
 
     public fun import(
-      portableDID: PortableDID,
+      portableDID: PortableDid,
       keyManager: KeyManager = InMemoryKeyManager()
-    ):
-      BearerDID {
+    ): BearerDid {
       check(portableDID.document.verificationMethod?.size != 0) {
         "PortableDID must contain at least one verification method"
       }
@@ -81,7 +80,7 @@ public class BearerDID(
         keyImporter!!.importKey(key)
       }
 
-      return BearerDID(did, keyManager, portableDID.document)
+      return BearerDid(did, keyManager, portableDID.document)
     }
   }
 

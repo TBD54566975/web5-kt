@@ -6,17 +6,14 @@ import web5.sdk.common.Convert
 import web5.sdk.common.EncodingFormat
 import web5.sdk.crypto.AlgorithmId
 import web5.sdk.crypto.InMemoryKeyManager
-import web5.sdk.crypto.KeyImporter
 import web5.sdk.crypto.KeyManager
-import web5.sdk.dids.CreateDidOptions
 import web5.sdk.dids.DidResolutionMetadata
 import web5.sdk.dids.DidResolutionResult
 import web5.sdk.dids.ResolutionError
-import web5.sdk.dids.ResolveDidOptions
-import web5.sdk.dids.did.BearerDID
-import web5.sdk.dids.did.PortableDID
+import web5.sdk.dids.did.BearerDid
+import web5.sdk.dids.did.PortableDid
 import web5.sdk.dids.didcore.Did
-import web5.sdk.dids.didcore.DIDDocument
+import web5.sdk.dids.didcore.DidDocument
 import web5.sdk.dids.didcore.Purpose
 import web5.sdk.dids.didcore.VerificationMethod
 import web5.sdk.dids.exceptions.InvalidMethodNameException
@@ -59,7 +56,7 @@ public class DidJwk {
     // todo look into whether params can be nullable if providing default values
     public fun create(
       keyManager: KeyManager = InMemoryKeyManager(),
-      algorithmId: AlgorithmId = AlgorithmId.Ed25519): BearerDID {
+      algorithmId: AlgorithmId = AlgorithmId.Ed25519): BearerDid {
 
       val keyAlias = keyManager.generatePrivateKey(algorithmId)
       val publicKeyJwk = keyManager.getPublicKey(keyAlias)
@@ -70,15 +67,15 @@ public class DidJwk {
 
       val did = Did(method = methodName, uri = didUri, url = didUri, id = base64Encoded)
 
-      return BearerDID(did, keyManager, createDocument(did, publicKeyJwk))
+      return BearerDid(did, keyManager, createDocument(did, publicKeyJwk))
 
     }
-    public fun import(portableDID: PortableDID, keyManager: KeyManager = InMemoryKeyManager()): BearerDID {
+    public fun import(portableDID: PortableDid, keyManager: KeyManager = InMemoryKeyManager()): BearerDid {
       val parsedDid = Did.parse(portableDID.uri)
       if (parsedDid.method != methodName) {
         throw InvalidMethodNameException("Method not supported")
       }
-      val bearerDid = BearerDID.import(portableDID, keyManager)
+      val bearerDid = BearerDid.import(portableDID, keyManager)
 
       if (bearerDid.document.verificationMethod?.size == 0) {
         throw IllegalStateException("DidJwk DID document must contain exactly one verification method")
@@ -140,7 +137,7 @@ public class DidJwk {
       return DidResolutionResult(didDocument = didDocument, context = "https://w3id.org/did-resolution/v1")
     }
 
-    private fun createDocument(did: Did, publicKeyJwk: JWK): DIDDocument {
+    private fun createDocument(did: Did, publicKeyJwk: JWK): DidDocument {
       val verificationMethodId = "${did.uri}#0"
       val verificationMethod = VerificationMethod.Builder()
         .id(verificationMethodId)
@@ -149,7 +146,7 @@ public class DidJwk {
         .type("JsonWebKey2020")
         .build()
 
-      val didDocumentBuilder = DIDDocument.Builder()
+      val didDocumentBuilder = DidDocument.Builder()
         .context(listOf("https://www.w3.org/ns/did/v1"))
         .id(did.url)
 

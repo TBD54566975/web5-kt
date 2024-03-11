@@ -4,8 +4,8 @@ import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
-import web5.sdk.dids.didcore.DIDDocument
-import web5.sdk.dids.didcore.DIDDocumentMetadata
+import web5.sdk.dids.didcore.DidDocument
+import web5.sdk.dids.didcore.DidDocumentMetadata
 import java.util.Objects.hash
 
 /**
@@ -20,8 +20,8 @@ import java.util.Objects.hash
 public class DidResolutionResult(
   @JsonProperty("@context")
   public val context: String? = null,
-  public val didDocument: DIDDocument? = null,
-  public val didDocumentMetadata: DIDDocumentMetadata = DIDDocumentMetadata(),
+  public val didDocument: DidDocument? = null,
+  public val didDocumentMetadata: DidDocumentMetadata = DidDocumentMetadata(),
   public val didResolutionMetadata: DidResolutionMetadata = DidResolutionMetadata(),
 ) {
   override fun toString(): String {
@@ -35,7 +35,13 @@ public class DidResolutionResult(
     return false
   }
 
-  override fun hashCode(): Int = hash(context, didDocument, didDocumentMetadata, didResolutionMetadata)
+  override fun hashCode(): Int =
+    hash(
+      context,
+      didDocument,
+      didDocumentMetadata,
+      didResolutionMetadata
+    )
 
   public companion object {
     private val objectMapper: ObjectMapper = ObjectMapper().apply {

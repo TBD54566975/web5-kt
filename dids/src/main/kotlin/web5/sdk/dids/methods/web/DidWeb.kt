@@ -22,12 +22,12 @@ import web5.sdk.common.Json
 import web5.sdk.crypto.KeyManager
 import web5.sdk.dids.CreateDidOptions
 import web5.sdk.dids.didcore.Did
-import web5.sdk.dids.didcore.DIDDocument
+import web5.sdk.dids.didcore.DidDocument
 import web5.sdk.dids.DidResolutionResult
 import web5.sdk.dids.exceptions.ParserException
 import web5.sdk.dids.ResolutionError
-import web5.sdk.dids.did.BearerDID
-import web5.sdk.dids.did.PortableDID
+import web5.sdk.dids.did.BearerDid
+import web5.sdk.dids.did.PortableDid
 import java.io.File
 import java.net.InetAddress
 import java.net.URL
@@ -117,8 +117,8 @@ public sealed class DidWebApi(
     }
   }
 
-  public fun import(portableDID: PortableDID, keyManager: KeyManager): BearerDID {
-    return BearerDID.import(portableDID, keyManager)
+  public fun import(portableDID: PortableDid, keyManager: KeyManager): BearerDid {
+    return BearerDid.import(portableDID, keyManager)
   }
 
   private fun resolveInternal(did: String): DidResolutionResult {
@@ -150,7 +150,7 @@ public sealed class DidWebApi(
       throw ResponseException(resp, "resolution error response: '$body'")
     }
     return DidResolutionResult(
-      didDocument = mapper.readValue(body, DIDDocument::class.java),
+      didDocument = mapper.readValue(body, DidDocument::class.java),
     )
   }
 
@@ -168,7 +168,7 @@ public sealed class DidWebApi(
     return targetUrl.toString()
   }
 
-  public fun create(keyManager: KeyManager, options: CreateDidOptions?): BearerDID {
+  public fun create(keyManager: KeyManager, options: CreateDidOptions?): BearerDid {
     throw UnsupportedOperationException("Create operation is not supported for did:web")
   }
 }

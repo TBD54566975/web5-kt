@@ -53,7 +53,7 @@ class VerifiableCredentialTest {
     val vc = VerifiableCredential.create(
       type = "StreetCred",
       issuer = issuerDid.uri,
-      subject = holderDid.uri,
+      subject = holderDid.did.uri,
       data = StreetCredibility(localRespect = "high", legit = true)
     )
 
@@ -72,8 +72,8 @@ class VerifiableCredentialTest {
 
     val vc = VerifiableCredential.create(
       type = "StreetCred",
-      issuer = issuerDid.uri,
-      subject = holderDid.uri,
+      issuer = issuerDid.did.uri,
+      subject = holderDid.did.uri,
       data = StreetCredibility(localRespect = "high", legit = true)
     )
     assertNotNull(vc)
@@ -88,8 +88,8 @@ class VerifiableCredentialTest {
     val exception = assertThrows(IllegalArgumentException::class.java) {
       VerifiableCredential.create(
         type = "StreetCred",
-        issuer = issuerDid.uri,
-        subject = holderDid.uri,
+        issuer = issuerDid.did.uri,
+        subject = holderDid.did.uri,
         data = "trials & tribulations"
       )
     }
@@ -106,8 +106,8 @@ class VerifiableCredentialTest {
 
     val vc = VerifiableCredential.create(
       type = "StreetCred",
-      issuer = issuerDid.uri,
-      subject = holderDid.uri,
+      issuer = issuerDid.did.uri,
+      subject = holderDid.did.uri,
       data = StreetCredibility(localRespect = "high", legit = true)
     )
 
@@ -134,7 +134,7 @@ class VerifiableCredentialTest {
     )
 
     val header = JWSHeader.Builder(JWSAlgorithm.ES256K)
-      .keyID(issuerDid.uri)
+      .keyID(issuerDid.did.uri)
       .build()
     // A detached payload JWT
     val vcJwt = "${header.toBase64URL()}..fakeSig"
@@ -211,8 +211,8 @@ class VerifiableCredentialTest {
 
     val vc = VerifiableCredential.create(
       type = "StreetCred",
-      issuer = issuerDid.uri,
-      subject = holderDid.uri,
+      issuer = issuerDid.did.uri,
+      subject = holderDid.did.uri,
       data = StreetCredibility(localRespect = "high", legit = true)
     )
 
@@ -252,8 +252,11 @@ class Web5TestVectorsCredentials {
 
       val keyManager = InMemoryKeyManager()
       keyManager.import(listOf(vector.input.signerPrivateJwk!!))
-      val issuerChangemeDid = ChangemeDid.load(vector.input.signerDidUri!!, keyManager)
-      val vcJwt = vc.sign(issuerChangemeDid)
+      // todo need to update test vectors
+      //  input should have portable did and credential
+      // want to be able to call BearerDID.import()
+      val issuerDid = ChangemeDid.load(vector.input.signerDidUri!!, keyManager)
+      val vcJwt = vc.sign(issuerDid)
 
       assertEquals(vector.output, vcJwt, vector.description)
     }

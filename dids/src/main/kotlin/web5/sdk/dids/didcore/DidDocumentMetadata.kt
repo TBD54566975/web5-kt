@@ -12,7 +12,7 @@ package web5.sdk.dids.didcore
  * @property equivalentId Alternative ID that can be used interchangeably with the canonical DID.
  * @property canonicalId The canonical ID of the DID as per method-specific rules.
  */
-public open class DIDDocumentMetadata(
+public open class DidDocumentMetadata(
   public var created: String? = null,
   public var updated: String? = null,
   public var deactivated: Boolean? = null,

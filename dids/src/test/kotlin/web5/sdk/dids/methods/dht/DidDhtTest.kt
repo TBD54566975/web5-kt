@@ -24,7 +24,7 @@ import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.dids.DidResolutionResult
 import web5.sdk.dids.JwkDeserializer
 import web5.sdk.dids.PurposesDeserializer
-import web5.sdk.dids.didcore.DIDDocument
+import web5.sdk.dids.didcore.DidDocument
 import web5.sdk.dids.didcore.Purpose
 import web5.sdk.dids.didcore.Service
 import web5.sdk.dids.exceptions.InvalidIdentifierException
@@ -365,7 +365,7 @@ class Web5TestVectorsDidDht {
 
   @Test
   fun create() {
-    val typeRef = object : TypeReference<TestVectors<CreateTestInput, DIDDocument>>() {}
+    val typeRef = object : TypeReference<TestVectors<CreateTestInput, DidDocument>>() {}
     val testVectors = mapper.readValue(File("../web5-spec/test-vectors/did_dht/create.json"), typeRef)
 
     testVectors.vectors.forEach { vector ->

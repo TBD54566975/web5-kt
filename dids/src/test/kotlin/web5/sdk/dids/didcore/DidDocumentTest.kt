@@ -9,7 +9,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
-class DIDDocumentTest {
+class DidDocumentTest {
 
   @Nested
   inner class SelectVerificationMethodTest {
@@ -17,7 +17,7 @@ class DIDDocumentTest {
     @Test
     fun `selectVerificationMethod throws exception if vmMethod is empty`() {
 
-      val doc = DIDDocument("did:example:123")
+      val doc = DidDocument("did:example:123")
 
       assertThrows<Exception> {
         doc.selectVerificationMethod(Purpose.AssertionMethod)
@@ -34,7 +34,7 @@ class DIDDocumentTest {
       val vmList = listOf(
         VerificationMethod("id", "type", "controller", publicKeyJwk)
       )
-      val doc = DIDDocument(id = "did:example:123", verificationMethod = vmList)
+      val doc = DidDocument(id = "did:example:123", verificationMethod = vmList)
 
       val vm = doc.selectVerificationMethod(null)
       assertEquals("id", vm.id)
@@ -54,7 +54,7 @@ class DIDDocumentTest {
         VerificationMethod("id", "type", "controller", publicKeyJwk)
       )
       val assertionMethods = listOf("id")
-      val doc = DIDDocument(
+      val doc = DidDocument(
         id = "did:example:123",
         verificationMethod = vmList,
         assertionMethod = assertionMethods
@@ -78,7 +78,7 @@ class DIDDocumentTest {
         VerificationMethod("id", "type", "controller", publicKeyJwk)
       )
       val assertionMethods = listOf("id")
-      val doc = DIDDocument(
+      val doc = DidDocument(
         id = "did:example:123",
         verificationMethod = vmList,
         assertionMethod = assertionMethods
@@ -101,7 +101,7 @@ class DIDDocumentTest {
       val vmList = listOf(
         VerificationMethod("id", "type", "controller", publicKeyJwk)
       )
-      val doc = DIDDocument(
+      val doc = DidDocument(
         id = "did:example:123",
         verificationMethod = vmList
       )
@@ -117,14 +117,14 @@ class DIDDocumentTest {
   inner class GetAbsoluteResourceIDTest {
     @Test
     fun `getAbsoluteResourceID returns absolute resource id if passed in fragment`() {
-      val doc = DIDDocument("did:example:123")
+      val doc = DidDocument("did:example:123")
       val resourceID = doc.getAbsoluteResourceID("#0")
       assertEquals("did:example:123#0", resourceID)
     }
 
     @Test
     fun `getAbsoluteResourceID returns absolute resource id if passed in full id`() {
-      val doc = DIDDocument("did:example:123")
+      val doc = DidDocument("did:example:123")
       val resourceID = doc.getAbsoluteResourceID("did:example:123#1")
       assertEquals("did:example:123#1", resourceID)
     }
@@ -135,7 +135,7 @@ class DIDDocumentTest {
   inner class FindAssertionMethodByIdTest {
     @Test
     fun `findAssertionMethodById throws exception if assertionMethod list is empty`() {
-      val doc = DIDDocument("did:example:123")
+      val doc = DidDocument("did:example:123")
 
       assertThrows<SignatureException> {
         doc.findAssertionMethodById()
@@ -146,7 +146,7 @@ class DIDDocumentTest {
     fun `findAssertionMethodById throws exception if assertionMethod does not have provided id`() {
       val assertionMethods = listOf("foo")
 
-      val doc = DIDDocument(id = "did:example:123", assertionMethod = assertionMethods)
+      val doc = DidDocument(id = "did:example:123", assertionMethod = assertionMethods)
 
       assertThrows<SignatureException> {
         doc.findAssertionMethodById("bar")
@@ -164,7 +164,7 @@ class DIDDocumentTest {
         VerificationMethod("foo", "type", "controller", publicKeyJwk)
       )
 
-      val doc = DIDDocument(id = "did:example:123", verificationMethod = vmList, assertionMethod = assertionMethods)
+      val doc = DidDocument(id = "did:example:123", verificationMethod = vmList, assertionMethod = assertionMethods)
 
       assertThrows<SignatureException> {
         doc.findAssertionMethodById()
@@ -182,7 +182,7 @@ class DIDDocumentTest {
         VerificationMethod("foo", "type", "controller", publicKeyJwk)
       )
 
-      val doc = DIDDocument(id = "did:example:123", verificationMethod = vmList, assertionMethod = assertionMethods)
+      val doc = DidDocument(id = "did:example:123", verificationMethod = vmList, assertionMethod = assertionMethods)
 
       val assertionMethod = doc.findAssertionMethodById("foo")
       assertEquals("foo", assertionMethod.id)
@@ -194,7 +194,7 @@ class DIDDocumentTest {
   @Nested
   inner class BuilderTest {
     @Test
-    fun `builder creates a DIDDocument with the provided id`() {
+    fun `builder creates a DidDocument with the provided id`() {
 
       val svc = Service.Builder()
         .id("service_id")
@@ -202,7 +202,7 @@ class DIDDocumentTest {
         .serviceEndpoint(listOf("https://example.com"))
         .build()
 
-      val doc = DIDDocument.Builder()
+      val doc = DidDocument.Builder()
         .id("did:ex:foo")
         .context(listOf("https://www.w3.org/ns/did/v1"))
         .controllers(listOf("did:ex:foo"))
@@ -224,7 +224,7 @@ class DIDDocumentTest {
       val publicKeyJwk = manager.getPublicKey(keyAlias)
       val vm = VerificationMethod("foo", "type", "controller", publicKeyJwk)
 
-      val doc = DIDDocument.Builder()
+      val doc = DidDocument.Builder()
         .id("did:ex:foo")
         .context(listOf("https://www.w3.org/ns/did/v1"))
         .verificationMethodForPurposes(vm,
@@ -253,7 +253,7 @@ class DIDDocumentTest {
       val publicKeyJwk = manager.getPublicKey(keyAlias)
       val vm = VerificationMethod("foo", "type", "controller", publicKeyJwk)
 
-      val doc = DIDDocument.Builder()
+      val doc = DidDocument.Builder()
         .id("did:ex:foo")
         .context(listOf("https://www.w3.org/ns/did/v1"))
         .verificationMethodForPurposes(vm,listOf(Purpose.Authentication))
@@ -274,7 +274,7 @@ class DIDDocumentTest {
       val publicKeyJwk = manager.getPublicKey(keyAlias)
       val vm = VerificationMethod("foo", "type", "controller", publicKeyJwk)
 
-      val doc = DIDDocument.Builder()
+      val doc = DidDocument.Builder()
         .id("did:ex:foo")
         .context(listOf("https://www.w3.org/ns/did/v1"))
         .verificationMethodForPurposes(vm)
@@ -290,7 +290,7 @@ class DIDDocumentTest {
 
     @Test
     fun `verificationMethodIdsForPurpose builds list for one purpose`() {
-      val doc = DIDDocument.Builder()
+      val doc = DidDocument.Builder()
         .id("did:ex:foo")
         .context(listOf("https://www.w3.org/ns/did/v1"))
         .verificationMethodIdsForPurpose(mutableListOf("keyagreementId"), Purpose.KeyAgreement)

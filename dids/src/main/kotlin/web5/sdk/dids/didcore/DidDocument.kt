@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import java.security.SignatureException
 
 /**
- * DIDDocument represents a set of data describing the DID subject including mechanisms such as:
+ * DidDocument represents a set of data describing the DID subject including mechanisms such as:
  * - cryptographic public keys - used to authenticate itself and prove association with the DID
  * - services - means of communicating or interacting with the DID subject or
  *   associated entities via one or more service endpoints.
@@ -36,7 +36,7 @@ import java.security.SignatureException
  * @property capabilityInvocation specifies a verification method used by the DID subject to invoke a
  * 	         cryptographic capability, such as the authorization to update the DID Document.
  */
-public class DIDDocument(
+public class DidDocument(
   public val id: String,
   @JsonProperty("@context")
   public val context: List<String>? = null,
@@ -102,7 +102,7 @@ public class DIDDocument(
   }
 
   /**
-   * Finds the first available assertion method from the [DIDDocument]. When [assertionMethodId]
+   * Finds the first available assertion method from the [DidDocument]. When [assertionMethodId]
    * is null, the function will return the first available assertion method.
    *
    * @param assertionMethodId The ID of the assertion method to be found
@@ -131,7 +131,7 @@ public class DIDDocument(
   }
 
   /**
-   * Builder object to build a DIDDocument.
+   * Builder object to build a DidDocument.
    */
   public class Builder {
 
@@ -150,17 +150,17 @@ public class DIDDocument(
     private var capabilityInvocationMethod: MutableList<String>? = null
 
     /**
-     * Adds Id to the DIDDocument.
+     * Adds Id to the DidDocument.
      *
-     * @param id of the DIDDocument
+     * @param id of the DidDocument
      * @return Builder object
      */
     public fun id(id: String): Builder = apply { this.id = id }
 
     /**
-     * Sets Context to the DIDDocument.
+     * Sets Context to the DidDocument.
      *
-     * @param context of the DIDDocument
+     * @param context of the DidDocument
      * @return Builder object
      */
     public fun context(context: List<String>): Builder = apply {
@@ -170,7 +170,7 @@ public class DIDDocument(
     /**
      * Sets Controllers.
      *
-     * @param controllers to be set on the DIDDocument
+     * @param controllers to be set on the DidDocument
      * @return Builder object
      */
     public fun controllers(controllers: List<String>): Builder = apply { this.controller = controllers }
@@ -178,7 +178,7 @@ public class DIDDocument(
     /**
      * Sets AlsoknownAses.
      *
-     * @param alsoKnownAses to be set on the DIDDocument
+     * @param alsoKnownAses to be set on the DidDocument
      * @return Builder object
      */
     public fun alsoKnownAses(alsoKnownAses: List<String>): Builder = apply { this.alsoKnownAs = alsoKnownAses }
@@ -186,7 +186,7 @@ public class DIDDocument(
     /**
      * Sets Services.
      *
-     * @param services to be set on the DIDDocument
+     * @param services to be set on the DidDocument
      * @return Builder object
      */
     public fun services(services: List<Service>?): Builder = apply { this.service = services }
@@ -227,7 +227,7 @@ public class DIDDocument(
     /**
      * Adds VerificationMethods for a single purpose.
      *
-     * @param methodIds a list of VerificationMethodIds to be added to the DIDDocument
+     * @param methodIds a list of VerificationMethodIds to be added to the DidDocument
      * @param purpose a single purpose to be associated with the list of VerificationMethods
      * @return Builder object
      */
@@ -256,13 +256,13 @@ public class DIDDocument(
       }
 
     /**
-     * Builds DIDDocument after validating the required fields.
+     * Builds DidDocument after validating the required fields.
      *
-     * @return DIDDocument
+     * @return DidDocument
      */
-    public fun build(): DIDDocument {
+    public fun build(): DidDocument {
       check(id != null) { "ID is required" }
-      return DIDDocument(
+      return DidDocument(
         id!!,
         context,
         alsoKnownAs,
@@ -279,7 +279,7 @@ public class DIDDocument(
   }
 
   override fun toString(): String {
-    return "DIDDocument(" +
+    return "DidDocument(" +
       "id='$id', " +
       "context='$context', " +
       "alsoKnownAs=$alsoKnownAs, " +
