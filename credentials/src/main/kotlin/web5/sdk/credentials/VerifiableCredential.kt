@@ -14,7 +14,9 @@ import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jwt.JWTParser
 import com.nimbusds.jwt.SignedJWT
 import web5.sdk.credentials.util.JwtUtil
-import web5.sdk.dids.ChangemeDid
+import web5.sdk.dids.did.BearerDid
+import web5.sdk.dids.jwt.Jwt
+import web5.sdk.dids.jwt.JwtClaimsSet
 import java.net.URI
 import java.security.SignatureException
 import java.util.Date
@@ -64,15 +66,15 @@ public class VerifiableCredential internal constructor(public val vcDataModel: V
    * ```
    */
   @JvmOverloads
-  public fun sign(did: ChangemeDid, assertionMethodId: String? = null): String {
-    val payload = JWTClaimsSet.Builder()
+  public fun sign(did: BearerDid, assertionMethodId: String? = null): String {
+    val payload = JwtClaimsSet.Builder()
       .issuer(vcDataModel.issuer.toString())
-      .issueTime(vcDataModel.issuanceDate)
+      .issueTime(vcDataModel.issuanceDate.time)
       .subject(vcDataModel.credentialSubject.id.toString())
-      .claim("vc", vcDataModel.toMap())
+      .misc("vc", vcDataModel.toMap())
       .build()
 
-    return JwtUtil.sign(did, assertionMethodId, payload)
+    return Jwt.sign(did, payload)
   }
 
   /**

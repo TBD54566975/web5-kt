@@ -36,7 +36,7 @@ public object Jwt {
 
   public fun sign(did: BearerDid, payload: JwtClaimsSet): String {
     val header = JwtHeader(typ = "JWT")
-    val payloadBytes = Convert(Json.jsonMapper.writeValueAsBytes(payload)).toByteArray()
+    val payloadBytes = Convert(Json.jsonMapper.writeValueAsString(payload)).toByteArray()
 
     return Jws.sign(did, payloadBytes, header)
   }
@@ -118,13 +118,13 @@ public class JwtClaimsSet(
     private var jti: String? = null
     private var misc: MutableMap<String, Any> = mutableMapOf()
 
-    public fun iss(iss: String): Builder = apply { this.iss = iss }
-    public fun sub(sub: String): Builder = apply { this.sub = sub }
-    public fun aud(aud: String): Builder = apply { this.aud = aud }
-    public fun exp(exp: Long): Builder = apply { this.exp = exp }
-    public fun nbf(nbf: Long): Builder = apply { this.nbf = nbf }
-    public fun iat(iat: Long): Builder = apply { this.iat = iat }
-    public fun jti(jti: String): Builder = apply { this.jti = jti }
+    public fun issuer(iss: String): Builder = apply { this.iss = iss }
+    public fun subject(sub: String): Builder = apply { this.sub = sub }
+    public fun audience(aud: String): Builder = apply { this.aud = aud }
+    public fun expirationTime(exp: Long): Builder = apply { this.exp = exp }
+    public fun notBeforeTime(nbf: Long): Builder = apply { this.nbf = nbf }
+    public fun issueTime(iat: Long): Builder = apply { this.iat = iat }
+    public fun jwtId(jti: String): Builder = apply { this.jti = jti }
     public fun misc(key: String, value: Any): Builder = apply { this.misc[key] = value }
 
     public fun build(): JwtClaimsSet = JwtClaimsSet(iss, sub, aud, exp, nbf, iat, jti, misc)

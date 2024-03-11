@@ -9,8 +9,8 @@ import com.nimbusds.jwt.JWTParser
 import com.nimbusds.jwt.SignedJWT
 import web5.sdk.common.Convert
 import web5.sdk.crypto.Crypto
-import web5.sdk.dids.ChangemeDid
 import web5.sdk.dids.DidResolvers
+import web5.sdk.dids.did.BearerDid
 import web5.sdk.dids.didcore.Did
 import web5.sdk.dids.exceptions.DidResolutionException
 import web5.sdk.dids.exceptions.PublicKeyJwkMissingException
@@ -25,13 +25,13 @@ private const val JSON_WEB_KEY = "JsonWebKey"
  */
 public object JwtUtil {
   /**
-   * Sign a jwt payload using a specified decentralized identifier ([did]) with the private key that pairs
+   * Sign a jwt payload using a specified decentralized identifier ([bearerDid]) with the private key that pairs
    * with the public key identified by [assertionMethodId].
    *
    * If the [assertionMethodId] is null, the function will attempt to use the first available verification method from
-   * the [did]. The result is a String in a JWT format.
+   * the [bearerDid]. The result is a String in a JWT format.
    *
-   * @param did The [ChangemeDid] used to sign the credential.
+   * @param bearerDid The [ChangemeDid] used to sign the credential.
    * @param assertionMethodId An optional identifier for the assertion method
    *        that will be used for verification of the produced signature.
    * @param jwtPayload the payload that is getting signed by the [ChangemeDid]
@@ -42,13 +42,15 @@ public object JwtUtil {
    * val signedVc = verifiableCredential.sign(myDid)
    * ```
    */
-  public fun sign(did: ChangemeDid, assertionMethodId: String?, jwtPayload: JWTClaimsSet): String {
-    val didResolutionResult = DidResolvers.resolve(did.uri)
+  // todo figure out how assertionMethodId is being used, make sure it's not lost
+  // when subbing this out with Jwt.sign(bearerDid, jwtPayload)
+  public fun sign(bearerDid: BearerDid, assertionMethodId: String?, jwtPayload: JWTClaimsSet): String {
+    val didResolutionResult = DidResolvers.resolve(bearerDid.did.uri)
     val didDocument = didResolutionResult.didDocument
     if (didResolutionResult.didResolutionMetadata.error != null || didDocument == null) {
       throw DidResolutionException(
         "Signature verification failed: " +
-          "Failed to resolve DID ${did.uri}. " +
+          "Failed to resolve DID ${bearerDid.did.uri}. " +
           "Error: ${didResolutionResult.didResolutionMetadata.error}"
       )
     }
@@ -56,7 +58,7 @@ public object JwtUtil {
     val assertionMethod = didDocument.findAssertionMethodById(assertionMethodId)
 
     val publicKeyJwk = assertionMethod.publicKeyJwk ?: throw PublicKeyJwkMissingException("publicKeyJwk is null.")
-    val keyAlias = did.keyManager.getDeterministicAlias(publicKeyJwk)
+    val keyAlias = bearerDid.keyManager.getDeterministicAlias(publicKeyJwk)
 
     // TODO: figure out how to make more reliable since algorithm is technically not a required property of a JWK
     val algorithm = publicKeyJwk.algorithm
@@ -64,7 +66,7 @@ public object JwtUtil {
 
     val kid = when (URI.create(assertionMethod.id).isAbsolute) {
       true -> assertionMethod.id
-      false -> "${did.uri}${assertionMethod.id}"
+      false -> "${bearerDid.did.uri}${assertionMethod.id}"
     }
 
     val jwtHeader = JWSHeader.Builder(jwsAlgorithm)
@@ -74,7 +76,7 @@ public object JwtUtil {
 
     val jwtObject = SignedJWT(jwtHeader, jwtPayload)
     val toSign = jwtObject.signingInput
-    val signatureBytes = did.keyManager.sign(keyAlias, toSign)
+    val signatureBytes = bearerDid.keyManager.sign(keyAlias, toSign)
 
     val base64UrlEncodedHeader = jwtHeader.toBase64URL()
     val base64UrlEncodedPayload = jwtPayload.toPayload().toBase64URL()

@@ -26,11 +26,11 @@ import web5.sdk.dids.exceptions.PublicKeyJwkMissingException
  * Implementers should adhere to the respective DID method specifications ensuring both compliance
  * and interoperability across different DID networks.
  */
-public abstract class ChangemeDid(public val uri: String, public val keyManager: KeyManager) {
-  public companion object {
-    // static helper methods here
-  }
-}
+//public abstract class ChangemeDid(public val uri: String, public val keyManager: KeyManager) {
+//  public companion object {
+//    // static helper methods here
+//  }
+//}
 
 /**
  * Represents options during the creation of a Decentralized Identifier (DID).

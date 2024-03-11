@@ -7,7 +7,9 @@ import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jwt.JWTParser
 import com.nimbusds.jwt.SignedJWT
 import web5.sdk.credentials.util.JwtUtil
-import web5.sdk.dids.ChangemeDid
+import web5.sdk.dids.did.BearerDid
+import web5.sdk.dids.jwt.Jwt
+import web5.sdk.dids.jwt.JwtClaimsSet
 import java.net.URI
 import java.security.SignatureException
 import java.util.Date
@@ -41,13 +43,13 @@ public class VerifiablePresentation internal constructor(public val vpDataModel:
     get() = vpDataModel.holder.toString()
 
   /**
-   * Sign a verifiable presentation using a specified decentralized identifier ([did]) with the private key that pairs
+   * Sign a verifiable presentation using a specified decentralized identifier ([bearerDid]) with the private key that pairs
    * with the public key identified by [assertionMethodId].
    *
    * If the [assertionMethodId] is null, the function will attempt to use the first available verification method from
-   * the [did]. The result is a String in a JWT format.
+   * the [bearerDid]. The result is a String in a JWT format.
    *
-   * @param did The [ChangemeDid] used to sign the credential.
+   * @param bearerDid The [ChangemeDid] used to sign the credential.
    * @param assertionMethodId An optional identifier for the assertion method that will be used for verification of the
    *        produced signature.
    * @return The JWT representing the signed verifiable credential.
@@ -58,14 +60,14 @@ public class VerifiablePresentation internal constructor(public val vpDataModel:
    * ```
    */
   @JvmOverloads
-  public fun sign(did: ChangemeDid, assertionMethodId: String? = null): String {
-    val payload = JWTClaimsSet.Builder()
-      .issuer(did.uri)
-      .issueTime(Date())
-      .claim("vp", vpDataModel.toMap())
+  public fun sign(bearerDid: BearerDid, assertionMethodId: String? = null): String {
+    val payload = JwtClaimsSet.Builder()
+      .issuer(bearerDid.did.uri)
+      .issueTime(Date().time)
+      .misc("vp", vpDataModel.toMap())
       .build()
 
-    return JwtUtil.sign(did, assertionMethodId, payload)
+    return Jwt.sign(bearerDid, payload)
   }
 
   /**
