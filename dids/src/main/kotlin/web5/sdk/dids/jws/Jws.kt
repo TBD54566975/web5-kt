@@ -67,7 +67,7 @@ public object Jws {
     val toSign = "$headerBase64Url.$payloadBase64Url"
     val toSignBytes = Convert(toSign).toByteArray()
 
-    val signatureBytes =  signer.invoke(toSignBytes)
+    val signatureBytes = signer.invoke(toSignBytes)
     val signatureBase64Url = Convert(signatureBytes).toBase64Url(padding = false)
 
     if (detached) {
@@ -90,7 +90,39 @@ public class JwsHeader(
   public var alg: String? = null,
   public var kid: String? = null
 ) {
+
+  public fun toBase64Url(): String {
+    return toBase64Url(this)
+  }
+
+  public class Builder {
+    private var typ: String? = null
+    private var alg: String? = null
+    private var kid: String? = null
+
+    public fun typ(typ: String): Builder {
+      this.typ = typ
+      return this
+    }
+
+    public fun alg(alg: String): Builder {
+      this.alg = alg
+      return this
+    }
+
+    public fun kid(kid: String): Builder {
+      this.kid = kid
+      return this
+    }
+
+    public fun build(): JwsHeader {
+      return JwsHeader(typ, alg, kid)
+    }
+  }
+
   public companion object {
+    // todo do i need these toJson and fromJson?
+    // i could just call Json.jsonMapper.xyz()
     public fun toJson(header: JwsHeader): String {
       return Json.jsonMapper.writeValueAsString(header)
     }
