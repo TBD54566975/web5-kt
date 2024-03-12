@@ -3,8 +3,6 @@ package web5.sdk.credentials
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
-import com.nimbusds.jwt.JWTParser
-import com.nimbusds.jwt.SignedJWT
 import web5.sdk.dids.did.BearerDid
 import web5.sdk.dids.jwt.Jwt
 import web5.sdk.dids.jwt.JwtClaimsSet
@@ -37,7 +35,7 @@ public class VerifiablePresentation internal constructor(public val vpDataModel:
   public val verifiableCredential: List<String>
     get() = vpDataModel.toMap()["verifiableCredential"] as List<String>
 
-    public val holder: String
+  public val holder: String
     get() = vpDataModel.holder.toString()
 
   /**
@@ -178,11 +176,11 @@ public class VerifiablePresentation internal constructor(public val vpDataModel:
      * ```
      */
     public fun parseJwt(vpJwt: String): VerifiablePresentation {
-      val jwt = JWTParser.parse(vpJwt) as SignedJWT
-      val jwtPayload = jwt.payload.toJSONObject()
-      val vpDataModelValue = jwtPayload.getOrElse("vp") {
-        throw IllegalArgumentException("jwt payload missing vp property")
-      }
+      val jwt = Jwt.decode(vpJwt)
+      val jwtPayload = jwt.claims
+      val vpDataModelValue = jwtPayload.misc["vp"]
+        ?: throw IllegalArgumentException("jwt payload missing vp property")
+
 
       @Suppress("UNCHECKED_CAST") // only partially unchecked. can only safely cast to Map<*, *>
       val vpDataModelMap = vpDataModelValue as? Map<String, Any>

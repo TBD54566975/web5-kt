@@ -10,8 +10,6 @@ import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.convertValue
 import com.nfeld.jsonpathkt.JsonPath
 import com.nfeld.jsonpathkt.extension.read
-import com.nimbusds.jwt.JWTParser
-import com.nimbusds.jwt.SignedJWT
 import web5.sdk.dids.did.BearerDid
 import web5.sdk.dids.jwt.Jwt
 import web5.sdk.dids.jwt.JwtClaimsSet
@@ -204,11 +202,10 @@ public class VerifiableCredential internal constructor(public val vcDataModel: V
      * ```
      */
     public fun parseJwt(vcJwt: String): VerifiableCredential {
-      val jwt = JWTParser.parse(vcJwt) as SignedJWT
-      val jwtPayload = jwt.payload.toJSONObject()
-      val vcDataModelValue = jwtPayload.getOrElse("vc") {
+      val jwt = Jwt.decode(vcJwt)
+      val jwtPayload = jwt.claims
+      val vcDataModelValue = jwtPayload.misc["vc"] ?:
         throw IllegalArgumentException("jwt payload missing vc property")
-      }
 
       @Suppress("UNCHECKED_CAST") // only partially unchecked. can only safely cast to Map<*, *>
       val vcDataModelMap = vcDataModelValue as? Map<String, Any>

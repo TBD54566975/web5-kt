@@ -1,21 +1,18 @@
 package web5.sdk.credentials
 
 import com.nimbusds.jose.JWSAlgorithm
-import com.nimbusds.jose.JWSHeader
-import com.nimbusds.jose.JWSSigner
-import com.nimbusds.jose.crypto.Ed25519Signer
-import com.nimbusds.jose.jwk.Curve
-import com.nimbusds.jose.jwk.gen.OctetKeyPairGenerator
-import com.nimbusds.jwt.JWTClaimsSet
-import com.nimbusds.jwt.SignedJWT
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
+import web5.sdk.common.Convert
 import web5.sdk.credentials.model.InputDescriptorMapping
 import web5.sdk.credentials.model.PresentationSubmission
 import web5.sdk.crypto.AlgorithmId
 import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.dids.didcore.Purpose
+import web5.sdk.dids.jws.JwsHeader
+import web5.sdk.dids.jwt.Jwt
+import web5.sdk.dids.jwt.JwtClaimsSet
 import web5.sdk.dids.methods.dht.CreateDidDhtOptions
 import web5.sdk.dids.methods.dht.DidDht
 import web5.sdk.dids.methods.key.DidKey
@@ -156,11 +153,12 @@ class VerifiablePresentationTest {
     val keyManager = InMemoryKeyManager()
     val holderDid = DidKey.create(keyManager)
 
-    val header = JWSHeader.Builder(JWSAlgorithm.ES256K)
-      .keyID(holderDid.did.uri)
+    val header = JwsHeader.Builder()
+      .algorithm(AlgorithmId.secp256k1.name)
+      .keyId(holderDid.did.uri)
       .build()
 
-    val vpJwt = "${header.toBase64URL()}..fakeSig"
+    val vpJwt = "${Convert(header).toBase64Url()}..fakeSig"
 
     val exception = assertThrows(SignatureException::class.java) {
       VerifiablePresentation.verify(vpJwt)
@@ -202,22 +200,16 @@ class VerifiablePresentationTest {
 
   @Test
   fun `parseJwt throws if vp property is missing in JWT`() {
-    val jwk = OctetKeyPairGenerator(Curve.Ed25519).generate()
-    val signer: JWSSigner = Ed25519Signer(jwk)
+    val signerDid = DidDht.create(InMemoryKeyManager())
 
-    val claimsSet = JWTClaimsSet.Builder()
+    val claimsSet = JwtClaimsSet.Builder()
       .subject("alice")
       .build()
 
-    val signedJWT = SignedJWT(
-      JWSHeader.Builder(JWSAlgorithm.EdDSA).keyID(jwk.keyID).build(),
-      claimsSet
-    )
+    val signedJWT = Jwt.sign(signerDid, claimsSet)
 
-    signedJWT.sign(signer)
-    val randomJwt = signedJWT.serialize()
     val exception = assertThrows(IllegalArgumentException::class.java) {
-      VerifiablePresentation.parseJwt(randomJwt)
+      VerifiablePresentation.parseJwt(signedJWT)
     }
 
     assertEquals("jwt payload missing vp property", exception.message)
@@ -240,11 +232,12 @@ class VerifiablePresentationTest {
       CreateDidDhtOptions(verificationMethods = verificationMethodsToAdd)
     )
 
-    val header = JWSHeader.Builder(JWSAlgorithm.ES256K)
-      .keyID(issuerDid.did.uri)
+    val header = JwsHeader.Builder()
+      .algorithm(AlgorithmId.secp256k1.name)
+      .keyId(issuerDid.did.uri)
       .build()
     //A detached payload JWT
-    val vpJwt = "${header.toBase64URL()}..fakeSig"
+    val vpJwt = "${Convert(header).toBase64Url()}..fakeSig"
 
     val exception = assertThrows(SignatureException::class.java) {
       VerifiablePresentation.verify(vpJwt)
