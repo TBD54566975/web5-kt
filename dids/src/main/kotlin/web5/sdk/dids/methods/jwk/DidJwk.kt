@@ -61,7 +61,7 @@ public class DidJwk {
       val keyAlias = keyManager.generatePrivateKey(algorithmId)
       val publicKeyJwk = keyManager.getPublicKey(keyAlias)
 
-      val base64Encoded = Convert(publicKeyJwk.toJSONString()).toBase64Url(padding = false)
+      val base64Encoded = Convert(publicKeyJwk.toJSONString()).toBase64Url()
 
       val didUri = "did:jwk:$base64Encoded"
 

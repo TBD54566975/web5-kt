@@ -3,10 +3,8 @@ package web5.sdk.credentials
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
-import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jwt.JWTParser
 import com.nimbusds.jwt.SignedJWT
-import web5.sdk.credentials.util.JwtUtil
 import web5.sdk.dids.did.BearerDid
 import web5.sdk.dids.jwt.Jwt
 import web5.sdk.dids.jwt.JwtClaimsSet
@@ -155,7 +153,8 @@ public class VerifiablePresentation internal constructor(public val vpDataModel:
      * ```
      */
     public fun verify(vpJwt: String) {
-      JwtUtil.verify(vpJwt)
+      val decodedJwt = Jwt.decode(vpJwt)
+      decodedJwt.verify()
 
       val vp = this.parseJwt(vpJwt)
       vp.verifiableCredential.forEach {

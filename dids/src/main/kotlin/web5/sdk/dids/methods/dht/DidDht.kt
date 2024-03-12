@@ -126,7 +126,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) {
    * publishing during creation.
    * @return A [DidDht] instance representing the newly created "did:dht" DID.
    */
-  public fun create(keyManager: KeyManager, options: CreateDidDhtOptions?): BearerDid {
+  public fun create(keyManager: KeyManager, options: CreateDidDhtOptions? = null): BearerDid {
     // TODO(gabe): enforce that provided keys are of supported types according to the did:dht spec
     val opts = options ?: CreateDidDhtOptions()
 
@@ -449,7 +449,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) {
       didDocument.verificationMethod?.forEachIndexed { i, verificationMethod ->
         val publicKeyJwk = verificationMethod.publicKeyJwk ?: throw PublicKeyJwkMissingException("publicKeyJwk is null")
         val publicKeyBytes = Crypto.publicKeyToBytes(publicKeyJwk)
-        val base64UrlEncodedKey = Convert(publicKeyBytes).toBase64Url(padding = false)
+        val base64UrlEncodedKey = Convert(publicKeyBytes).toBase64Url()
         val verificationMethodId = "k$i"
 
         verificationMethodsById[verificationMethod.id] = verificationMethodId

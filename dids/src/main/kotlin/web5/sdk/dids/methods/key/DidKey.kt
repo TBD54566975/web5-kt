@@ -8,7 +8,6 @@ import web5.sdk.crypto.Crypto
 import web5.sdk.crypto.KeyManager
 import web5.sdk.crypto.Secp256k1
 import web5.sdk.dids.CreateDidOptions
-import web5.sdk.dids.ChangemeDid
 import web5.sdk.dids.DidResolutionResult
 import web5.sdk.dids.ResolveDidOptions
 import web5.sdk.dids.did.BearerDid
@@ -48,7 +47,7 @@ public class CreateDidKeyOptions(
  *
  * @constructor Initializes a new instance of [DidKey] with the provided [uri] and [keyManager].
  */
-public class DidKey(uri: String, keyManager: KeyManager) : ChangemeDid(uri, keyManager) {
+public class DidKey(public val uri: String, public val keyManager: KeyManager) : ChangemeDid(uri, keyManager) {
   /**
    * Resolves the current instance's [uri] to a [DidResolutionResult], which contains the DID Document
    * and possible related metadata.

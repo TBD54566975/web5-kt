@@ -46,11 +46,11 @@ class VerifiablePresentationTest {
 
     val vp = VerifiablePresentation.create(
       vcJwts = vcJwts,
-      holder = holderDid.uri
+      holder = holderDid.did.uri
     )
 
     assertNotNull(vp, "VerifiablePresentation should not be null")
-    assertEquals(holderDid.uri, vp.holder, "holder should match")
+    assertEquals(holderDid.did.uri, vp.holder, "holder should match")
     assertEquals(vcJwts, vp.verifiableCredential, "vcJwts should match")
   }
 
@@ -75,7 +75,7 @@ class VerifiablePresentationTest {
 
     val vp = VerifiablePresentation.create(
       vcJwts = vcJwts,
-      holder = holderDid.uri,
+      holder = holderDid.did.uri,
       additionalData = mapOf("presentation_submission" to presentationSubmission)
     )
 
@@ -94,7 +94,7 @@ class VerifiablePresentationTest {
 
     val vp = VerifiablePresentation.create(
       vcJwts = listOf("vcjwt1", "vcjwt2"),
-      holder = holderDid.uri
+      holder = holderDid.did.uri
     )
 
     val vpJwt = vp.sign(holderDid)
@@ -122,7 +122,7 @@ class VerifiablePresentationTest {
 
     val vp = VerifiablePresentation.create(
       vcJwts = vcJwts,
-      holder = holderDid.uri,
+      holder = holderDid.did.uri,
       type = "PresentationSubmission",
       additionalData = mapOf("presentation_submission" to presentationSubmission)
     )
@@ -143,7 +143,7 @@ class VerifiablePresentationTest {
 
     val vp = VerifiablePresentation.create(
       vcJwts = vcJwts,
-      holder = holderDid.uri
+      holder = holderDid.did.uri
     )
 
     val vpJwt = vp.sign(holderDid)
@@ -157,7 +157,7 @@ class VerifiablePresentationTest {
     val holderDid = DidKey.create(keyManager)
 
     val header = JWSHeader.Builder(JWSAlgorithm.ES256K)
-      .keyID(holderDid.uri)
+      .keyID(holderDid.did.uri)
       .build()
 
     val vpJwt = "${header.toBase64URL()}..fakeSig"
@@ -181,7 +181,7 @@ class VerifiablePresentationTest {
 
     val vp = VerifiablePresentation.create(
       vcJwts = vcJwts,
-      holder = holderDid.uri
+      holder = holderDid.did.uri
     )
 
     val vpJwt = vp.sign(holderDid)
@@ -241,7 +241,7 @@ class VerifiablePresentationTest {
     )
 
     val header = JWSHeader.Builder(JWSAlgorithm.ES256K)
-      .keyID(issuerDid.uri)
+      .keyID(issuerDid.did.uri)
       .build()
     //A detached payload JWT
     val vpJwt = "${header.toBase64URL()}..fakeSig"

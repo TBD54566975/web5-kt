@@ -10,10 +10,8 @@ import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.convertValue
 import com.nfeld.jsonpathkt.JsonPath
 import com.nfeld.jsonpathkt.extension.read
-import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jwt.JWTParser
 import com.nimbusds.jwt.SignedJWT
-import web5.sdk.credentials.util.JwtUtil
 import web5.sdk.dids.did.BearerDid
 import web5.sdk.dids.jwt.Jwt
 import web5.sdk.dids.jwt.JwtClaimsSet
@@ -190,7 +188,8 @@ public class VerifiableCredential internal constructor(public val vcDataModel: V
      * ```
      */
     public fun verify(vcJwt: String) {
-      JwtUtil.verify(vcJwt)
+      val decodedJwt = Jwt.decode(vcJwt)
+      decodedJwt.verify()
     }
 
     /**

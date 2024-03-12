@@ -82,8 +82,8 @@ public object Ed25519 : KeyGenerator, Signer {
     val privateKeyParameters = Ed25519PrivateKeyParameters(privateKeyBytes, 0)
     val publicKeyBytes = privateKeyParameters.generatePublicKey().encoded
 
-    val base64UrlEncodedPrivateKey = Convert(privateKeyBytes).toBase64Url(padding = false)
-    val base64UrlEncodedPublicKey = Convert(publicKeyBytes).toBase64Url(padding = false)
+    val base64UrlEncodedPrivateKey = Convert(privateKeyBytes).toBase64Url()
+    val base64UrlEncodedPublicKey = Convert(publicKeyBytes).toBase64Url()
 
     return OctetKeyPair.Builder(com.nimbusds.jose.jwk.Curve.Ed25519, Base64URL(base64UrlEncodedPublicKey))
       .algorithm(Jwa.toJwsAlgorithm(algorithm))
@@ -94,7 +94,7 @@ public object Ed25519 : KeyGenerator, Signer {
   }
 
   override fun bytesToPublicKey(publicKeyBytes: ByteArray): JWK {
-    val base64UrlEncodedPublicKey = Convert(publicKeyBytes).toBase64Url(padding = false)
+    val base64UrlEncodedPublicKey = Convert(publicKeyBytes).toBase64Url()
 
     return OctetKeyPair.Builder(com.nimbusds.jose.jwk.Curve.Ed25519, Base64URL(base64UrlEncodedPublicKey))
       .algorithm(Jwa.toJwsAlgorithm(algorithm))

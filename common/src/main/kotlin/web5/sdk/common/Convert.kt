@@ -46,7 +46,7 @@ public val B64URL_DECODER: Base64.Decoder = Base64.getUrlDecoder()
  * ```
  * // Example 1: Convert a ByteArray to a Base64Url encoded string without padding
  * val byteArray = byteArrayOf(1, 2, 3)
- * val base64Url = Convert(byteArray).toBase64Url(padding = false)
+ * val base64Url = Convert(byteArray).toBase64Url()
  * println(base64Url)  // Output should be a Base64Url encoded string without padding
  *
  * // Example 2: Convert a Base64Url encoded string to a ByteArray
@@ -68,13 +68,14 @@ public class Convert<T>(private val value: T, private val kind: EncodingFormat? 
   /**
    * Converts the [value] to a Base64Url-encoded string.
    *
-   * @param padding Determines whether the resulting Base64 string should be padded or not. Default is true.
+   * @param padding Determines whether the resulting Base64 string should be padded or not.
+   *                Default is false.
    * @return The Base64Url-encoded string.
    *
    * Note: If the value type is unsupported for this conversion, the method will throw an exception.
    */
   @JvmOverloads
-  public fun toBase64Url(padding: Boolean = true): String {
+  public fun toBase64Url(padding: Boolean = false): String {
     val encoder = if (padding) B64URL_ENCODER else B64URL_ENCODER.withoutPadding()
 
     return when (this.value) {

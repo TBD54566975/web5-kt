@@ -6,6 +6,7 @@ import web5.sdk.common.Json
 import web5.sdk.crypto.Crypto
 import web5.sdk.dids.DidResolvers
 import web5.sdk.dids.did.BearerDid
+import web5.sdk.dids.exceptions.PublicKeyJwkMissingException
 
 public object Jws {
 
@@ -47,33 +48,37 @@ public object Jws {
   ): String {
     val (signer, verificationMethod) = bearerDid.getSigner()
 
+    check(verificationMethod.publicKeyJwk != null) {
+      throw PublicKeyJwkMissingException("publicKeyJwk is null.")
+    }
+
     val kid = if (verificationMethod.id.startsWith("#")) {
       "${bearerDid.did.uri}${verificationMethod.id}"
     } else {
       verificationMethod.id
     }
 
-    val publicKeyJwk = verificationMethod.publicKeyJwk!!
-    val jwsHeader = header ?: JwsHeader()
-    jwsHeader.kid = kid
-    // todo pretty sure i need algorithm names like ES256K for secp and EdDSA for ed25519
-    jwsHeader.alg = Crypto.getJwkCurve(publicKeyJwk)?.name
-    // todo do we need jwsHeader.typ = "??"
-    // todo with padding false?
-    // todo should padding = false by default?
-    val headerBase64Url = Convert(jwsHeader).toBase64Url(padding = false)
-    val payloadBase64Url = Convert(payload).toBase64Url(padding = false)
+    val jwsHeader = header
+      ?: JwsHeader.Builder()
+        .type("JWT")
+        .keyId(kid)
+        // todo pretty sure i need algorithm names like ES256K for secp and EdDSA for ed25519
+        .algorithm(Crypto.getJwkCurve(verificationMethod.publicKeyJwk)?.name!!)
+        .build()
+
+    val headerBase64Url = Convert(jwsHeader).toBase64Url()
+    val payloadBase64Url = Convert(payload).toBase64Url()
 
     val toSign = "$headerBase64Url.$payloadBase64Url"
     val toSignBytes = Convert(toSign).toByteArray()
 
     val signatureBytes = signer.invoke(toSignBytes)
-    val signatureBase64Url = Convert(signatureBytes).toBase64Url(padding = false)
+    val signatureBase64Url = Convert(signatureBytes).toBase64Url()
 
-    if (detached) {
-      return "$headerBase64Url..$signatureBase64Url"
+    return if (detached) {
+      "$headerBase64Url..$signatureBase64Url"
     } else {
-      return "$headerBase64Url.$payloadBase64Url.$signatureBase64Url"
+      "$headerBase64Url.$payloadBase64Url.$signatureBase64Url"
     }
 
   }
@@ -86,9 +91,9 @@ public object Jws {
 }
 
 public class JwsHeader(
-  public var typ: String? = null,
-  public var alg: String? = null,
-  public var kid: String? = null
+  public val typ: String? = null,
+  public val alg: String? = null,
+  public val kid: String? = null
 ) {
 
   public fun toBase64Url(): String {
@@ -100,22 +105,25 @@ public class JwsHeader(
     private var alg: String? = null
     private var kid: String? = null
 
-    public fun typ(typ: String): Builder {
+    public fun type(typ: String): Builder {
       this.typ = typ
       return this
     }
 
-    public fun alg(alg: String): Builder {
+    public fun algorithm(alg: String): Builder {
       this.alg = alg
       return this
     }
 
-    public fun kid(kid: String): Builder {
+    public fun keyId(kid: String): Builder {
       this.kid = kid
       return this
     }
 
     public fun build(): JwsHeader {
+      check(typ != null) { "typ is required" }
+      check(alg != null) { "alg is required" }
+      check(kid != null) { "kid is required" }
       return JwsHeader(typ, alg, kid)
     }
   }
@@ -138,7 +146,7 @@ public class JwsHeader(
 
     public fun toBase64Url(header: JwsHeader): String {
       val jsonHeader = toJson(header)
-      return Convert(jsonHeader, EncodingFormat.Base64Url).toBase64Url(padding = false)
+      return Convert(jsonHeader, EncodingFormat.Base64Url).toBase64Url()
     }
   }
 }
@@ -165,10 +173,27 @@ public class DecodedJws(
       "Verification failed. Expected header kid to dereference a verification method"
     }
 
+    /*
+    // todo
+    in JwtUtil, we had this
+    val verificationMethodIds = setOf(
+      did.url,
+      "#${did.fragment}"
+    )
+    and were checking the assertionMethod list for a match of the id
+    and then find the vm that matches the id
+    but here we are just looking for the first?
+     */
     val verificationMethod = dereferenceResult.didDocument.verificationMethod!!.first()
     check(verificationMethod.publicKeyJwk != null) {
       "Verification failed. Expected headeder kid to dereference" +
         " a verification method with a publicKeyJwk"
+    }
+
+    // todo add this bit in coz it was in JwtUtil.verify()
+    check(verificationMethod.type == "JsonWebKey2020" || verificationMethod.type == "JsonWebKey") {
+      "Verification failed. Expected header kid to dereference " +
+        "a verification method of type JsonWebKey2020 or JsonWebKey"
     }
 
     val toSign = "${parts[0]}.${parts[1]}"

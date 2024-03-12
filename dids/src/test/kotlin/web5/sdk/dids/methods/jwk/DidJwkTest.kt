@@ -28,7 +28,7 @@ class DidJwkTest {
       val manager = InMemoryKeyManager()
       val did = DidJwk.create(manager)
 
-      val didResolutionResult = DidResolvers.resolve(did.uri)
+      val didResolutionResult = DidResolvers.resolve(did.did.uri)
       val verificationMethod = didResolutionResult.didDocument!!.verificationMethod?.get(0)
 
       assertNotNull(verificationMethod)
@@ -96,7 +96,7 @@ class DidJwkTest {
       val manager = InMemoryKeyManager()
       manager.generatePrivateKey(AlgorithmId.secp256k1)
       val privateJwk = JWK.parse(manager.export().first())
-      val encodedPrivateJwk = Convert(privateJwk.toJSONString()).toBase64Url(padding = false)
+      val encodedPrivateJwk = Convert(privateJwk.toJSONString()).toBase64Url()
 
       val did = "did:jwk:$encodedPrivateJwk"
       assertThrows<IllegalArgumentException>(

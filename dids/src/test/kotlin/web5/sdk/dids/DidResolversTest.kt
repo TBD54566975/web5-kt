@@ -17,7 +17,7 @@ class DidResolversTest {
 
   @Test
   fun `resolving a default dht did contains assertion method`() {
-    val dhtDid = DidDht.create(InMemoryKeyManager())
+    val dhtDid = DidDht.create(InMemoryKeyManager(), null)
 
     val resolutionResult = DidResolvers.resolve(dhtDid.uri)
     assertNotNull(resolutionResult.didDocument!!.assertionMethod)

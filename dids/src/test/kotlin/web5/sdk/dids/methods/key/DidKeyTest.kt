@@ -26,7 +26,7 @@ class DidKeyTest {
       val manager = InMemoryKeyManager()
       val did = DidKey.create(manager)
 
-      val didResolutionResult = DidResolvers.resolve(did.uri)
+      val didResolutionResult = DidResolvers.resolve(did.did.uri)
 
       assertNotNull(didResolutionResult.didDocument)
       val verificationMethod = didResolutionResult.didDocument!!.verificationMethod?.get(0)
@@ -124,11 +124,11 @@ class DidKeyTest {
 
       assertDoesNotThrow {
         val km = InMemoryKeyManager()
-        val did = DidKey.create(km)
+        val bearerDid = DidKey.create(km)
 
         val keySet = km.export()
         val serializedKeySet = jsonMapper.writeValueAsString(keySet)
-        val didUri = did.uri
+        val didUri = bearerDid.did.uri
 
         val jsonKeySet: List<Map<String, Any>> = jsonMapper.readValue(serializedKeySet)
         val km2 = InMemoryKeyManager()

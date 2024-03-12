@@ -140,12 +140,10 @@ class DhtTest {
       val diddht = DidDhtApi {}
       val did = diddht.create(manager)
 
-      require(did.didDocument != null)
-
-      val kid = did.didDocument!!.verificationMethod?.first()?.publicKeyJwk?.keyID?.toString()
+      val kid = did.document.verificationMethod?.first()?.publicKeyJwk?.keyID?.toString()
       assertNotNull(kid)
 
-      val message = did.didDocument?.let { diddht.toDnsPacket(it) }
+      val message = did.document.let { diddht.toDnsPacket(it) }
       assertNotNull(message)
 
       val bep44Message = DhtClient.createBep44PutRequest(manager, kid, message)
@@ -164,12 +162,10 @@ class DhtTest {
       val diddht = DidDhtApi {}
       val did = diddht.create(manager)
 
-      require(did.didDocument != null)
-
-      val kid = did.didDocument!!.verificationMethod?.first()?.publicKeyJwk?.keyID?.toString()
+      val kid = did.document.verificationMethod?.first()?.publicKeyJwk?.keyID?.toString()
       assertNotNull(kid)
 
-      val message = did.didDocument?.let { diddht.toDnsPacket(it) }
+      val message = did.document.let { diddht.toDnsPacket(it) }
       assertNotNull(message)
 
       val bep44Message = DhtClient.createBep44PutRequest(manager, kid, message)

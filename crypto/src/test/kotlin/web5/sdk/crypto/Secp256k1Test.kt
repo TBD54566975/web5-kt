@@ -58,8 +58,8 @@ class Secp256k1Test {
     val sig2 = Secp256k1.sign(privateKey, payload)
     Secp256k1.verify(publicKey, payload, sig2)
 
-    val base64UrlEncodedSig1 = Convert(sig1).toBase64Url(padding = false)
-    val base64UrlEncodedSig2 = Convert(sig2).toBase64Url(padding = false)
+    val base64UrlEncodedSig1 = Convert(sig1).toBase64Url()
+    val base64UrlEncodedSig2 = Convert(sig2).toBase64Url()
 
     assertEquals(base64UrlEncodedSig1, base64UrlEncodedSig2)
   }
@@ -80,7 +80,7 @@ class Secp256k1Test {
         val sig1 = Secp256k1.sign(privateKey, payload)
         Secp256k1.verify(publicKey, payload, sig1)
       } catch (e: SignatureException) {
-        val payloadString = Convert(payload).toBase64Url(false)
+        val payloadString = Convert(payload).toBase64Url()
         println("($it) $e. Payload (base64url encoded): $payloadString")
         throw e
       }

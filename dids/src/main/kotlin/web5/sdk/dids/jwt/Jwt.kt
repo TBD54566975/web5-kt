@@ -40,6 +40,12 @@ public object Jwt {
 
     return Jws.sign(did, payloadBytes, header)
   }
+
+  public fun verify(jwt: String): DecodedJwt {
+    val decodedJwt = decode(jwt)
+    decodedJwt.verify()
+    return decodedJwt
+  }
 }
 
 public class DecodedJwt(
