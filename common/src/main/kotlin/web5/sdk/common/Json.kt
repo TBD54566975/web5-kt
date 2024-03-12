@@ -2,6 +2,7 @@ package web5.sdk.common
 
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.ObjectReader
 import com.fasterxml.jackson.databind.ObjectWriter
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
@@ -33,6 +34,7 @@ public object Json {
     .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
 
   private val objectWriter: ObjectWriter = jsonMapper.writer()
+  public val objectReader: ObjectReader = jsonMapper.reader()
 
   /**
    * Converts a kotlin object to a json string.
@@ -42,5 +44,9 @@ public object Json {
    */
   public fun stringify(obj: Any): String {
     return objectWriter.writeValueAsString(obj)
+  }
+
+  public inline fun <reified T> parse(payload: String): T {
+    return objectReader.readValue(payload, T::class.java)
   }
 }

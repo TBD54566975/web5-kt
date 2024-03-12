@@ -36,7 +36,7 @@ public object Jwt {
 
   public fun sign(did: BearerDid, payload: JwtClaimsSet): String {
     val header = JwtHeader(typ = "JWT")
-    val payloadBytes = Convert(Json.jsonMapper.writeValueAsString(payload)).toByteArray()
+    val payloadBytes = Convert(Json.stringify(payload)).toByteArray()
 
     return Jws.sign(did, payloadBytes, header)
   }

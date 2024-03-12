@@ -132,16 +132,16 @@ public class JwsHeader(
     // todo do i need these toJson and fromJson?
     // i could just call Json.jsonMapper.xyz()
     public fun toJson(header: JwsHeader): String {
-      return Json.jsonMapper.writeValueAsString(header)
+      return Json.stringify(header)
     }
 
-    public fun fromJson(jsonHeader: String): JwsHeader? {
-      return Json.jsonMapper.readValue(jsonHeader, JwsHeader::class.java)
+    public fun fromJson(jsonHeader: String): JwsHeader {
+      return Json.parse<JwsHeader>(jsonHeader)
     }
 
     public fun fromBase64Url(base64EncodedHeader: String): JwsHeader {
-      val jsonHeaderDecoded = Convert(base64EncodedHeader).toByteArray()
-      return Json.jsonMapper.readValue(jsonHeaderDecoded, JwsHeader::class.java)
+      val jsonHeaderDecoded = Convert(base64EncodedHeader, EncodingFormat.Base64Url).toStr()
+      return Json.parse<JwsHeader>(jsonHeaderDecoded)
     }
 
     public fun toBase64Url(header: JwsHeader): String {
