@@ -1,6 +1,7 @@
 package web5.sdk.crypto
 
 import com.nimbusds.jose.jwk.JWK
+import web5.sdk.crypto.jwk.Jwk
 
 /**
  * `KeyGenOptions` serves as an interface defining options or parameters that influence
@@ -21,7 +22,7 @@ import com.nimbusds.jose.jwk.JWK
  * ```kotlin
  * val keyGenOptions: KeyGenOptions = ...
  * val keyGenerator: KeyGenerator = ...
- * val privateKey: JWK = keyGenerator.generatePrivateKey(keyGenOptions)
+ * val privateKey: Jwk = keyGenerator.generatePrivateKey(keyGenOptions)
  * ```
  *
  * ### Note:
@@ -50,10 +51,10 @@ public interface KeyGenOptions
  *
  * ```
  * val keyGenerator: KeyGenerator = ...
- * val privateKey: JWK = keyGenerator.generatePrivateKey()
- * val publicKey: JWK = keyGenerator.getPublicKey(privateKey)
+ * val privateKey: Jwk = keyGenerator.generatePrivateKey()
+ * val publicKey: Jwk = keyGenerator.getPublicKey(privateKey)
  * val privateKeyBytes: ByteArray = keyGenerator.privateKeyToBytes(privateKey)
- * val restoredPrivateKey: JWK = keyGenerator.bytesToPrivateKey(privateKeyBytes)
+ * val restoredPrivateKey: Jwk = keyGenerator.bytesToPrivateKey(privateKeyBytes)
  * ```
  *
  * ### Note:
@@ -71,33 +72,33 @@ public interface KeyGenerator {
   public val curve: JwaCurve
 
   /** Generates a private key. */
-  public fun generatePrivateKey(options: KeyGenOptions? = null): JWK
+  public fun generatePrivateKey(options: KeyGenOptions? = null): Jwk
 
   /**
    * Derives a public key from the private key provided. Applicable for asymmetric Key Generators only.
    * Implementers of symmetric key generators should throw an UnsupportedOperation Exception
    */
-  public fun computePublicKey(privateKey: JWK): JWK
+  public fun computePublicKey(privateKey: Jwk): Jwk
 
   /**
    * Converts a private key to bytes.
    */
-  public fun privateKeyToBytes(privateKey: JWK): ByteArray
+  public fun privateKeyToBytes(privateKey: Jwk): ByteArray
 
   /**
    * Converts a public key to bytes. Applicable for asymmetric [KeyGenerator] implementations only.
    * Implementers of symmetric key generators should throw an UnsupportedOperation Exception
    */
-  public fun publicKeyToBytes(publicKey: JWK): ByteArray
+  public fun publicKeyToBytes(publicKey: Jwk): ByteArray
 
   /**
    * Converts a private key as bytes into a JWK.
    */
-  public fun bytesToPrivateKey(privateKeyBytes: ByteArray): JWK
+  public fun bytesToPrivateKey(privateKeyBytes: ByteArray): Jwk
 
   /**
    * Converts a public key as bytes into a JWK. Applicable for asymmetric Key Generators only.
    * Implementers of symmetric key generators should throw an UnsupportedOperation Exception
    */
-  public fun bytesToPublicKey(publicKeyBytes: ByteArray): JWK
+  public fun bytesToPublicKey(publicKeyBytes: ByteArray): Jwk
 }

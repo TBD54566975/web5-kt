@@ -1,7 +1,6 @@
 package web5.sdk.dids.methods.dht
 
 import com.nimbusds.jose.JWSAlgorithm
-import com.nimbusds.jose.jwk.JWK
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.okhttp.OkHttp
@@ -17,8 +16,10 @@ import web5.sdk.crypto.AlgorithmId
 import web5.sdk.crypto.Crypto
 import web5.sdk.crypto.Ed25519
 import web5.sdk.crypto.InMemoryKeyManager
+import web5.sdk.crypto.Jwa
 import web5.sdk.crypto.KeyManager
 import web5.sdk.crypto.Secp256k1
+import web5.sdk.crypto.jwk.Jwk
 import web5.sdk.dids.CreateDidOptions
 import web5.sdk.dids.DidResolutionResult
 import web5.sdk.dids.ResolutionError
@@ -90,7 +91,7 @@ private class DidDhtApiImpl(configuration: DidDhtConfiguration) : DidDhtApi(conf
  * @property alsoKnownAses A list of also known as identifiers to add to the DID Document.
  */
 public class CreateDidDhtOptions(
-  public val verificationMethods: Iterable<Triple<JWK, List<Purpose>, String?>>? = null,
+  public val verificationMethods: Iterable<Triple<Jwk, List<Purpose>, String?>>? = null,
   public val services: Iterable<Service>? = null,
   public val publish: Boolean = true,
   public val controllers: Iterable<String>? = null,
@@ -164,7 +165,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) {
         id = "$didUri#0",
         type = "JsonWebKey",
         controller = didUri,
-        publicKeyJwk = publicKey.toPublicJWK()
+        publicKeyJwk = publicKey
       )
 
     didDocumentBuilder.verificationMethodForPurposes(
@@ -177,12 +178,12 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) {
       )
     )
 
-    opts.verificationMethods?.map { (key, purposes, controller) ->
+    opts.verificationMethods?.map { (publicKey, purposes, controller) ->
       VerificationMethod.Builder()
-        .id("$didUri#${key.keyID}")
+        .id("$didUri#${publicKey.kid}")
         .type("JsonWebKey")
         .controller(controller ?: didUri)
-        .publicKeyJwk(key.toPublicJWK())
+        .publicKeyJwk(publicKey)
         .build().also { verificationMethod ->
           didDocumentBuilder.verificationMethodForPurposes(verificationMethod, purposes.toList())
 
@@ -305,7 +306,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) {
 
     val publicKeyJwk = didDocument.verificationMethod?.first()?.publicKeyJwk
       ?: throw PublicKeyJwkMissingException("publicKeyJwk is null")
-    return publicKeyJwk.keyID
+    return publicKeyJwk.kid ?: publicKeyJwk.computeThumbprint()
   }
 
   internal fun validateIdentityKey(did: String, keyManager: KeyManager) {
@@ -325,8 +326,19 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) {
    *
    * @param identityKey the key used to generate the DID's identifier
    */
-  internal fun getDidIdentifier(identityKey: JWK): String {
-    val publicKeyJwk = identityKey.toPublicJWK()
+  internal fun getDidIdentifier(identityKey: Jwk): String {
+    val publicKeyJwk = Jwk.Builder()
+      .keyType(identityKey.kty)
+      .apply {
+        identityKey.x?.let { x(it) }
+        identityKey.y?.let { y(it) }
+        identityKey.alg?.let { algorithm(it) }
+        (identityKey.kid
+          ?: identityKey.computeThumbprint())
+          .let { keyId(it) }
+      }
+      .build()
+
     val publicKeyBytes = Crypto.publicKeyToBytes(publicKeyJwk)
     val zBase32Encoded = ZBase32.encode(publicKeyBytes)
     return "did:dht:$zBase32Encoded"
@@ -454,11 +466,11 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) {
 
         verificationMethodsById[verificationMethod.id] = verificationMethodId
 
-        val keyType = when (publicKeyJwk.algorithm) {
-          JWSAlgorithm.EdDSA -> 0
-          JWSAlgorithm.ES256K -> 1
-          JWSAlgorithm.ES256 -> 2
-          else -> throw IllegalArgumentException("unsupported algorithm: ${publicKeyJwk.algorithm}")
+        // todo dropping support for ES256?
+        val keyType = when (publicKeyJwk.alg) {
+          Jwa.EdDSA.name -> 0
+          Jwa.ES256K.name -> 1
+          else -> throw IllegalArgumentException("unsupported algorithm: ${publicKeyJwk.alg}")
         }
 
         message.addRecord(
@@ -607,7 +619,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) {
     val vmBuilder = VerificationMethod.Builder()
       .id("$did#$verificationMethodId")
       .type("JsonWebKey")
-      .publicKeyJwk(publicKeyJwk.toPublicJWK())
+      .publicKeyJwk(publicKeyJwk)
 
     if (data.containsKey("c")) {
       vmBuilder.controller(data["c"]!!)

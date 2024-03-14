@@ -2,9 +2,6 @@ package web5.sdk.dids.methods.dht
 
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
-import com.nimbusds.jose.jwk.Curve
-import com.nimbusds.jose.jwk.JWK
-import com.nimbusds.jose.jwk.gen.ECKeyGenerator
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
 import io.ktor.http.HttpMethod
@@ -21,6 +18,7 @@ import web5.sdk.common.Json
 import web5.sdk.common.ZBase32
 import web5.sdk.crypto.AlgorithmId
 import web5.sdk.crypto.InMemoryKeyManager
+import web5.sdk.crypto.jwk.Jwk
 import web5.sdk.dids.DidResolutionResult
 import web5.sdk.dids.JwkDeserializer
 import web5.sdk.dids.PurposesDeserializer
@@ -117,9 +115,11 @@ class DidDhtTest {
       val manager = InMemoryKeyManager()
 
       val otherKey = manager.generatePrivateKey(AlgorithmId.secp256k1)
-      val publicKeyJwk = manager.getPublicKey(otherKey).toPublicJWK()
-      val publicKeyJwk2 = ECKeyGenerator(Curve.P_256).generate().toPublicJWK()
-      val verificationMethodsToAdd: Iterable<Triple<JWK, List<Purpose>, String?>> = listOf(
+      val publicKeyJwk = manager.getPublicKey(otherKey)
+      // todo this was ECKeyGenerator(Curve.P_256).generate().toPublicJWK() before
+      //  is this the right equivalent?
+      val publicKeyJwk2 = Jwk.Builder().keyType("EC").build()
+      val verificationMethodsToAdd: Iterable<Triple<Jwk, List<Purpose>, String?>> = listOf(
         Triple(
           publicKeyJwk,
           listOf(Purpose.Authentication, Purpose.AssertionMethod),
@@ -239,8 +239,6 @@ class DidDhtTest {
       val manager = InMemoryKeyManager()
       val did = DidDht.create(manager, CreateDidDhtOptions(publish = false))
 
-      require(did.document != null)
-
       val packet = DidDht.toDnsPacket(did.document)
       assertNotNull(packet)
 
@@ -255,8 +253,6 @@ class DidDhtTest {
     fun `to and from DNS packet - DID with types`() {
       val manager = InMemoryKeyManager()
       val did = DidDht.create(manager, CreateDidDhtOptions(publish = false))
-
-      require(did.document != null)
 
       val indexes = listOf(DidDhtTypeIndexing.Corporation, DidDhtTypeIndexing.SoftwarePackage)
       val packet = DidDht.toDnsPacket(did.document, indexes)
@@ -276,8 +272,8 @@ class DidDhtTest {
       val manager = InMemoryKeyManager()
 
       val otherKey = manager.generatePrivateKey(AlgorithmId.secp256k1)
-      val publicKeyJwk = manager.getPublicKey(otherKey).toPublicJWK()
-      val verificationMethodsToAdd: Iterable<Triple<JWK, List<Purpose>, String?>> = listOf(
+      val publicKeyJwk = manager.getPublicKey(otherKey)
+      val verificationMethodsToAdd: Iterable<Triple<Jwk, List<Purpose>, String?>> = listOf(
         Triple(publicKeyJwk, listOf(Purpose.Authentication, Purpose.AssertionMethod), null)
       )
 
@@ -295,8 +291,6 @@ class DidDhtTest {
         publish = false
       )
       val did = DidDht.create(manager, opts)
-
-      require(did.document != null)
 
       val packet = DidDht.toDnsPacket(did.document)
       assertNotNull(packet)
@@ -357,7 +351,7 @@ class Web5TestVectorsDidDht {
 
   data class VerificationMethodInput(
     @JsonDeserialize(using = JwkDeserializer::class)
-    val jwk: JWK,
+    val jwk: Jwk,
     @JsonDeserialize(using = PurposesDeserializer::class)
     val purposes: List<Purpose>
   )

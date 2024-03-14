@@ -1,6 +1,5 @@
 package web5.sdk.credentials
 
-import com.nimbusds.jose.JWSAlgorithm
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
@@ -9,13 +8,14 @@ import web5.sdk.credentials.model.InputDescriptorMapping
 import web5.sdk.credentials.model.PresentationSubmission
 import web5.sdk.crypto.AlgorithmId
 import web5.sdk.crypto.InMemoryKeyManager
+import web5.sdk.crypto.Jwa
 import web5.sdk.dids.didcore.Purpose
-import web5.sdk.dids.jws.JwsHeader
-import web5.sdk.dids.jwt.Jwt
-import web5.sdk.dids.jwt.JwtClaimsSet
 import web5.sdk.dids.methods.dht.CreateDidDhtOptions
 import web5.sdk.dids.methods.dht.DidDht
 import web5.sdk.dids.methods.key.DidKey
+import web5.sdk.jose.jws.JwsHeader
+import web5.sdk.jose.jwt.Jwt
+import web5.sdk.jose.jwt.JwtClaimsSet
 import java.security.SignatureException
 import java.text.ParseException
 import kotlin.test.assertEquals
@@ -154,7 +154,7 @@ class VerifiablePresentationTest {
     val holderDid = DidKey.create(keyManager)
 
     val header = JwsHeader.Builder()
-      .algorithm(AlgorithmId.secp256k1.name)
+      .algorithm(Jwa.ES256K.name)
       .keyId(holderDid.did.uri)
       .build()
 
@@ -233,7 +233,7 @@ class VerifiablePresentationTest {
     )
 
     val header = JwsHeader.Builder()
-      .algorithm(AlgorithmId.secp256k1.name)
+      .algorithm(Jwa.ES256K.name)
       .keyId(issuerDid.did.uri)
       .build()
     //A detached payload JWT

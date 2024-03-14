@@ -3,16 +3,17 @@ package web5.sdk.crypto
 import com.google.crypto.tink.subtle.Ed25519Sign
 import com.google.crypto.tink.subtle.Ed25519Verify
 import com.nimbusds.jose.JWSAlgorithm
-import com.nimbusds.jose.jwk.JWK
+import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.KeyUse
 import com.nimbusds.jose.jwk.OctetKeyPair
 import com.nimbusds.jose.jwk.gen.OctetKeyPairGenerator
-import com.nimbusds.jose.util.Base64URL
 import org.bouncycastle.crypto.params.Ed25519PrivateKeyParameters
 import web5.sdk.common.Convert
+import web5.sdk.common.EncodingFormat
 import web5.sdk.crypto.Ed25519.PRIV_MULTICODEC
 import web5.sdk.crypto.Ed25519.PUB_MULTICODEC
 import web5.sdk.crypto.Ed25519.algorithm
+import web5.sdk.crypto.jwk.Jwk
 import java.security.GeneralSecurityException
 import java.security.SignatureException
 
@@ -43,67 +44,81 @@ public object Ed25519 : KeyGenerator, Signer {
    * Generates a private key utilizing the Ed25519 algorithm.
    *
    * @param options (Optional) Additional options to control the key generation process.
-   * @return The generated private key in JWK format.
+   * @return The generated private key in Jwk format.
    */
-  override fun generatePrivateKey(options: KeyGenOptions?): JWK {
-    return OctetKeyPairGenerator(com.nimbusds.jose.jwk.Curve.Ed25519)
+  override fun generatePrivateKey(options: KeyGenOptions?): Jwk {
+    // todo use tink to generate private key?
+    val privateKey = OctetKeyPairGenerator(Curve.Ed25519)
       .algorithm(JWSAlgorithm.EdDSA)
       .keyIDFromThumbprint(true)
       .keyUse(KeyUse.SIGNATURE)
       .generate()
-      .toOctetKeyPair()
+
+    return Jwk.Builder()
+      .algorithm(algorithm.name)
+      .privateKey(privateKey.d.toString())
+      .x(privateKey.x.toString())
+      .keyUse("sig")
+      .build()
+
   }
 
   /**
    * Derives the public key corresponding to a given private key.
    *
-   * @param privateKey The private key in JWK format.
-   * @return The corresponding public key in JWK format.
+   * @param privateKey The private key in Jwk format.
+   * @return The corresponding public key in Jwk format.
    */
-  override fun computePublicKey(privateKey: JWK): JWK {
-    require(privateKey is OctetKeyPair) { "private key must be an Octet Key Pair (kty: OKP)" }
+  override fun computePublicKey(privateKey: Jwk): Jwk {
+    require(privateKey.kty == "OKP") { "private key must be an Octet Key Pair (kty: OKP)" }
 
-    return privateKey.toOctetKeyPair().toPublicJWK()
+    return Jwk.Builder()
+      .keyType(privateKey.kty)
+      .algorithm(algorithm.name)
+      .x(privateKey.x.toString())
+      .build()
   }
 
-  override fun privateKeyToBytes(privateKey: JWK): ByteArray {
+  override fun privateKeyToBytes(privateKey: Jwk): ByteArray {
     validatePrivateKey(privateKey)
 
-    return privateKey.toOctetKeyPair().decodedD
+    return Convert(privateKey.d, EncodingFormat.Base64Url).toByteArray()
   }
 
-  override fun publicKeyToBytes(publicKey: JWK): ByteArray {
+  override fun publicKeyToBytes(publicKey: Jwk): ByteArray {
     validatePublicKey(publicKey)
 
-    return publicKey.toOctetKeyPair().decodedX
+    return Convert(publicKey.x, EncodingFormat.Base64Url).toByteArray()
   }
 
-  override fun bytesToPrivateKey(privateKeyBytes: ByteArray): JWK {
+  override fun bytesToPrivateKey(privateKeyBytes: ByteArray): Jwk {
     val privateKeyParameters = Ed25519PrivateKeyParameters(privateKeyBytes, 0)
     val publicKeyBytes = privateKeyParameters.generatePublicKey().encoded
 
     val base64UrlEncodedPrivateKey = Convert(privateKeyBytes).toBase64Url()
     val base64UrlEncodedPublicKey = Convert(publicKeyBytes).toBase64Url()
 
-    return OctetKeyPair.Builder(com.nimbusds.jose.jwk.Curve.Ed25519, Base64URL(base64UrlEncodedPublicKey))
-      .algorithm(Jwa.toJwsAlgorithm(algorithm))
-      .keyIDFromThumbprint()
-      .d(Base64URL(base64UrlEncodedPrivateKey))
-      .keyUse(KeyUse.SIGNATURE)
+    return Jwk.Builder()
+      .keyType("OKP")
+      .algorithm(algorithm.name)
+      .privateKey(base64UrlEncodedPrivateKey)
+      .x(base64UrlEncodedPublicKey)
+      .keyUse("sig")
       .build()
   }
 
-  override fun bytesToPublicKey(publicKeyBytes: ByteArray): JWK {
+  override fun bytesToPublicKey(publicKeyBytes: ByteArray): Jwk {
     val base64UrlEncodedPublicKey = Convert(publicKeyBytes).toBase64Url()
 
-    return OctetKeyPair.Builder(com.nimbusds.jose.jwk.Curve.Ed25519, Base64URL(base64UrlEncodedPublicKey))
-      .algorithm(Jwa.toJwsAlgorithm(algorithm))
-      .keyIDFromThumbprint()
-      .keyUse(KeyUse.SIGNATURE)
+    return Jwk.Builder()
+      .keyType("OKP")
+      .algorithm(algorithm.name)
+      .x(base64UrlEncodedPublicKey)
+      .keyUse("sig")
       .build()
   }
 
-  override fun sign(privateKey: JWK, payload: ByteArray, options: SignOptions?): ByteArray {
+  override fun sign(privateKey: Jwk, payload: ByteArray, options: SignOptions?): ByteArray {
     validatePrivateKey(privateKey)
 
     val privateKeyBytes = privateKeyToBytes(privateKey)
@@ -112,7 +127,7 @@ public object Ed25519 : KeyGenerator, Signer {
     return signer.sign(payload)
   }
 
-  override fun verify(publicKey: JWK, signedPayload: ByteArray, signature: ByteArray, options: VerifyOptions?) {
+  override fun verify(publicKey: Jwk, signedPayload: ByteArray, signature: ByteArray, options: VerifyOptions?) {
     validatePublicKey(publicKey)
 
     val publicKeyBytes = publicKeyToBytes(publicKey)
@@ -126,7 +141,7 @@ public object Ed25519 : KeyGenerator, Signer {
   }
 
   /**
-   * Validates the provided [JWK] (JSON Web Key) is a public key
+   * Validates the provided [Jwk] (JSON Web Key) is a public key
    *
    * This function checks the following:
    * - The key must be a public key
@@ -135,16 +150,16 @@ public object Ed25519 : KeyGenerator, Signer {
    * If any of these checks fail, this function throws an [IllegalArgumentException] with
    * a descriptive error message.
    *
-   * @param key The [JWK] to validate.
+   * @param key The [Jwk] to validate.
    * @throws IllegalArgumentException if the key is not a public key
    */
-  public fun validatePublicKey(key: JWK) {
-    require(!key.isPrivate) { "key must be public" }
+  public fun validatePublicKey(key: Jwk) {
+    require(key.d == null) { "key must be public" }
     validateKey(key)
   }
 
   /**
-   * Validates the provided [JWK] (JSON Web Key) to ensure it conforms to the expected key type and format.
+   * Validates the provided [Jwk] (JSON Web Key) to ensure it conforms to the expected key type and format.
    *
    * This function checks the following:
    * - The key must be a private key
@@ -153,16 +168,16 @@ public object Ed25519 : KeyGenerator, Signer {
    * If any of these checks fail, this function throws an [IllegalArgumentException] with
    * a descriptive error message.
    *
-   * @param key The [JWK] to validate.
+   * @param key The [Jwk] to validate.
    * @throws IllegalArgumentException if the key is not a private key
    */
-  public fun validatePrivateKey(key: JWK) {
-    require(key.isPrivate) { "key must be private" }
+  public fun validatePrivateKey(key: Jwk) {
+    require(key.d != null) { "key must be private" }
     validateKey(key)
   }
 
   /**
-   * Validates the provided [JWK] (JSON Web Key) to ensure it conforms to the expected key type and format.
+   * Validates the provided [Jwk] (JSON Web Key) to ensure it conforms to the expected key type and format.
    *
    * This function checks the following:
    * - The key must be an instance of [OctetKeyPair].
@@ -172,7 +187,7 @@ public object Ed25519 : KeyGenerator, Signer {
    *
    * ### Usage Example:
    * ```
-   * val jwk: JWK = //...obtain or generate a JWK
+   * val jwk: Jwk = //...obtain or generate a Jwk
    * try {
    *     Ed25519.validateKey(jwk)
    *     // Key is valid, proceed with further operations...
@@ -182,13 +197,13 @@ public object Ed25519 : KeyGenerator, Signer {
    * ```
    *
    * ### Important:
-   * Ensure to call this function before using a [JWK] in cryptographic operations
+   * Ensure to call this function before using a [Jwk] in cryptographic operations
    * to safeguard against invalid key usage and potential vulnerabilities.
    *
-   * @param key The [JWK] to validate.
+   * @param key The [Jwk] to validate.
    * @throws IllegalArgumentException if the key is not of type [OctetKeyPair].
    */
-  private fun validateKey(key: JWK) {
-    require(key is OctetKeyPair) { "key must be an Octet Key Pair (kty: OKP)" }
+  private fun validateKey(key: Jwk) {
+    require(key.kty == "OKP") { "key must be an Octet Key Pair (kty: OKP)" }
   }
 }

@@ -16,8 +16,11 @@ import org.bouncycastle.crypto.signers.HMacDSAKCalculator
 import org.bouncycastle.jce.ECNamedCurveTable
 import org.bouncycastle.jce.spec.ECNamedCurveParameterSpec
 import org.bouncycastle.math.ec.ECPoint
+import web5.sdk.common.Convert
+import web5.sdk.common.EncodingFormat
 import web5.sdk.crypto.Secp256k1.PRIV_MULTICODEC
 import web5.sdk.crypto.Secp256k1.PUB_MULTICODEC
+import web5.sdk.crypto.jwk.Jwk
 import java.math.BigInteger
 import java.security.MessageDigest
 import java.security.Security
@@ -135,61 +138,83 @@ public object Secp256k1 : KeyGenerator, Signer {
    * be intended for signature use.
    *
    * @param options Options for key generation (currently unused, provided for possible future expansion).
-   * @return A JWK representing the generated private key.
+   * @return A Jwk representing the generated private key.
    */
-  override fun generatePrivateKey(options: KeyGenOptions?): JWK {
-    return ECKeyGenerator(com.nimbusds.jose.jwk.Curve.SECP256K1)
+  override fun generatePrivateKey(options: KeyGenOptions?): Jwk {
+    // todo use tink to generate private key?
+    val privateKey = ECKeyGenerator(com.nimbusds.jose.jwk.Curve.SECP256K1)
       .algorithm(JWSAlgorithm.ES256K)
       .provider(BouncyCastleProviderSingleton.getInstance())
       .keyIDFromThumbprint(true)
       .keyUse(KeyUse.SIGNATURE)
       .generate()
+
+    return Jwk.Builder()
+      .algorithm(algorithm.name)
+      .keyType("EC")
+      .keyUse("sig")
+      .privateKey(Convert(privateKey.d, EncodingFormat.Base64Url).toStr())
+      .x(Convert(privateKey.d, EncodingFormat.Base64Url).toStr())
+      .build()
   }
 
-  override fun computePublicKey(privateKey: JWK): JWK {
+  override fun computePublicKey(privateKey: Jwk): Jwk {
     validateKey(privateKey)
 
-    return privateKey.toECKey().toPublicJWK()
+    return Jwk.Builder()
+      .keyType(privateKey.kty)
+      .algorithm(algorithm.name)
+      .apply {
+        privateKey.x?.let { x(it) }
+        privateKey.y?.let { y(it) }
+      }
+      .build()
+
   }
 
-  override fun privateKeyToBytes(privateKey: JWK): ByteArray {
+  override fun privateKeyToBytes(privateKey: Jwk): ByteArray {
     validateKey(privateKey)
 
-    return privateKey.toECKey().d.decode()
+    return Convert(privateKey.d, EncodingFormat.Base64Url).toByteArray()
   }
 
-  override fun publicKeyToBytes(publicKey: JWK): ByteArray {
+  override fun publicKeyToBytes(publicKey: Jwk): ByteArray {
     validateKey(publicKey)
 
-    val ecKey = publicKey.toECKey()
-    val xBytes = ecKey.x.decode()
-    val yBytes = ecKey.y.decode()
+    val xBytes = Convert(publicKey.x, EncodingFormat.Base64Url).toByteArray()
+    val yBytes = Convert(publicKey.y, EncodingFormat.Base64Url).toByteArray()
 
     return byteArrayOf(UNCOMPRESSED_KEY_ID) + xBytes + yBytes
   }
 
-  override fun bytesToPrivateKey(privateKeyBytes: ByteArray): JWK {
+  override fun bytesToPrivateKey(privateKeyBytes: ByteArray): Jwk {
+    // todo what is this MAGIC???
     var pointQ: ECPoint = spec.g.multiply(BigInteger(1, privateKeyBytes))
 
     pointQ = pointQ.normalize()
     val rawX = pointQ.rawXCoord.encoded
     val rawY = pointQ.rawYCoord.encoded
 
-    return ECKey.Builder(com.nimbusds.jose.jwk.Curve.SECP256K1, Base64URL.encode(rawX), Base64URL.encode(rawY))
-      .algorithm(JWSAlgorithm.ES256K)
-      .keyIDFromThumbprint()
-      .keyUse(KeyUse.SIGNATURE)
+    return Jwk.Builder()
+      .keyType("EC")
+      .algorithm(algorithm.name)
+      .keyUse("sig")
+      .x(Convert(rawX).toBase64Url())
+      .y(Convert(rawY).toBase64Url())
+      .privateKey(Convert(privateKeyBytes).toBase64Url())
       .build()
   }
 
-  override fun bytesToPublicKey(publicKeyBytes: ByteArray): JWK {
+  override fun bytesToPublicKey(publicKeyBytes: ByteArray): Jwk {
     val xBytes = publicKeyBytes.sliceArray(1..32)
     val yBytes = publicKeyBytes.sliceArray(33..64)
 
-    return ECKey.Builder(com.nimbusds.jose.jwk.Curve.SECP256K1, Base64URL.encode(xBytes), Base64URL.encode(yBytes))
-      .algorithm(JWSAlgorithm.ES256K)
-      .keyIDFromThumbprint()
-      .keyUse(KeyUse.SIGNATURE)
+    return Jwk.Builder()
+      .keyType("EC")
+      .algorithm(algorithm.name)
+      .x(Convert(xBytes).toBase64Url())
+      .y(Convert(yBytes).toBase64Url())
+      .keyUse("sig")
       .build()
   }
 
@@ -211,8 +236,8 @@ public object Secp256k1 : KeyGenerator, Signer {
    * @throws IllegalArgumentException If the provided key, payload, or options are invalid or inappropriate
    *                                  for the signing process.
    */
-  override fun sign(privateKey: JWK, payload: ByteArray, options: SignOptions?): ByteArray {
-    val privateKeyBigInt = privateKey.toECKey().d.decodeToBigInteger()
+  override fun sign(privateKey: Jwk, payload: ByteArray, options: SignOptions?): ByteArray {
+    val privateKeyBigInt = Convert(privateKey.d, EncodingFormat.Base64Url).toStr().toBigInteger()
     val privateKeyParams = ECPrivateKeyParameters(privateKeyBigInt, curveParams)
 
     // generates k value deterministically using the private key and message hash, ensuring that signing the same
@@ -260,7 +285,7 @@ public object Secp256k1 : KeyGenerator, Signer {
    * @throws IllegalArgumentException If the provided public key or signature format is invalid or not
    *                                  supported by the implementation.
    */
-  override fun verify(publicKey: JWK, signedPayload: ByteArray, signature: ByteArray, options: VerifyOptions?) {
+  override fun verify(publicKey: Jwk, signedPayload: ByteArray, signature: ByteArray, options: VerifyOptions?) {
     val publicKeyBytes = publicKeyToBytes(publicKey)
     val publicKeyPoint = spec.curve.decodePoint(publicKeyBytes)
 
@@ -300,7 +325,7 @@ public object Secp256k1 : KeyGenerator, Signer {
    *
    * ### Usage Example:
    * ```
-   * val jwk: JWK = //...obtain or generate a JWK
+   * val jwk: Jwk = //...obtain or generate a JWK
    * try {
    *     Secp256k1.validateKey(jwk)
    *     // Key is valid, proceed with further operations...
@@ -316,8 +341,8 @@ public object Secp256k1 : KeyGenerator, Signer {
    * @param key The [JWK] to validate.
    * @throws IllegalArgumentException if the key is not of type [ECKey].
    */
-  public fun validateKey(key: JWK) {
-    require(key is ECKey) { "private key must be an ECKey (kty: EC)" }
+  public fun validateKey(key: Jwk) {
+    require(key.kty == "EC") { "private key must be an ECKey (kty: EC)" }
   }
 
   /**

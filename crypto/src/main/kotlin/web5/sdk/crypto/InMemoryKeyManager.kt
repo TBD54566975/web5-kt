@@ -1,6 +1,9 @@
 package web5.sdk.crypto
 
 import com.nimbusds.jose.jwk.JWK
+import web5.sdk.common.Json
+import web5.sdk.common.Json.toMap
+import web5.sdk.crypto.jwk.Jwk
 
 /**
  * A class for managing cryptographic keys in-memory.
@@ -26,7 +29,7 @@ public class InMemoryKeyManager : KeyManager {
   /**
    * An in-memory keystore represented as a flat key-value map, where the key is a key ID.
    */
-  private val keyStore: MutableMap<String, JWK> = HashMap()
+  private val keyStore: MutableMap<String, Jwk> = HashMap()
 
   /**
    * Generates a private key using specified algorithmId, and stores it in the in-memory keyStore.
@@ -37,19 +40,22 @@ public class InMemoryKeyManager : KeyManager {
    */
   override fun generatePrivateKey(algorithmId: AlgorithmId, options: KeyGenOptions?): String {
     val jwk = Crypto.generatePrivateKey(algorithmId, options)
-    keyStore[jwk.keyID] = jwk
+    if (jwk.kid.isNullOrEmpty()) {
+      jwk.kid = jwk.computeThumbprint()
+    }
 
-    return jwk.keyID
+    keyStore[jwk.kid!!] = jwk
+    return jwk.kid!!
   }
 
   /**
    * Computes and returns a public key corresponding to the private key identified by the provided keyAlias.
    *
    * @param keyAlias The alias (key ID) of the private key stored in the keyStore.
-   * @return The computed public key as a JWK object.
+   * @return The computed public key as a Jwk object.
    * @throws Exception if a key with the provided alias is not found in the keyStore.
    */
-  override fun getPublicKey(keyAlias: String): JWK {
+  override fun getPublicKey(keyAlias: String): Jwk {
     // TODO: decide whether to return null or throw an exception
     val privateKey = getPrivateKey(keyAlias)
     return Crypto.computePublicKey(privateKey)
@@ -72,12 +78,12 @@ public class InMemoryKeyManager : KeyManager {
   /**
    * Return the alias of [publicKey], as was originally returned by [generatePrivateKey].
    *
-   * @param publicKey A public key in JWK (JSON Web Key) format
+   * @param publicKey A public key in Jwk (JSON Web Key) format
    * @return The alias belonging to [publicKey]
    * @throws IllegalArgumentException if the key is not known to the [KeyManager]
    */
-  override fun getDeterministicAlias(publicKey: JWK): String {
-    val kid = publicKey.keyID ?: publicKey.computeThumbprint().toString()
+  override fun getDeterministicAlias(publicKey: Jwk): String {
+    val kid = publicKey.kid ?: publicKey.computeThumbprint()
     require(keyStore.containsKey(kid)) {
       "key with alias $kid not found"
     }
@@ -94,20 +100,22 @@ public class InMemoryKeyManager : KeyManager {
    * @return A list of key aliases belonging to the imported keys.
    */
   public fun import(keySet: Iterable<Map<String, Any>>): List<String> = keySet.map {
-    val jwk = JWK.parse(it)
+    // todo are all keySet.value of type Any in this case a possible Jwk?
+    //  we can just call toString() and call it good? am skeptical
+    val jwk = Json.parse<Jwk>(it.toString())
     import(jwk)
   }
 
   /**
    * Imports a single key and returns the alias that refers to it.
    *
-   * @param jwk A JWK object representing the key to be imported.
+   * @param jwk A Jwk object representing the key to be imported.
    * @return The alias belonging to the imported key.
    */
-  public fun import(jwk: JWK): String {
-    var kid = jwk.keyID
+  public fun import(jwk: Jwk): String {
+    var kid = jwk.kid
     if (kid.isNullOrEmpty()) {
-      kid = jwk.computeThumbprint().toString()
+      kid = jwk.computeThumbprint()
     }
     keyStore.putIfAbsent(kid, jwk)
     return kid
@@ -118,5 +126,6 @@ public class InMemoryKeyManager : KeyManager {
    *
    * @return A list of key representations in map format.
    */
-  public fun export(): List<Map<String, Any>> = keyStore.map { it.value.toJSONObject() }
+  public fun export(): List<Map<String, Any>> = keyStore.map { it.value.toString().toMap() }
+
 }

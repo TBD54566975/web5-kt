@@ -1,10 +1,10 @@
 package web5.sdk.dids.did
 
-import com.nimbusds.jose.jwk.JWK
 import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.crypto.KeyExporter
 import web5.sdk.crypto.KeyImporter
 import web5.sdk.crypto.KeyManager
+import web5.sdk.crypto.jwk.Jwk
 import web5.sdk.dids.didcore.DidDocument
 import web5.sdk.dids.didcore.Did
 import web5.sdk.dids.didcore.VMSelector
@@ -34,7 +34,7 @@ public class BearerDid(
   public fun export(): PortableDid {
 
     val keyExporter = keyManager as? KeyExporter
-    val privateKeys = mutableListOf<JWK>()
+    val privateKeys = mutableListOf<Jwk>()
 
     document.verificationMethod?.forEach { vm ->
       val keyAliasResult = runCatching { vm.publicKeyJwk?.computeThumbprint() }
@@ -70,7 +70,7 @@ public class BearerDid(
           ?: false
 
       check(allVerificationMethodsHavePublicKey) {
-        "Each VerificationMethod must contain a public key in JWK format."
+        "Each VerificationMethod must contain a public key in Jwk format."
       }
 
       val did = Did.parse(portableDID.uri)

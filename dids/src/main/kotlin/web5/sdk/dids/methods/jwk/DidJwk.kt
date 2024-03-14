@@ -1,12 +1,12 @@
 package web5.sdk.dids.methods.jwk
 
-import com.nimbusds.jose.jwk.JWK
-import com.nimbusds.jose.jwk.KeyUse
 import web5.sdk.common.Convert
 import web5.sdk.common.EncodingFormat
+import web5.sdk.common.Json
 import web5.sdk.crypto.AlgorithmId
 import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.crypto.KeyManager
+import web5.sdk.crypto.jwk.Jwk
 import web5.sdk.dids.DidResolutionMetadata
 import web5.sdk.dids.DidResolutionResult
 import web5.sdk.dids.ResolutionError
@@ -61,7 +61,7 @@ public class DidJwk {
       val keyAlias = keyManager.generatePrivateKey(algorithmId)
       val publicKeyJwk = keyManager.getPublicKey(keyAlias)
 
-      val base64Encoded = Convert(publicKeyJwk.toJSONString()).toBase64Url()
+      val base64Encoded = Convert(Json.stringify(publicKeyJwk)).toBase64Url()
 
       val didUri = "did:jwk:$base64Encoded"
 
@@ -118,7 +118,7 @@ public class DidJwk {
       val id = parsedDid.id
       val decodedKey = Convert(id, EncodingFormat.Base64Url).toStr()
       val publicKeyJwk = try {
-        JWK.parse(decodedKey)
+        Json.parse<Jwk>(decodedKey)
       } catch (_: ParseException) {
         return DidResolutionResult(
           context = "https://w3id.org/did-resolution/v1",
@@ -128,7 +128,7 @@ public class DidJwk {
         )
       }
 
-      require(!publicKeyJwk.isPrivate) {
+      require(publicKeyJwk.d != null) {
         throw IllegalArgumentException("decoded jwk value cannot be a private key")
       }
 
@@ -137,7 +137,7 @@ public class DidJwk {
       return DidResolutionResult(didDocument = didDocument, context = "https://w3id.org/did-resolution/v1")
     }
 
-    private fun createDocument(did: Did, publicKeyJwk: JWK): DidDocument {
+    private fun createDocument(did: Did, publicKeyJwk: Jwk): DidDocument {
       val verificationMethodId = "${did.uri}#0"
       val verificationMethod = VerificationMethod.Builder()
         .id(verificationMethodId)
@@ -149,12 +149,7 @@ public class DidJwk {
       val didDocumentBuilder = DidDocument.Builder()
         .context(listOf("https://www.w3.org/ns/did/v1"))
         .id(did.url)
-
-      // todo noticed that this was already in kotlin impl of building did doc
-      // but it's not in go impl?
-      // ask frank. encryption not needed for tbdex use, so not considered in go impl
-      // keyUse is technically not required (per spec)
-      if (publicKeyJwk.keyUse != KeyUse.ENCRYPTION) {
+      if (publicKeyJwk.use != "enc") {
         didDocumentBuilder
           .verificationMethodForPurposes(
             verificationMethod,
@@ -167,7 +162,7 @@ public class DidJwk {
           )
       }
 
-      if (publicKeyJwk.keyUse != KeyUse.SIGNATURE) {
+      if (publicKeyJwk.use != "sig") {
         didDocumentBuilder.verificationMethodForPurposes(verificationMethod, listOf(Purpose.KeyAgreement))
       }
       return didDocumentBuilder.build()

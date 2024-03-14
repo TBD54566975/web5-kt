@@ -8,17 +8,17 @@ import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.JsonSerializer
 import com.fasterxml.jackson.databind.SerializerProvider
-import com.nimbusds.jose.jwk.JWK
+import web5.sdk.common.Json
+import web5.sdk.crypto.jwk.Jwk
 import web5.sdk.dids.didcore.Purpose
 import java.io.IOException
 
 /**
- * Serialize JWK into String.
+ * Serialize Jwk into String.
  */
-public class JWKSerializer : JsonSerializer<JWK?>() {
-  public override fun serialize(jwk: JWK?, gen: JsonGenerator, serializers: SerializerProvider?) {
-    val jwkString = jwk?.toJSONString()
-
+public class JwkSerializer : JsonSerializer<Jwk?>() {
+  public override fun serialize(jwk: Jwk?, gen: JsonGenerator, serializers: SerializerProvider?) {
+    val jwkString = jwk?.let { Json.stringify(it) }
     gen.writeRawValue(jwkString)
   }
 
@@ -28,11 +28,11 @@ public class JWKSerializer : JsonSerializer<JWK?>() {
  * Deserialize String into JWK.
  *
  */
-public class JwkDeserializer : JsonDeserializer<JWK>() {
-  override fun deserialize(p: JsonParser, ctxt: DeserializationContext): JWK {
+public class JwkDeserializer : JsonDeserializer<Jwk>() {
+  override fun deserialize(p: JsonParser, ctxt: DeserializationContext): Jwk {
     val node = p.codec.readTree<JsonNode>(p)
     val jwkJson = node.toString()
-    return JWK.parse(jwkJson)
+    return Json.parse<Jwk>(jwkJson)
   }
 }
 

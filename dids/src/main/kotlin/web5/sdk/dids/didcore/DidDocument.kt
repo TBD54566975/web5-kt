@@ -110,6 +110,13 @@ public class DidDocument(
    */
   @JvmOverloads
   public fun findAssertionMethodById(assertionMethodId: String? = null): VerificationMethod {
+    /*
+    // todo add this bit (see jwtutil)
+    val verificationMethodIds = setOf(
+      did.url,
+      "#${did.fragment}"
+    )
+     */
     require(!assertionMethod.isNullOrEmpty()) {
       throw SignatureException("No assertion methods found in DID document")
     }

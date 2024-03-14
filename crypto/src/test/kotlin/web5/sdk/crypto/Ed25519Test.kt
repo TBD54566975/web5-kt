@@ -2,9 +2,10 @@ package web5.sdk.crypto
 
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.nimbusds.jose.jwk.OctetKeyPair
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
+import web5.sdk.common.Json
+import web5.sdk.crypto.jwk.Jwk
 import web5.sdk.testing.TestVectors
 import java.io.File
 import kotlin.test.assertEquals
@@ -34,7 +35,7 @@ class Web5TestVectorsCryptoEd25519 {
       val inputByteArray: ByteArray = hexStringToByteArray(vector.input.data)
       val jwkMap = vector.input.key
 
-      val ed25519Jwk = OctetKeyPair.parse(jwkMap.toString())
+      val ed25519Jwk = Json.parse<Jwk>(jwkMap.toString())
 
       val signedByteArray: ByteArray = Ed25519.sign(ed25519Jwk, inputByteArray)
 
@@ -50,7 +51,7 @@ class Web5TestVectorsCryptoEd25519 {
         val inputByteArray: ByteArray = hexStringToByteArray(vector.input.data)
         val jwkMap = vector.input.key
 
-        val ed25519Jwk = OctetKeyPair.parse(jwkMap.toString())
+        val ed25519Jwk = Json.parse<Jwk>(jwkMap.toString())
 
         Ed25519.sign(ed25519Jwk, inputByteArray)
       }
@@ -63,7 +64,7 @@ class Web5TestVectorsCryptoEd25519 {
     val testVectors = mapper.readValue(File("../web5-spec/test-vectors/crypto_ed25519/verify.json"), typeRef)
 
     testVectors.vectors.filter { it.errors == false }.forEach { vector ->
-      val key = OctetKeyPair.parse(vector.input.key)
+      val key = Json.parse<Jwk>(vector.input.key.toString())
       val data = hexStringToByteArray(vector.input.data)
       val signature = hexStringToByteArray(vector.input.signature)
       if (vector.output == true) {
@@ -79,7 +80,7 @@ class Web5TestVectorsCryptoEd25519 {
 
     testVectors.vectors.filter { it.errors == true }.forEach { vector ->
       assertFails {
-        val key = OctetKeyPair.parse(vector.input.key)
+        val key = Json.parse<Jwk>(vector.input.key.toString())
         val data = hexStringToByteArray(vector.input.data)
         val signature = hexStringToByteArray(vector.input.signature)
         Ed25519.verify(key, data, signature)

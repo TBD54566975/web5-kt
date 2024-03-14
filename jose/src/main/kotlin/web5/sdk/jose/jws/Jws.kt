@@ -1,4 +1,4 @@
-package web5.sdk.dids.jws
+package web5.sdk.jose.jws
 
 import web5.sdk.common.Convert
 import web5.sdk.common.EncodingFormat
@@ -62,8 +62,7 @@ public object Jws {
       ?: JwsHeader.Builder()
         .type("JWT")
         .keyId(kid)
-        // todo pretty sure i need algorithm names like ES256K for secp and EdDSA for ed25519
-        .algorithm(Crypto.getJwkCurve(verificationMethod.publicKeyJwk)?.name!!)
+        .algorithm(Crypto.getJwkCurve(verificationMethod.publicKeyJwk!!)?.name!!)
         .build()
 
     val headerBase64Url = Convert(jwsHeader).toBase64Url()
@@ -129,23 +128,13 @@ public class JwsHeader(
   }
 
   public companion object {
-    // todo do i need these toJson and fromJson?
-    // i could just call Json.jsonMapper.xyz()
-    public fun toJson(header: JwsHeader): String {
-      return Json.stringify(header)
-    }
-
-    public fun fromJson(jsonHeader: String): JwsHeader {
-      return Json.parse<JwsHeader>(jsonHeader)
-    }
-
     public fun fromBase64Url(base64EncodedHeader: String): JwsHeader {
       val jsonHeaderDecoded = Convert(base64EncodedHeader, EncodingFormat.Base64Url).toStr()
       return Json.parse<JwsHeader>(jsonHeaderDecoded)
     }
 
     public fun toBase64Url(header: JwsHeader): String {
-      val jsonHeader = toJson(header)
+      val jsonHeader = Json.stringify(header)
       return Convert(jsonHeader, EncodingFormat.Base64Url).toBase64Url()
     }
   }
@@ -162,35 +151,27 @@ public class DecodedJws(
       "Malformed JWS. Expected header to contain kid and alg."
     }
 
-    val dereferenceResult = DidResolvers.resolve(header.kid!!)
+    val resolutionResult = DidResolvers.resolve(header.kid!!)
 
-    check(dereferenceResult.didResolutionMetadata.error != null) {
+    check(resolutionResult.didResolutionMetadata.error != null) {
       "Verification failed. Failed to resolve kid. " +
-        "Error: ${dereferenceResult.didResolutionMetadata.error}"
+        "Error: ${resolutionResult.didResolutionMetadata.error}"
     }
 
-    check(dereferenceResult.didDocument!!.verificationMethod?.size != 0) {
+    check(resolutionResult.didDocument != null) {
+      "Verification failed. Expected header kid to dereference a DID document"
+    }
+
+    check(resolutionResult.didDocument?.verificationMethod?.size != 0) {
       "Verification failed. Expected header kid to dereference a verification method"
     }
 
-    /*
-    // todo
-    in JwtUtil, we had this
-    val verificationMethodIds = setOf(
-      did.url,
-      "#${did.fragment}"
-    )
-    and were checking the assertionMethod list for a match of the id
-    and then find the vm that matches the id
-    but here we are just looking for the first?
-     */
-    val verificationMethod = dereferenceResult.didDocument.verificationMethod!!.first()
+    val verificationMethod = resolutionResult.didDocument!!.findAssertionMethodById(header.kid)
     check(verificationMethod.publicKeyJwk != null) {
       "Verification failed. Expected headeder kid to dereference" +
         " a verification method with a publicKeyJwk"
     }
 
-    // todo add this bit in coz it was in JwtUtil.verify()
     check(verificationMethod.type == "JsonWebKey2020" || verificationMethod.type == "JsonWebKey") {
       "Verification failed. Expected header kid to dereference " +
         "a verification method of type JsonWebKey2020 or JsonWebKey"
@@ -199,7 +180,7 @@ public class DecodedJws(
     val toSign = "${parts[0]}.${parts[1]}"
     val toSignBytes = Convert(toSign).toByteArray()
 
-    Crypto.verify(verificationMethod.publicKeyJwk, toSignBytes, signature)
+    Crypto.verify(verificationMethod.publicKeyJwk!!, toSignBytes, signature)
 
   }
 }

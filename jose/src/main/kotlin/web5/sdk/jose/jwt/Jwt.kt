@@ -1,12 +1,13 @@
-package web5.sdk.dids.jwt
+package web5.sdk.jose.jwt
 
 import com.fasterxml.jackson.databind.JsonNode
 import web5.sdk.common.Convert
+import web5.sdk.common.EncodingFormat
 import web5.sdk.common.Json
 import web5.sdk.dids.did.BearerDid
-import web5.sdk.dids.jws.DecodedJws
-import web5.sdk.dids.jws.Jws
-import web5.sdk.dids.jws.JwsHeader
+import web5.sdk.jose.jws.DecodedJws
+import web5.sdk.jose.jws.Jws
+import web5.sdk.jose.jws.JwsHeader
 
 public object Jwt {
 
@@ -16,7 +17,6 @@ public object Jwt {
     val claims: JwtClaimsSet
     try {
       val payload = Convert(decodedJws.payload).toStr()
-      // todo don't know if this is correct
       claims = JwtClaimsSet.fromJson(Json.jsonMapper.readTree(payload))
     } catch (e: Exception) {
       throw IllegalArgumentException(
@@ -57,8 +57,7 @@ public class DecodedJwt(
   public fun verify() {
     val decodedJws = DecodedJws(
       header = header,
-      // todo why does this use parts[1] instead of claims?
-      payload = Convert(parts[1]).toByteArray(),
+      payload = Convert(parts[1], EncodingFormat.Base64Url).toByteArray(),
       signature = signature,
       parts = parts
     )

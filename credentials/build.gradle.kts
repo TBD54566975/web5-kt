@@ -38,6 +38,8 @@ dependencies {
   implementation(project(":dids"))
   implementation(project(":common"))
   implementation(project(":crypto"))
+  implementation(project(":jose"))
+
 
   // Implementation
   implementation(libs.comFasterXmlJacksonModuleKotlin)

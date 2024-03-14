@@ -1,6 +1,6 @@
 package web5.sdk.crypto
 
-import com.nimbusds.jose.jwk.JWK
+import web5.sdk.crypto.jwk.Jwk
 import java.security.SignatureException
 
 /**
@@ -80,28 +80,28 @@ public interface Signer {
   /**
    * Sign a given payload using a private key.
    *
-   * This function takes a payload and a private key in JWK (JSON Web Key) format,
+   * This function takes a payload and a private key in Jwk (JSON Web Key) format,
    * and returns a signature as a byte array. Additional options for the signing
    * process can be provided via the `options` parameter.
    *
-   * @param privateKey The private key in JWK format to be used for signing.
+   * @param privateKey The private key in Jwk format to be used for signing.
    *                   Must not be null.
    * @param payload The payload/data to be signed. Must not be null.
    * @param options Optional parameter containing additional options to control
    *                the signing process. Default is null.
    * @return A [ByteArray] representing the signature.
    */
-  public fun sign(privateKey: JWK, payload: ByteArray, options: SignOptions? = null): ByteArray
+  public fun sign(privateKey: Jwk, payload: ByteArray, options: SignOptions? = null): ByteArray
 
   /**
    * Verify the signature of a given payload using a public key.
    *
    * This function attempts to verify the signature of a provided payload using a public key,
-   * supplied in JWK (JSON Web Key) format, and a signature. The verification process checks
+   * supplied in Jwk (JSON Web Key) format, and a signature. The verification process checks
    * the validity of the signature against the provided payload, respecting any optional
    * verification options provided via [VerifyOptions].
    *
-   * @param publicKey The public key in JWK format used for verifying the signature.
+   * @param publicKey The public key in Jwk format used for verifying the signature.
    *                  Must not be null.
    * @param signedPayload The original payload/data that was signed, to be verified
    *                      against its signature. Must not be null.
@@ -112,5 +112,5 @@ public interface Signer {
    *
    * @throws [SignatureException] if the verification fails.
    */
-  public fun verify(publicKey: JWK, signedPayload: ByteArray, signature: ByteArray, options: VerifyOptions? = null)
+  public fun verify(publicKey: Jwk, signedPayload: ByteArray, signature: ByteArray, options: VerifyOptions? = null)
 }

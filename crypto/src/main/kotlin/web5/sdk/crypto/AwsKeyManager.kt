@@ -14,13 +14,13 @@ import com.amazonaws.services.kms.model.SignRequest
 import com.amazonaws.services.kms.model.SigningAlgorithmSpec
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.crypto.impl.ECDSA
-import com.nimbusds.jose.jwk.ECKey
-import com.nimbusds.jose.jwk.JWK
-import com.nimbusds.jose.jwk.KeyUse
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo
 import org.bouncycastle.crypto.ExtendedDigest
 import org.bouncycastle.crypto.digests.SHA256Digest
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter
+import web5.sdk.common.Convert
+import web5.sdk.common.EncodingFormat
+import web5.sdk.crypto.jwk.Jwk
 import java.nio.ByteBuffer
 import java.security.PublicKey
 import java.security.interfaces.ECPublicKey
@@ -30,7 +30,7 @@ import java.security.interfaces.ECPublicKey
  * connection details for [AWSKMS] client as per
  * [Configure the AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html)
  *
- * Key aliases are generated from the key's JWK thumbprint, and stored in AWS KMS.
+ * Key aliases are generated from the key's Jwk thumbprint, and stored in AWS KMS.
  * e.g. alias/6uNnyj7xZUgtKTEOFV2mz0f7Hd3cxIH1o5VXsOo4u1M
  *
  * AWSKeyManager supports a limited set ECDSA curves for signing:
@@ -118,25 +118,57 @@ public class AwsKeyManager @JvmOverloads constructor(
    * Retrieves the public key associated with a previously stored private key, identified by the provided alias.
    *
    * @param keyAlias The alias referencing the stored private key.
-   * @return The associated public key in JWK (JSON Web Key) format.
+   * @return The associated public key in Jwk (JSON Web Key) format.
    * @throws [AWSKMSException] for any error originating from the [AWSKMS] client
    */
-  override fun getPublicKey(keyAlias: String): JWK {
+  override fun getPublicKey(keyAlias: String): Jwk {
     val getPublicKeyRequest = GetPublicKeyRequest().withKeyId(keyAlias)
     val publicKeyResponse = kmsClient.getPublicKey(getPublicKeyRequest)
     val publicKey = convertToJavaPublicKey(publicKeyResponse.publicKey)
 
     val algorithmDetails = getAlgorithmDetails(publicKeyResponse.keySpec.enum())
     val jwkBuilder = when (publicKey) {
-      is ECPublicKey -> ECKey.Builder(JwaCurve.toJwkCurve(algorithmDetails.curve), publicKey)
+      is ECPublicKey -> {
+        val (x, y) = extractBase64UrlXYFromECPublicKey(publicKey)
+        Jwk.Builder()
+          .keyType("EC")
+          .x(x)
+          .y(y)
+      }
+
       else -> throw IllegalArgumentException("Unknown key type $publicKey")
     }
     return jwkBuilder
-      .algorithm(Jwa.toJwsAlgorithm(algorithmDetails.algorithm))
-      .keyID(keyAlias)
-      .keyUse(KeyUse.SIGNATURE)
+      .algorithm(algorithmDetails.algorithm.name)
+      .keyId(keyAlias)
+      .keyUse("sig")
       .build()
   }
+
+  private fun extractBase64UrlXYFromECPublicKey(ecPublicKey: ECPublicKey): Pair<String, String> {
+    val ecPoint = ecPublicKey.w
+    val x = ecPoint.affineX.toByteArray().trimLeadingZeroes()
+    val y = ecPoint.affineY.toByteArray().trimLeadingZeroes()
+
+    val base64UrlX = Convert(x, EncodingFormat.Base64Url).toStr()
+    val base64UrlY = Convert(y, EncodingFormat.Base64Url).toStr()
+
+    return Pair(base64UrlX, base64UrlY)
+  }
+
+  /**
+   * // todo not sure where this should live
+   * Extension function to remove leading zero bytes which might be
+   * added by BigInteger's toByteArray() method to represent positive numbers.
+   */
+  private fun ByteArray.trimLeadingZeroes(): ByteArray =
+    if (this.isEmpty()) {
+      this
+    } else if (this[0] == 0.toByte()) {
+      this.dropWhile { it == 0.toByte() }.toByteArray()
+    } else {
+      this
+    }
 
   /**
    * Signs the provided payload using the private key identified by the provided alias.
@@ -165,11 +197,11 @@ public class AwsKeyManager @JvmOverloads constructor(
   /**
    * Return the alias of [publicKey], as was originally returned by [generatePrivateKey].
    *
-   * @param publicKey A public key in JWK (JSON Web Key) format
+   * @param publicKey A public key in Jwk (JSON Web Key) format
    * @return The alias belonging to [publicKey]
    */
-  override fun getDeterministicAlias(publicKey: JWK): String {
-    val jwkThumbprint = publicKey.computeThumbprint()
+  override fun getDeterministicAlias(publicKey: Jwk): String {
+    val jwkThumbprint = publicKey.kid ?: publicKey.computeThumbprint()
     return "alias/$jwkThumbprint"
   }
 
@@ -211,6 +243,7 @@ public class AwsKeyManager @JvmOverloads constructor(
   /**
    * KMS returns the signature encoded as ASN.1 DER. Convert to the "R+S" concatenation format required by JWS.
    * https://www.rfc-editor.org/rfc/rfc7515#appendix-A.3.1
+   * // todo how to eject from JWSAlgorithm here? need to write ECDSA.getSignatureByteArrayLength and transcodeSignatureToConcat?
    */
   private fun transcodeDerSignatureToConcat(derSignature: ByteArray, algorithm: JWSAlgorithm): ByteArray {
     val signatureLength = ECDSA.getSignatureByteArrayLength(algorithm)

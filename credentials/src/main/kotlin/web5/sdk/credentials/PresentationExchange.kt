@@ -11,7 +11,7 @@ import web5.sdk.credentials.model.PresentationDefinitionV2
 import web5.sdk.credentials.model.PresentationDefinitionV2Validator
 import web5.sdk.credentials.model.PresentationSubmission
 import web5.sdk.credentials.model.PresentationSubmissionValidator
-import web5.sdk.dids.jwt.Jwt
+import web5.sdk.jose.jwt.Jwt
 import java.util.UUID
 
 /**

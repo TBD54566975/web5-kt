@@ -2,8 +2,6 @@ package web5.sdk.dids.methods.jwk
 
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.nimbusds.jose.JWSAlgorithm
-import com.nimbusds.jose.jwk.JWK
 import org.erdtman.jcs.JsonCanonicalizer
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -12,6 +10,8 @@ import web5.sdk.common.Convert
 import web5.sdk.common.Json
 import web5.sdk.crypto.AlgorithmId
 import web5.sdk.crypto.InMemoryKeyManager
+import web5.sdk.crypto.Jwa
+import web5.sdk.crypto.jwk.Jwk
 import web5.sdk.dids.DidResolutionResult
 import web5.sdk.dids.DidResolvers
 import web5.sdk.testing.TestVectors
@@ -37,8 +37,7 @@ class DidJwkTest {
       assertNotNull(jwk)
       val keyAlias = did.keyManager.getDeterministicAlias(jwk)
       val publicKey = did.keyManager.getPublicKey(keyAlias)
-
-      assertEquals(JWSAlgorithm.ES256K, publicKey.algorithm)
+      assertEquals(Jwa.ES256K.name, publicKey.alg)
     }
   }
 
@@ -95,8 +94,8 @@ class DidJwkTest {
     fun `private key throws exception`() {
       val manager = InMemoryKeyManager()
       manager.generatePrivateKey(AlgorithmId.secp256k1)
-      val privateJwk = JWK.parse(manager.export().first())
-      val encodedPrivateJwk = Convert(privateJwk.toJSONString()).toBase64Url()
+      val privateJwkString = Json.parse<Jwk>(manager.export().first().toString())
+      val encodedPrivateJwk = Convert(privateJwkString).toBase64Url()
 
       val did = "did:jwk:$encodedPrivateJwk"
       assertThrows<IllegalArgumentException>(

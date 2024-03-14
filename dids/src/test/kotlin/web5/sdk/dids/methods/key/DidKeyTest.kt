@@ -4,14 +4,13 @@ import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
-import com.nimbusds.jose.JWSAlgorithm
-import com.nimbusds.jose.jwk.Curve
-import com.nimbusds.jose.jwk.ECKey
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
 import web5.sdk.crypto.InMemoryKeyManager
+import web5.sdk.crypto.Jwa
+import web5.sdk.crypto.JwaCurve
 import web5.sdk.dids.DidResolvers
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -76,7 +75,7 @@ class DidKeyTest {
     fun `resolving a secp256k1 DID works`() {
       // test vector taken from: https://github.com/w3c-ccg/did-method-key/blob/main/test-vectors/secp256k1.json#L202C4-L257
       val did = "did:key:zQ3shjmnWpSDEbYKpaFm4kTs9kXyqG6N2QwCYHNPP4yubqgJS"
-      val result = DidKey.resolve(did)
+      val result = DidKey.resolve(did, null)
       assertNotNull(result)
 
       val didDocument = result.didDocument
@@ -104,12 +103,12 @@ class DidKeyTest {
       assertNotNull(verificationMethod.publicKeyJwk)
 
       val publicKeyJwk = verificationMethod.publicKeyJwk // validates
-      assertTrue(publicKeyJwk is ECKey)
+      assertTrue(publicKeyJwk?.kty == "EC")
 
-      assertEquals(publicKeyJwk.algorithm, JWSAlgorithm.ES256K)
-      assertEquals(Curve.SECP256K1, publicKeyJwk.curve)
-      assertEquals("TEIJN9vnTq1EXMkqzo7yN_867-foKc2pREv45Fw_QA8", publicKeyJwk.x.toString())
-      assertEquals("9yiymlzdxKCiRbYq7p-ArRB-C1ytjHE-eb7RDTi6rVc", publicKeyJwk.y.toString())
+      assertEquals(publicKeyJwk?.alg, Jwa.ES256K.name)
+      assertEquals(JwaCurve.secp256k1.name, publicKeyJwk?.crv)
+      assertEquals("TEIJN9vnTq1EXMkqzo7yN_867-foKc2pREv45Fw_QA8", publicKeyJwk?.x.toString())
+      assertEquals("9yiymlzdxKCiRbYq7p-ArRB-C1ytjHE-eb7RDTi6rVc", publicKeyJwk?.y.toString())
 
     }
   }

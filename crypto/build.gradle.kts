@@ -32,6 +32,8 @@ dependencies {
 
   // Project
   implementation(project(":common"))
+  implementation(project(":jose"))
+
 
   // Implementation
   implementation(libs.comGoogleCryptoTink)

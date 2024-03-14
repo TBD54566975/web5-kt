@@ -4,8 +4,8 @@ import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import web5.sdk.dids.did.BearerDid
-import web5.sdk.dids.jwt.Jwt
-import web5.sdk.dids.jwt.JwtClaimsSet
+import web5.sdk.jose.jwt.Jwt
+import web5.sdk.jose.jwt.JwtClaimsSet
 import java.net.URI
 import java.security.SignatureException
 import java.util.Date

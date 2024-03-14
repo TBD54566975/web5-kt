@@ -4,9 +4,6 @@ import com.amazonaws.AmazonServiceException
 import com.amazonaws.auth.AWSStaticCredentialsProvider
 import com.amazonaws.auth.BasicAWSCredentials
 import com.amazonaws.services.kms.AWSKMSClient
-import com.nimbusds.jose.JWSAlgorithm
-import com.nimbusds.jose.jwk.ECKey
-import com.nimbusds.jose.jwk.KeyUse
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -24,10 +21,10 @@ class AwsKeyManagerTest {
     val alias = awsKeyManager.generatePrivateKey(AlgorithmId.secp256k1)
     val publicKey = awsKeyManager.getPublicKey(alias)
 
-    assertEquals(alias, publicKey.keyID)
-    assertTrue(publicKey is ECKey)
-    assertEquals(KeyUse.SIGNATURE, publicKey.keyUse)
-    assertEquals(JWSAlgorithm.ES256K, publicKey.algorithm)
+    assertEquals(alias, publicKey.kid)
+    assertTrue(publicKey.kty  == "EC")
+    assertEquals("sig", publicKey.use)
+    assertEquals(Jwa.ES256K.name, publicKey.alg)
   }
 
   @Test

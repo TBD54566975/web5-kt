@@ -9,11 +9,12 @@ import web5.sdk.common.Convert
 import web5.sdk.crypto.AlgorithmId
 import web5.sdk.crypto.AwsKeyManager
 import web5.sdk.crypto.InMemoryKeyManager
+import web5.sdk.crypto.Jwa
 import web5.sdk.dids.didcore.Purpose
 import web5.sdk.dids.extensions.load
-import web5.sdk.dids.jws.JwsHeader
-import web5.sdk.dids.jwt.Jwt
-import web5.sdk.dids.jwt.JwtClaimsSet
+import web5.sdk.jose.jws.JwsHeader
+import web5.sdk.jose.jwt.Jwt
+import web5.sdk.jose.jwt.JwtClaimsSet
 import web5.sdk.dids.methods.dht.CreateDidDhtOptions
 import web5.sdk.dids.methods.dht.DidDht
 import web5.sdk.dids.methods.key.DidKey
@@ -129,7 +130,7 @@ class VerifiableCredentialTest {
     )
 
     val header = JwsHeader.Builder()
-      .algorithm(AlgorithmId.secp256k1.name)
+      .algorithm(Jwa.ES256K.name)
       .keyId(issuerDid.did.uri)
       .build()
     // A detached payload JWT

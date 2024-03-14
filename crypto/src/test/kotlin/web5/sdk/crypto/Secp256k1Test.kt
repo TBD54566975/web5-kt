@@ -2,13 +2,12 @@ package web5.sdk.crypto
 
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.nimbusds.jose.JWSAlgorithm
-import com.nimbusds.jose.jwk.ECKey
-import com.nimbusds.jose.jwk.KeyUse
 import org.apache.commons.codec.binary.Hex
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import web5.sdk.common.Convert
+import web5.sdk.common.Json
+import web5.sdk.crypto.jwk.Jwk
 import web5.sdk.testing.TestVectors
 import java.io.File
 import java.security.SignatureException
@@ -25,11 +24,11 @@ class Secp256k1Test {
     val privateKey = Secp256k1.generatePrivateKey()
 
     Secp256k1.validateKey(privateKey)
-    assertEquals(JWSAlgorithm.ES256K, privateKey.algorithm)
-    assertEquals(KeyUse.SIGNATURE, privateKey.keyUse)
-    assertNotNull(privateKey.keyID)
-    assertTrue(privateKey is ECKey)
-    assertTrue(privateKey.isPrivate)
+    assertEquals(Jwa.ES256K.name, privateKey.alg)
+    assertEquals("sig", privateKey.use)
+    assertNotNull(privateKey.kid)
+    assertTrue(privateKey.kty == "EC")
+    assertNotNull(privateKey.d)
   }
 
   @Test
@@ -39,11 +38,11 @@ class Secp256k1Test {
     val publicKey = Secp256k1.computePublicKey(privateKey)
 
     Secp256k1.validateKey(publicKey)
-    assertEquals(publicKey.keyID, privateKey.keyID)
-    assertEquals(JWSAlgorithm.ES256K, publicKey.algorithm)
-    assertEquals(KeyUse.SIGNATURE, publicKey.keyUse)
-    assertTrue(publicKey is ECKey)
-    assertFalse(publicKey.isPrivate)
+    assertEquals(publicKey.kid, privateKey.kid)
+    assertEquals(Jwa.ES256K.name, publicKey.alg)
+    assertEquals("sign", publicKey.use)
+    assertTrue(publicKey.kty == "EC")
+    assertNotNull(publicKey.d)
   }
 
   @Test
@@ -110,7 +109,7 @@ class Web5TestVectorsCryptoEs256k {
     testVectors.vectors.filter { it.errors == false }.forEach { vector ->
       val inputByteArray: ByteArray = Hex.decodeHex(vector.input.data.toCharArray())
       val jwkMap = vector.input.key
-      val ecJwk = ECKey.parse(jwkMap.toString())
+      val ecJwk = Json.parse<Jwk>(jwkMap.toString())
       val signedByteArray: ByteArray = Secp256k1.sign(ecJwk, inputByteArray)
 
       val signedHex = Hex.encodeHexString(signedByteArray)
@@ -123,7 +122,7 @@ class Web5TestVectorsCryptoEs256k {
         val inputByteArray: ByteArray = Hex.decodeHex(vector.input.data.toCharArray())
         val jwkMap = vector.input.key
 
-        val ecJwk = ECKey.parse(jwkMap.toString())
+        val ecJwk = Json.parse<Jwk>(jwkMap.toString())
 
         Secp256k1.sign(ecJwk, inputByteArray)
       }
@@ -140,7 +139,7 @@ class Web5TestVectorsCryptoEs256k {
       val jwkMap = vector.input.key
       val signatureByteArray = Hex.decodeHex(vector.input.signature.toCharArray())
 
-      val ecJwk = ECKey.parse(jwkMap.toString())
+      val ecJwk = Json.parse<Jwk>(jwkMap.toString())
 
       if (vector.output == true) {
         assertDoesNotThrow { Secp256k1.verify(ecJwk, inputByteArray, signatureByteArray) }
@@ -155,7 +154,7 @@ class Web5TestVectorsCryptoEs256k {
         val jwkMap = vector.input.key
         val signatureByteArray = Hex.decodeHex(vector.input.signature.toCharArray())
 
-        val ecJwk = ECKey.parse(jwkMap.toString())
+        val ecJwk = Json.parse<Jwk>(jwkMap.toString())
         Secp256k1.verify(ecJwk, inputByteArray, signatureByteArray)
       }
     }

@@ -30,20 +30,6 @@ public enum class JwaCurve {
         null
       }
     }
-
-    /**
-     * Convert JwaCurve nimbusds JWK curve.
-     * Used to temporarily bridge the gap between moving from nimbusds JWK methods
-     * to rolling our own JWK methods
-     * @param curve
-     * @return nimbus JWK Curve
-     */
-    public fun toJwkCurve(curve: JwaCurve): Curve {
-      return when (curve) {
-        secp256k1 -> Curve.SECP256K1
-        Ed25519 -> Curve.Ed25519
-      }
-    }
   }
 }
 
@@ -76,8 +62,8 @@ public enum class Jwa {
 
     /**
      * Convert Jwa to nimbusds JWSAlgorithm.
-     * Used to temporarily bridge the gap between moving from nimbusds JWK methods
-     * to rolling our own JWK methods
+     * Used to temporarily bridge the gap between moving from nimbusds Jwk methods
+     * to rolling our own Jwk methods
      *
      * @param algorithm Jwa
      * @return JWSAlgorithm nimbusds JWSAlgorithm

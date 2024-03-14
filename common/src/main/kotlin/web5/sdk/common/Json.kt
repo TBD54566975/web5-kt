@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.ObjectReader
 import com.fasterxml.jackson.databind.ObjectWriter
 import com.fasterxml.jackson.databind.SerializationFeature
+import com.fasterxml.jackson.module.kotlin.readValue
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 
 /**
@@ -48,5 +49,9 @@ public object Json {
 
   public inline fun <reified T> parse(payload: String): T {
     return objectReader.readValue(payload, T::class.java)
+  }
+
+  public fun String.toMap(): Map<String, Any> {
+    return jsonMapper.readValue(this)
   }
 }

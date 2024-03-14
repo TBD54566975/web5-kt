@@ -131,7 +131,7 @@ internal class DhtClient(
     fun createBep44PutRequest(manager: KeyManager, keyAlias: String, message: Message): Bep44Message {
       // get the public key to verify it is an Ed25519 key
       val pubKey = manager.getPublicKey(keyAlias)
-      val curve = pubKey.toJSONObject()["crv"]
+      val curve = pubKey.crv
       require(curve == Ed25519.curve.name) {
         "Must supply an Ed25519 key"
       }
@@ -183,7 +183,7 @@ internal class DhtClient(
       // get the public key to verify it is an Ed25519 key
       val pubKey = manager.getPublicKey(keyAlias)
 
-      val curve = pubKey.toJSONObject()["crv"]
+      val curve = pubKey.crv
       require(curve == Ed25519.curve.name) {
         "Must supply an Ed25519 key"
       }
