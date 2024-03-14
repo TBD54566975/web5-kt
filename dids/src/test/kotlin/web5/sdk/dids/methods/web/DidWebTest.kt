@@ -71,32 +71,6 @@ class DidWebTest {
     assertEquals("internalError", result.didResolutionMetadata.error)
   }
 
-  @Test
-  fun `importing a portabledid with existing privatekey returns same did with same key`() {
-    val manager = InMemoryKeyManager()
-    val privateJwk = readKey("src/test/resources/jwkEs256k1Private.json")
-    val kid = privateJwk.kid ?: privateJwk.computeThumbprint()
-    manager.import(privateJwk)
-    val bearerDid = DidWeb.create(manager, null)
-    val portableDid = bearerDid.export()
-
-    val importedBearerDid = DidWeb.import(portableDid, InMemoryKeyManager())
-    assertEquals(bearerDid, importedBearerDid)
-    val importedDidPubKey = importedBearerDid.keyManager.getPublicKey(kid)
-    val originalDidPubKey = bearerDid.keyManager.getPublicKey(kid)
-    assertEquals(importedDidPubKey, originalDidPubKey)
-  }
-
-  @Test
-  fun `create throws exception`() {
-    val exception = assertThrows<UnsupportedOperationException> {
-      DidWebApi {
-        engine = mockEngine()
-      }.create(InMemoryKeyManager(), null)
-    }
-    assertEquals("Create operation is not supported for did:web", exception.message)
-  }
-
   private fun mockEngine() = MockEngine { request ->
     when (request.url.toString()) {
       "https://example.com/.well-known/did.json" -> {

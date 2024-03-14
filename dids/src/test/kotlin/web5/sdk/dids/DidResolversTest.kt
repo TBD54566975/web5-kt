@@ -12,14 +12,14 @@ class DidResolversTest {
   // TODO: use all relevant test vectors from https://github.com/w3c-ccg/did-method-key/blob/main/test-vectors/
   @Test
   fun `it works`() {
-    DidResolvers.resolve("did:key:z6MkiTBz1ymuepAQ4HEHYSF1H8quG5GLVVQR3djdX3mDooWp", null)
+    DidResolvers.resolve("did:key:z6MkiTBz1ymuepAQ4HEHYSF1H8quG5GLVVQR3djdX3mDooWp")
   }
 
   @Test
   fun `resolving a default dht did contains assertion method`() {
     val dhtDid = DidDht.create(InMemoryKeyManager(), null)
 
-    val resolutionResult = DidResolvers.resolve(dhtDid.uri)
+    val resolutionResult = DidResolvers.resolve(dhtDid.did.uri)
     assertNotNull(resolutionResult.didDocument!!.assertionMethod)
   }
 
@@ -33,7 +33,7 @@ class DidResolversTest {
 
   @Test
   fun `addResolver adds a custom resolver`() {
-    val resolver: DidResolver = { _, _ -> DidResolutionResult(null, null) }
+    val resolver: DidResolver = { _ -> DidResolutionResult(null, null) }
     DidResolvers.addResolver("test", resolver)
     assertNotNull(DidResolvers.resolve("did:test:123"))
   }
