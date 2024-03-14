@@ -12,12 +12,41 @@ import web5.sdk.dids.didcore.VerificationMethod
 
 public typealias DidSigner = (payload: ByteArray) -> ByteArray
 
+/**
+ * Represents a Decentralized Identifier (DID) along with its DID document, key manager, metadata,
+ * and convenience functions.
+ *
+ * @param did The Decentralized Identifier (DID) to represent.
+ * @param keyManager The KeyManager instance used to manage the cryptographic keys associated with the DID.
+ * @param document The DID Document associated with the DID.
+ */
 public class BearerDid(
   public val did: Did,
   public val keyManager: KeyManager,
   public val document: DidDocument
 ) {
 
+  /**
+   * GetSigner returns a sign method that can be used to sign a payload using a key associated to the DID.
+   * This function also returns the verification method needed to verify the signature.
+   *
+   * Providing the verification method allows the caller to provide the signature's recipient
+   * with a reference to the verification method needed to verify the payload. This is often done
+   * by including the verification method id either alongside the signature or as part of the header
+   * in the case of JSON Web Signatures.
+   *
+   * The verifier can dereference the verification method id to obtain the public key needed to verify the signature.
+   *
+   * This function takes a Verification Method selector that can be used to select a specific verification method
+   * from the DID Document if desired. If no selector is provided, the payload will be signed with the key associated
+   * to the first verification method in the DID Document.
+   *
+   * The selector can either be a Verification Method ID or a Purpose. If a Purpose is provided, the first verification
+   * method in the DID Document that has the provided purpose will be used to sign the payload.
+   *
+   * The returned signer is a function that takes a byte payload and returns a byte signature.
+   */
+  @JvmOverloads
   public fun getSigner(selector: VMSelector? = null): Pair<DidSigner, VerificationMethod> {
     val verificationMethod = document.selectVerificationMethod(selector)
 
@@ -31,6 +60,18 @@ public class BearerDid(
     return Pair(signer, verificationMethod)
   }
 
+  /**
+   * Converts a `BearerDid` object to a portable format containing the URI and verification methods
+   * associated with the DID.
+   *
+   * This method is useful when you need to represent the key material and metadata associated with
+   * a DID in format that can be used independently of the specific DID method implementation. It
+   * extracts both public and private keys from the DID's key manager and organizes them into a
+   * `PortableDid` structure.
+   *
+   * @returns A `PortableDid` containing the URI, DID document, metadata, and optionally private
+   *          keys associated with the `BearerDid`.
+   */
   public fun export(): PortableDid {
 
     val keyExporter = keyManager as? KeyExporter
@@ -56,31 +97,45 @@ public class BearerDid(
 
   public companion object {
 
+
+    /**
+     * Instantiates a [BearerDid] object from a given [PortableDid].
+     *
+     * This method allows for the creation of a `BearerDid` object using a previously created DID's
+     * key material, DID document, and metadata.
+     *
+     * @param portableDid - The PortableDid object to import.
+     * @param keyManager - Optionally specify an external Key Management System (KMS) used to
+     *                     generate keys and sign data. If not given, a new
+     *                     [LocalKeyManager] instance will be created and used.
+     * @returns [BearerDid] object representing the DID formed from the
+     *          provided PortableDid.
+     */
+    @JvmOverloads
     public fun import(
-      portableDID: PortableDid,
+      portableDid: PortableDid,
       keyManager: KeyManager = InMemoryKeyManager()
     ): BearerDid {
-      check(portableDID.document.verificationMethod?.size != 0) {
+      check(portableDid.document.verificationMethod?.size != 0) {
         "PortableDID must contain at least one verification method"
       }
 
       val allVerificationMethodsHavePublicKey =
-        portableDID.document.verificationMethod
+        portableDid.document.verificationMethod
           ?.all { vm -> vm.publicKeyJwk != null }
           ?: false
-
       check(allVerificationMethodsHavePublicKey) {
         "Each VerificationMethod must contain a public key in Jwk format."
       }
 
-      val did = Did.parse(portableDID.uri)
+      val did = Did.parse(portableDid.uri)
 
-      for (key in portableDID.privateKeys) {
+      for (key in portableDid.privateKeys) {
         val keyImporter = keyManager as? KeyImporter
         keyImporter!!.importKey(key)
       }
 
-      return BearerDid(did, keyManager, portableDID.document)
+      return BearerDid(did, keyManager, portableDid.document)
     }
   }
 

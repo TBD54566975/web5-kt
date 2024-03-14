@@ -32,22 +32,3 @@ public interface CreateDidOptions
  * ```
  */
 public interface CreationMetadata
-
-/**
- * Represents options during the resolution of a Decentralized Identifier (DID).
- *
- * Implementations of this interface may contain properties and methods that provide
- * specific options or metadata during the DID resolution processes following specific
- * DID method specifications.
- *
- * ### Usage Example:
- * Implement this interface in classes where specific creation options are needed
- * for different DID methods.
- *
- * ```
- * class ResolveDidKeyOptions : ResolveDidOptions {
- *     // Implementation-specific options for DID creation.
- * }
- * ```
- */
-public interface ResolveDidOptions

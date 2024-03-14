@@ -47,10 +47,22 @@ public object Json {
     return objectWriter.writeValueAsString(obj)
   }
 
+  /**
+   * Parse a json string into a kotlin object.
+   *
+   * @param T type of the object to parse.
+   * @param payload JSON string to parse
+   * @return parsed type T
+   */
   public inline fun <reified T> parse(payload: String): T {
     return objectReader.readValue(payload, T::class.java)
   }
 
+  /**
+   * Parse a JSON string into a Map.
+   *
+   * @return String parsed into a Map
+   */
   public fun String.toMap(): Map<String, Any> {
     return jsonMapper.readValue(this)
   }

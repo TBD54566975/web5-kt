@@ -169,7 +169,7 @@ style:
   UselessCallOnNotNull:
     active: true
   UtilityClassWithPublicConstructor:
-    active: true
+    active: false
 
 TbdRuleset:
   JvmOverloadsAnnotationRule:

@@ -4,6 +4,31 @@ import web5.sdk.common.Convert
 import web5.sdk.common.Json
 import java.security.MessageDigest
 
+/**
+ * Represents a [JSON Web Key (JWK)](https://datatracker.ietf.org/doc/html/rfc7517).
+ * A JWK is a JSON object that represents a cryptographic key. This class
+ * provides functionalities to manage a JWK including its creation, conversion
+ * to and from JSON, and computing a thumbprint.
+ *
+ * Example:
+ * ```
+ * var jwk = Jwk(
+ *   kty: 'RSA',
+ *   alg: 'RS256',
+ *   use: 'sig',
+ *   ... // other parameters
+ * );
+ * ```
+ * @property kty Represents the key type.
+ * @property use Represents the intended use of the public key.
+ * @property alg Identifies the algorithm intended for use with the key.
+ * @property kid Key ID, unique identifier for the key.
+ * @property crv Elliptic curve name for EC keys.
+ * @property d Private key component for EC or OKP keys.
+ * @property x X coordinate for EC keys, or the public key for OKP.
+ * @property y Y coordinate for EC keys.
+ *
+ */
 public class Jwk(
   public val kty: String,
   public val use: String?,
@@ -15,6 +40,16 @@ public class Jwk(
   public val y: String?
 ) {
 
+  /**
+   * Computes the thumbprint of the JWK.
+   * [Specification](https://www.rfc-editor.org/rfc/rfc7638.html).
+   *
+   * Generates a thumbprint of the JWK using SHA-256 hash function.
+   * The thumbprint is computed based on the key's [kty], [crv], [x],
+   * and [y] values.
+   *
+   * @return a Base64URL-encoded string representing the thumbprint.
+   */
   public fun computeThumbprint(): String {
     val thumbprintPayload = Json.jsonMapper.createObjectNode().apply {
       put("crv", crv)
@@ -34,6 +69,10 @@ public class Jwk(
 
   }
 
+  /**
+   * Builder for Jwk type.
+   *
+   */
   public class Builder {
     private var kty: String? = null
     private var use: String? = null
@@ -44,53 +83,109 @@ public class Jwk(
     private var x: String? = null
     private var y: String? = null
 
+    /**
+     * Sets key type.
+     *
+     * @param kty
+     * @return Builder object
+     */
     public fun keyType(kty: String): Builder {
       this.kty = kty
       return this
     }
 
+    /**
+     * Sets key use.
+     *
+     * @param use
+     * @return Builder object
+     */
     public fun keyUse(use: String): Builder {
       this.use = use
       return this
     }
 
+    /**
+     * Sets algorithm.
+     *
+     * @param alg
+     * @return Builder object
+     */
     public fun algorithm(alg: String): Builder {
       this.alg = alg
       return this
     }
 
+    /**
+     * Sets key ID.
+     *
+     * @param kid
+     * @return Builder object
+     */
     public fun keyId(kid: String): Builder {
       this.kid = kid
       return this
     }
 
+    /**
+     * Sets elliptic curve name.
+     *
+     * @param crv
+     * @return Builder object
+     */
     public fun curve(crv: String): Builder {
       this.crv = crv
       return this
     }
 
+    /**
+     * Sets private key component. Must be base64 encoded string.
+     *
+     * @param d
+     * @return Builder object
+     */
     public fun privateKey(d: String): Builder {
       this.d = d
       return this
     }
 
+    /**
+     * Sets x coordinate. Must be base64 encoded string.
+     *
+     * @param x
+     * @return Builder object
+     */
     public fun x(x: String): Builder {
       this.x = x
       return this
     }
 
+    /**
+     * Sets y coordinate. Must be base64 encoded string.
+     *
+     * @param y
+     * @return Builder object
+     */
     public fun y(y: String): Builder {
       this.y = y
       return this
     }
 
+    /**
+     * Builds a Jwk object.
+     *
+     * @return Jwk object
+     */
     public fun build(): Jwk {
-      // todo are any of the other fields required?
-      // if kty ec: x y required,
-      // if kty ed: x required
       check(kty != null) { "kty is required" }
+      if (kty == "EC") {
+        check(x != null) { "x is required for EC keys" }
+        check(y != null) { "y is required for EC keys" }
+      }
+      if (kty == "OKP") {
+        check(x != null) { "x is required for OKP keys" }
+      }
       return Jwk(kty!!, use, alg, kid, crv, d, x, y)
     }
-
   }
 }

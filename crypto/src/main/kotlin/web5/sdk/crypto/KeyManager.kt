@@ -61,10 +61,35 @@ public interface KeyManager {
   public fun getDeterministicAlias(publicKey: Jwk): String
 }
 
+/**
+ * KeyExporter is an abstraction that can be leveraged to
+ * implement types which intend to export keys.
+ *
+ */
 public interface KeyExporter {
+
+  /**
+   * ExportKey exports the key specific by the key ID from the KeyManager.
+   *
+   * @param keyId the keyId whose corresponding key to export
+   * @return the Jwk representation of the key
+   */
   public fun exportKey(keyId: String): Jwk
 }
 
+/**
+ * KeyImporter is an abstraction that can be leveraged to
+ * implement types which intend to import keys.
+ *
+ */
 public interface KeyImporter {
+
+  /**
+   * ImportKey imports the key into the KeyManager
+   * and returns the key alias.
+   *
+   * @param jwk the Jwk representation of the key to import
+   * @return the key alias of the imported key
+   */
   public fun importKey(jwk: Jwk): String
 }

@@ -19,8 +19,8 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.dnsoverhttps.DnsOverHttps
 import web5.sdk.common.Json
+import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.crypto.KeyManager
-import web5.sdk.dids.CreateDidOptions
 import web5.sdk.dids.didcore.Did
 import web5.sdk.dids.didcore.DidDocument
 import web5.sdk.dids.DidResolutionResult
@@ -108,6 +108,24 @@ public sealed class DidWebApi(
     }
   }
 
+  /**
+   * Resolves a `did:jwk` URI into a [DidResolutionResult].
+   *   
+   * This method parses the provided `did` URI to extract the JWK information.
+   * It validates the method of the DID URI and then attempts to parse the
+   * JWK from the URI. If successful, it constructs a [DidDocument] with the
+   * resolved JWK, generating a [DidResolutionResult].
+   *   
+   * The method ensures that the DID URI adheres to the `did:jwk` method
+   * specification and handles exceptions that may arise during the parsing
+   * and resolution process.
+   *   
+   * @param did did URI to parse
+   * @return [DidResolutionResult] containing the resolved DID document.
+   * If the DID URI is invalid, not conforming to the `did:jwk` method, or
+   * if any other error occurs during the resolution process, it returns
+   * an invalid [DidResolutionResult].
+   */
   public fun resolve(did: String): DidResolutionResult {
     return try {
       resolveInternal(did)
@@ -117,8 +135,23 @@ public sealed class DidWebApi(
     }
   }
 
-  public fun import(portableDID: PortableDid, keyManager: KeyManager): BearerDid {
-    return BearerDid.import(portableDID, keyManager)
+  /**
+   * Instantiates a [BearerDid] object for the DID WEB method from a given [PortableDid].
+   *
+   * This method allows for the creation of a `BearerDid` object using a previously created DID's
+   * key material, DID document, and metadata.
+   *
+   * @param portableDid - The PortableDid object to import.
+   * @param keyManager - Optionally specify an external Key Management System (KMS) used to
+   *                            generate keys and sign data. If not given, a new
+   *                            [InMemoryKeyManager] instance will be created and
+   *                            used.
+   * @returns a BearerDid object representing the DID formed from the
+   *          provided PortableDid.
+   */
+  @JvmOverloads
+  public fun import(portableDid: PortableDid, keyManager: KeyManager = InMemoryKeyManager()): BearerDid {
+    return BearerDid.import(portableDid, keyManager)
   }
 
   private fun resolveInternal(did: String): DidResolutionResult {
@@ -168,7 +201,4 @@ public sealed class DidWebApi(
     return targetUrl.toString()
   }
 
-  public fun create(keyManager: KeyManager, options: CreateDidOptions?): BearerDid {
-    throw UnsupportedOperationException("Create operation is not supported for did:web")
-  }
 }

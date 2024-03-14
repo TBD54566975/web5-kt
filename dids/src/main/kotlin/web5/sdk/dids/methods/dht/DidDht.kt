@@ -1,6 +1,5 @@
 package web5.sdk.dids.methods.dht
 
-import com.nimbusds.jose.JWSAlgorithm
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.okhttp.OkHttp
@@ -36,7 +35,6 @@ import web5.sdk.dids.exceptions.InvalidIdentifierSizeException
 import web5.sdk.dids.exceptions.InvalidMethodNameException
 import web5.sdk.dids.exceptions.PkarrRecordNotFoundException
 import web5.sdk.dids.exceptions.PublicKeyJwkMissingException
-
 
 /**
  * Type indexing types as per https://tbd54566975.github.io/did-dht-method/#type-indexing
@@ -127,6 +125,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) {
    * publishing during creation.
    * @return A [DidDht] instance representing the newly created "did:dht" DID.
    */
+  @JvmOverloads
   public fun create(keyManager: KeyManager, options: CreateDidDhtOptions? = null): BearerDid {
     // TODO(gabe): enforce that provided keys are of supported types according to the did:dht spec
     val opts = options ?: CreateDidDhtOptions()
@@ -223,19 +222,39 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) {
     }
   }
 
-  public fun import(portableDID: PortableDid, keyManager: KeyManager = InMemoryKeyManager()): BearerDid {
-    val parsedDid = Did.parse(portableDID.uri)
+  /**
+   * Instantiates a [BearerDid] object for the DID DHT method from a given [PortableDid].
+   *
+   * This method allows for the creation of a `BearerDid` object using a previously created DID's
+   * key material, DID document, and metadata.
+   *
+   * @param portableDid - The PortableDid object to import.
+   * @param keyManager - Optionally specify an external Key Management System (KMS) used to
+   *                            generate keys and sign data. If not given, a new
+   *                            [InMemoryKeyManager] instance will be created and
+   *                            used.
+   * @returns a BearerDid object representing the DID formed from the
+   *          provided PortableDid.
+   * @throws InvalidMethodNameException if importing incorrect DID method
+   * @throws IllegalStateException if PortableDid document does not contain any verification methods,
+   *         lacks an Identity Key, or the keys for any verification method are missing in the key
+   *         manager.
+   */
+  @JvmOverloads
+  public fun import(portableDid: PortableDid, keyManager: KeyManager = InMemoryKeyManager()): BearerDid {
+    val parsedDid = Did.parse(portableDid.uri)
     if (parsedDid.method != methodName) {
       throw InvalidMethodNameException("Method not supported")
     }
-    val bearerDid = BearerDid.import(portableDID, keyManager)
+    val bearerDid = BearerDid.import(portableDid, keyManager)
 
-    if (bearerDid.document.verificationMethod
-        ?.none { vm ->
-          vm.id.split("#").last() == "0"
-        } == true
-    ) {
-      throw IllegalStateException("DidDht DID document must contain at least one verification method with fragment of 0")
+    val containsOneVmWithFragmentId0 = bearerDid.document.verificationMethod
+      ?.none { vm ->
+        vm.id.split("#").last() == "0"
+      } ?: false
+
+    check(containsOneVmWithFragmentId0) {
+      "DidDht DID document must contain at least one verification method with fragment of 0"
     }
     return bearerDid
   }
@@ -696,11 +715,6 @@ public class DidDht(
 ) {
 
   /**
-   * Default companion object for creating a [DidDhtApi] with a default configuration.
-   */
-  public companion object Default : DidDhtApi(DidDhtConfiguration())
-
-  /**
    * Calls [DidDht.suffix] with the provided [id] and returns the result.
    */
   @JvmOverloads
@@ -732,4 +746,8 @@ public class DidDht(
     return DidDht.fromDnsPacket(did, msg)
   }
 
+  /**
+   * Default companion object for creating a [DidDhtApi] with a default configuration.
+   */
+  public companion object Default : DidDhtApi(DidDhtConfiguration())
 }
