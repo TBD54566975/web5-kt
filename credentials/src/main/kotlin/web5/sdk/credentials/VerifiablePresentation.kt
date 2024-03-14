@@ -45,7 +45,7 @@ public class VerifiablePresentation internal constructor(public val vpDataModel:
    * If the [assertionMethodId] is null, the function will attempt to use the first available verification method from
    * the [bearerDid]. The result is a String in a JWT format.
    *
-   * @param bearerDid The [ChangemeDid] used to sign the credential.
+   * @param bearerDid The [BearerDid] used to sign the credential.
    * @param assertionMethodId An optional identifier for the assertion method that will be used for verification of the
    *        produced signature.
    * @return The JWT representing the signed verifiable credential.

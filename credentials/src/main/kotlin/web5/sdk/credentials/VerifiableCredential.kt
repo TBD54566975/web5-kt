@@ -51,7 +51,7 @@ public class VerifiableCredential internal constructor(public val vcDataModel: V
    * If the [assertionMethodId] is null, the function will attempt to use the first available verification method from
    * the [did]. The result is a String in a JWT format.
    *
-   * @param did The [ChangemeDid] used to sign the credential.
+   * @param did The [BearerDid] used to sign the credential.
    * @param assertionMethodId An optional identifier for the assertion method that will be used for verification of the
    *        produced signature.
    * @return The JWT representing the signed verifiable credential.

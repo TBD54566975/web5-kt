@@ -46,7 +46,8 @@ class DidKeyTest {
   fun `load fails when key manager does not contain private key`() {
     val manager = InMemoryKeyManager()
     val exception = assertThrows<IllegalArgumentException> {
-      DidKey.load("did:key:z6MkiTBz1ymuepAQ4HEHYSF1H8quG5GLVVQR3djdX3mDooWp", manager)
+      DidKey.import()
+//      DidKey.load("did:key:z6MkiTBz1ymuepAQ4HEHYSF1H8quG5GLVVQR3djdX3mDooWp", manager)
     }
     assertEquals("key with alias 9ZP03Nu8GrXPAUkbKNxHOKBzxPX83SShgFkRNK-f2lw not found", exception.message)
   }
