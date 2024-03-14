@@ -110,7 +110,8 @@ public object JwtUtil {
     val verificationMethodId = jwt.header.keyID
     val didUri = DidUri.Parser.parse(verificationMethodId)
 
-    val didResolutionResult = DidResolvers.resolve(didUri.url)
+    val didResolutionResult = DidResolvers.resolve(didUri.uri)
+
     if (didResolutionResult.didResolutionMetadata.error != null) {
       throw SignatureException(
         "Signature verification failed: " +
