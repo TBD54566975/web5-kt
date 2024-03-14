@@ -11,7 +11,6 @@ import web5.sdk.crypto.AwsKeyManager
 import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.crypto.Jwa
 import web5.sdk.dids.didcore.Purpose
-import web5.sdk.dids.extensions.load
 import web5.sdk.jose.jws.JwsHeader
 import web5.sdk.jose.jwt.Jwt
 import web5.sdk.jose.jwt.JwtClaimsSet
@@ -33,22 +32,12 @@ class VerifiableCredentialTest {
   @Ignore("Testing with a prev created ion did")
   fun `create a vc with a previously created DID in the key manager`() {
     val keyManager = AwsKeyManager()
-    val didUri =
-      "did:ion:EiCTb6TakNEaBkYK0ZVtCC26mdv8mGZ8Z7YnbsSf-kiMyg" +
-        ":eyJkZWx0YSI6eyJwYXRjaGVzIjpbeyJhY3Rpb24iOiJyZXBsYWNlIiwiZG9jdW1lbnQiOnsicHVibGljS2V5cyI6W3siaWQiOiIwMzlhZTc" +
-        "xYy04OTZjLTQ2MzgtYjA3My0zYTQyM2IwMjhiMDEiLCJwdWJsaWNLZXlKd2siOnsiYWxnIjoiRVMyNTZLIiwiY3J2Ijoic2VjcDI1NmsxIiw" +
-        "ia2lkIjoiYWxpYXMvTzNmZUVhSDlaTVFmdkg3cTFkSUw3OFNxUmRJWkhnVUJlcFU3c1RtbHY1OCIsImt0eSI6IkVDIiwidXNlIjoic2lnIiw" +
-        "ieCI6IllwbTNZWS1oVnNqWjV2ME83aGRhZS1WVi1DRm1Ib0hldWFZODAtV08wS0UiLCJ5IjoiUnU5QlA2RzctU0lxU3E0MFdUenk5MnpiWXd" +
-        "aRHBuVmlDUWxRSHpNWVQzVSJ9LCJwdXJwb3NlcyI6WyJhc3NlcnRpb25NZXRob2QiXSwidHlwZSI6Ikpzb25XZWJLZXkyMDIwIn1dLCJzZXJ" +
-        "2aWNlcyI6W119fV0sInVwZGF0ZUNvbW1pdG1lbnQiOiJFaUNsaVVIbHBQQjE0VVpkVzk4S250aG8zV2YxRjQxOU83cFhSMGhPeFAzRkNnIn0" +
-        "sInN1ZmZpeERhdGEiOnsiZGVsdGFIYXNoIjoiRWlEU2FMNHZVNElzNmxDalp4YVp6Zl9lWFFMU3V5T3E5T0pNbVJHa2FFTzRCQSIsInJlY29" +
-        "2ZXJ5Q29tbWl0bWVudCI6IkVpQzI0TFljVEdRN1JzaDdIRUl2TXQ0MGNGbmNhZGZReTdibDNoa3k0RkxUQ2cifX0"
-    val issuerDid = DidDht.load(didUri, keyManager)
+    val issuerDid = DidDht.create(keyManager)
     val holderDid = DidKey.create(keyManager)
 
     val vc = VerifiableCredential.create(
       type = "StreetCred",
-      issuer = issuerDid.uri,
+      issuer = issuerDid.did.uri,
       subject = holderDid.did.uri,
       data = StreetCredibility(localRespect = "high", legit = true)
     )
@@ -235,10 +224,10 @@ class Web5TestVectorsCredentials {
 
       val keyManager = InMemoryKeyManager()
       keyManager.import(listOf(vector.input.signerPrivateJwk!!))
+      val issuerDid = DidKey.create(keyManager)
       // todo need to update test vectors
       //  input should have portable did and credential
       // want to be able to call BearerDID.import()
-      val issuerDid = ChangemeDid.load(vector.input.signerDidUri!!, keyManager)
       val vcJwt = vc.sign(issuerDid)
 
       assertEquals(vector.output, vcJwt, vector.description)

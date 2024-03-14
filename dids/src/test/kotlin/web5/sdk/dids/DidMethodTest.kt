@@ -10,7 +10,9 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.dids.didcore.Did
+import web5.sdk.dids.methods.jwk.DidJwk
 import web5.sdk.dids.methods.key.DidKey
+import web5.sdk.dids.methods.web.DidWeb
 import web5.sdk.dids.methods.web.DidWebApi
 import java.security.SignatureException
 import kotlin.test.assertContains
@@ -56,27 +58,10 @@ class DidMethodTest {
   @Test
   fun `findAssertionMethodById throws exception when no assertion methods are found`() {
     val manager = InMemoryKeyManager()
-    val did = DidWebApi {
-      engine = mockEngine()
-    }.load("did:web:example.com", manager)
-
+    val did = DidJwk.create(manager)
     val exception = assertThrows<SignatureException> {
-      did.resolve(null).didDocument!!.findAssertionMethodById("made up assertion method id")
+      did.document.findAssertionMethodById("made up assertion method id")
     }
     assertEquals("No assertion methods found in DID document", exception.message)
-  }
-
-  private fun mockEngine() = MockEngine { request ->
-    when (request.url.toString()) {
-      "https://example.com/.well-known/did.json" -> {
-        respond(
-          content = ByteReadChannel("""{"id": "did:web:example.com"}"""),
-          status = HttpStatusCode.OK,
-          headers = headersOf(HttpHeaders.ContentType, "application/json")
-        )
-      }
-
-      else -> throw Exception("")
-    }
   }
 }

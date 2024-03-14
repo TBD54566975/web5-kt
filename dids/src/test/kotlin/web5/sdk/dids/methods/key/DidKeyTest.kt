@@ -1,9 +1,5 @@
 package web5.sdk.dids.methods.key
 
-import com.fasterxml.jackson.annotation.JsonInclude
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
-import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
@@ -12,6 +8,8 @@ import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.crypto.Jwa
 import web5.sdk.crypto.JwaCurve
 import web5.sdk.dids.DidResolvers
+import web5.sdk.dids.exceptions.InvalidMethodNameException
+import web5.sdk.dids.methods.dht.DidDht
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
@@ -23,9 +21,9 @@ class DidKeyTest {
     @Test
     fun `it works`() {
       val manager = InMemoryKeyManager()
-      val did = DidKey.create(manager)
+      val bearerDid = DidKey.create(manager)
 
-      val didResolutionResult = DidResolvers.resolve(did.did.uri)
+      val didResolutionResult = DidResolvers.resolve(bearerDid.did.uri)
 
       assertNotNull(didResolutionResult.didDocument)
       val verificationMethod = didResolutionResult.didDocument!!.verificationMethod?.get(0)
@@ -33,41 +31,13 @@ class DidKeyTest {
       val jwk = verificationMethod?.publicKeyJwk
       assertNotNull(jwk)
 
-      val keyAlias = did.keyManager.getDeterministicAlias(jwk)
-      val publicKey = did.keyManager.getPublicKey(keyAlias)
+      val keyAlias = bearerDid.keyManager.getDeterministicAlias(jwk)
+      val publicKey = bearerDid.keyManager.getPublicKey(keyAlias)
       assertNotNull(jwk)
       assertNotNull(keyAlias)
       assertNotNull(publicKey)
 
     }
-  }
-
-  @Test
-  fun `load fails when key manager does not contain private key`() {
-    val manager = InMemoryKeyManager()
-    val exception = assertThrows<IllegalArgumentException> {
-      DidKey.import()
-//      DidKey.load("did:key:z6MkiTBz1ymuepAQ4HEHYSF1H8quG5GLVVQR3djdX3mDooWp", manager)
-    }
-    assertEquals("key with alias 9ZP03Nu8GrXPAUkbKNxHOKBzxPX83SShgFkRNK-f2lw not found", exception.message)
-  }
-
-  @Test
-  fun `load returns instance when key manager contains private key`() {
-    val manager = InMemoryKeyManager()
-    val did = DidKey.create(manager)
-    val didKey = DidKey.load(did.uri, manager)
-    assertEquals(did.uri, didKey.uri)
-  }
-
-  @Test
-  fun `throws exception when loading a different type of did`() {
-    val manager = InMemoryKeyManager()
-    val did = DidKey.create(manager)
-    val exception = assertThrows<IllegalArgumentException> {
-      DidKey.load(did.uri.replace("key", "ion"), manager)
-    }
-    assertTrue(exception.message!!.startsWith("did must start with the prefix \"did:key\""))
   }
 
   @Nested
@@ -115,26 +85,35 @@ class DidKeyTest {
   }
 
   @Nested
-  inner class ImportExportTest {
+  inner class ImportTest {
     @Test
-    fun `InMemoryKeyManager export then re-import doesn't throw exception`() {
-      val jsonMapper = ObjectMapper()
-        .registerKotlinModule()
-        .setSerializationInclusion(JsonInclude.Include.NON_NULL)
-
+    fun `BearerDid export then re-import doesn't throw exception`() {
       assertDoesNotThrow {
         val km = InMemoryKeyManager()
         val bearerDid = DidKey.create(km)
 
-        val keySet = km.export()
-        val serializedKeySet = jsonMapper.writeValueAsString(keySet)
-        val didUri = bearerDid.did.uri
-
-        val jsonKeySet: List<Map<String, Any>> = jsonMapper.readValue(serializedKeySet)
+        val portableDid = bearerDid.export()
         val km2 = InMemoryKeyManager()
-        km2.import(jsonKeySet)
+        DidKey.import(portableDid, km2)
+      }
+    }
 
-        DidKey.load(uri = didUri, keyManager = km2)
+    @Test
+    fun `importing a portable did key did works`() {
+      val manager = InMemoryKeyManager()
+      val bearerDid = DidKey.create(manager)
+      val portableDid = bearerDid.export()
+      val importedDid = DidKey.import(portableDid, manager)
+      assertEquals(bearerDid.did.uri, importedDid.did.uri)
+    }
+
+    @Test
+    fun `importing a did with wrong method name throws exception`() {
+      val manager = InMemoryKeyManager()
+      val did = DidDht.create(manager)
+      val portableDid = did.export()
+      assertThrows<InvalidMethodNameException> {
+        DidKey.import(portableDid, manager)
       }
     }
   }

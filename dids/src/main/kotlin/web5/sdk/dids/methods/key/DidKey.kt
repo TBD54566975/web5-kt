@@ -47,7 +47,7 @@ public class CreateDidKeyOptions(
  *
  * @constructor Initializes a new instance of [DidKey] with the provided [uri] and [keyManager].
  */
-public class DidKey(public val uri: String, public val keyManager: KeyManager) : ChangemeDid(uri, keyManager) {
+public class DidKey(public val uri: String, public val keyManager: KeyManager) {
   /**
    * Resolves the current instance's [uri] to a [DidResolutionResult], which contains the DID Document
    * and possible related metadata.

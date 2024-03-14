@@ -14,11 +14,12 @@ import web5.sdk.crypto.Jwa
 import web5.sdk.crypto.jwk.Jwk
 import web5.sdk.dids.DidResolutionResult
 import web5.sdk.dids.DidResolvers
+import web5.sdk.dids.exceptions.InvalidMethodNameException
+import web5.sdk.dids.methods.dht.DidDht
 import web5.sdk.testing.TestVectors
 import java.io.File
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
-import kotlin.test.assertTrue
 
 class DidJwkTest {
   @Nested
@@ -42,36 +43,24 @@ class DidJwkTest {
   }
 
   @Nested
-  inner class LoadTest {
+  inner class ImportTest {
     @Test
-    fun `throws exception when key manager does not contain private key`() {
+    fun `importing a portable did jwk did works`() {
       val manager = InMemoryKeyManager()
-      val exception = assertThrows<IllegalArgumentException> {
-        @Suppress("MaxLineLength")
-        DidJwk.load(
-          "did:jwk:eyJjcnYiOiJQLTI1NiIsImt0eSI6IkVDIiwieCI6ImFjYklRaXVNczNpOF91c3pFakoydHBUdFJNNEVVM3l6OTFQSDZDZEgyVjAiLCJ5IjoiX0tjeUxqOXZXTXB0bm1LdG00NkdxRHo4d2Y3NEk1TEtncmwyR3pIM25TRSJ9",
-          manager
-        )
-      }
-      assertEquals("key with alias wKIg-QPOd75_AJLdvvo-EACSpCPE5IOJu-MUpQVk1c4 not found", exception.message)
+      val bearerDid = DidJwk.create(manager)
+      val portableDid = bearerDid.export()
+      val importedDid = DidJwk.import(portableDid, manager)
+      assertEquals(bearerDid.did.uri, importedDid.did.uri)
     }
 
     @Test
-    fun `returns instance when key manager contains private key`() {
+    fun `importing a did with wrong method name throws exception`() {
       val manager = InMemoryKeyManager()
-      val did = DidJwk.create(manager)
-      val didKey = DidJwk.load(did.uri, manager)
-      assertEquals(did.uri, didKey.uri)
-    }
-
-    @Test
-    fun `throws exception when loading a different type of did`() {
-      val manager = InMemoryKeyManager()
-      val did = DidJwk.create(manager)
-      val exception = assertThrows<IllegalArgumentException> {
-        DidJwk.load(did.uri.replace("jwk", "ion"), manager)
+      val did = DidDht.create(manager)
+      val portableDid = did.export()
+      assertThrows<InvalidMethodNameException> {
+        DidJwk.import(portableDid, manager)
       }
-      assertTrue(exception.message!!.startsWith("did must start with the prefix \"did:jwk\""))
     }
   }
 

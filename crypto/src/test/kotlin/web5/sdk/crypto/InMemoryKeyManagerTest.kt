@@ -30,7 +30,7 @@ class InMemoryKeyManagerTest {
     val keyManager = InMemoryKeyManager()
     val jwk = Crypto.generatePrivateKey(AlgorithmId.secp256k1)
     val exception = assertThrows<IllegalArgumentException> {
-      keyManager.getDeterministicAlias(jwk.toPublicJWK())
+      keyManager.getDeterministicAlias(jwk)
     }
     assertTrue(exception.message!!.matches("key with alias .* not found".toRegex()))
   }
@@ -43,7 +43,7 @@ class InMemoryKeyManagerTest {
     val alias = keyManager.import(jwk)
 
     val publicKey = keyManager.getPublicKey(alias)
-    assertEquals(jwk.toPublicJWK(), publicKey)
+    assertEquals(jwk, publicKey)
   }
 
   @Test
@@ -51,24 +51,20 @@ class InMemoryKeyManagerTest {
     val jwk = Crypto.generatePrivateKey(AlgorithmId.secp256k1)
     val keyManager = InMemoryKeyManager()
 
-    val alias = keyManager.import(jwk.toPublicJWK())
+    val alias = keyManager.import(jwk)
 
-    assertEquals(jwk.toPublicJWK(), keyManager.getPublicKey(alias))
+    assertEquals(jwk, keyManager.getPublicKey(alias))
   }
 
   @Test
   fun `key without kid can be imported`() {
-    val jwk = ECKeyGenerator(Curve.SECP256K1)
-      .provider(
-        BouncyCastleProviderSingleton.getInstance()
-      )
-      .generate()
+    val jwk = Ed25519.generatePrivateKey()
     val keyManager = InMemoryKeyManager()
 
     val alias = keyManager.import(jwk)
 
     val publicKey = keyManager.getPublicKey(alias)
-    assertEquals(jwk.toPublicJWK(), publicKey)
+    assertEquals(jwk, publicKey)
   }
 
   @Test

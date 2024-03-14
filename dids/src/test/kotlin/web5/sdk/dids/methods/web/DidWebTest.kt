@@ -72,24 +72,19 @@ class DidWebTest {
   }
 
   @Test
-  fun `load returns instance when key manager contains private key`() {
+  fun `importing a portabledid with existing privatekey returns same did with same key`() {
     val manager = InMemoryKeyManager()
     val privateJwk = readKey("src/test/resources/jwkEs256k1Private.json")
+    val kid = privateJwk.kid ?: privateJwk.computeThumbprint()
     manager.import(privateJwk)
-    DidWebApi {
-      engine = mockEngine()
-    }.load("did:web:example-with-verification-method.com", manager)
-  }
+    val bearerDid = DidWeb.create(manager, null)
+    val portableDid = bearerDid.export()
 
-  @Test
-  fun `load throws exception when key manager does not contain private key`() {
-    val manager = InMemoryKeyManager()
-    val exception = assertThrows<IllegalArgumentException> {
-      DidWebApi {
-        engine = mockEngine()
-      }.load("did:web:example-with-verification-method.com", manager)
-    }
-    assertEquals("key with alias CfveyLOfYrOhSgD66MA6PO9J5sAnj_J-Z0URcD6VGVU not found", exception.message)
+    val importedBearerDid = DidWeb.import(portableDid, InMemoryKeyManager())
+    assertEquals(bearerDid, importedBearerDid)
+    val importedDidPubKey = importedBearerDid.keyManager.getPublicKey(kid)
+    val originalDidPubKey = bearerDid.keyManager.getPublicKey(kid)
+    assertEquals(importedDidPubKey, originalDidPubKey)
   }
 
   @Test

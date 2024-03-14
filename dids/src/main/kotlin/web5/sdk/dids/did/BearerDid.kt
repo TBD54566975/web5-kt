@@ -25,7 +25,7 @@ public class BearerDid(
     val keyAlias = keyAliasResult.getOrNull() ?: throw Exception("Failed to compute key alias")
 
     val signer: DidSigner = { payload ->
-      keyManager.sign(keyAlias.toString(), payload)
+      keyManager.sign(keyAlias, payload)
     }
 
     return Pair(signer, verificationMethod)
