@@ -262,6 +262,7 @@ class VerifiablePresentationTest {
 
   data class EmploymentStatus(val employmentStatus: String)
   data class PIICredential(val name: String, val dateOfBirth: String)
+  
   @Test
   fun `full flow with did dht`() {
     val keyManager = InMemoryKeyManager()
