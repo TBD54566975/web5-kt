@@ -34,6 +34,13 @@ jobs:
           if ! which sha256sum; then brew install coreutils; fi
           sha256sum $(find test-vectors -name '*.json') > test-vector-hashes.txt
 
+      - id: test_condition
+        # and pr branch name is not main
+        if: matrix.os == 'ubuntu-latest' && github.ref != 'refs/heads/main'
+        run: |
+          echo "This step only runs on ubuntu-latest"
+          exit 1
+
       - name: Run Gradle Tasks
         run: gradle build koverXmlReport
 
@@ -60,7 +67,8 @@ jobs:
       - name: Generate an access token to trigger downstream repo
         uses: actions/create-github-app-token@2986852ad836768dfea7781f31828eb3e17990fa # v1.6.2
         id: generate_token
-        if: github.ref == 'refs/heads/main'
+        # test only in main and report ubuntu results only
+        if: github.ref == 'refs/heads/main' && matrix.os == 'ubuntu-latest'
         with:
           app-id: ${{ secrets.CICD_ROBOT_GITHUB_APP_ID }}
           private-key: ${{ secrets.CICD_ROBOT_GITHUB_APP_PRIVATE_KEY }}
@@ -68,7 +76,8 @@ jobs:
           repositories: sdk-report-runner
 
       - name: Trigger sdk-report-runner report build
-        if: github.ref == 'refs/heads/main'
+        # test only in main and report ubuntu results only
+        if: github.ref == 'refs/heads/main' && matrix.os == 'ubuntu-latest'
         run: |
           curl -L \
           -H "Authorization: Bearer ${APP_TOKEN}" \
