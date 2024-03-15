@@ -179,7 +179,7 @@ public class DidKey(public val uri: String, public val keyManager: KeyManager) {
     public fun import(portableDid: PortableDid, keyManager: KeyManager = InMemoryKeyManager()): BearerDid {
       val parsedDid = Did.parse(portableDid.uri)
       if (parsedDid.method != methodName) {
-        throw MethodNotSupportedException("Method not supported")
+        throw InvalidMethodNameException("Method not supported")
       }
 
       val bearerDid = BearerDid.import(portableDid, keyManager)

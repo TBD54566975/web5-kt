@@ -1,17 +1,12 @@
 package web5.sdk.crypto
 
-import com.fasterxml.jackson.annotation.JsonInclude
-import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.MissingKotlinParameterException
 import com.fasterxml.jackson.module.kotlin.readValue
-import com.nimbusds.jose.crypto.bc.BouncyCastleProviderSingleton
-import com.nimbusds.jose.jwk.Curve
-import com.nimbusds.jose.jwk.JWK
-import com.nimbusds.jose.jwk.gen.ECKeyGenerator
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
-import java.text.ParseException
+import web5.sdk.common.Json
 import kotlin.test.assertEquals
 
 class InMemoryKeyManagerTest {
@@ -37,34 +32,46 @@ class InMemoryKeyManagerTest {
 
   @Test
   fun `public key is available after import`() {
-    val jwk = Crypto.generatePrivateKey(AlgorithmId.secp256k1)
+    val privateKey = Crypto.generatePrivateKey(AlgorithmId.secp256k1)
     val keyManager = InMemoryKeyManager()
 
-    val alias = keyManager.import(jwk)
+    val alias = keyManager.import(privateKey)
 
     val publicKey = keyManager.getPublicKey(alias)
-    assertEquals(jwk, publicKey)
+    assertEquals(privateKey.kid, publicKey.kid)
+    assertEquals(privateKey.crv, publicKey.crv)
+    assertEquals(privateKey.alg, publicKey.alg)
+    assertEquals(privateKey.use, publicKey.use)
+    assertEquals(privateKey.x, publicKey.x)
   }
 
   @Test
   fun `public keys can be imported`() {
-    val jwk = Crypto.generatePrivateKey(AlgorithmId.secp256k1)
+    val privateKey = Crypto.generatePrivateKey(AlgorithmId.secp256k1)
     val keyManager = InMemoryKeyManager()
 
-    val alias = keyManager.import(jwk)
-
-    assertEquals(jwk, keyManager.getPublicKey(alias))
+    val alias = keyManager.import(privateKey)
+    val publicKey = keyManager.getPublicKey(alias)
+    assertEquals(privateKey.kid, publicKey.kid)
+    assertEquals(privateKey.crv, publicKey.crv)
+    assertEquals(privateKey.alg, publicKey.alg)
+    assertEquals(privateKey.use, publicKey.use)
+    assertEquals(privateKey.x, publicKey.x)
   }
 
   @Test
   fun `key without kid can be imported`() {
-    val jwk = Ed25519.generatePrivateKey()
+    val privateKey = Ed25519.generatePrivateKey()
     val keyManager = InMemoryKeyManager()
 
-    val alias = keyManager.import(jwk)
-
+    val alias = keyManager.import(privateKey)
     val publicKey = keyManager.getPublicKey(alias)
-    assertEquals(jwk, publicKey)
+    assertEquals(privateKey.kid, publicKey.kid)
+    assertEquals(privateKey.crv, publicKey.crv)
+    assertEquals(privateKey.alg, publicKey.alg)
+    assertEquals(privateKey.use, publicKey.use)
+    assertEquals(privateKey.x, publicKey.x)
+
   }
 
   @Test
@@ -74,18 +81,14 @@ class InMemoryKeyManagerTest {
 
     val keySet = keyManager.export()
     assertEquals(1, keySet.size)
-
-    assertDoesNotThrow {
-      JWK.parse(keySet[0])
-    }
   }
 
   @Test
-  fun `import throws an exception if key isnt a JWK`() {
+  fun `import throws an exception if key is not a Jwk`() {
     val keyManager = InMemoryKeyManager()
     val kakaKeySet = listOf(mapOf("hehe" to "troll"))
 
-    assertThrows<ParseException> {
+    assertThrows<MissingKotlinParameterException> {
       keyManager.import(kakaKeySet)
     }
   }
@@ -96,11 +99,7 @@ class InMemoryKeyManagerTest {
     val serializedKeySet =
       """[{"kty":"OKP","d":"DTwtf9i7M4Vj8vSg0iJAQ_n2gSNEUTNLIq30CJ4d9BE","use":"sig","crv":"Ed25519","kid":"hKTpA-TQPNAX9zXtuxPIyTNpoyd4j1Pq1Y_txo2Hm3I","x":"_CrbbGuhpHFs3KVGg2bbNgd2SikmT4L5rIE_zQQjKq0","alg":"EdDSA"}]"""
 
-    val jsonMapper: ObjectMapper = ObjectMapper()
-      .findAndRegisterModules()
-      .setSerializationInclusion(JsonInclude.Include.NON_NULL)
-
-    val jsonKeySet: List<Map<String, Any>> = jsonMapper.readValue(serializedKeySet)
+    val jsonKeySet: List<Map<String, Any>> = Json.jsonMapper.readValue(serializedKeySet)
     val keyManager = InMemoryKeyManager()
 
     assertDoesNotThrow {

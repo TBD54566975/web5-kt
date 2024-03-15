@@ -5,9 +5,9 @@ import web5.sdk.common.Json
 import java.security.MessageDigest
 
 /**
- * Represents a [JSON Web Key (JWK)](https://datatracker.ietf.org/doc/html/rfc7517).
- * A JWK is a JSON object that represents a cryptographic key. This class
- * provides functionalities to manage a JWK including its creation, conversion
+ * Represents a [JSON Web Key (Jwk )](https://datatracker.ietf.org/doc/html/rfc7517).
+ * A Jwk is a JSON object that represents a cryptographic key. This class
+ * provides functionalities to manage a Jwk including its creation, conversion
  * to and from JSON, and computing a thumbprint.
  *
  * Example:
@@ -31,20 +31,20 @@ import java.security.MessageDigest
  */
 public class Jwk(
   public val kty: String,
+  public val crv: String,
   public val use: String?,
   public val alg: String?,
   public var kid: String?,
-  public val crv: String?,
   public val d: String? = null,
   public val x: String?,
   public val y: String?
 ) {
 
   /**
-   * Computes the thumbprint of the JWK.
+   * Computes the thumbprint of the Jwk.
    * [Specification](https://www.rfc-editor.org/rfc/rfc7638.html).
    *
-   * Generates a thumbprint of the JWK using SHA-256 hash function.
+   * Generates a thumbprint of the Jwk using SHA-256 hash function.
    * The thumbprint is computed based on the key's [kty], [crv], [x],
    * and [y] values.
    *
@@ -55,7 +55,9 @@ public class Jwk(
       put("crv", crv)
       put("kty", kty)
       put("x", x)
-      put("y", y)
+      if (y != null) {
+        put("y", y)
+      }
     }
 
     val thumbprintPayloadString = Json.stringify(thumbprintPayload)
@@ -69,16 +71,21 @@ public class Jwk(
 
   }
 
+  override fun toString(): String {
+    return "Jwk(kty='$kty', use=$use, alg=$alg, kid=$kid, crv=$crv, d=$d, x=$x, y=$y)"
+  }
+
   /**
    * Builder for Jwk type.
    *
    */
   public class Builder {
+    // todo take in keytype and curve as required params
     private var kty: String? = null
+    private var crv: String? = null
     private var use: String? = null
     private var alg: String? = null
     private var kid: String? = null
-    private var crv: String? = null
     private var d: String? = null
     private var x: String? = null
     private var y: String? = null
@@ -185,7 +192,8 @@ public class Jwk(
       if (kty == "OKP") {
         check(x != null) { "x is required for OKP keys" }
       }
-      return Jwk(kty!!, use, alg, kid, crv, d, x, y)
+      // todo crv is required
+      return Jwk(kty!!, crv!!, use, alg, kid,  d, x, y)
     }
   }
 }

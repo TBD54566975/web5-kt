@@ -54,12 +54,17 @@ public object Ed25519 : KeyGenerator, Signer {
       .keyUse(KeyUse.SIGNATURE)
       .generate()
 
-    return Jwk.Builder()
+    val jwk = Jwk.Builder()
+      .keyType("OKP")
       .algorithm(algorithm.name)
+      .curve(privateKey.curve.name)
+      .keyUse("sig")
       .privateKey(privateKey.d.toString())
       .x(privateKey.x.toString())
-      .keyUse("sig")
       .build()
+
+    jwk.kid = jwk.computeThumbprint()
+    return jwk
 
   }
 
@@ -72,11 +77,18 @@ public object Ed25519 : KeyGenerator, Signer {
   override fun computePublicKey(privateKey: Jwk): Jwk {
     require(privateKey.kty == "OKP") { "private key must be an Octet Key Pair (kty: OKP)" }
 
-    return Jwk.Builder()
+    val jwk = Jwk.Builder()
       .keyType(privateKey.kty)
       .algorithm(algorithm.name)
+      .curve(curve.name)
+      .apply {
+        privateKey.use?.let { keyUse(it) }
+      }
       .x(privateKey.x.toString())
       .build()
+
+    jwk.kid = jwk.computeThumbprint()
+    return jwk
   }
 
   override fun privateKeyToBytes(privateKey: Jwk): ByteArray {
@@ -100,22 +112,27 @@ public object Ed25519 : KeyGenerator, Signer {
 
     return Jwk.Builder()
       .keyType("OKP")
+      .keyUse("sig")
       .algorithm(algorithm.name)
+      .curve(curve.name)
       .privateKey(base64UrlEncodedPrivateKey)
       .x(base64UrlEncodedPublicKey)
-      .keyUse("sig")
       .build()
   }
 
   override fun bytesToPublicKey(publicKeyBytes: ByteArray): Jwk {
     val base64UrlEncodedPublicKey = Convert(publicKeyBytes).toBase64Url()
 
-    return Jwk.Builder()
+    val jwk = Jwk.Builder()
       .keyType("OKP")
       .algorithm(algorithm.name)
-      .x(base64UrlEncodedPublicKey)
+      .curve(curve.name)
       .keyUse("sig")
+      .x(base64UrlEncodedPublicKey)
       .build()
+
+    jwk.kid = jwk.computeThumbprint()
+    return jwk
   }
 
   override fun sign(privateKey: Jwk, payload: ByteArray, options: SignOptions?): ByteArray {

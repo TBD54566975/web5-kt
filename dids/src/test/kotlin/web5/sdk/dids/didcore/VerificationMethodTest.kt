@@ -1,16 +1,16 @@
 package web5.sdk.dids.didcore
 
-import com.nimbusds.jose.jwk.JWK
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.assertThrows
 import web5.sdk.crypto.AlgorithmId
 import web5.sdk.crypto.InMemoryKeyManager
+import web5.sdk.crypto.jwk.Jwk
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class VerificationMethodTest {
 
-  var publicKey: JWK? = null
+  var publicKey: Jwk? = null
 
   @BeforeEach
   fun setUp() {

@@ -46,7 +46,7 @@ class DidKeyTest {
     fun `resolving a secp256k1 DID works`() {
       // test vector taken from: https://github.com/w3c-ccg/did-method-key/blob/main/test-vectors/secp256k1.json#L202C4-L257
       val did = "did:key:zQ3shjmnWpSDEbYKpaFm4kTs9kXyqG6N2QwCYHNPP4yubqgJS"
-      val result = DidKey.resolve(did, null)
+      val result = DidKey.resolve(did)
       assertNotNull(result)
 
       val didDocument = result.didDocument

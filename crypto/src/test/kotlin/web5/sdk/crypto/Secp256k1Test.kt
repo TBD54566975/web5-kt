@@ -14,8 +14,8 @@ import java.security.SignatureException
 import java.util.Random
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
-import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class Secp256k1Test {
@@ -40,9 +40,9 @@ class Secp256k1Test {
     Secp256k1.validateKey(publicKey)
     assertEquals(publicKey.kid, privateKey.kid)
     assertEquals(Jwa.ES256K.name, publicKey.alg)
-    assertEquals("sign", publicKey.use)
+    assertEquals("sig", publicKey.use)
     assertTrue(publicKey.kty == "EC")
-    assertNotNull(publicKey.d)
+    assertNull(publicKey.d)
   }
 
   @Test
@@ -108,8 +108,8 @@ class Web5TestVectorsCryptoEs256k {
 
     testVectors.vectors.filter { it.errors == false }.forEach { vector ->
       val inputByteArray: ByteArray = Hex.decodeHex(vector.input.data.toCharArray())
-      val jwkMap = vector.input.key
-      val ecJwk = Json.parse<Jwk>(jwkMap.toString())
+      val jwkMap = vector.input.key!!
+      val ecJwk = Json.parse<Jwk>(Json.stringify(jwkMap))
       val signedByteArray: ByteArray = Secp256k1.sign(ecJwk, inputByteArray)
 
       val signedHex = Hex.encodeHexString(signedByteArray)
@@ -136,25 +136,25 @@ class Web5TestVectorsCryptoEs256k {
 
     testVectors.vectors.filter { it.errors == false }.forEach { vector ->
       val inputByteArray: ByteArray = Hex.decodeHex(vector.input.data.toCharArray())
-      val jwkMap = vector.input.key
+      val jwkMap = vector.input.key!!
       val signatureByteArray = Hex.decodeHex(vector.input.signature.toCharArray())
 
-      val ecJwk = Json.parse<Jwk>(jwkMap.toString())
+      val jwk = Json.parse<Jwk>(Json.stringify(jwkMap))
 
       if (vector.output == true) {
-        assertDoesNotThrow { Secp256k1.verify(ecJwk, inputByteArray, signatureByteArray) }
+        assertDoesNotThrow { Secp256k1.verify(jwk, inputByteArray, signatureByteArray) }
       } else {
-        assertFails { Secp256k1.verify(ecJwk, inputByteArray, signatureByteArray) }
+        assertFails { Secp256k1.verify(jwk, inputByteArray, signatureByteArray) }
       }
     }
 
     testVectors.vectors.filter { it.errors == true }.forEach { vector ->
       assertFails {
         val inputByteArray: ByteArray = Hex.decodeHex(vector.input.data.toCharArray())
-        val jwkMap = vector.input.key
+        val jwkMap = vector.input.key!!
         val signatureByteArray = Hex.decodeHex(vector.input.signature.toCharArray())
 
-        val ecJwk = Json.parse<Jwk>(jwkMap.toString())
+        val ecJwk = Json.parse<Jwk>(Json.stringify(jwkMap))
         Secp256k1.verify(ecJwk, inputByteArray, signatureByteArray)
       }
     }

@@ -120,6 +120,7 @@ class VerifiableCredentialTest {
 
     val header = JwsHeader.Builder()
       .algorithm(Jwa.ES256K.name)
+      .type("JWT")
       .keyId(issuerDid.did.uri)
       .build()
     // A detached payload JWT

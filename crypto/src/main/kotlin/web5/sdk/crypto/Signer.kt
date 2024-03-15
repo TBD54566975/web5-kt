@@ -59,11 +59,11 @@ public interface VerifyOptions
  * ### Usage Example:
  * ```
  * class MySigner : Signer {
- *     override fun sign(privateKey: JWK, payload: Payload, options: SignOptions?): String {
+ *     override fun sign(privateKey: Jwk , payload: Payload, options: SignOptions?): String {
  *         // Implementation-specific signing logic.
  *     }
  *
- *     override fun verify(publicKey: JWK, jws: String, options: VerifyOptions?) {
+ *     override fun verify(publicKey: Jwk , jws: String, options: VerifyOptions?) {
  *         // Implementation-specific verification logic.
  *     }
  * }

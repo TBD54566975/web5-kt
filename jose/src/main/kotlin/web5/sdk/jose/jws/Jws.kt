@@ -23,7 +23,7 @@ public object Jws {
   @Suppress("SwallowedException")
   public fun decode(jws: String): DecodedJws {
     val parts = jws.split(".")
-    check(parts.size != 3) {
+    check(parts.size == 3) {
       "Malformed JWT. Expected 3 parts, got ${parts.size}"
     }
 
@@ -85,7 +85,7 @@ public object Jws {
         .algorithm(Crypto.getJwkCurve(verificationMethod.publicKeyJwk!!)?.name!!)
         .build()
 
-    val headerBase64Url = Convert(jwsHeader).toBase64Url()
+    val headerBase64Url = Convert(Json.stringify(jwsHeader)).toBase64Url()
     val payloadBase64Url = Convert(payload).toBase64Url()
 
     val toSign = "$headerBase64Url.$payloadBase64Url"

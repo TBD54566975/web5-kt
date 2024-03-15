@@ -35,7 +35,7 @@ class Web5TestVectorsCryptoEd25519 {
       val inputByteArray: ByteArray = hexStringToByteArray(vector.input.data)
       val jwkMap = vector.input.key
 
-      val ed25519Jwk = Json.parse<Jwk>(jwkMap.toString())
+      val ed25519Jwk = Json.parse<Jwk>(Json.stringify(jwkMap))
 
       val signedByteArray: ByteArray = Ed25519.sign(ed25519Jwk, inputByteArray)
 
@@ -64,7 +64,7 @@ class Web5TestVectorsCryptoEd25519 {
     val testVectors = mapper.readValue(File("../web5-spec/test-vectors/crypto_ed25519/verify.json"), typeRef)
 
     testVectors.vectors.filter { it.errors == false }.forEach { vector ->
-      val key = Json.parse<Jwk>(vector.input.key.toString())
+      val key = Json.parse<Jwk>(Json.stringify(vector.input.key))
       val data = hexStringToByteArray(vector.input.data)
       val signature = hexStringToByteArray(vector.input.signature)
       if (vector.output == true) {

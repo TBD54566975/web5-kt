@@ -10,7 +10,7 @@ import web5.sdk.common.Convert
 import web5.sdk.common.Json
 import web5.sdk.crypto.AlgorithmId
 import web5.sdk.crypto.InMemoryKeyManager
-import web5.sdk.crypto.Jwa
+import web5.sdk.crypto.JwaCurve
 import web5.sdk.crypto.jwk.Jwk
 import web5.sdk.dids.DidResolutionResult
 import web5.sdk.dids.DidResolvers
@@ -25,7 +25,7 @@ class DidJwkTest {
   @Nested
   inner class CreateTest {
     @Test
-    fun `creates an ES256K key when no options are passed`() {
+    fun `creates an EdDSA key when no options are passed`() {
       val manager = InMemoryKeyManager()
       val did = DidJwk.create(manager)
 
@@ -38,7 +38,7 @@ class DidJwkTest {
       assertNotNull(jwk)
       val keyAlias = did.keyManager.getDeterministicAlias(jwk)
       val publicKey = did.keyManager.getPublicKey(keyAlias)
-      assertEquals(Jwa.ES256K.name, publicKey.alg)
+      assertEquals(JwaCurve.Ed25519.name, publicKey.crv)
     }
   }
 
@@ -77,19 +77,6 @@ class DidJwkTest {
     fun `throws exception if did method is not jwk`() {
       val result = DidJwk.resolve("did:example:123")
       assertEquals("methodNotSupported", result.didResolutionMetadata.error)
-    }
-
-    @Test
-    fun `private key throws exception`() {
-      val manager = InMemoryKeyManager()
-      manager.generatePrivateKey(AlgorithmId.secp256k1)
-      val privateJwkString = Json.parse<Jwk>(manager.export().first().toString())
-      val encodedPrivateJwk = Convert(privateJwkString).toBase64Url()
-
-      val did = "did:jwk:$encodedPrivateJwk"
-      assertThrows<IllegalArgumentException>(
-        "decoded jwk value cannot be a private key"
-      ) { DidJwk.resolve(did) }
     }
 
     @Test

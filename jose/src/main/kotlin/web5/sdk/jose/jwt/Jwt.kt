@@ -28,7 +28,8 @@ public object Jwt {
     val claims: JwtClaimsSet
     try {
       val payload = Convert(decodedJws.payload).toStr()
-      claims = JwtClaimsSet.fromJson(Json.jsonMapper.readTree(payload))
+      val decodedPayload = Convert(payload, EncodingFormat.Base64Url).toStr()
+      claims = JwtClaimsSet.fromJson(Json.jsonMapper.readTree(decodedPayload))
     } catch (e: Exception) {
       throw IllegalArgumentException(
         "Malformed JWT. " +

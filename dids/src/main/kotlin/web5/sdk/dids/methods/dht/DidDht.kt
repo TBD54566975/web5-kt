@@ -81,7 +81,7 @@ private class DidDhtApiImpl(configuration: DidDhtConfiguration) : DidDhtApi(conf
 
 /**
  * Specifies options for creating a new "did:dht" Decentralized Identifier (DID).
- * @property verificationMethods A list of [JWK]s to add to the DID Document mapped to their purposes
+ * @property verificationMethods A list of [Jwk]s to add to the DID Document mapped to their purposes
  * as verification methods, and an optional controller for the verification method.
  * @property services A list of [Service]s to add to the DID Document.
  * @property publish Whether to publish the DID Document to the DHT after creation.
@@ -348,6 +348,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) {
   internal fun getDidIdentifier(identityKey: Jwk): String {
     val publicKeyJwk = Jwk.Builder()
       .keyType(identityKey.kty)
+      .curve(identityKey.crv)
       .apply {
         identityKey.x?.let { x(it) }
         identityKey.y?.let { y(it) }
@@ -357,6 +358,8 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) {
           .let { keyId(it) }
       }
       .build()
+
+    publicKeyJwk.kid = publicKeyJwk.computeThumbprint()
 
     val publicKeyBytes = Crypto.publicKeyToBytes(publicKeyJwk)
     val zBase32Encoded = ZBase32.encode(publicKeyBytes)

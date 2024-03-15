@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode
 import com.networknt.schema.JsonSchema
 import com.nfeld.jsonpathkt.JsonPath
 import com.nfeld.jsonpathkt.extension.read
+import web5.sdk.common.Json
 import web5.sdk.credentials.model.InputDescriptorMapping
 import web5.sdk.credentials.model.InputDescriptorV2
 import web5.sdk.credentials.model.PresentationDefinitionV2
@@ -163,7 +164,7 @@ public object PresentationExchange {
     val vcJwtListWithNodes = vcJwtList.zip(vcJwtList.map { vcJwt ->
       val vc = Jwt.decode(vcJwt)
 
-      JsonPath.parse(vc.claims.toString())
+      Json.jsonMapper.readTree(Json.stringify(vc.claims))
         ?: throw JsonPathParseException()
     })
     return presentationDefinition.inputDescriptors.associateWith { inputDescriptor ->
@@ -197,6 +198,9 @@ public object PresentationExchange {
       val requiredFields = fields.filter { field -> field.optional != true }
 
       for (field in requiredFields) {
+        // todo path currently set to $.vc.type
+        //  but now all vcs are in $.misc.vc.type
+        //  however vcPayloadJson.read<JsonNode>("$.misc.vc.type") also returns null
         val matchedFields = field.path.mapNotNull { path -> vcPayloadJson.read<JsonNode>(path) }
         if (matchedFields.isEmpty()) {
           // If no matching fields are found for a required field, the VC does not satisfy this Input Descriptor.

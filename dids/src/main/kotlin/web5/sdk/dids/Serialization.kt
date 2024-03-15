@@ -25,7 +25,7 @@ public class JwkSerializer : JsonSerializer<Jwk?>() {
 }
 
 /**
- * Deserialize String into JWK.
+ * Deserialize String into Jwk.
  *
  */
 public class JwkDeserializer : JsonDeserializer<Jwk>() {

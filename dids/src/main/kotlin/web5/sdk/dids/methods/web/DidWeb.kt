@@ -111,10 +111,10 @@ public sealed class DidWebApi(
   /**
    * Resolves a `did:jwk` URI into a [DidResolutionResult].
    *   
-   * This method parses the provided `did` URI to extract the JWK information.
+   * This method parses the provided `did` URI to extract the Jwk information.
    * It validates the method of the DID URI and then attempts to parse the
-   * JWK from the URI. If successful, it constructs a [DidDocument] with the
-   * resolved JWK, generating a [DidResolutionResult].
+   * Jwk from the URI. If successful, it constructs a [DidDocument] with the
+   * resolved Jwk, generating a [DidResolutionResult].
    *   
    * The method ensures that the DID URI adheres to the `did:jwk` method
    * specification and handles exceptions that may arise during the parsing

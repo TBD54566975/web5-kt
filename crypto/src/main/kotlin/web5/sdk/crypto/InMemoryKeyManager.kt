@@ -1,6 +1,5 @@
 package web5.sdk.crypto
 
-import com.nimbusds.jose.jwk.JWK
 import web5.sdk.common.Json
 import web5.sdk.common.Json.toMap
 import web5.sdk.crypto.jwk.Jwk
@@ -99,10 +98,10 @@ public class InMemoryKeyManager : KeyManager {
    * @param keySet A list of key representations in map format.
    * @return A list of key aliases belonging to the imported keys.
    */
-  public fun import(keySet: Iterable<Map<String, Any>>): List<String> = keySet.map {
+  public fun import(keySet: Iterable<Map<String, Any>>): List<String> = keySet.map {map ->
     // todo are all keySet.value of type Any in this case a possible Jwk?
     //  we can just call toString() and call it good? am skeptical
-    val jwk = Json.parse<Jwk>(it.toString())
+    val jwk = Json.parse<Jwk>(Json.stringify(map))
     import(jwk)
   }
 
@@ -126,6 +125,6 @@ public class InMemoryKeyManager : KeyManager {
    *
    * @return A list of key representations in map format.
    */
-  public fun export(): List<Map<String, Any>> = keyStore.map { it.value.toString().toMap() }
+  public fun export(): List<Map<String, Any>> = keyStore.map { keyIdToJwk -> Json.stringify(keyIdToJwk.value).toMap() }
 
 }

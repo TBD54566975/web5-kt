@@ -1,6 +1,5 @@
 package web5.sdk.crypto
 
-import com.nimbusds.jose.jwk.JWK
 import web5.sdk.crypto.Crypto.generatePrivateKey
 import web5.sdk.crypto.Crypto.publicKeyToBytes
 import web5.sdk.crypto.Crypto.sign
@@ -79,7 +78,7 @@ public object Crypto {
    */
   public fun computePublicKey(privateKey: Jwk): Jwk {
     val rawCurve = privateKey.crv
-    val curve = rawCurve?.let { JwaCurve.parse(it) }
+    val curve = JwaCurve.parse(rawCurve)
     val generator = getKeyGenerator(AlgorithmId.from(curve))
 
     return generator.computePublicKey(privateKey)
@@ -109,18 +108,18 @@ public object Crypto {
    * Verifies a signature against a signed payload using a public key.
    *
    * This function utilizes the relevant verifier, determined by the algorithm and curve
-   * used in the JWK, to ensure the provided signature is valid for the signed payload
+   * used in the Jwk, to ensure the provided signature is valid for the signed payload
    * using the provided public key. The algorithm used can either be specified in the
    * public key Jwk or passed explicitly as a parameter. If it is not found in either,
    * an exception will be thrown.
    *
    * ## Note
-   * Algorithm **MUST** either be present on the [JWK] or be provided explicitly
+   * Algorithm **MUST** either be present on the [Jwk] or be provided explicitly
    *
    * @param publicKey The Jwk public key to be used for verifying the signature.
    * @param signedPayload The byte array data that was signed.
    * @param signature The signature that will be verified.
-   *                  if not provided in the JWK. Default is null.
+   *                  if not provided in the Jwk. Default is null.
    *
    * @throws IllegalArgumentException if neither the Jwk nor the explicit algorithm parameter
    *                                  provides an algorithm.
@@ -135,9 +134,9 @@ public object Crypto {
 
 
   /**
-   * Converts a [JWK] public key into its byte array representation.
+   * Converts a [Jwk] public key into its byte array representation.
    *
-   * @param publicKey A [JWK] object representing the public key to be converted.
+   * @param publicKey A [Jwk] object representing the public key to be converted.
    * @return A [ByteArray] representing the byte-level information of the provided public key.
    *
    * ### Example
@@ -146,12 +145,12 @@ public object Crypto {
    * ```
    *
    * ### Note
-   * This function assumes that the provided [JWK] contains valid curve and algorithm
-   * information. Malformed or invalid [JWK] objects may result in exceptions or
+   * This function assumes that the provided [Jwk] contains valid curve and algorithm
+   * information. Malformed or invalid [Jwk] objects may result in exceptions or
    * unexpected behavior.
    *
    * ### Throws
-   * - [IllegalArgumentException] If the algorithm or curve in [JWK] is not supported or invalid.
+   * - [IllegalArgumentException] If the algorithm or curve in [Jwk] is not supported or invalid.
    */
   public fun publicKeyToBytes(publicKey: Jwk): ByteArray {
     val curve = getJwkCurve(publicKey)
@@ -225,13 +224,13 @@ public object Crypto {
   }
 
   /**
-   * Extracts the cryptographic curve information from a [JWK] object.
+   * Extracts the cryptographic curve information from a [Jwk] object.
    *
-   * This function parses and returns the curve type used in a JWK.
+   * This function parses and returns the curve type used in a Jwk.
    * May return `null` if the curve information is not present or unsupported.
    *
    * @param jwk The Jwk object from which to extract curve information.
-   * @return The [JwaCurve] used in the JWK, or `null` if the curve is not defined or recognized.
+   * @return The [JwaCurve] used in the Jwk, or `null` if the curve is not defined or recognized.
    */
   public fun getJwkCurve(jwk: Jwk): JwaCurve? {
     val rawCurve = jwk.crv

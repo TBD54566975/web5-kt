@@ -1,6 +1,5 @@
 package web5.sdk.crypto
 
-import com.nimbusds.jose.jwk.JWK
 import web5.sdk.crypto.jwk.Jwk
 
 /**
@@ -92,12 +91,12 @@ public interface KeyGenerator {
   public fun publicKeyToBytes(publicKey: Jwk): ByteArray
 
   /**
-   * Converts a private key as bytes into a JWK.
+   * Converts a private key as bytes into a Jwk.
    */
   public fun bytesToPrivateKey(privateKeyBytes: ByteArray): Jwk
 
   /**
-   * Converts a public key as bytes into a JWK. Applicable for asymmetric Key Generators only.
+   * Converts a public key as bytes into a Jwk. Applicable for asymmetric Key Generators only.
    * Implementers of symmetric key generators should throw an UnsupportedOperation Exception
    */
   public fun bytesToPublicKey(publicKeyBytes: ByteArray): Jwk

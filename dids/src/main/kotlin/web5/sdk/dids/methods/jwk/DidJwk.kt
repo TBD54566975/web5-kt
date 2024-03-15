@@ -129,7 +129,7 @@ public object DidJwk {
     val decodedKey = Convert(id, EncodingFormat.Base64Url).toStr()
     val publicKeyJwk = try {
       Json.parse<Jwk>(decodedKey)
-    } catch (_: ParseException) {
+    } catch (_: Exception) {
       return DidResolutionResult(
         context = "https://w3id.org/did-resolution/v1",
         didResolutionMetadata = DidResolutionMetadata(
@@ -138,8 +138,8 @@ public object DidJwk {
       )
     }
 
-    require(publicKeyJwk.d != null) {
-      throw IllegalArgumentException("decoded jwk value cannot be a private key")
+    require(publicKeyJwk.d == null) {
+      "decoded jwk value cannot be a private key"
     }
 
     val didDocument = createDocument(parsedDid, publicKeyJwk)
@@ -153,7 +153,7 @@ public object DidJwk {
       .id(verificationMethodId)
       .publicKeyJwk(publicKeyJwk)
       .controller(did.url)
-      .type("JsonWebKey2020")
+      .type("JsonWebKey")
       .build()
 
     val didDocumentBuilder = DidDocument.Builder()
