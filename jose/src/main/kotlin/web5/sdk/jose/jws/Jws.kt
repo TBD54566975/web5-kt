@@ -63,7 +63,6 @@ public object Jws {
   public fun sign(
     bearerDid: BearerDid,
     payload: ByteArray,
-    header: JwsHeader?,
     detached: Boolean = false
   ): String {
     val (signer, verificationMethod) = bearerDid.getSigner()
@@ -78,11 +77,10 @@ public object Jws {
       verificationMethod.id
     }
 
-    val jwsHeader = header
-      ?: JwsHeader.Builder()
+    val jwsHeader = JwsHeader.Builder()
         .type("JWT")
-        .keyId(kid)
         .algorithm(Crypto.getJwkCurve(verificationMethod.publicKeyJwk!!)?.name!!)
+        .keyId(kid)
         .build()
 
     val headerBase64Url = Convert(Json.stringify(jwsHeader)).toBase64Url()
@@ -237,7 +235,7 @@ public class DecodedJws(
 
     val resolutionResult = DidResolvers.resolve(header.kid!!)
 
-    check(resolutionResult.didResolutionMetadata.error != null) {
+    check(resolutionResult.didResolutionMetadata.error == null) {
       "Verification failed. Failed to resolve kid. " +
         "Error: ${resolutionResult.didResolutionMetadata.error}"
     }
@@ -246,7 +244,7 @@ public class DecodedJws(
       "Verification failed. Expected header kid to dereference a DID document"
     }
 
-    check(resolutionResult.didDocument?.verificationMethod?.size != 0) {
+    check(resolutionResult.didDocument!!.verificationMethod?.size != 0) {
       "Verification failed. Expected header kid to dereference a verification method"
     }
 

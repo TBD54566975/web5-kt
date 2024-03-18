@@ -1,5 +1,6 @@
 package web5.sdk.jose.jwt
 
+import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.JsonNode
 import web5.sdk.common.Convert
 import web5.sdk.common.EncodingFormat
@@ -54,10 +55,9 @@ public object Jwt {
    * @return The signed JWT
    */
   public fun sign(did: BearerDid, payload: JwtClaimsSet): String {
-    val header = JwtHeader(typ = "JWT")
     val payloadBytes = Convert(Json.stringify(payload)).toByteArray()
 
-    return Jws.sign(did, payloadBytes, header)
+    return Jws.sign(did, payloadBytes)
   }
 
   /**
@@ -143,7 +143,8 @@ public class JwtClaimsSet(
         "exp",
         "nbf",
         "iat",
-        "jti"
+        "jti",
+        "misc"
       )
 
       val miscClaims: MutableMap<String, Any> = mutableMapOf()
@@ -156,6 +157,12 @@ public class JwtClaimsSet(
         }
       }
 
+      val miscMap = Json.jsonMapper
+        .convertValue(
+          jsonNode.get("misc"),
+          object : TypeReference<MutableMap<String, Any>>() {}
+        ) ?: mutableMapOf()
+
       return JwtClaimsSet(
         iss = jsonNode.get("iss")?.asText(),
         sub = jsonNode.get("sub")?.asText(),
@@ -164,7 +171,7 @@ public class JwtClaimsSet(
         nbf = jsonNode.get("nbf")?.asLong(),
         iat = jsonNode.get("iat")?.asLong(),
         jti = jsonNode.get("jti")?.asText(),
-        misc = miscClaims
+        misc = miscClaims + miscMap
       )
 
     }

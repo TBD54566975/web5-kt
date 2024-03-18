@@ -20,8 +20,8 @@ import web5.sdk.dids.methods.key.DidKey
 import web5.sdk.testing.TestVectors
 import java.io.File
 import java.security.SignatureException
-import java.text.ParseException
 import kotlin.test.Ignore
+import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
 import kotlin.test.assertNotNull
@@ -119,8 +119,8 @@ class VerifiableCredentialTest {
     )
 
     val header = JwsHeader.Builder()
-      .algorithm(Jwa.ES256K.name)
       .type("JWT")
+      .algorithm(Jwa.ES256K.name)
       .keyId(issuerDid.did.uri)
       .build()
     // A detached payload JWT
@@ -129,15 +129,14 @@ class VerifiableCredentialTest {
     val exception = assertThrows(SignatureException::class.java) {
       VerifiableCredential.verify(vcJwt)
     }
-    assertEquals(
-      "Signature verification failed: Expected kid in JWS header to dereference a DID Document " +
-        "Verification Method with an Assertion verification relationship", exception.message
+    assertContains(
+      exception.message!!, "not found in list of assertion methods",
     )
   }
 
   @Test
-  fun `parseJwt throws ParseException if argument is not a valid JWT`() {
-    assertThrows(ParseException::class.java) {
+  fun `parseJwt throws IllegalStateException if argument is not a valid JWT`() {
+    assertThrows(IllegalStateException::class.java) {
       VerifiableCredential.parseJwt("hi")
     }
   }

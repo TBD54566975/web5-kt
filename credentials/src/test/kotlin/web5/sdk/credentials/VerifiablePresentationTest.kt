@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import web5.sdk.common.Convert
+import web5.sdk.common.Json
 import web5.sdk.credentials.model.InputDescriptorMapping
 import web5.sdk.credentials.model.PresentationSubmission
 import web5.sdk.crypto.AlgorithmId
@@ -18,6 +19,7 @@ import web5.sdk.jose.jwt.Jwt
 import web5.sdk.jose.jwt.JwtClaimsSet
 import java.security.SignatureException
 import java.text.ParseException
+import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 
@@ -34,6 +36,7 @@ class VerifiablePresentationTest {
     "M1oiLCJjcmVkZW50aWFsU3ViamVjdCI6eyJpZCI6ImRpZDprZXk6elEzc2h3ZDR5VUFmV2dmR0VScVVrNDd4Rzk1cU5Vc2lzRDc3NkpMdVo3" +
     "eXo5blFpaiIsImxvY2FsUmVzcGVjdCI6ImhpZ2giLCJsZWdpdCI6dHJ1ZX19fQ.Bx0JrQERWRLpYeg3TnfrOIo4zexo3q1exPZ-Ej6j0T0YO" +
     "BVZaZ9-RqpiAM-fHKrdGUzVyXr77pOl7yGgwIO90g"
+
   @Test
   fun `create simple vp`() {
     val vcJwts: Iterable<String> = listOf("vcjwt1")
@@ -154,19 +157,19 @@ class VerifiablePresentationTest {
     val holderDid = DidKey.create(keyManager)
 
     val header = JwsHeader.Builder()
+      .type("JWT")
       .algorithm(Jwa.ES256K.name)
       .keyId(holderDid.did.uri)
       .build()
 
-    val vpJwt = "${Convert(header).toBase64Url()}..fakeSig"
+    val vpJwt = "${Convert(Json.stringify(header)).toBase64Url()}..fakeSig"
 
     val exception = assertThrows(SignatureException::class.java) {
       VerifiablePresentation.verify(vpJwt)
     }
 
-    assertEquals(
-      "Signature verification failed: Expected kid in JWS header to dereference a DID Document " +
-        "Verification Method with an Assertion verification relationship", exception.message
+    assertContains(
+      exception.message!!, "not found in list of assertion methods",
     )
   }
 
@@ -192,8 +195,8 @@ class VerifiablePresentationTest {
   }
 
   @Test
-  fun `parseJwt throws ParseException if argument is not a valid JWT`() {
-    assertThrows(ParseException::class.java) {
+  fun `parseJwt throws IllegalStateException if argument is not a valid JWT`() {
+    assertThrows(IllegalStateException::class.java) {
       VerifiablePresentation.parseJwt("hi")
     }
   }
@@ -222,29 +225,31 @@ class VerifiablePresentationTest {
     //Create a DHT DID without an assertionMethod
     val alias = keyManager.generatePrivateKey(AlgorithmId.secp256k1)
     val verificationJwk = keyManager.getPublicKey(alias)
-    val verificationMethodsToAdd = listOf(Triple(
-      verificationJwk,
-      emptyList<Purpose>(),
-      "did:web:tbd.website"
-    ))
+    val verificationMethodsToAdd = listOf(
+      Triple(
+        verificationJwk,
+        emptyList<Purpose>(),
+        "did:web:tbd.website"
+      )
+    )
     val issuerDid = DidDht.create(
       InMemoryKeyManager(),
       CreateDidDhtOptions(verificationMethods = verificationMethodsToAdd)
     )
 
     val header = JwsHeader.Builder()
+      .type("JWT")
       .algorithm(Jwa.ES256K.name)
       .keyId(issuerDid.did.uri)
       .build()
     //A detached payload JWT
-    val vpJwt = "${Convert(header).toBase64Url()}..fakeSig"
+    val vpJwt = "${Convert(Json.stringify(header)).toBase64Url()}..fakeSig"
 
     val exception = assertThrows(SignatureException::class.java) {
       VerifiablePresentation.verify(vpJwt)
     }
-    assertEquals(
-      "Signature verification failed: Expected kid in JWS header to dereference a DID Document " +
-        "Verification Method with an Assertion verification relationship", exception.message
+    assertContains(
+      exception.message!!, "not found in list of assertion methods",
     )
   }
 }
