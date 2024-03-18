@@ -7,14 +7,14 @@ on:
       - main
   pull_request:
     branches:
-      - '*'
+      - "*"
 
 jobs:
   build:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ ubuntu-latest, macos-latest ]
+        os: [ubuntu-latest, macos-latest]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -60,7 +60,8 @@ jobs:
       - name: Generate an access token to trigger downstream repo
         uses: actions/create-github-app-token@2986852ad836768dfea7781f31828eb3e17990fa # v1.6.2
         id: generate_token
-        if: github.ref == 'refs/heads/main'
+        # test only in main and report ubuntu results only
+        if: github.ref == 'refs/heads/main' && matrix.os == 'ubuntu-latest'
         with:
           app-id: ${{ secrets.CICD_ROBOT_GITHUB_APP_ID }}
           private-key: ${{ secrets.CICD_ROBOT_GITHUB_APP_PRIVATE_KEY }}
@@ -68,7 +69,8 @@ jobs:
           repositories: sdk-report-runner
 
       - name: Trigger sdk-report-runner report build
-        if: github.ref == 'refs/heads/main'
+        # test only in main and report ubuntu results only
+        if: github.ref == 'refs/heads/main' && matrix.os == 'ubuntu-latest'
         run: |
           curl -L \
           -H "Authorization: Bearer ${APP_TOKEN}" \
