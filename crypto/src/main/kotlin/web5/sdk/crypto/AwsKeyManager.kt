@@ -17,6 +17,7 @@ import com.nimbusds.jose.crypto.impl.ECDSA
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo
 import org.bouncycastle.crypto.ExtendedDigest
 import org.bouncycastle.crypto.digests.SHA256Digest
+import org.bouncycastle.jce.spec.ECNamedCurveSpec
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter
 import web5.sdk.common.Convert
 import web5.sdk.common.EncodingFormat
@@ -130,8 +131,12 @@ public class AwsKeyManager @JvmOverloads constructor(
     val jwkBuilder = when (publicKey) {
       is ECPublicKey -> {
         val (x, y) = extractBase64UrlXYFromECPublicKey(publicKey)
-        Jwk.Builder()
-          .keyType("EC")
+        // todo how to get the curve name out of java.security.publicKey?
+        //  publicKey.params.curve.toString() gives me toString() value of the curve type
+        //  here tried casting it as ECNamedCurveSpec of bouncy castle and get name
+        //  not sure if correct.
+        val namedCurve = publicKey as ECNamedCurveSpec
+        Jwk.Builder("EC", namedCurve.name)
           .x(x)
           .y(y)
       }

@@ -147,11 +147,9 @@ public object Secp256k1 : KeyGenerator, Signer {
       .keyUse(KeyUse.SIGNATURE)
       .generate()
 
-    val jwk = Jwk.Builder()
-      .keyType("EC")
+    val jwk = Jwk.Builder("EC", privateKey.curve.name)
       .keyUse("sig")
       .algorithm(algorithm.name)
-      .curve(privateKey.curve.name)
       .privateKey(privateKey.d.toString())
       .x(privateKey.x.toString())
       .y(privateKey.y.toString())
@@ -165,9 +163,7 @@ public object Secp256k1 : KeyGenerator, Signer {
   override fun computePublicKey(privateKey: Jwk): Jwk {
     validateKey(privateKey)
 
-    val jwk = Jwk.Builder()
-      .keyType(privateKey.kty)
-      .curve(curve.name)
+    val jwk = Jwk.Builder(privateKey.kty, curve.name)
       .algorithm(algorithm.name)
       .apply {
         privateKey.x?.let { x(it) }
@@ -203,8 +199,7 @@ public object Secp256k1 : KeyGenerator, Signer {
     val rawX = pointQ.rawXCoord.encoded
     val rawY = pointQ.rawYCoord.encoded
 
-    return Jwk.Builder()
-      .keyType("EC")
+    return Jwk.Builder("EC", curve.name)
       .algorithm(algorithm.name)
       .keyUse("sig")
       .x(Convert(rawX).toBase64Url())
@@ -217,10 +212,8 @@ public object Secp256k1 : KeyGenerator, Signer {
     val xBytes = publicKeyBytes.sliceArray(1..32)
     val yBytes = publicKeyBytes.sliceArray(33..64)
 
-    val jwk = Jwk.Builder()
-      .keyType("EC")
+    val jwk = Jwk.Builder("EC", curve.name)
       .algorithm(algorithm.name)
-      .curve(curve.name)
       .keyUse("sig")
       .x(Convert(xBytes).toBase64Url())
       .y(Convert(yBytes).toBase64Url())

@@ -78,28 +78,18 @@ public class Jwk(
   /**
    * Builder for Jwk type.
    *
+   * @property keyType: Type of key (EC or OKP)
+   * @property curve: Type of curve
    */
-  public class Builder {
-    // todo take in keytype and curve as required params
-    private var kty: String? = null
-    private var crv: String? = null
+  public class Builder(keyType: String, curve: String) {
+    private var kty: String = keyType
+    private var crv: String = curve
     private var use: String? = null
     private var alg: String? = null
     private var kid: String? = null
     private var d: String? = null
     private var x: String? = null
     private var y: String? = null
-
-    /**
-     * Sets key type.
-     *
-     * @param kty
-     * @return Builder object
-     */
-    public fun keyType(kty: String): Builder {
-      this.kty = kty
-      return this
-    }
 
     /**
      * Sets key use.
@@ -134,16 +124,6 @@ public class Jwk(
       return this
     }
 
-    /**
-     * Sets elliptic curve name.
-     *
-     * @param crv
-     * @return Builder object
-     */
-    public fun curve(crv: String): Builder {
-      this.crv = crv
-      return this
-    }
 
     /**
      * Sets private key component. Must be base64 encoded string.
@@ -184,7 +164,7 @@ public class Jwk(
      * @return Jwk object
      */
     public fun build(): Jwk {
-      check(kty != null) { "kty is required" }
+      // todo move these checks out to Ed25519 or Secp256k1 classes?
       if (kty == "EC") {
         check(x != null) { "x is required for EC keys" }
         check(y != null) { "y is required for EC keys" }
@@ -193,7 +173,7 @@ public class Jwk(
         check(x != null) { "x is required for OKP keys" }
       }
       // todo crv is required
-      return Jwk(kty!!, crv!!, use, alg, kid,  d, x, y)
+      return Jwk(kty, crv, use, alg, kid,  d, x, y)
     }
   }
 }

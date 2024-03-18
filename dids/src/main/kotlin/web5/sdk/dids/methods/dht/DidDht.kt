@@ -346,9 +346,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) {
    * @param identityKey the key used to generate the DID's identifier
    */
   internal fun getDidIdentifier(identityKey: Jwk): String {
-    val publicKeyJwk = Jwk.Builder()
-      .keyType(identityKey.kty)
-      .curve(identityKey.crv)
+    val publicKeyJwk = Jwk.Builder(identityKey.kty, identityKey.crv)
       .apply {
         identityKey.x?.let { x(it) }
         identityKey.y?.let { y(it) }

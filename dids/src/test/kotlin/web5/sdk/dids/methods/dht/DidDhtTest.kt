@@ -19,6 +19,7 @@ import web5.sdk.common.Json
 import web5.sdk.common.ZBase32
 import web5.sdk.crypto.AlgorithmId
 import web5.sdk.crypto.InMemoryKeyManager
+import web5.sdk.crypto.JwaCurve
 import web5.sdk.crypto.jwk.Jwk
 import web5.sdk.dids.DidResolutionResult
 import web5.sdk.dids.JwkDeserializer
@@ -119,7 +120,10 @@ class DidDhtTest {
       val publicKeyJwk = manager.getPublicKey(otherKey)
       // todo this was ECKeyGenerator(Curve.P_256).generate().toPublicJWK() before
       //  is this the right equivalent?
-      val publicKeyJwk2 = Jwk.Builder().keyType("EC").build()
+      val publicKeyJwk2 = Jwk.Builder("EC", JwaCurve.secp256k1.name)
+        .x("fake-x-value")
+        .y("fake-y-value")
+        .build()
       val verificationMethodsToAdd: Iterable<Triple<Jwk, List<Purpose>, String?>> = listOf(
         Triple(
           publicKeyJwk,
