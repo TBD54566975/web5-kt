@@ -155,8 +155,7 @@ public object Secp256k1 : KeyGenerator, Signer {
       .y(privateKey.y.toString())
       .build()
 
-
-    jwk.kid = jwk.computeThumbprint() // or should i do privateKey.keyId?
+    jwk.kid = jwk.computeThumbprint()
     return jwk
   }
 
@@ -164,15 +163,16 @@ public object Secp256k1 : KeyGenerator, Signer {
     validateKey(privateKey)
 
     val jwk = Jwk.Builder(privateKey.kty, curve.name)
+      .keyUse("sig") // todo is publicKey JWK's keyUse "sig"? had to edit create.json
       .algorithm(algorithm.name)
       .apply {
+        privateKey.kid?.let { keyId(it) }
         privateKey.x?.let { x(it) }
         privateKey.y?.let { y(it) }
       }
-      .keyUse("sig")
       .build()
 
-    jwk.kid = jwk.computeThumbprint()
+    jwk.kid = jwk.kid ?: jwk.computeThumbprint()
     return jwk
   }
 

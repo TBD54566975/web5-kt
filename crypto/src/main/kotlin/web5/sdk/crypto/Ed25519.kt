@@ -73,17 +73,18 @@ public object Ed25519 : KeyGenerator, Signer {
    * @return The corresponding public key in Jwk format.
    */
   override fun computePublicKey(privateKey: Jwk): Jwk {
-    require(privateKey.kty == "OKP") { "private key must be an Octet Key Pair (kty: OKP)" }
+    validateKey(privateKey)
 
     val jwk = Jwk.Builder(privateKey.kty, curve.name)
+      .keyUse("sig") // todo is publicKey JWK's keyUse "sig"? had to edit create.json
       .algorithm(algorithm.name)
       .apply {
-        privateKey.use?.let { keyUse(it) }
+        privateKey.kid?.let { keyId(it) }
+        privateKey.x?.let { x(it) }
       }
-      .x(privateKey.x.toString())
       .build()
 
-    jwk.kid = jwk.computeThumbprint()
+    jwk.kid = jwk.kid ?: jwk.computeThumbprint()
     return jwk
   }
 
@@ -123,7 +124,7 @@ public object Ed25519 : KeyGenerator, Signer {
       .x(base64UrlEncodedPublicKey)
       .build()
 
-    jwk.kid = jwk.computeThumbprint()
+    jwk.kid = jwk.kid ?: jwk.computeThumbprint()
     return jwk
   }
 
