@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import web5.sdk.common.Convert
+import web5.sdk.common.Json
 import web5.sdk.crypto.AlgorithmId
 import web5.sdk.crypto.AwsKeyManager
 import web5.sdk.crypto.InMemoryKeyManager
@@ -124,7 +125,7 @@ class VerifiableCredentialTest {
       .keyId(issuerDid.did.uri)
       .build()
     // A detached payload JWT
-    val vcJwt = "${Convert(header).toBase64Url()}..fakeSig"
+    val vcJwt = "${Convert(Json.stringify(header)).toBase64Url()}..fakeSig"
 
     val exception = assertThrows(SignatureException::class.java) {
       VerifiableCredential.verify(vcJwt)
