@@ -17,10 +17,10 @@
 
   <!-- SCM -->
   <scm>
-    <connection>scm:git:git://github.com/ALRubinger/web5-kt.git</connection>
+    <connection>scm:git:git://github.com/TBD54566975/web5-kt.git</connection>
     <!-- This has to be HTTPS, not git://, for maven-release-plugin to do AUTH correctly -->
-    <developerConnection>scm:git:https://github.com/ALRubinger/web5-kt.git</developerConnection>
-    <url>https://github.com/ALRubinger/web5-kt</url>
+    <developerConnection>scm:git:https://github.com/TBD54566975/web5-kt.git</developerConnection>
+    <url>https://github.com/TBD54566975/web5-kt</url>
     <tag>HEAD</tag>
   </scm>
 
