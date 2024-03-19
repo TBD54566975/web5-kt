@@ -19,13 +19,15 @@ on:
       version:
         description: 'Version to publish. For example "1.0.0-SNAPSHOT". If not supplied, will default to version specified in the POM. Must end in "-SNAPSHOT".'
         required: false
-        default: '0.0.0-SNAPSHOT'
+        default: "0.0.0-SNAPSHOT"
   push:
+    branches:
+      - main
+  pull_request:
     branches:
       - main
 
 jobs:
-
   # On MacOS we only build, test, and verify
   build-test-macos:
     runs-on: macOS-latest
@@ -84,7 +86,8 @@ jobs:
           if ! which sha256sum; then brew install coreutils; fi
           sha256sum $(find test-vectors -name '*.json') > test-vector-hashes.txt
 
-      - name: Build, Test, and Deploy to TBD Artifactory
+      - name: Resolve Snapshot Version
+        id: resolve_version
         run: |
           # Version resolution: use provided
           if [ -n "${{ github.event.inputs.version }}" ]; then
@@ -96,19 +99,24 @@ jobs:
             resolvedVersion="commit-$shortSHA-SNAPSHOT"
             echo "Requesting deployment as version: $resolvedVersion"
           fi
-          
+
           # Postcondition check; only allow this to proceed if we have a version ending in "-SNAPSHOT"
           if [[ ! "$resolvedVersion" =~ -SNAPSHOT$ ]]; then
             echo "Error: The version does not end with \"-SNAPSHOT\": $resolvedVersion"
             exit 1
           fi
-          
+
+          echo "Resolved SNAPSHOT Version: $resolvedVersion"
+          echo "resolved_version=$resolvedVersion" >> $GITHUB_OUTPUT
+
+      - name: Build, Test, and Deploy to TBD Artifactory
+        run: |
           # Set newly resolved version in POM config
           mvn \
             versions:set \
             --batch-mode \
-            -DnewVersion=$resolvedVersion 
-        
+            -DnewVersion=${{ steps.resolve_version.outputs.resolved_version }}
+
           # Maven deploy lifecycle will build, run tests, verify, sign, and deploy
           mvn \
             deploy \
@@ -152,6 +160,15 @@ jobs:
       #    private-key: ${{ secrets.CICD_ROBOT_GITHUB_APP_PRIVATE_KEY }}
       #    owner: TBD54566975
       #    repositories: sdk-report-runner
+      #- name: Generate an access token to trigger downstream repo
+      #  uses: actions/create-github-app-token@2986852ad836768dfea7781f31828eb3e17990fa # v1.6.2
+      #  id: generate_token
+      #  if: github.ref == 'refs/heads/main'
+      #  with:
+      #    app-id: ${{ secrets.CICD_ROBOT_GITHUB_APP_ID }}
+      #    private-key: ${{ secrets.CICD_ROBOT_GITHUB_APP_PRIVATE_KEY }}
+      #    owner: TBD54566975
+      #    repositories: sdk-report-runner
 
       #- name: Trigger sdk-report-runner report build
       #  if: github.ref == 'refs/heads/main'
@@ -168,7 +185,7 @@ jobs:
   # Ensure both MacOS and Ubuntu build/test jobs succeeded
   confirm-successful-build-and-tests:
     # Wait on both jobs to succeed
-    needs: [ build-test-macos, build-test-deploy-snapshot-ubuntu ]
+    needs: [build-test-macos, build-test-deploy-snapshot-ubuntu]
     runs-on: ubuntu-latest
 
     steps:
