@@ -13,6 +13,7 @@ import web5.sdk.crypto.jwk.Jwk
 import web5.sdk.dids.didcore.Purpose
 import java.io.IOException
 
+// todo delete the de/serializers for jwk
 /**
  * Serialize Jwk into String.
  */

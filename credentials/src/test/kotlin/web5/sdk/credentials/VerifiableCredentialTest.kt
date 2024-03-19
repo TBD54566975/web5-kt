@@ -1,6 +1,7 @@
 package web5.sdk.credentials
 
 import com.fasterxml.jackson.core.type.TypeReference
+import com.fasterxml.jackson.databind.exc.MismatchedInputException
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
@@ -172,11 +173,10 @@ class VerifiableCredentialTest {
       .build()
 
     val signedJWT = Jwt.sign(signerDid, claimsSet)
-    val exception = assertThrows(IllegalArgumentException::class.java) {
+    assertThrows(MismatchedInputException::class.java) {
       VerifiableCredential.parseJwt(signedJWT)
     }
 
-    assertEquals("expected vc property in JWT payload to be an object", exception.message)
   }
 
   @Test

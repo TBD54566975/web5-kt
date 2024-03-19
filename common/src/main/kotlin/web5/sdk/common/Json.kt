@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.ObjectReader
 import com.fasterxml.jackson.databind.ObjectWriter
 import com.fasterxml.jackson.databind.SerializationFeature
+import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 
@@ -23,6 +24,9 @@ import com.fasterxml.jackson.module.kotlin.registerKotlinModule
  * ```
  */
 public object Json {
+
+  // todo can't do this because of circular dependency
+//  private val jwtModule = SimpleModule().addSerializer(JwtClaimsSet::class.java, JwtClaimsSetSerializer())
   /**
    * The Jackson object mapper instance, shared across the lib.
    *
@@ -33,6 +37,8 @@ public object Json {
     .findAndRegisterModules()
     .setSerializationInclusion(JsonInclude.Include.NON_NULL)
     .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+
+
 
   private val objectWriter: ObjectWriter = jsonMapper.writer()
   public val objectReader: ObjectReader = jsonMapper.reader()

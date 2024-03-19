@@ -29,6 +29,7 @@ import java.security.MessageDigest
  * @property y Y coordinate for EC keys.
  *
  */
+// todo use jcs for canonicalization, instead of using de/serlization.
 public class Jwk(
   public val kty: String,
   public val crv: String,

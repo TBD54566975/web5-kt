@@ -1,11 +1,15 @@
 package web5.sdk.jose.jwt
 
-import com.fasterxml.jackson.core.type.TypeReference
+import com.fasterxml.jackson.core.JsonGenerator
 import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.JsonSerializer
+import com.fasterxml.jackson.databind.SerializerProvider
+import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import web5.sdk.common.Convert
 import web5.sdk.common.EncodingFormat
 import web5.sdk.common.Json
 import web5.sdk.dids.did.BearerDid
+import web5.sdk.jose.JwtClaimsSetSerializer
 import web5.sdk.jose.jws.DecodedJws
 import web5.sdk.jose.jws.Jws
 import web5.sdk.jose.jws.JwsHeader
@@ -117,6 +121,7 @@ public typealias JwtHeader = JwsHeader
  * @property jti provides a unique identifier for the JWT.
  * @property misc additional claims (i.e. VerifiableCredential, VerifiablePresentation)
  */
+@JsonSerialize(using = JwtClaimsSetSerializer::class)
 public class JwtClaimsSet(
   public val iss: String? = null,
   public val sub: String? = null,
@@ -127,6 +132,7 @@ public class JwtClaimsSet(
   public val jti: String? = null,
   public val misc: Map<String, Any> = emptyMap()
 ) {
+
   public companion object {
 
     /**
@@ -143,8 +149,7 @@ public class JwtClaimsSet(
         "exp",
         "nbf",
         "iat",
-        "jti",
-        "misc"
+        "jti"
       )
 
       val miscClaims: MutableMap<String, Any> = mutableMapOf()
@@ -157,12 +162,6 @@ public class JwtClaimsSet(
         }
       }
 
-      val miscMap = Json.jsonMapper
-        .convertValue(
-          jsonNode.get("misc"),
-          object : TypeReference<MutableMap<String, Any>>() {}
-        ) ?: mutableMapOf()
-
       return JwtClaimsSet(
         iss = jsonNode.get("iss")?.asText(),
         sub = jsonNode.get("sub")?.asText(),
@@ -171,7 +170,7 @@ public class JwtClaimsSet(
         nbf = jsonNode.get("nbf")?.asLong(),
         iat = jsonNode.get("iat")?.asLong(),
         jti = jsonNode.get("jti")?.asText(),
-        misc = miscClaims + miscMap
+        misc = miscClaims
       )
 
     }
@@ -263,4 +262,5 @@ public class JwtClaimsSet(
      */
     public fun build(): JwtClaimsSet = JwtClaimsSet(iss, sub, aud, exp, nbf, iat, jti, misc)
   }
+
 }

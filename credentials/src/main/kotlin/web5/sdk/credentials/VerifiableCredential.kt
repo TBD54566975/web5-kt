@@ -10,6 +10,7 @@ import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.convertValue
 import com.nfeld.jsonpathkt.JsonPath
 import com.nfeld.jsonpathkt.extension.read
+import web5.sdk.common.Json
 import web5.sdk.dids.did.BearerDid
 import web5.sdk.jose.jwt.Jwt
 import web5.sdk.jose.jwt.JwtClaimsSet
@@ -207,9 +208,7 @@ public class VerifiableCredential internal constructor(public val vcDataModel: V
       val vcDataModelValue = jwtPayload.misc["vc"] ?:
         throw IllegalArgumentException("jwt payload missing vc property")
 
-      @Suppress("UNCHECKED_CAST") // only partially unchecked. can only safely cast to Map<*, *>
-      val vcDataModelMap = vcDataModelValue as? Map<String, Any>
-        ?: throw IllegalArgumentException("expected vc property in JWT payload to be an object")
+      val vcDataModelMap = Json.parse<Map<String, Any>>(Json.stringify(vcDataModelValue))
 
       val vcDataModel = VcDataModel.fromMap(vcDataModelMap)
 
