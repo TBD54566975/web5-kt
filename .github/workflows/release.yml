@@ -107,11 +107,11 @@ jobs:
         run: |
           echo $(git describe --tags)
           # Maven deploy lifecycle will build, run tests, verify, sign, and deploy
-          #mvn \
-          #  deploy \
-          #    -P ossrh,sign-artifacts \
-          #    --batch-mode \
-          #    --settings .maven_settings.xml
+          mvn \
+            deploy \
+              -P ossrh,sign-artifacts \
+              --batch-mode \
+              --settings .maven_settings.xml
         env:
           SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
           SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
