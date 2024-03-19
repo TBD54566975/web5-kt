@@ -11,12 +11,15 @@ import web5.sdk.crypto.AlgorithmId
 import web5.sdk.crypto.AwsKeyManager
 import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.crypto.Jwa
+import web5.sdk.dids.did.BearerDid
+import web5.sdk.dids.did.PortableDid
 import web5.sdk.dids.didcore.Purpose
 import web5.sdk.jose.jws.JwsHeader
 import web5.sdk.jose.jwt.Jwt
 import web5.sdk.jose.jwt.JwtClaimsSet
 import web5.sdk.dids.methods.dht.CreateDidDhtOptions
 import web5.sdk.dids.methods.dht.DidDht
+import web5.sdk.dids.methods.jwk.DidJwk
 import web5.sdk.dids.methods.key.DidKey
 import web5.sdk.testing.TestVectors
 import java.io.File
@@ -203,8 +206,7 @@ class VerifiableCredentialTest {
 class Web5TestVectorsCredentials {
 
   data class CreateTestInput(
-    val signerDidUri: String?,
-    val signerPrivateJwk: Map<String, Any>?,
+    val signerPortableDid: PortableDid?,
     val credential: Map<String, Any>?,
   )
 
@@ -220,16 +222,12 @@ class Web5TestVectorsCredentials {
     val testVectors = mapper.readValue(File("../web5-spec/test-vectors/credentials/create.json"), typeRef)
 
     testVectors.vectors.filterNot { it.errors ?: false }.forEach { vector ->
-      println(vector.description)
       val vc = VerifiableCredential.fromJson(mapper.writeValueAsString(vector.input.credential))
+      val portableDid = Json.parse<PortableDid>(Json.stringify(vector.input.signerPortableDid!!))
 
       val keyManager = InMemoryKeyManager()
-      keyManager.import(listOf(vector.input.signerPrivateJwk!!))
-      val issuerDid = DidKey.create(keyManager)
-      // todo need to update test vectors
-      //  input should have portable did and credential
-      // want to be able to call BearerDID.import()
-      val vcJwt = vc.sign(issuerDid)
+      val bearerDid = BearerDid.import(portableDid, keyManager)
+      val vcJwt = vc.sign(bearerDid)
 
       assertEquals(vector.output, vcJwt, vector.description)
     }

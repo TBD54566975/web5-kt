@@ -23,7 +23,7 @@ import web5.sdk.crypto.jwk.Jwk
  * - Keys are stored in an in-memory mutable map and will be lost once the application is terminated or the object is garbage-collected.
  * - It is suitable for testing or scenarios where persistent storage of keys is not necessary.
  */
-public class InMemoryKeyManager : KeyManager {
+public class InMemoryKeyManager : KeyManager, KeyExporter, KeyImporter {
 
   /**
    * An in-memory keystore represented as a flat key-value map, where the key is a key ID.
@@ -126,5 +126,15 @@ public class InMemoryKeyManager : KeyManager {
    * @return A list of key representations in map format.
    */
   public fun export(): List<Map<String, Any>> = keyStore.map { keyIdToJwk -> Json.stringify(keyIdToJwk.value).toMap() }
+
+  override fun exportKey(keyId: String): Jwk {
+    return this.getPrivateKey(keyId)
+  }
+
+  override fun importKey(jwk: Jwk): String {
+    val keyAlias = jwk.computeThumbprint()
+    keyStore[keyAlias] = jwk
+    return keyAlias
+  }
 
 }

@@ -198,9 +198,6 @@ public object PresentationExchange {
       val requiredFields = fields.filter { field -> field.optional != true }
 
       for (field in requiredFields) {
-        // todo path currently set to $.vc.type
-        //  but now all vcs are in $.misc.vc.type
-        //  however vcPayloadJson.read<JsonNode>("$.misc.vc.type") also returns null
         val matchedFields = field.path.mapNotNull { path -> vcPayloadJson.read<JsonNode>(path) }
         if (matchedFields.isEmpty()) {
           // If no matching fields are found for a required field, the VC does not satisfy this Input Descriptor.
