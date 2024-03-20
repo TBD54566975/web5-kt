@@ -25,8 +25,6 @@ import com.fasterxml.jackson.module.kotlin.registerKotlinModule
  */
 public object Json {
 
-  // todo can't do this because of circular dependency
-//  private val jwtModule = SimpleModule().addSerializer(JwtClaimsSet::class.java, JwtClaimsSetSerializer())
   /**
    * The Jackson object mapper instance, shared across the lib.
    *

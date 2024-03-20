@@ -41,8 +41,8 @@ class DidTest {
 
   @Test
   fun `Parser parses a valid did`() {
-    // todo adding /path after abcdefghi messes up the parsing of params (comes in null)
-    // to be addressed via gh issue https://github.com/TBD54566975/web5-spec/issues/120
+    // TODO adding /path after abcdefghi messes up the parsing of params (comes in null)
+    //  https://github.com/TBD54566975/web5-spec/issues/120
     val did = Did.Parser.parse("did:example:123456789abcdefghi;foo=bar;baz=qux?foo=bar&baz=qux#keys-1")
     assertEquals("did:example:123456789abcdefghi", did.uri)
     assertEquals("123456789abcdefghi", did.id)

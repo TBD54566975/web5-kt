@@ -139,7 +139,7 @@ public object Secp256k1 : KeyGenerator, Signer {
    * @return A Jwk representing the generated private key.
    */
   override fun generatePrivateKey(options: KeyGenOptions?): Jwk {
-    // todo use tink to generate private key?
+    // TODO use tink to generate private key https://github.com/TBD54566975/web5-kt/issues/273
     val privateKey = ECKeyGenerator(com.nimbusds.jose.jwk.Curve.SECP256K1)
       .algorithm(JWSAlgorithm.ES256K)
       .provider(BouncyCastleProviderSingleton.getInstance())

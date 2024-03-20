@@ -1,6 +1,7 @@
 package web5.sdk.dids.didcore
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import web5.sdk.dids.DidResolvers
 import java.security.SignatureException
 
 /**
@@ -110,13 +111,6 @@ public class DidDocument(
    */
   @JvmOverloads
   public fun findAssertionMethodById(assertionMethodId: String? = null): VerificationMethod {
-    /*
-    // todo add this bit (see jwtutil)
-    val verificationMethodIds = setOf(
-      did.url,
-      "#${did.fragment}"
-    )
-     */
     require(!assertionMethod.isNullOrEmpty()) {
       throw SignatureException("No assertion methods found in DID document")
     }
@@ -125,6 +119,30 @@ public class DidDocument(
       require(assertionMethod.contains(assertionMethodId)) {
         throw SignatureException("assertion method \"$assertionMethodId\" not found in list of assertion methods")
       }
+
+      // todo bits from jwtutil - make sure these checks are actually required
+      val did = Did.parse(assertionMethodId)
+      val didResolutionResult = DidResolvers.resolve(did.url)
+      if (didResolutionResult.didResolutionMetadata.error != null) {
+        throw SignatureException(
+          "Signature verification failed: " +
+            "Failed to resolve DID ${did.url}. " +
+            "Error: ${didResolutionResult.didResolutionMetadata.error}"
+        )
+      }
+
+      val verificationMethodIds = setOf(
+        did.url,
+        "#${did.fragment}"
+      )
+
+      didResolutionResult.didDocument?.assertionMethod?.firstOrNull {
+        verificationMethodIds.contains(it)
+      } ?: throw SignatureException(
+        "Signature verification failed: Expected kid in JWS header to dereference " +
+          "a DID Document Verification Method with an Assertion verification relationship"
+      )
+
     }
 
     val assertionMethod: VerificationMethod =

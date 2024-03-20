@@ -98,10 +98,10 @@ public class InMemoryKeyManager : KeyManager, KeyExporter, KeyImporter {
    * @param keySet A list of key representations in map format.
    * @return A list of key aliases belonging to the imported keys.
    */
-  public fun import(keySet: Iterable<Map<String, Any>>): List<String> = keySet.map {map ->
+  public fun import(keySet: Iterable<Map<String, Any>>): List<String> = keySet.map { key ->
     // todo are all keySet.value of type Any in this case a possible Jwk?
     //  we can just call toString() and call it good? am skeptical
-    val jwk = Json.parse<Jwk>(Json.stringify(map))
+    val jwk = Json.parse<Jwk>(Json.stringify(key))
     import(jwk)
   }
 

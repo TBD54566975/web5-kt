@@ -7,6 +7,7 @@ import web5.sdk.crypto.Crypto
 import web5.sdk.dids.DidResolvers
 import web5.sdk.dids.did.BearerDid
 import web5.sdk.dids.exceptions.PublicKeyJwkMissingException
+import java.security.SignatureException
 
 /**
  * Json Web Signature (JWS) is a compact signature format that is used to secure messages.
@@ -31,21 +32,21 @@ public object Jws {
     try {
       header = JwsHeader.fromBase64Url(parts[0])
     } catch (e: Exception) {
-      throw IllegalArgumentException("Malformed JWT. Failed to decode header: ${e.message}")
+      throw SignatureException("Malformed JWT. Failed to decode header: ${e.message}")
     }
 
     val payload: ByteArray
     try {
-      payload = Convert(parts[1]).toByteArray()
+      payload = Convert(parts[1], EncodingFormat.Base64Url).toByteArray()
     } catch (e: Exception) {
-      throw IllegalArgumentException("Malformed JWT. Failed to decode payload: ${e.message}")
+      throw SignatureException("Malformed JWT. Failed to decode payload: ${e.message}")
     }
 
     val signature: ByteArray
     try {
-      signature = Convert(parts[2]).toByteArray()
+      signature = Convert(parts[2], EncodingFormat.Base64Url).toByteArray()
     } catch (e: Exception) {
-      throw IllegalArgumentException("Malformed JWT. Failed to decode signature: ${e.message}")
+      throw SignatureException("Malformed JWT. Failed to decode signature: ${e.message}")
     }
 
     return DecodedJws(header, payload, signature, parts)
@@ -56,7 +57,6 @@ public object Jws {
    *
    * @param bearerDid The Bearer DID to sign with
    * @param payload The payload to sign
-   * @param header The JWS header
    * @param detached Whether to include the payload in the JWS string output
    * @return
    */
@@ -86,8 +86,9 @@ public object Jws {
     val headerBase64Url = Convert(Json.stringify(jwsHeader)).toBase64Url()
     val payloadBase64Url = Convert(payload).toBase64Url()
 
-    val toSign = "$headerBase64Url.$payloadBase64Url"
-    val toSignBytes = Convert(toSign).toByteArray()
+    val toSignBase64Url = "$headerBase64Url.$payloadBase64Url"
+    val toSignBytes = Convert(toSignBase64Url).toByteArray()
+
 
     val signatureBytes = signer.invoke(toSignBytes)
     val signatureBase64Url = Convert(signatureBytes).toBase64Url()

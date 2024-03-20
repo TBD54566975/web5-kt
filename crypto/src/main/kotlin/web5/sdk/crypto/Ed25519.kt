@@ -47,7 +47,7 @@ public object Ed25519 : KeyGenerator, Signer {
    * @return The generated private key in Jwk format.
    */
   override fun generatePrivateKey(options: KeyGenOptions?): Jwk {
-    // todo use tink to generate private key?
+    // TODO use tink to generate private key https://github.com/TBD54566975/web5-kt/issues/273
     val privateKey = OctetKeyPairGenerator(Curve.Ed25519)
       .algorithm(JWSAlgorithm.EdDSA)
       .keyIDFromThumbprint(true)

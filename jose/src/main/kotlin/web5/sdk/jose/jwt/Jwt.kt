@@ -1,18 +1,18 @@
 package web5.sdk.jose.jwt
 
-import com.fasterxml.jackson.core.JsonGenerator
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.JsonSerializer
-import com.fasterxml.jackson.databind.SerializerProvider
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import com.fasterxml.jackson.databind.annotation.JsonSerialize
+import com.fasterxml.jackson.databind.module.SimpleModule
 import web5.sdk.common.Convert
 import web5.sdk.common.EncodingFormat
 import web5.sdk.common.Json
 import web5.sdk.dids.did.BearerDid
+import web5.sdk.jose.JwtClaimsSetDeserializer
 import web5.sdk.jose.JwtClaimsSetSerializer
 import web5.sdk.jose.jws.DecodedJws
 import web5.sdk.jose.jws.Jws
 import web5.sdk.jose.jws.JwsHeader
+import java.security.SignatureException
 
 /**
  * Json Web Token (JWT) is a compact, URL-safe means of representing claims to be transferred between two parties.
@@ -33,10 +33,11 @@ public object Jwt {
     val claims: JwtClaimsSet
     try {
       val payload = Convert(decodedJws.payload).toStr()
-      val decodedPayload = Convert(payload, EncodingFormat.Base64Url).toStr()
-      claims = JwtClaimsSet.fromJson(Json.jsonMapper.readTree(decodedPayload))
+      val jwtModule = SimpleModule().addDeserializer(JwtClaimsSet::class.java, JwtClaimsSetDeserializer())
+      Json.jsonMapper.registerModule(jwtModule)
+      claims = Json.jsonMapper.readValue(payload, JwtClaimsSet::class.java)
     } catch (e: Exception) {
-      throw IllegalArgumentException(
+      throw SignatureException(
         "Malformed JWT. " +
           "Invalid base64url encoding for JWT payload. ${e.message}"
       )
@@ -59,7 +60,10 @@ public object Jwt {
    * @return The signed JWT
    */
   public fun sign(did: BearerDid, payload: JwtClaimsSet): String {
-    val payloadBytes = Convert(Json.stringify(payload)).toByteArray()
+    val jwtModule = SimpleModule().addSerializer(JwtClaimsSet::class.java, JwtClaimsSetSerializer())
+    Json.jsonMapper.registerModule(jwtModule)
+    val payloadJsonString = Json.jsonMapper.writeValueAsString(payload)
+    val payloadBytes = Convert(payloadJsonString).toByteArray()
 
     return Jws.sign(did, payloadBytes)
   }
@@ -122,6 +126,7 @@ public typealias JwtHeader = JwsHeader
  * @property misc additional claims (i.e. VerifiableCredential, VerifiablePresentation)
  */
 @JsonSerialize(using = JwtClaimsSetSerializer::class)
+@JsonDeserialize(using = JwtClaimsSetDeserializer::class)
 public class JwtClaimsSet(
   public val iss: String? = null,
   public val sub: String? = null,
@@ -133,48 +138,48 @@ public class JwtClaimsSet(
   public val misc: Map<String, Any> = emptyMap()
 ) {
 
-  public companion object {
-
-    /**
-     * Takes a JsonNode representation of a claim and builds a JwtClaimsSet.
-     *
-     * @param jsonNode The JsonNode representation of a claim
-     * @return JwtClaimsSet
-     */
-    public fun fromJson(jsonNode: JsonNode): JwtClaimsSet {
-      val reservedClaims = setOf(
-        "iss",
-        "sub",
-        "aud",
-        "exp",
-        "nbf",
-        "iat",
-        "jti"
-      )
-
-      val miscClaims: MutableMap<String, Any> = mutableMapOf()
-
-      val fields = jsonNode.fields()
-      while (fields.hasNext()) {
-        val (key, value) = fields.next()
-        if (!reservedClaims.contains(key)) {
-          miscClaims[key] = value
-        }
-      }
-
-      return JwtClaimsSet(
-        iss = jsonNode.get("iss")?.asText(),
-        sub = jsonNode.get("sub")?.asText(),
-        aud = jsonNode.get("aud")?.asText(),
-        exp = jsonNode.get("exp")?.asLong(),
-        nbf = jsonNode.get("nbf")?.asLong(),
-        iat = jsonNode.get("iat")?.asLong(),
-        jti = jsonNode.get("jti")?.asText(),
-        misc = miscClaims
-      )
-
-    }
-  }
+//  public companion object {
+//
+//    /**
+//     * Takes a JsonNode representation of a claim and builds a JwtClaimsSet.
+//     *
+//     * @param jsonNode The JsonNode representation of a claim
+//     * @return JwtClaimsSet
+//     */
+//    public fun fromJson(jsonNode: JsonNode): JwtClaimsSet {
+//      val reservedClaims = setOf(
+//        "iss",
+//        "sub",
+//        "aud",
+//        "exp",
+//        "nbf",
+//        "iat",
+//        "jti"
+//      )
+//
+//      val miscClaims: MutableMap<String, Any> = mutableMapOf()
+//
+//      val fields = jsonNode.fields()
+//      while (fields.hasNext()) {
+//        val (key, value) = fields.next()
+//        if (!reservedClaims.contains(key)) {
+//          miscClaims[key] = value
+//        }
+//      }
+//
+//      return JwtClaimsSet(
+//        iss = jsonNode.get("iss")?.asText(),
+//        sub = jsonNode.get("sub")?.asText(),
+//        aud = jsonNode.get("aud")?.asText(),
+//        exp = jsonNode.get("exp")?.asLong(),
+//        nbf = jsonNode.get("nbf")?.asLong(),
+//        iat = jsonNode.get("iat")?.asLong(),
+//        jti = jsonNode.get("jti")?.asText(),
+//        misc = miscClaims
+//      )
+//
+//    }
+//  }
 
   /**
    * Builder for JwtClaimsSet.

@@ -169,7 +169,7 @@ class VerifiablePresentationTest {
     }
 
     assertContains(
-      exception.message!!, "not found in list of assertion methods",
+      exception.message!!, "Malformed JWT. Invalid base64url encoding for JWT payload.",
     )
   }
 
@@ -249,7 +249,7 @@ class VerifiablePresentationTest {
       VerifiablePresentation.verify(vpJwt)
     }
     assertContains(
-      exception.message!!, "not found in list of assertion methods",
+      exception.message!!, "Malformed JWT. Invalid base64url encoding for JWT payload.",
     )
   }
 }

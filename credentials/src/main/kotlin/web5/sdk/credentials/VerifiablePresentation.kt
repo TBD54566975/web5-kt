@@ -3,6 +3,7 @@ package web5.sdk.credentials
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
+import web5.sdk.common.Json
 import web5.sdk.dids.did.BearerDid
 import web5.sdk.jose.jwt.Jwt
 import web5.sdk.jose.jwt.JwtClaimsSet
@@ -181,10 +182,7 @@ public class VerifiablePresentation internal constructor(public val vpDataModel:
       val vpDataModelValue = jwtPayload.misc["vp"]
         ?: throw IllegalArgumentException("jwt payload missing vp property")
 
-
-      @Suppress("UNCHECKED_CAST") // only partially unchecked. can only safely cast to Map<*, *>
-      val vpDataModelMap = vpDataModelValue as? Map<String, Any>
-        ?: throw IllegalArgumentException("expected vp property in JWT payload to be an object")
+      val vpDataModelMap = Json.parse<Map<String, Any>>(Json.stringify(vpDataModelValue))
 
       val vpDataModel = VpDataModel.fromMap(vpDataModelMap)
 

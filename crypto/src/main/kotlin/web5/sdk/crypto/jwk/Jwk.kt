@@ -64,7 +64,6 @@ public class Jwk(
     val thumbprintPayloadString = Json.stringify(thumbprintPayload)
     val thumbprintPayloadBytes = Convert(thumbprintPayloadString).toByteArray()
 
-    // todo read spec: https://datatracker.ietf.org/doc/html/rfc7638#section-3.1
     val messageDigest = MessageDigest.getInstance("SHA-256")
     val thumbprintPayloadDigest = messageDigest.digest(thumbprintPayloadBytes)
 
@@ -173,7 +172,7 @@ public class Jwk(
       if (kty == "OKP") {
         check(x != null) { "x is required for OKP keys" }
       }
-      // todo crv is required
+
       return Jwk(kty, crv, use, alg, kid,  d, x, y)
     }
   }

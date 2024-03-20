@@ -1,10 +1,20 @@
 package web5.sdk.jose
 
 import com.fasterxml.jackson.core.JsonGenerator
+import com.fasterxml.jackson.core.JsonParser
+import com.fasterxml.jackson.databind.DeserializationContext
+import com.fasterxml.jackson.databind.JsonDeserializer
+import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.JsonSerializer
 import com.fasterxml.jackson.databind.SerializerProvider
 import web5.sdk.jose.jwt.JwtClaimsSet
 
+/**
+ * JwtClaimsSet serializer.
+ *
+ * Used to serialize JwtClaimsSet into a JSON object that flattens the misc claims
+ *
+ */
 public class JwtClaimsSetSerializer : JsonSerializer<JwtClaimsSet>() {
 
   override fun serialize(jwtClaimsSet: JwtClaimsSet, gen: JsonGenerator, serializers: SerializerProvider?) {
@@ -25,4 +35,47 @@ public class JwtClaimsSetSerializer : JsonSerializer<JwtClaimsSet>() {
     gen.writeEndObject()
   }
 
+}
+
+/**
+ * JwtClaimsSet deserializer.
+ *
+ * Used to deserialize JSON object JwtClaimsSet
+ * that takes miscellaneous claims and puts them as values inside misc key
+ */
+public class JwtClaimsSetDeserializer : JsonDeserializer<JwtClaimsSet>() {
+
+  public override fun deserialize(p: JsonParser, ctxt: DeserializationContext): JwtClaimsSet {
+    val jsonNode = p.codec.readTree<JsonNode>(p)
+    val reservedClaims = setOf(
+      "iss",
+      "sub",
+      "aud",
+      "exp",
+      "nbf",
+      "iat",
+      "jti"
+    )
+
+    val miscClaims: MutableMap<String, Any> = mutableMapOf()
+
+    val fields = jsonNode.fields()
+    while (fields.hasNext()) {
+      val (key, value) = fields.next()
+      if (!reservedClaims.contains(key)) {
+        miscClaims[key] = value
+      }
+    }
+
+    return JwtClaimsSet(
+      iss = jsonNode.get("iss")?.asText(),
+      sub = jsonNode.get("sub")?.asText(),
+      aud = jsonNode.get("aud")?.asText(),
+      exp = jsonNode.get("exp")?.asLong(),
+      nbf = jsonNode.get("nbf")?.asLong(),
+      iat = jsonNode.get("iat")?.asLong(),
+      jti = jsonNode.get("jti")?.asText(),
+      misc = miscClaims
+    )
+  }
 }

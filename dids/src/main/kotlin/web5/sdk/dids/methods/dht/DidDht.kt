@@ -486,7 +486,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) {
 
         verificationMethodsById[verificationMethod.id] = verificationMethodId
 
-        // todo dropping support for ES256?
+        // TODO support Jwa.ES256 alg https://github.com/TBD54566975/web5-kt/issues/272
         val keyType = when (publicKeyJwk.alg) {
           Jwa.EdDSA.name -> 0
           Jwa.ES256K.name -> 1
@@ -629,7 +629,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) {
     val verificationMethodId = data["id"]!!
     val keyBytes = Convert(data["k"]!!, EncodingFormat.Base64Url).toByteArray()
 
-    // TODO(gabe): support other key types
+    // TODO(gabe): support other key types https://github.com/TBD54566975/web5-kt/issues/272
     val publicKeyJwk = when (data["t"]!!) {
       "0" -> Ed25519.bytesToPublicKey(keyBytes)
       "1" -> Secp256k1.bytesToPublicKey(keyBytes)

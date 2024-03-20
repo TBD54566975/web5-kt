@@ -173,7 +173,7 @@ public class Convert<T>(private val value: T, private val kind: EncodingFormat? 
           EncodingFormat.Base58Btc -> Base58Btc.decode(this.value)
           EncodingFormat.Base64Url -> B64URL_DECODER.decode(this.value)
           EncodingFormat.ZBase32 -> ZBase32.decode(this.value)
-          null -> this.value.toByteArray()
+          null -> this.value.toByteArray() // todo do we need Charset_UTF8 here?
         }
       }
 

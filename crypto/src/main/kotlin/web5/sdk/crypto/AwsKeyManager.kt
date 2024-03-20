@@ -132,8 +132,6 @@ public class AwsKeyManager @JvmOverloads constructor(
       is ECPublicKey -> {
         val (x, y) = extractBase64UrlXYFromECPublicKey(publicKey)
         // todo how to get the curve name out of java.security.publicKey?
-        //  publicKey.params.curve.toString() gives me toString() value of the curve type
-        //  here tried casting it as ECNamedCurveSpec of bouncy castle and get name
         //  not sure if correct.
         val namedCurve = publicKey as ECNamedCurveSpec
         Jwk.Builder("EC", namedCurve.name)
@@ -248,7 +246,6 @@ public class AwsKeyManager @JvmOverloads constructor(
   /**
    * KMS returns the signature encoded as ASN.1 DER. Convert to the "R+S" concatenation format required by JWS.
    * https://www.rfc-editor.org/rfc/rfc7515#appendix-A.3.1
-   * // todo how to eject from JWSAlgorithm here? need to write ECDSA.getSignatureByteArrayLength and transcodeSignatureToConcat?
    */
   private fun transcodeDerSignatureToConcat(derSignature: ByteArray, algorithm: JWSAlgorithm): ByteArray {
     val signatureLength = ECDSA.getSignatureByteArrayLength(algorithm)
