@@ -1,11 +1,8 @@
 package web5.sdk.dids
 
-import com.nimbusds.jose.jwk.JWK
-import foundation.identity.did.DID
-import foundation.identity.did.DIDDocument
-import foundation.identity.did.VerificationMethod
 import web5.sdk.crypto.KeyManager
-import java.security.SignatureException
+import web5.sdk.dids.didcore.DidUri
+import web5.sdk.dids.exceptions.PublicKeyJwkMissingException
 
 /**
  * A base abstraction for Decentralized Identifiers (DID) compliant with the W3C DID standard.
@@ -171,35 +168,16 @@ public interface DidMethod<T : Did, O : CreateDidOptions> {
   public fun load(uri: String, keyManager: KeyManager): T
 }
 
-/**
- * Finds the first available assertion method from the [DIDDocument]. When [assertionMethodId]
- * is null, the function will return the first available assertion method.
- */
-@JvmOverloads
-public fun DIDDocument.findAssertionMethodById(assertionMethodId: String? = null): VerificationMethod {
-  require(!assertionMethodVerificationMethodsDereferenced.isNullOrEmpty()) {
-    throw SignatureException("No assertion methods found in DID document")
-  }
-
-  val assertionMethod: VerificationMethod = when {
-    assertionMethodId != null -> assertionMethodVerificationMethodsDereferenced.find {
-      it.id.toString() == assertionMethodId
-    }
-
-    else -> assertionMethodVerificationMethodsDereferenced.firstOrNull()
-  } ?: throw SignatureException("assertion method \"$assertionMethodId\" not found")
-  return assertionMethod
-}
 
 internal fun <T : Did, O : CreateDidOptions> DidMethod<T, O>.validateKeyMaterialInsideKeyManager(
   did: String, keyManager: KeyManager) {
-  require(DID.fromString(did).methodName == methodName) {
+  require(DidUri.parse(did).method == methodName) {
     "did must start with the prefix \"did:$methodName\", but got $did"
   }
   val didResolutionResult = resolve(did)
 
-  didResolutionResult.didDocument!!.allVerificationMethods.forEach {
-    val publicKeyJwk = JWK.parse(it.publicKeyJwk)
+  didResolutionResult.didDocument!!.verificationMethod?.forEach {
+    val publicKeyJwk = it.publicKeyJwk ?: throw PublicKeyJwkMissingException("publicKeyJwk is null")
     val keyAlias = keyManager.getDeterministicAlias(publicKeyJwk)
     keyManager.getPublicKey(keyAlias)
   }

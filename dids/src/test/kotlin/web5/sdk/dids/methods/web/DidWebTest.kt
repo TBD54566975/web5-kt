@@ -56,7 +56,7 @@ class DidWebTest {
     }
     for (did in didsToTest) {
       val result = api.resolve(did)
-      assertEquals(did, result.didDocument!!.id.toString())
+      assertEquals(did, result.didDocument!!.id)
     }
   }
 
@@ -143,7 +143,7 @@ class DidWebTest {
   }
 }
 
-class Web5TestVectorsDidWebTest {
+class Web5TestVectorsDidWeb {
   data class ResolveTestInput(
     val didUri: String,
     val mockServer: Map<String, JsonNode>?,

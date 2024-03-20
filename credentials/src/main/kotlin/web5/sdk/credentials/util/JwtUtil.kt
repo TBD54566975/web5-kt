@@ -3,22 +3,22 @@ package web5.sdk.credentials.util
 import com.nimbusds.jose.JOSEObjectType
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.JWSHeader
-import com.nimbusds.jose.jwk.JWK
 import com.nimbusds.jose.util.Base64URL
 import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jwt.JWTParser
 import com.nimbusds.jwt.SignedJWT
-import foundation.identity.did.DIDURL
 import web5.sdk.common.Convert
 import web5.sdk.crypto.Crypto
 import web5.sdk.dids.Did
 import web5.sdk.dids.DidResolvers
+import web5.sdk.dids.didcore.DidUri
 import web5.sdk.dids.exceptions.DidResolutionException
-import web5.sdk.dids.findAssertionMethodById
+import web5.sdk.dids.exceptions.PublicKeyJwkMissingException
+import java.net.URI
 import java.security.SignatureException
 
-private const val JsonWebKey2020 = "JsonWebKey2020"
-private const val JsonWebKey = "JsonWebKey"
+private const val JSON_WEB_KEY_2020 = "JsonWebKey2020"
+private const val JSON_WEB_KEY = "JsonWebKey"
 
 /**
  * Util class for common shared JWT methods.
@@ -32,8 +32,8 @@ public object JwtUtil {
    * the [did]. The result is a String in a JWT format.
    *
    * @param did The [Did] used to sign the credential.
-   * @param assertionMethodId An optional identifier for the assertion method that will be used for verification of the
-   *        produces signature.
+   * @param assertionMethodId An optional identifier for the assertion method
+   *        that will be used for verification of the produced signature.
    * @param jwtPayload the payload that is getting signed by the [Did]
    * @return The JWT representing the signed verifiable credential.
    *
@@ -55,16 +55,15 @@ public object JwtUtil {
 
     val assertionMethod = didDocument.findAssertionMethodById(assertionMethodId)
 
-    // TODO: ensure that publicKeyJwk is not null
-    val publicKeyJwk = JWK.parse(assertionMethod.publicKeyJwk)
+    val publicKeyJwk = assertionMethod.publicKeyJwk ?: throw PublicKeyJwkMissingException("publicKeyJwk is null.")
     val keyAlias = did.keyManager.getDeterministicAlias(publicKeyJwk)
 
     // TODO: figure out how to make more reliable since algorithm is technically not a required property of a JWK
     val algorithm = publicKeyJwk.algorithm
     val jwsAlgorithm = JWSAlgorithm.parse(algorithm.toString())
 
-    val kid = when (assertionMethod.id.isAbsolute) {
-      true -> assertionMethod.id.toString()
+    val kid = when (URI.create(assertionMethod.id).isAbsolute) {
+      true -> assertionMethod.id
       false -> "${did.uri}${assertionMethod.id}"
     }
 
@@ -109,13 +108,14 @@ public object JwtUtil {
     }
 
     val verificationMethodId = jwt.header.keyID
-    val parsedDidUrl = DIDURL.fromString(verificationMethodId) // validates vm id which is a DID URL
+    val didUri = DidUri.Parser.parse(verificationMethodId)
 
-    val didResolutionResult = DidResolvers.resolve(parsedDidUrl.did.didString)
+    val didResolutionResult = DidResolvers.resolve(didUri.uri)
+
     if (didResolutionResult.didResolutionMetadata.error != null) {
       throw SignatureException(
         "Signature verification failed: " +
-          "Failed to resolve DID ${parsedDidUrl.did.didString}. " +
+          "Failed to resolve DID ${didUri.url}. " +
           "Error: ${didResolutionResult.didResolutionMetadata.error}"
       )
     }
@@ -123,31 +123,52 @@ public object JwtUtil {
     // create a set of possible id matches. the DID spec allows for an id to be the entire `did#fragment`
     // or just `#fragment`. See: https://www.w3.org/TR/did-core/#relative-did-urls.
     // using a set for fast string comparison. DIDs can be lonnng.
-    val verificationMethodIds = setOf(parsedDidUrl.didUrlString, "#${parsedDidUrl.fragment}")
-    val assertionMethods = didResolutionResult.didDocument?.assertionMethodVerificationMethodsDereferenced
-    val assertionMethod = assertionMethods?.firstOrNull {
-      val id = it.id.toString()
-      verificationMethodIds.contains(id)
-    }
-      ?: throw SignatureException(
+    val verificationMethodIds = setOf(
+      didUri.url,
+      "#${didUri.fragment}"
+    )
+
+    didResolutionResult.didDocument?.assertionMethod?.firstOrNull {
+      verificationMethodIds.contains(it)
+    } ?: throw SignatureException(
+      "Signature verification failed: Expected kid in JWS header to dereference " +
+        "a DID Document Verification Method with an Assertion verification relationship"
+    )
+
+    // TODO: this will be cleaned up as part of BearerDid PR
+    val assertionVerificationMethod = didResolutionResult
+      .didDocument
+      ?.verificationMethod
+      ?.find { verificationMethodIds.contains(it.id) }
+
+    if (assertionVerificationMethod == null) {
+      throw SignatureException(
         "Signature verification failed: Expected kid in JWS header to dereference " +
           "a DID Document Verification Method with an Assertion verification relationship"
       )
+    }
 
-    require((assertionMethod.isType(JsonWebKey2020) || assertionMethod.isType(JsonWebKey))  &&
-      assertionMethod.publicKeyJwk != null) {
+    require(
+      (assertionVerificationMethod.isType(JSON_WEB_KEY_2020) || assertionVerificationMethod.isType(JSON_WEB_KEY)) &&
+        assertionVerificationMethod.publicKeyJwk != null
+    ) {
       throw SignatureException(
         "Signature verification failed: Expected kid in JWS header to dereference " +
-          "a DID Document Verification Method of type $JsonWebKey2020 or $JsonWebKey with a publicKeyJwk"
+          "a DID Document Verification Method of type $JSON_WEB_KEY_2020 or $JSON_WEB_KEY with a publicKeyJwk"
       )
     }
 
-    val publicKeyMap = assertionMethod.publicKeyJwk
-    val publicKeyJwk = JWK.parse(publicKeyMap)
-
+    val publicKeyJwk =
+      assertionVerificationMethod.publicKeyJwk ?: throw PublicKeyJwkMissingException("publicKeyJwk is null")
     val toVerifyBytes = jwt.signingInput
     val signatureBytes = jwt.signature.decode()
 
-    Crypto.verify(publicKeyJwk, toVerifyBytes, signatureBytes, jwt.header.algorithm)
+    Crypto.verify(
+      publicKeyJwk,
+      toVerifyBytes,
+      signatureBytes
+    )
   }
+
+
 }

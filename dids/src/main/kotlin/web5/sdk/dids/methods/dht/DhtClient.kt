@@ -131,17 +131,15 @@ internal class DhtClient(
     fun createBep44PutRequest(manager: KeyManager, keyAlias: String, message: Message): Bep44Message {
       // get the public key to verify it is an Ed25519 key
       val pubKey = manager.getPublicKey(keyAlias)
-      require(
-        pubKey.keyType == Ed25519.keyType &&
-          pubKey.algorithm == Ed25519.algorithm
-      ) {
+      val curve = pubKey.toJSONObject()["crv"]
+      require(curve == Ed25519.curve.name) {
         "Must supply an Ed25519 key"
       }
 
       // set the sequence number to the current time in seconds
       val seq = System.currentTimeMillis() / 1000
       val v = message.toWire()
-      require(!v.isEmpty()) {
+      require(v.isNotEmpty()) {
         "Message must be not be empty"
       }
       return signBep44Message(manager, keyAlias, seq, v)
@@ -184,10 +182,9 @@ internal class DhtClient(
     fun signBep44Message(manager: KeyManager, keyAlias: String, seq: Long, v: ByteArray): Bep44Message {
       // get the public key to verify it is an Ed25519 key
       val pubKey = manager.getPublicKey(keyAlias)
-      require(
-        pubKey.keyType == Ed25519.keyType &&
-          pubKey.algorithm == Ed25519.algorithm
-      ) {
+
+      val curve = pubKey.toJSONObject()["crv"]
+      require(curve == Ed25519.curve.name) {
         "Must supply an Ed25519 key"
       }
 

@@ -2,8 +2,10 @@ package web5.sdk.dids
 
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import web5.sdk.crypto.InMemoryKeyManager
-import web5.sdk.dids.methods.ion.DidIon
+import web5.sdk.dids.methods.dht.DidDht
+import kotlin.test.assertEquals
 
 class DidResolversTest {
 
@@ -14,10 +16,25 @@ class DidResolversTest {
   }
 
   @Test
-  fun `resolving a default ion did contains assertion method`() {
-    val ionDid = DidIon.create(InMemoryKeyManager())
+  fun `resolving a default dht did contains assertion method`() {
+    val dhtDid = DidDht.create(InMemoryKeyManager())
 
-    val resolutionResult = DidResolvers.resolve(ionDid.uri)
-    assertNotNull(resolutionResult.didDocument!!.assertionMethodVerificationMethodsDereferenced)
+    val resolutionResult = DidResolvers.resolve(dhtDid.uri)
+    assertNotNull(resolutionResult.didDocument!!.assertionMethod)
+  }
+
+  @Test
+  fun `resolving an invalid did throws an exception`() {
+    val exception = assertThrows<IllegalArgumentException> {
+      DidResolvers.resolve("did:invalid:123")
+    }
+    assertEquals("Resolving did:invalid not supported", exception.message)
+  }
+
+  @Test
+  fun `addResolver adds a custom resolver`() {
+    val resolver: DidResolver = { _, _ -> DidResolutionResult(null, null) }
+    DidResolvers.addResolver("test", resolver)
+    assertNotNull(DidResolvers.resolve("did:test:123"))
   }
 }

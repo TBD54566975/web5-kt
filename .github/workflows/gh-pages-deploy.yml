@@ -15,14 +15,11 @@ jobs:
         ]
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-java@v1
-        with:
-          java-version: 17
-      - uses: gradle/gradle-build-action@v2
-        with:
-          gradle-home-cache-cleanup: true
+      # https://cashapp.github.io/hermit/usage/ci/
+      - name: Init Hermit
+        uses: cashapp/activate-hermit@v1
       - name: Build html
-        run: ./gradlew dokkaHtmlMultiModule --no-daemon --stacktrace
+        run: gradle dokkaHtmlMultiModule --no-daemon --stacktrace
         working-directory: .
       - name: Upload artifact
         uses: actions/upload-artifact@v2

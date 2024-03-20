@@ -1,6 +1,5 @@
 package web5.sdk.dids.methods.dht
 
-import com.nimbusds.jose.jwk.Curve
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
 import io.ktor.http.HttpMethod
@@ -10,9 +9,9 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
+import web5.sdk.crypto.AlgorithmId
 import web5.sdk.crypto.Ed25519
 import web5.sdk.crypto.InMemoryKeyManager
-import web5.sdk.crypto.Secp256k1
 import web5.sdk.dids.methods.dht.DhtClient.Companion.bencode
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -97,7 +96,7 @@ class DhtTest {
     @Test
     fun `sign and verify a BEP44 message`() {
       val manager = InMemoryKeyManager()
-      val keyAlias = manager.generatePrivateKey(Ed25519.algorithm, Curve.Ed25519)
+      val keyAlias = manager.generatePrivateKey(AlgorithmId.Ed25519)
 
       val seq = 1L
       val v = "Hello World!".toByteArray()
@@ -120,7 +119,7 @@ class DhtTest {
     @Test
     fun `sign BEP44 message with wrong key type`() {
       val manager = InMemoryKeyManager()
-      val keyAlias = manager.generatePrivateKey(Secp256k1.algorithm, Curve.SECP256K1)
+      val keyAlias = manager.generatePrivateKey(AlgorithmId.secp256k1)
 
       val seq = 1L
       val v = "Hello World!".toByteArray()
@@ -138,14 +137,15 @@ class DhtTest {
     @Test
     fun `create and parse a bep44 put request`() {
       val manager = InMemoryKeyManager()
-      val did = DidDht.create(manager)
+      val diddht = DidDhtApi {}
+      val did = diddht.create(manager)
 
       require(did.didDocument != null)
 
-      val kid = did.didDocument!!.verificationMethods?.first()?.publicKeyJwk?.get("kid")?.toString()
+      val kid = did.didDocument!!.verificationMethod?.first()?.publicKeyJwk?.keyID?.toString()
       assertNotNull(kid)
 
-      val message = did.didDocument?.let { DidDht.toDnsPacket(it) }
+      val message = did.didDocument?.let { diddht.toDnsPacket(it) }
       assertNotNull(message)
 
       val bep44Message = DhtClient.createBep44PutRequest(manager, kid, message)
@@ -159,74 +159,46 @@ class DhtTest {
 
     @Test
     fun `put and get a bep44 message to a pkarr relay`() {
-      val dht = DhtClient(engine = mockEngine())
+      val dhtClient = DhtClient()
       val manager = InMemoryKeyManager()
-      val did = DidDht.create(manager)
+      val diddht = DidDhtApi {}
+      val did = diddht.create(manager)
 
       require(did.didDocument != null)
 
-      val kid = did.didDocument!!.verificationMethods?.first()?.publicKeyJwk?.get("kid")?.toString()
+      val kid = did.didDocument!!.verificationMethod?.first()?.publicKeyJwk?.keyID?.toString()
       assertNotNull(kid)
 
-      val message = did.didDocument?.let { DidDht.toDnsPacket(it) }
+      val message = did.didDocument?.let { diddht.toDnsPacket(it) }
       assertNotNull(message)
 
       val bep44Message = DhtClient.createBep44PutRequest(manager, kid, message)
       assertNotNull(bep44Message)
 
-      assertDoesNotThrow { dht.pkarrPut(did.suffix(), bep44Message) }
+      assertDoesNotThrow { dhtClient.pkarrPut(did.suffix(), bep44Message) }
 
-      val retrievedMessage = assertDoesNotThrow { dht.pkarrGet(did.suffix()) }
+      val retrievedMessage = assertDoesNotThrow { dhtClient.pkarrGet(did.suffix()) }
       assertNotNull(retrievedMessage)
     }
 
     @Test
     fun `bad pkarr put`() {
-      val dht = DhtClient(engine = mockEngine())
-      val manager = InMemoryKeyManager()
-      val did = DidDht.create(manager)
+      val bep = Bep44Message(
+        v = "v".toByteArray(),
+        sig = "s".repeat(64).toByteArray(),
+        k = "k".repeat(32).toByteArray(),
+        seq = 1
+      )
 
-      require(did.didDocument != null)
-
-      val kid = did.didDocument!!.verificationMethods?.first()?.publicKeyJwk?.get("kid")?.toString()
-      assertNotNull(kid)
-
-      val message = did.didDocument?.let { DidDht.toDnsPacket(it) }
-      assertNotNull(message)
-
-      val bep44Message = DhtClient.createBep44PutRequest(manager, kid, message)
-      assertNotNull(bep44Message)
-
-      val exception = assertThrows<IllegalArgumentException> { dht.pkarrPut("bad", bep44Message) }
+      val exception = assertThrows<IllegalArgumentException> { DhtClient().pkarrPut("bad", bep) }
       assertEquals("Identifier must be a z-base-32 encoded Ed25519 public key", exception.message)
     }
 
     @Test
     fun `bad pkarr get`() {
-      val dht = DhtClient(engine = mockEngine())
 
-      val exception = assertThrows<IllegalArgumentException> { dht.pkarrGet("bad") }
+      val exception = assertThrows<IllegalArgumentException> { DhtClient().pkarrGet("bad") }
       assertEquals("Identifier must be a z-base-32 encoded Ed25519 public key", exception.message)
-    }
-
-    @OptIn(ExperimentalStdlibApi::class)
-    private fun mockEngine() = MockEngine { request ->
-      val hexResponse = "1ad37b5b8ed6c5fc87b64fe4849d81e7446c31b36138d03b9f6d68837123d6ae6aedf91e0340a7c83cd53b95a60" +
-        "0ffe4a2264c3c677d7d16ca6bd30e05fa820c00000000659dd40e000004000000000200000000035f6b30045f646964000010000100" +
-        "001c2000373669643d303b743d303b6b3d63506262357357792d553547333854424a79504d6f4b714632746f4c563563395a3177484" +
-        "56b7448764c6fc0100010000100001c20002322766d3d6b303b617574683d6b303b61736d3d6b303b696e763d6b303b64656c3d6b30"
-
-      when {
-        request.url.encodedPath == "/" && request.method == HttpMethod.Put -> {
-          respond("Success", HttpStatusCode.OK)
-        }
-
-        request.url.encodedPath.matches("/\\w+".toRegex()) && request.method == HttpMethod.Get -> {
-          respond(hexResponse.hexToByteArray(), HttpStatusCode.OK)
-        }
-
-        else -> respond("Success", HttpStatusCode.OK)
-      }
     }
   }
 }

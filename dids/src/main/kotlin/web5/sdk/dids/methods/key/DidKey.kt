@@ -1,13 +1,8 @@
 package web5.sdk.dids.methods.key
 
-import com.nimbusds.jose.Algorithm
-import com.nimbusds.jose.JWSAlgorithm
-import com.nimbusds.jose.jwk.Curve
-import foundation.identity.did.DID
-import foundation.identity.did.DIDDocument
-import foundation.identity.did.VerificationMethod
 import io.ipfs.multibase.Multibase
 import web5.sdk.common.Varint
+import web5.sdk.crypto.AlgorithmId
 import web5.sdk.crypto.Crypto
 import web5.sdk.crypto.KeyManager
 import web5.sdk.crypto.Secp256k1
@@ -16,18 +11,18 @@ import web5.sdk.dids.Did
 import web5.sdk.dids.DidMethod
 import web5.sdk.dids.DidResolutionResult
 import web5.sdk.dids.ResolveDidOptions
+import web5.sdk.dids.didcore.DidUri
+import web5.sdk.dids.didcore.DIDDocument
+import web5.sdk.dids.didcore.Purpose
+import web5.sdk.dids.didcore.VerificationMethod
 import web5.sdk.dids.validateKeyMaterialInsideKeyManager
-import java.net.URI
 
 /**
  * Specifies options for creating a new "did:key" Decentralized Identifier (DID).
  *
- * @property algorithm Specifies the algorithm to be used for key creation.
- *                     Defaults to ES256K (Elliptic Curve Digital Signature Algorithm with SHA-256 and secp256k1 curve).
- * @property curve Specifies the elliptic curve to be used with the algorithm.
- *                 Optional and can be null if the algorithm does not require an explicit curve specification.
- *
- * @constructor Creates an instance of [CreateDidKeyOptions] with the provided [algorithm] and [curve].
+ * @property algorithmId Specifies the algorithmId to be used for key creation.
+ *                       Defaults to ES256K (Elliptic Curve Digital Signature Algorithm with SHA-256 and secp256k1 curve).
+ * @constructor Creates an instance of [CreateDidKeyOptions] with the provided [algorithmId].
  *
  * ### Usage Example:
  * ```
@@ -36,8 +31,7 @@ import java.net.URI
  * ```
  */
 public class CreateDidKeyOptions(
-  public val algorithm: Algorithm = JWSAlgorithm.ES256K,
-  public val curve: Curve? = null
+  public val algorithmId: AlgorithmId = AlgorithmId.secp256k1,
 ) : CreateDidOptions
 
 /**
@@ -78,7 +72,7 @@ public class DidKey(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
      * **Note**: Defaults to ES256K if no options are provided
      *
      * @param keyManager A [KeyManager] instance where the new key will be stored.
-     * @param options Optional parameters ([CreateDidKeyOptions]) to specify algorithm and curve during key creation.
+     * @param options Optional parameters ([CreateDidKeyOptions]) to specify algorithmId during key creation.
      * @return A [DidKey] instance representing the newly created "did:key" DID.
      *
      * @throws UnsupportedOperationException if the specified curve is not supported.
@@ -86,16 +80,16 @@ public class DidKey(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
     override fun create(keyManager: KeyManager, options: CreateDidKeyOptions?): DidKey {
       val opts = options ?: CreateDidKeyOptions()
 
-      val keyAlias = keyManager.generatePrivateKey(opts.algorithm, opts.curve)
+      val keyAlias = keyManager.generatePrivateKey(opts.algorithmId)
       val publicKey = keyManager.getPublicKey(keyAlias)
       var publicKeyBytes = Crypto.publicKeyToBytes(publicKey)
 
-      if (opts.algorithm == JWSAlgorithm.ES256K) {
+      if (opts.algorithmId == AlgorithmId.secp256k1) {
         publicKeyBytes = Secp256k1.compressPublicKey(publicKeyBytes)
       }
 
-      val multiCodec = Crypto.getAlgorithmMultiCodec(opts.algorithm, opts.curve)
-        ?: throw UnsupportedOperationException("${opts.curve} curve not supported")
+      val multiCodec = Crypto.getAlgorithmMultiCodec(opts.algorithmId)
+        ?: throw UnsupportedOperationException("${opts.algorithmId.curveName} curve not supported")
 
       val multiCodecBytes = Varint.encode(multiCodec)
       val idBytes = multiCodecBytes + publicKeyBytes
@@ -133,11 +127,11 @@ public class DidKey(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
      * @throws IllegalArgumentException if the provided DID does not conform to the "did:key" method.
      */
     override fun resolve(did: String, options: ResolveDidOptions?): DidResolutionResult {
-      val parsedDid = DID.fromString(did)
+      val parsedDidUri = DidUri.parse(did)
 
-      require(parsedDid.methodName == methodName) { throw IllegalArgumentException("expected did:key") }
+      require(parsedDidUri.method == methodName) { throw IllegalArgumentException("expected did:key") }
 
-      val id = parsedDid.methodSpecificId
+      val id = parsedDidUri.id
       val idBytes = Multibase.decode(id)
       val (multiCodec, numBytes) = Varint.decode(idBytes)
 
@@ -150,26 +144,25 @@ public class DidKey(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
 
       val publicKeyJwk = keyGenerator.bytesToPublicKey(publicKeyBytes)
 
-      val verificationMethodId = URI.create("$did#$id")
-      val verificationMethod = VerificationMethod.builder()
+      val verificationMethodId = "${parsedDidUri.uri}#$id"
+      val verificationMethod = VerificationMethod.Builder()
         .id(verificationMethodId)
-        .publicKeyJwk(publicKeyJwk.toJSONObject())
-        .controller(URI(did))
+        .publicKeyJwk(publicKeyJwk)
+        .controller(did)
         .type("JsonWebKey2020")
         .build()
 
-      val verificationMethodRef = VerificationMethod.builder()
-        .id(verificationMethodId)
-        .build()
-
-      val didDocument = DIDDocument.builder()
-        .id(URI(did))
-        .verificationMethod(verificationMethod)
-        .assertionMethodVerificationMethod(verificationMethodRef)
-        .authenticationVerificationMethod(verificationMethodRef)
-        .capabilityDelegationVerificationMethods(listOf(verificationMethodRef))
-        .capabilityInvocationVerificationMethod(verificationMethodRef)
-        .keyAgreementVerificationMethod(verificationMethodRef)
+      val didDocument = DIDDocument.Builder()
+        .id(did)
+        .verificationMethodForPurposes(
+          verificationMethod,
+          listOf(
+            Purpose.AssertionMethod,
+            Purpose.Authentication,
+            Purpose.KeyAgreement,
+            Purpose.CapabilityDelegation,
+            Purpose.CapabilityInvocation
+          ))
         .build()
 
       return DidResolutionResult(didDocument = didDocument, context = "https://w3id.org/did-resolution/v1")
