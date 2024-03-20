@@ -33,6 +33,7 @@ import web5.sdk.dids.didcore.VerificationMethod
 import web5.sdk.dids.exceptions.InvalidIdentifierException
 import web5.sdk.dids.exceptions.InvalidIdentifierSizeException
 import web5.sdk.dids.exceptions.InvalidMethodNameException
+import web5.sdk.dids.exceptions.ParserException
 import web5.sdk.dids.exceptions.PkarrRecordNotFoundException
 import web5.sdk.dids.exceptions.PublicKeyJwkMissingException
 import web5.sdk.dids.validateKeyMaterialInsideKeyManager
