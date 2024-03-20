@@ -11,7 +11,7 @@
 # If triggered from workflow_dispatch, you may select a branch or tag to
 # deploy as an internal "release" (or SNAPSHOT, depending upon the version in the POM)
 # to TBD's Artifactory instance by not specifying a version.
-name: Build, Test, and Publish to TBD Artifactory
+name: SDK Kotlin CI
 
 on:
   workflow_dispatch:

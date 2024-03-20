@@ -2,7 +2,7 @@ name: Publish Tests Report
 
 on:
   workflow_run:
-    workflows: ["Build, Test, and Deploy SNAPSHOT"]
+    workflows: ["SDK Kotlin CI"]
     types:
       - completed
 

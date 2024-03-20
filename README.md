@@ -201,7 +201,7 @@ In Kotlin we use the SNAPSHOT convention to build and publish a pre-release pack
 
 These SNAPSHOTs are generated and published whenever there's a new push to `main`. If you want to manually kick that off to preview some changes introduced in a PR branch:
 
-1. Open the [Build, Test, and Publish to TBD Artifactory Workflow](https://github.com/TBD54566975/web5-kt/actions/workflows/build-test-publish-tbd-artifactory.yml), press the **Run workflow button** selecting the branch you want to generate the snapshot from.
+1. Open the [SDK Kotlin CI Workflow](https://github.com/TBD54566975/web5-kt/actions/workflows/ci.yml), press the **Run workflow button** selecting the branch you want to generate the snapshot from.
 
 2. In the version field, insert the current version, a short meaningful identifier and the `-SNAPSHOT` suffix, ie:
 
@@ -219,7 +219,7 @@ You **MUST** use the `-SNAPSHOT` suffix, otherwise it's not a valid preview `SNA
 
 To release a new version, execute the following steps:
 
-1. Open the [Release and Publish](https://github.com/TBD54566975/web5-kt/actions/workflows/release-and-publish.yml), press the **Run workflow button** selecting the branch you want to generate the snapshot from.
+1. Open the [Release and Publish](https://github.com/TBD54566975/web5-kt/actions/workflows/release.yml), press the **Run workflow button** selecting the branch you want to generate the snapshot from.
 
 2. In the version field, declare the version to be released. ie:
 
