@@ -166,18 +166,8 @@ does not yet support multimodule builds. To run locally, obtain the Dokka CLI.
 Run from the root of this repo:
 
 ```shell
-wget -O dokka-cli.jar https://repo1.maven.org/maven2/org/jetbrains/dokka/dokka-cli/1.9.20/dokka-cli-1.9.20.jar; \
-wget -O dokka-base.jar https://repo1.maven.org/maven2/org/jetbrains/dokka/dokka-base/1.9.20/dokka-base-1.9.20.jar; \
-wget -O analysis-kotlin-descriptors.jar https://repo1.maven.org/maven2/org/jetbrains/dokka/analysis-kotlin-descriptors/1.9.20/analysis-kotlin-descriptors-1.9.20.jar; \
-wget -O kotlinx-html-jvm.jar https://repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-html-jvm/0.8.0/kotlinx-html-jvm-0.8.0.jar; \
-wget -O freemarker.jar https://repo1.maven.org/maven2/org/freemarker/freemarker/2.3.31/freemarker-2.3.31.jar
-```
-
-This will give you the Dokka CLI and all its dependencies. Dokka configuration is
-located at `./dokka-configuration.json`. To generate the HTML docs, run:
-
-```shell
-java -jar ./dokka-cli.jar dokka-configuration.json
+# it will download the jars into the `target/dokka-cli` folder and generate the docs
+./scripts/dokka.sh
 ```
 
 These will be available in `target/apidocs`.
@@ -239,22 +229,22 @@ To release a new version, execute the following steps:
 
    - **Choose an appropriate version number based on semver rules. Remember that versions are immutable once published to Maven Central; they cannot be altered or removed.**
 
-2. Press the **Run workflow button** and leave the main branch selected (unless its a rare case where you don't want to build from the main branch for the release).
+3. Press the **Run workflow button** and leave the main branch selected (unless its a rare case where you don't want to build from the main branch for the release).
 
-3. Run workflow! This:
+4. Run workflow! This:
 
-* Builds
-* Tests
-* Creates artifacts for binaries and sources
-* Signs artifacts
-* Uploads artifacts to TBD Artifactory
-* Tags git with release number "v$version"
-* Keeps development version in the pom.xml to 0.0.0-main-SNAPSHOT
-* Pushes changes to git
-* Triggers job to:
-  * Build from tag and upload to Maven Central
-  * Create GitHub Release "v$version"built and **published to maven central**, **docs will be published** (see below) and **the GitHub release will be automatically generated**!
-  * Publish API Docs 
+- Builds
+- Tests
+- Creates artifacts for binaries and sources
+- Signs artifacts
+- Uploads artifacts to TBD Artifactory
+- Tags git with release number "v$version"
+- Keeps development version in the pom.xml to 0.0.0-main-SNAPSHOT
+- Pushes changes to git
+- Triggers job to:
+  - Build from tag and upload to Maven Central
+  - Create GitHub Release "v$version"built and **published to maven central**, **docs will be published** (see below) and **the GitHub release will be automatically generated**!
+  - Publish API Docs
 
 ### Publishing a `SNAPSHOT` from a Local Dev Machine
 
@@ -262,7 +252,7 @@ Please take care to only publish `-SNAPSHOT` builds (ie.
 when the `<version>` field of the `pom.xml` ends in
 `-SNAPSHOT`.) unless there's good reason
 to deploy a non-`SNAPSHOT` release. Releases are typically handled via automation
-in GitHub Actions s documented above. 
+in GitHub Actions s documented above.
 
 To deploy to TBD's Artifactory instance for sharing with others, you
 need your Artifactory username and password handy (available to TBD-employed engineers).
@@ -286,7 +276,7 @@ mvn deploy --settings .maven_settings.xml
 You may need to update the `web5-spec` submodule after pulling.
 
 ```sh
-git pull; \
+git pull
 git submodule update
 ```
 
@@ -296,9 +286,9 @@ If you have made changes to the `web5-spec` submodule, you should push your chan
 pushing changes to `web5-kt`.
 
 ```sh
-cd web5-spec; \
-git push; \
-cd ..; \
+cd web5-spec
+git push
+cd ..
 git push
 ```
 

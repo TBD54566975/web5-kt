@@ -7,7 +7,10 @@
   "outputDir": "./target/apidocs",
   "sourceSets": [
     {
-      "documentedVisibilities": ["PUBLIC", "PROTECTED"],
+      "documentedVisibilities": [
+        "PUBLIC",
+        "PROTECTED"
+      ],
       "sourceSetID": {
         "scopeId": "web5",
         "sourceSetName": "main"
@@ -27,9 +30,9 @@
     }
   ],
   "pluginsClasspath": [
-    "./dokka-base.jar",
-    "./kotlinx-html-jvm.jar",
-    "./analysis-kotlin-descriptors.jar",
-    "./freemarker.jar"
+    "./target/dokka-cli/dokka-base.jar",
+    "./target/dokka-cli/kotlinx-html-jvm.jar",
+    "./target/dokka-cli/analysis-kotlin-descriptors.jar",
+    "./target/dokka-cli/freemarker.jar"
   ]
 }
