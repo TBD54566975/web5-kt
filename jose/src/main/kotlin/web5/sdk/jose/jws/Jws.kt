@@ -238,7 +238,9 @@ public class DecodedJws(
       "Malformed JWS. Expected header to contain kid and alg."
     }
 
-    val resolutionResult = DidResolvers.resolve(header.kid!!)
+    // todo header.kid needs to be broken down into didUri and fragment and use the didUri
+    val didUri = header.kid!!.split("#")[0]
+    val resolutionResult = DidResolvers.resolve(didUri)
 
     check(resolutionResult.didResolutionMetadata.error == null) {
       "Verification failed. Failed to resolve kid. " +

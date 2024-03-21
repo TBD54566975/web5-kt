@@ -113,8 +113,8 @@ class VerifiableCredentialTest {
 
     val vc = VerifiableCredential.create(
       type = "StreetCred",
-      issuer = issuerDid.uri,
-      subject = holderDid.uri,
+      issuer = issuerDid.did.uri,
+      subject = holderDid.did.uri,
       data = StreetCredibility(localRespect = "high", legit = true)
     )
 
