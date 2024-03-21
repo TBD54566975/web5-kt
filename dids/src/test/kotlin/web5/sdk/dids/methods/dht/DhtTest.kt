@@ -73,7 +73,7 @@ class DhtTest {
       val v = "Hello World!".toByteArray()
 
       val manager = InMemoryKeyManager()
-      manager.import(privateKey)
+      manager.importKey(privateKey)
 
       val bep44SignedMessage = DhtClient.signBep44Message(
         manager,

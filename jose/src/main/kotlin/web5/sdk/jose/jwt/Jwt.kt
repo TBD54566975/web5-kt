@@ -33,7 +33,11 @@ public object Jwt {
     val claims: JwtClaimsSet
     try {
       val payload = Convert(decodedJws.payload).toStr()
-      val jwtModule = SimpleModule().addDeserializer(JwtClaimsSet::class.java, JwtClaimsSetDeserializer())
+      val jwtModule = SimpleModule()
+        .addDeserializer(
+          JwtClaimsSet::class.java,
+          JwtClaimsSetDeserializer()
+        )
       Json.jsonMapper.registerModule(jwtModule)
       claims = Json.jsonMapper.readValue(payload, JwtClaimsSet::class.java)
     } catch (e: Exception) {
@@ -60,7 +64,11 @@ public object Jwt {
    * @return The signed JWT
    */
   public fun sign(did: BearerDid, payload: JwtClaimsSet): String {
-    val jwtModule = SimpleModule().addSerializer(JwtClaimsSet::class.java, JwtClaimsSetSerializer())
+    val jwtModule = SimpleModule()
+      .addSerializer(
+        JwtClaimsSet::class.java,
+        JwtClaimsSetSerializer()
+      )
     Json.jsonMapper.registerModule(jwtModule)
     val payloadJsonString = Json.jsonMapper.writeValueAsString(payload)
     val payloadBytes = Convert(payloadJsonString).toByteArray()
@@ -138,48 +146,9 @@ public class JwtClaimsSet(
   public val misc: Map<String, Any> = emptyMap()
 ) {
 
-//  public companion object {
-//
-//    /**
-//     * Takes a JsonNode representation of a claim and builds a JwtClaimsSet.
-//     *
-//     * @param jsonNode The JsonNode representation of a claim
-//     * @return JwtClaimsSet
-//     */
-//    public fun fromJson(jsonNode: JsonNode): JwtClaimsSet {
-//      val reservedClaims = setOf(
-//        "iss",
-//        "sub",
-//        "aud",
-//        "exp",
-//        "nbf",
-//        "iat",
-//        "jti"
-//      )
-//
-//      val miscClaims: MutableMap<String, Any> = mutableMapOf()
-//
-//      val fields = jsonNode.fields()
-//      while (fields.hasNext()) {
-//        val (key, value) = fields.next()
-//        if (!reservedClaims.contains(key)) {
-//          miscClaims[key] = value
-//        }
-//      }
-//
-//      return JwtClaimsSet(
-//        iss = jsonNode.get("iss")?.asText(),
-//        sub = jsonNode.get("sub")?.asText(),
-//        aud = jsonNode.get("aud")?.asText(),
-//        exp = jsonNode.get("exp")?.asLong(),
-//        nbf = jsonNode.get("nbf")?.asLong(),
-//        iat = jsonNode.get("iat")?.asLong(),
-//        jti = jsonNode.get("jti")?.asText(),
-//        misc = miscClaims
-//      )
-//
-//    }
-//  }
+  override fun toString(): String {
+    return "JwtClaimsSet(iss=$iss, sub=$sub, aud=$aud, exp=$exp, nbf=$nbf, iat=$iat, jti=$jti, misc=$misc)"
+  }
 
   /**
    * Builder for JwtClaimsSet.

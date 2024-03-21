@@ -2,6 +2,7 @@ package web5.sdk.crypto
 
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.crypto.bc.BouncyCastleProviderSingleton
+import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.ECKey
 import com.nimbusds.jose.jwk.KeyUse
 import com.nimbusds.jose.jwk.gen.ECKeyGenerator
@@ -140,22 +141,16 @@ public object Secp256k1 : KeyGenerator, Signer {
    */
   override fun generatePrivateKey(options: KeyGenOptions?): Jwk {
     // TODO use tink to generate private key https://github.com/TBD54566975/web5-kt/issues/273
-    val privateKey = ECKeyGenerator(com.nimbusds.jose.jwk.Curve.SECP256K1)
-      .algorithm(JWSAlgorithm.ES256K)
+    val privateKey = ECKeyGenerator(Curve.SECP256K1)
       .provider(BouncyCastleProviderSingleton.getInstance())
-      .keyIDFromThumbprint(true)
-      .keyUse(KeyUse.SIGNATURE)
       .generate()
 
     val jwk = Jwk.Builder("EC", privateKey.curve.name)
-      .keyUse("sig")
-      .algorithm(algorithm.name)
       .privateKey(privateKey.d.toString())
       .x(privateKey.x.toString())
       .y(privateKey.y.toString())
       .build()
 
-    jwk.kid = jwk.computeThumbprint()
     return jwk
   }
 
@@ -163,16 +158,15 @@ public object Secp256k1 : KeyGenerator, Signer {
     validateKey(privateKey)
 
     val jwk = Jwk.Builder(privateKey.kty, curve.name)
-      .keyUse("sig") // todo is publicKey JWK's keyUse "sig"? had to edit create.json
       .algorithm(algorithm.name)
       .apply {
-        privateKey.kid?.let { keyId(it) }
+        privateKey.use?.let { keyUse(it) }
+        privateKey.alg?.let { algorithm(it) }
         privateKey.x?.let { x(it) }
         privateKey.y?.let { y(it) }
       }
       .build()
 
-    jwk.kid = jwk.kid ?: jwk.computeThumbprint()
     return jwk
   }
 
@@ -192,7 +186,6 @@ public object Secp256k1 : KeyGenerator, Signer {
   }
 
   override fun bytesToPrivateKey(privateKeyBytes: ByteArray): Jwk {
-    // todo what is this MAGIC???
     var pointQ: ECPoint = spec.g.multiply(BigInteger(1, privateKeyBytes))
 
     pointQ = pointQ.normalize()
@@ -201,7 +194,6 @@ public object Secp256k1 : KeyGenerator, Signer {
 
     return Jwk.Builder("EC", curve.name)
       .algorithm(algorithm.name)
-      .keyUse("sig")
       .x(Convert(rawX).toBase64Url())
       .y(Convert(rawY).toBase64Url())
       .privateKey(Convert(privateKeyBytes).toBase64Url())
@@ -214,11 +206,10 @@ public object Secp256k1 : KeyGenerator, Signer {
 
     val jwk = Jwk.Builder("EC", curve.name)
       .algorithm(algorithm.name)
-      .keyUse("sig")
       .x(Convert(xBytes).toBase64Url())
       .y(Convert(yBytes).toBase64Url())
       .build()
-    jwk.kid = jwk.computeThumbprint()
+
     return jwk
   }
 

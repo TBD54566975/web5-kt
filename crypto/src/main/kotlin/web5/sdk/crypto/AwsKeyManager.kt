@@ -14,6 +14,7 @@ import com.amazonaws.services.kms.model.SignRequest
 import com.amazonaws.services.kms.model.SigningAlgorithmSpec
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.crypto.impl.ECDSA
+import com.nimbusds.jose.jwk.ECKey
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo
 import org.bouncycastle.crypto.ExtendedDigest
 import org.bouncycastle.crypto.digests.SHA256Digest
@@ -130,48 +131,15 @@ public class AwsKeyManager @JvmOverloads constructor(
     val algorithmDetails = getAlgorithmDetails(publicKeyResponse.keySpec.enum())
     val jwkBuilder = when (publicKey) {
       is ECPublicKey -> {
-        val (x, y) = extractBase64UrlXYFromECPublicKey(publicKey)
-        // todo how to get the curve name out of java.security.publicKey?
-        //  not sure if correct.
-        val namedCurve = publicKey as ECNamedCurveSpec
-        Jwk.Builder("EC", namedCurve.name)
-          .x(x)
-          .y(y)
+        val key = ECKey.Builder(JwaCurve.toJwkCurve(algorithmDetails.curve), publicKey).build()
+        Jwk.Builder("EC", key.curve.name)
+          .x(key.x.toString())
+          .y(key.y.toString())
       }
-
       else -> throw IllegalArgumentException("Unknown key type $publicKey")
     }
-    return jwkBuilder
-      .algorithm(algorithmDetails.algorithm.name)
-      .keyId(keyAlias)
-      .keyUse("sig")
-      .build()
+    return jwkBuilder.build()
   }
-
-  private fun extractBase64UrlXYFromECPublicKey(ecPublicKey: ECPublicKey): Pair<String, String> {
-    val ecPoint = ecPublicKey.w
-    val x = ecPoint.affineX.toByteArray().trimLeadingZeroes()
-    val y = ecPoint.affineY.toByteArray().trimLeadingZeroes()
-
-    val base64UrlX = Convert(x, EncodingFormat.Base64Url).toStr()
-    val base64UrlY = Convert(y, EncodingFormat.Base64Url).toStr()
-
-    return Pair(base64UrlX, base64UrlY)
-  }
-
-  /**
-   * // todo not sure where this should live
-   * Extension function to remove leading zero bytes which might be
-   * added by BigInteger's toByteArray() method to represent positive numbers.
-   */
-  private fun ByteArray.trimLeadingZeroes(): ByteArray =
-    if (this.isEmpty()) {
-      this
-    } else if (this[0] == 0.toByte()) {
-      this.dropWhile { it == 0.toByte() }.toByteArray()
-    } else {
-      this
-    }
 
   /**
    * Signs the provided payload using the private key identified by the provided alias.

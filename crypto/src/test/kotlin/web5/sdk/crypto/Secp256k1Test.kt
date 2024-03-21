@@ -24,9 +24,7 @@ class Secp256k1Test {
     val privateKey = Secp256k1.generatePrivateKey()
 
     Secp256k1.validateKey(privateKey)
-    assertEquals(Jwa.ES256K.name, privateKey.alg)
-    assertEquals("sig", privateKey.use)
-    assertNotNull(privateKey.kid)
+    assertEquals(JwaCurve.secp256k1.name, privateKey.crv)
     assertTrue(privateKey.kty == "EC")
     assertNotNull(privateKey.d)
   }
@@ -40,7 +38,6 @@ class Secp256k1Test {
     Secp256k1.validateKey(publicKey)
     assertEquals(publicKey.kid, privateKey.kid)
     assertEquals(Jwa.ES256K.name, publicKey.alg)
-    assertEquals("sig", publicKey.use)
     assertTrue(publicKey.kty == "EC")
     assertNull(publicKey.d)
   }

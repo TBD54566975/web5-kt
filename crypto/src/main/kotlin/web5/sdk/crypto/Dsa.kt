@@ -12,6 +12,21 @@ public enum class JwaCurve {
   Ed25519;
 
   public companion object {
+
+    /**
+     * Convert JwaCurve nimbusds JWK curve.
+     * Used to temporarily bridge the gap between moving from nimbusds JWK methods
+     * to rolling our own JWK methods
+     * @param curve
+     * @return nimbus JWK Curve
+     */
+    public fun toJwkCurve(curve: JwaCurve): Curve {
+      return when (curve) {
+        secp256k1 -> Curve.SECP256K1
+        Ed25519 -> Curve.Ed25519
+      }
+    }
+
     /**
      * Parse name of a curve into JwaCurve.
      *
@@ -34,7 +49,7 @@ public enum class JwaCurve {
 }
 
 /**
- * JSON Web Algorithm Curve.
+ * JSON Web Algorithm.
  */
 public enum class Jwa {
   EdDSA,

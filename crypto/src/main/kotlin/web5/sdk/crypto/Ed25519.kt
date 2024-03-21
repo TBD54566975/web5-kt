@@ -48,20 +48,13 @@ public object Ed25519 : KeyGenerator, Signer {
    */
   override fun generatePrivateKey(options: KeyGenOptions?): Jwk {
     // TODO use tink to generate private key https://github.com/TBD54566975/web5-kt/issues/273
-    val privateKey = OctetKeyPairGenerator(Curve.Ed25519)
-      .algorithm(JWSAlgorithm.EdDSA)
-      .keyIDFromThumbprint(true)
-      .keyUse(KeyUse.SIGNATURE)
-      .generate()
+    val privateKey = OctetKeyPairGenerator(Curve.Ed25519).generate()
 
     val jwk = Jwk.Builder("OKP", privateKey.curve.name)
-      .algorithm(algorithm.name)
-      .keyUse("sig")
       .privateKey(privateKey.d.toString())
       .x(privateKey.x.toString())
       .build()
 
-    jwk.kid = jwk.computeThumbprint()
     return jwk
 
   }
@@ -76,15 +69,14 @@ public object Ed25519 : KeyGenerator, Signer {
     validateKey(privateKey)
 
     val jwk = Jwk.Builder(privateKey.kty, curve.name)
-      .keyUse("sig") // todo is publicKey JWK's keyUse "sig"? had to edit create.json
       .algorithm(algorithm.name)
       .apply {
-        privateKey.kid?.let { keyId(it) }
+        privateKey.use?.let { keyUse(it) }
+        privateKey.alg?.let { algorithm(it) }
         privateKey.x?.let { x(it) }
       }
       .build()
 
-    jwk.kid = jwk.kid ?: jwk.computeThumbprint()
     return jwk
   }
 
@@ -108,7 +100,6 @@ public object Ed25519 : KeyGenerator, Signer {
     val base64UrlEncodedPublicKey = Convert(publicKeyBytes).toBase64Url()
 
     return Jwk.Builder("OKP", curve.name)
-      .keyUse("sig")
       .algorithm(algorithm.name)
       .privateKey(base64UrlEncodedPrivateKey)
       .x(base64UrlEncodedPublicKey)
@@ -120,11 +111,9 @@ public object Ed25519 : KeyGenerator, Signer {
 
     val jwk = Jwk.Builder("OKP", curve.name)
       .algorithm(algorithm.name)
-      .keyUse("sig")
       .x(base64UrlEncodedPublicKey)
       .build()
 
-    jwk.kid = jwk.kid ?: jwk.computeThumbprint()
     return jwk
   }
 

@@ -23,7 +23,6 @@ class AwsKeyManagerTest {
 
     assertEquals(alias, publicKey.kid)
     assertTrue(publicKey.kty  == "EC")
-    assertEquals("sig", publicKey.use)
     assertEquals(Jwa.ES256K.name, publicKey.alg)
   }
 

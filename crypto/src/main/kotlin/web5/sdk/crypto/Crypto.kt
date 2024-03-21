@@ -233,9 +233,7 @@ public object Crypto {
    * @return The [JwaCurve] used in the Jwk, or `null` if the curve is not defined or recognized.
    */
   public fun getJwkCurve(jwk: Jwk): JwaCurve? {
-    val rawCurve = jwk.crv
-
-    return rawCurve?.let { JwaCurve.parse(it) }
+    return JwaCurve.parse(jwk.crv)
   }
 
   /**

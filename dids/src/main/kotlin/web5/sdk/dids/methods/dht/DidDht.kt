@@ -179,7 +179,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) {
 
     opts.verificationMethods?.map { (publicKey, purposes, controller) ->
       VerificationMethod.Builder()
-        .id("$didUri#${publicKey.kid}")
+        .id("$didUri#${publicKey.kid ?: publicKey.computeThumbprint()}")
         .type("JsonWebKey")
         .controller(controller ?: didUri)
         .publicKeyJwk(publicKey)

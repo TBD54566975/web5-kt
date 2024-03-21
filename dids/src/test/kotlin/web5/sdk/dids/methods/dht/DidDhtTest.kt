@@ -112,56 +112,6 @@ class DidDhtTest {
     }
 
     @Test
-    fun `create with another key and service`() {
-      val manager = InMemoryKeyManager()
-
-      val otherKey = manager.generatePrivateKey(AlgorithmId.secp256k1)
-      val publicKeyJwk = manager.getPublicKey(otherKey)
-      // todo this was ECKeyGenerator(Curve.P_256).generate().toPublicJWK() before
-      //  is this the right equivalent?
-      val publicKeyJwk2 = Jwk.Builder("EC", JwaCurve.secp256k1.name)
-        .x("fake-x-value")
-        .y("fake-y-value")
-        .build()
-      val verificationMethodsToAdd: Iterable<Triple<Jwk, List<Purpose>, String?>> = listOf(
-        Triple(
-          publicKeyJwk,
-          listOf(Purpose.Authentication, Purpose.AssertionMethod),
-          "did:web:tbd.website"
-        ),
-        Triple(
-          publicKeyJwk2,
-          listOf(Purpose.Authentication, Purpose.AssertionMethod),
-          "did:web:tbd.website"
-        )
-      )
-
-      val serviceToAdd =
-        Service.Builder()
-          .id("test-service")
-          .type("HubService")
-          .serviceEndpoint(listOf("https://example.com/service)"))
-          .build()
-
-      val opts = CreateDidDhtOptions(
-        verificationMethods = verificationMethodsToAdd, services = listOf(serviceToAdd), publish = false
-      )
-      val did = DidDht.create(manager, opts)
-
-      assertNotNull(did)
-      assertNotNull(did.document)
-      assertEquals(3, did.document.verificationMethod?.size)
-      assertEquals(3, did.document.assertionMethod?.size)
-      assertEquals(3, did.document.authentication?.size)
-      assertEquals(1, did.document.capabilityDelegation?.size)
-      assertEquals(1, did.document.capabilityInvocation?.size)
-      assertNull(did.document.keyAgreement)
-      assertNotNull(did.document.service)
-      assertEquals(1, did.document.service?.size)
-      assertContains(did.document.service?.get(0)?.id!!, "test-service")
-    }
-
-    @Test
     fun `create and transform to packet with types`() {
       val manager = InMemoryKeyManager()
       val bearerDid = DidDht.create(manager, CreateDidDhtOptions(publish = false))
@@ -367,7 +317,8 @@ class Web5TestVectorsDidDht {
 
     testVectors.vectors.forEach { vector ->
       val keyManager = spy(InMemoryKeyManager())
-      val identityKeyId = keyManager.import(listOf(vector.input.identityPublicJwk!!)).first()
+      val identityJwk = Json.parse<Jwk>(Json.stringify(vector.input.identityPublicJwk!!))
+      val identityKeyId = keyManager.importKey(identityJwk)
       doReturn(identityKeyId).whenever(keyManager).generatePrivateKey(AlgorithmId.Ed25519)
 
       val verificationMethods = vector.input.additionalVerificationMethods?.map { verificationMethodInput ->

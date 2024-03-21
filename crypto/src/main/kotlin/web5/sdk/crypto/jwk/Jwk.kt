@@ -2,6 +2,7 @@ package web5.sdk.crypto.jwk
 
 import web5.sdk.common.Convert
 import web5.sdk.common.Json
+import web5.sdk.crypto.Ed25519
 import java.security.MessageDigest
 
 /**
@@ -29,7 +30,6 @@ import java.security.MessageDigest
  * @property y Y coordinate for EC keys.
  *
  */
-// todo use jcs for canonicalization, instead of using de/serlization.
 public class Jwk(
   public val kty: String,
   public val crv: String,
@@ -164,7 +164,8 @@ public class Jwk(
      * @return Jwk object
      */
     public fun build(): Jwk {
-      // todo move these checks out to Ed25519 or Secp256k1 classes?
+      // TODO move these checks out to Ed25519 or Secp256k1 classes?
+      //  https://github.com/TBD54566975/web5-kt/issues/276
       if (kty == "EC") {
         check(x != null) { "x is required for EC keys" }
         check(y != null) { "y is required for EC keys" }

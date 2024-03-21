@@ -174,22 +174,21 @@ class DidDocumentTest {
       }
     }
 
-    // todo this test fails because of what i added to DidDocument#findAssertionMethodById()
     @Test
     fun `findAssertionMethodById returns assertion verification method if id is found`() {
-      val assertionMethods = listOf("foo")
+      val assertionMethods = listOf("#foo")
       val manager = InMemoryKeyManager()
       val keyAlias = manager.generatePrivateKey(AlgorithmId.secp256k1)
       val publicKeyJwk = manager.getPublicKey(keyAlias)
 
       val vmList = listOf(
-        VerificationMethod("foo", "type", "controller", publicKeyJwk)
+        VerificationMethod("#foo", "type", "controller", publicKeyJwk)
       )
 
       val doc = DidDocument(id = "did:example:123", verificationMethod = vmList, assertionMethod = assertionMethods)
 
-      val assertionMethod = doc.findAssertionMethodById("foo")
-      assertEquals("foo", assertionMethod.id)
+      val assertionMethod = doc.findAssertionMethodById("#foo")
+      assertEquals("#foo", assertionMethod.id)
       assertEquals("type", assertionMethod.type)
       assertEquals("controller", assertionMethod.controller)
     }

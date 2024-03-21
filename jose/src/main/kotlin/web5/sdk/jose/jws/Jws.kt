@@ -3,7 +3,9 @@ package web5.sdk.jose.jws
 import web5.sdk.common.Convert
 import web5.sdk.common.EncodingFormat
 import web5.sdk.common.Json
+import web5.sdk.crypto.AlgorithmId
 import web5.sdk.crypto.Crypto
+import web5.sdk.crypto.JwaCurve
 import web5.sdk.dids.DidResolvers
 import web5.sdk.dids.did.BearerDid
 import web5.sdk.dids.exceptions.PublicKeyJwkMissingException
@@ -77,18 +79,20 @@ public object Jws {
       verificationMethod.id
     }
 
+    val curve = JwaCurve.parse(verificationMethod.publicKeyJwk!!.crv)
+    val alg = AlgorithmId.from(curve).name
+
     val jwsHeader = JwsHeader.Builder()
-        .type("JWT")
-        .algorithm(Crypto.getJwkCurve(verificationMethod.publicKeyJwk!!)?.name!!)
-        .keyId(kid)
-        .build()
+      .type("JWT")
+      .algorithm(alg)
+      .keyId(kid)
+      .build()
 
     val headerBase64Url = Convert(Json.stringify(jwsHeader)).toBase64Url()
     val payloadBase64Url = Convert(payload).toBase64Url()
 
     val toSignBase64Url = "$headerBase64Url.$payloadBase64Url"
     val toSignBytes = Convert(toSignBase64Url).toByteArray()
-
 
     val signatureBytes = signer.invoke(toSignBytes)
     val signatureBase64Url = Convert(signatureBytes).toBase64Url()

@@ -15,6 +15,7 @@ dependencies {
   implementation(project(":dids"))
 
   // Test
+  testImplementation(libs.comWillowtreeappsAssertk)
   testImplementation(kotlin("test"))
   testImplementation(project(":testing"))
 }

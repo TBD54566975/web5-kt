@@ -92,41 +92,6 @@ public class InMemoryKeyManager : KeyManager, KeyExporter, KeyImporter {
   private fun getPrivateKey(keyAlias: String) =
     keyStore[keyAlias] ?: throw IllegalArgumentException("key with alias $keyAlias not found")
 
-  /**
-   * Imports a list of keys represented as a list of maps and returns a list of key aliases referring to them.
-   *
-   * @param keySet A list of key representations in map format.
-   * @return A list of key aliases belonging to the imported keys.
-   */
-  public fun import(keySet: Iterable<Map<String, Any>>): List<String> = keySet.map { key ->
-    // todo are all keySet.value of type Any in this case a possible Jwk?
-    //  we can just call toString() and call it good? am skeptical
-    val jwk = Json.parse<Jwk>(Json.stringify(key))
-    import(jwk)
-  }
-
-  /**
-   * Imports a single key and returns the alias that refers to it.
-   *
-   * @param jwk A Jwk object representing the key to be imported.
-   * @return The alias belonging to the imported key.
-   */
-  public fun import(jwk: Jwk): String {
-    var kid = jwk.kid
-    if (kid.isNullOrEmpty()) {
-      kid = jwk.computeThumbprint()
-    }
-    keyStore.putIfAbsent(kid, jwk)
-    return kid
-  }
-
-  /**
-   * Exports all stored keys as a list of maps.
-   *
-   * @return A list of key representations in map format.
-   */
-  public fun export(): List<Map<String, Any>> = keyStore.map { keyIdToJwk -> Json.stringify(keyIdToJwk.value).toMap() }
-
   override fun exportKey(keyId: String): Jwk {
     return this.getPrivateKey(keyId)
   }

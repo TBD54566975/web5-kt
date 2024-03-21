@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.JsonSerializer
 import com.fasterxml.jackson.databind.SerializerProvider
+import web5.sdk.common.Json
 import web5.sdk.jose.jwt.JwtClaimsSet
 
 /**
@@ -44,7 +45,6 @@ public class JwtClaimsSetSerializer : JsonSerializer<JwtClaimsSet>() {
  * that takes miscellaneous claims and puts them as values inside misc key
  */
 public class JwtClaimsSetDeserializer : JsonDeserializer<JwtClaimsSet>() {
-
   public override fun deserialize(p: JsonParser, ctxt: DeserializationContext): JwtClaimsSet {
     val jsonNode = p.codec.readTree<JsonNode>(p)
     val reservedClaims = setOf(
@@ -57,15 +57,20 @@ public class JwtClaimsSetDeserializer : JsonDeserializer<JwtClaimsSet>() {
       "jti"
     )
 
+    // extract misc nodes
     val miscClaims: MutableMap<String, Any> = mutableMapOf()
-
+    val mc = Json.jsonMapper.createObjectNode()
     val fields = jsonNode.fields()
+
     while (fields.hasNext()) {
       val (key, value) = fields.next()
+
       if (!reservedClaims.contains(key)) {
-        miscClaims[key] = value
+        mc.set<JsonNode>(key, value)
       }
     }
+
+    val yo = Json.jsonMapper.convertValue(mc, Map::class.java)
 
     return JwtClaimsSet(
       iss = jsonNode.get("iss")?.asText(),
@@ -75,7 +80,7 @@ public class JwtClaimsSetDeserializer : JsonDeserializer<JwtClaimsSet>() {
       nbf = jsonNode.get("nbf")?.asLong(),
       iat = jsonNode.get("iat")?.asLong(),
       jti = jsonNode.get("jti")?.asText(),
-      misc = miscClaims
+      misc = yo as Map<String, Any>
     )
   }
 }

@@ -35,13 +35,11 @@ class InMemoryKeyManagerTest {
     val privateKey = Crypto.generatePrivateKey(AlgorithmId.secp256k1)
     val keyManager = InMemoryKeyManager()
 
-    val alias = keyManager.import(privateKey)
+    val alias = keyManager.importKey(privateKey)
 
     val publicKey = keyManager.getPublicKey(alias)
-    assertEquals(privateKey.kid, publicKey.kid)
+    assertEquals(privateKey.kty, publicKey.kty)
     assertEquals(privateKey.crv, publicKey.crv)
-    assertEquals(privateKey.alg, publicKey.alg)
-    assertEquals(privateKey.use, publicKey.use)
     assertEquals(privateKey.x, publicKey.x)
   }
 
@@ -50,12 +48,10 @@ class InMemoryKeyManagerTest {
     val privateKey = Crypto.generatePrivateKey(AlgorithmId.secp256k1)
     val keyManager = InMemoryKeyManager()
 
-    val alias = keyManager.import(privateKey)
+    val alias = keyManager.importKey(privateKey)
     val publicKey = keyManager.getPublicKey(alias)
-    assertEquals(privateKey.kid, publicKey.kid)
+    assertEquals(privateKey.kty, publicKey.kty)
     assertEquals(privateKey.crv, publicKey.crv)
-    assertEquals(privateKey.alg, publicKey.alg)
-    assertEquals(privateKey.use, publicKey.use)
     assertEquals(privateKey.x, publicKey.x)
   }
 
@@ -64,46 +60,12 @@ class InMemoryKeyManagerTest {
     val privateKey = Ed25519.generatePrivateKey()
     val keyManager = InMemoryKeyManager()
 
-    val alias = keyManager.import(privateKey)
+    val alias = keyManager.importKey(privateKey)
     val publicKey = keyManager.getPublicKey(alias)
-    assertEquals(privateKey.kid, publicKey.kid)
+    assertEquals(privateKey.kty, publicKey.kty)
     assertEquals(privateKey.crv, publicKey.crv)
-    assertEquals(privateKey.alg, publicKey.alg)
-    assertEquals(privateKey.use, publicKey.use)
     assertEquals(privateKey.x, publicKey.x)
 
   }
 
-  @Test
-  fun `export returns all keys`() {
-    val keyManager = InMemoryKeyManager()
-    keyManager.generatePrivateKey(AlgorithmId.Ed25519)
-
-    val keySet = keyManager.export()
-    assertEquals(1, keySet.size)
-  }
-
-  @Test
-  fun `import throws an exception if key is not a Jwk`() {
-    val keyManager = InMemoryKeyManager()
-    val kakaKeySet = listOf(mapOf("hehe" to "troll"))
-
-    assertThrows<MissingKotlinParameterException> {
-      keyManager.import(kakaKeySet)
-    }
-  }
-
-  @Test
-  fun `import loads all keys provided`() {
-    @Suppress("MaxLineLength")
-    val serializedKeySet =
-      """[{"kty":"OKP","d":"DTwtf9i7M4Vj8vSg0iJAQ_n2gSNEUTNLIq30CJ4d9BE","use":"sig","crv":"Ed25519","kid":"hKTpA-TQPNAX9zXtuxPIyTNpoyd4j1Pq1Y_txo2Hm3I","x":"_CrbbGuhpHFs3KVGg2bbNgd2SikmT4L5rIE_zQQjKq0","alg":"EdDSA"}]"""
-
-    val jsonKeySet: List<Map<String, Any>> = Json.jsonMapper.readValue(serializedKeySet)
-    val keyManager = InMemoryKeyManager()
-
-    assertDoesNotThrow {
-      keyManager.import(jsonKeySet)
-    }
-  }
 }

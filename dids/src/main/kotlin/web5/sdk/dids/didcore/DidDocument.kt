@@ -116,44 +116,55 @@ public class DidDocument(
     }
 
     if (assertionMethodId != null) {
+
       require(assertionMethod.contains(assertionMethodId)) {
         throw SignatureException("assertion method \"$assertionMethodId\" not found in list of assertion methods")
       }
 
-      // todo bits from jwtutil - make sure these checks are actually required
-      val did = Did.parse(assertionMethodId)
-      val didResolutionResult = DidResolvers.resolve(did.url)
-      if (didResolutionResult.didResolutionMetadata.error != null) {
-        throw SignatureException(
-          "Signature verification failed: " +
-            "Failed to resolve DID ${did.url}. " +
-            "Error: ${didResolutionResult.didResolutionMetadata.error}"
+      val verificationMethodIds = mutableSetOf(
+        assertionMethodId
+      )
+
+      if (assertionMethodId.startsWith("#")) {
+        verificationMethodIds.add("${this.id}${assertionMethodId}")
+      } else if (assertionMethodId.startsWith("did:")) {
+        val fragment = assertionMethodId.split("#").last()
+        verificationMethodIds.add("#$fragment")
+      } else {
+        throw IllegalArgumentException(
+          "Invalid assertionMethodId. " +
+            "Expected assertionMethodId to be a DID URL or fragment, but was $assertionMethodId"
         )
       }
 
-      val verificationMethodIds = setOf(
-        did.url,
-        "#${did.fragment}"
-      )
-
-      didResolutionResult.didDocument?.assertionMethod?.firstOrNull {
+      assertionMethod.firstOrNull {
         verificationMethodIds.contains(it)
       } ?: throw SignatureException(
         "Signature verification failed: Expected kid in JWS header to dereference " +
           "a DID Document Verification Method with an Assertion verification relationship"
       )
 
+      val assertionMethod: VerificationMethod =
+        verificationMethod
+          ?.find {
+            it.id == assertionMethodId
+          }
+          ?: throw SignatureException("assertion method \"$assertionMethodId\" not found")
+
+      return assertionMethod
+
+    } else {
+      val assertionMethod: VerificationMethod =
+        verificationMethod
+          ?.find {
+            it.id == assertionMethod.first()
+          }
+          ?: throw SignatureException("assertion method not found")
+
+      return assertionMethod
     }
-
-    val assertionMethod: VerificationMethod =
-      verificationMethod
-        ?.find {
-          it.id == (assertionMethodId ?: assertionMethod.first())
-        }
-        ?: throw SignatureException("assertion method \"$assertionMethodId\" not found")
-
-    return assertionMethod
   }
+
 
   /**
    * Builder object to build a DidDocument.
