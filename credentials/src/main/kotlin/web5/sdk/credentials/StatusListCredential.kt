@@ -1,6 +1,5 @@
 package web5.sdk.credentials
 
-import com.danubetech.verifiablecredentials.CredentialSubject
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.okhttp.OkHttp
@@ -13,6 +12,14 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.http.isSuccess
 import io.ktor.serialization.jackson.jackson
 import kotlinx.coroutines.runBlocking
+import web5.sdk.credentials.model.CredentialSubject
+import web5.sdk.credentials.model.DEFAULT_STATUS_LIST_2021_ENTRY_TYPE
+import web5.sdk.credentials.model.DEFAULT_STATUS_LIST_2021_VC_TYPE
+import web5.sdk.credentials.model.DEFAULT_STATUS_LIST_CONTEXT
+import web5.sdk.credentials.model.DEFAULT_VC_CONTEXT
+import web5.sdk.credentials.model.DEFAULT_VC_TYPE
+import web5.sdk.credentials.model.StatusList2021Entry
+import web5.sdk.credentials.model.VcDataModel
 import web5.sdk.dids.DidResolvers
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
@@ -22,12 +29,6 @@ import java.util.BitSet
 import java.util.Date
 import java.util.zip.GZIPInputStream
 import java.util.zip.GZIPOutputStream
-
-/**
- * Type alias representing the danubetech Status List 2021 Entry data model.
- * This typealias simplifies the use of the [com.danubetech.verifiablecredentials.credentialstatus.StatusList2021Entry] class.
- */
-public typealias StatusList2021Entry = com.danubetech.verifiablecredentials.credentialstatus.StatusList2021Entry
 
 /**
  * Status purpose of a status list credential or a credential with a credential status.
@@ -46,6 +47,11 @@ private const val ENCODED_LIST: String = "encodedList"
  * The JSON property key for a status purpose.
  */
 private const val STATUS_PURPOSE: String = "statusPurpose"
+
+/**
+ * The JSON property key for a type.
+ */
+private const val TYPE: String = "type"
 
 /**
  * `StatusListCredential` represents a digitally verifiable status list credential according to the
@@ -104,19 +110,21 @@ public object StatusListCredential {
       throw IllegalArgumentException("issuer: $issuer not resolvable", e)
     }
 
-    val claims = mapOf(STATUS_PURPOSE to statusPurpose.toString().lowercase(), ENCODED_LIST to bitString)
-    val credSubject = CredentialSubject.builder()
+    val claims = mapOf(TYPE to DEFAULT_STATUS_LIST_2021_ENTRY_TYPE,
+      STATUS_PURPOSE to statusPurpose.toString().lowercase(),
+      ENCODED_LIST to bitString)
+
+    val credSubject = CredentialSubject.Builder()
       .id(URI.create(statusListCredentialId))
-      .type("StatusList2021")
-      .claims(claims)
+      .additionalClaims(claims)
       .build()
 
-    val vcDataModel = VcDataModel.builder()
+    val vcDataModel = VcDataModel.Builder()
       .id(URI.create(statusListCredentialId))
+      .context(mutableListOf(URI.create(DEFAULT_VC_CONTEXT), URI.create(DEFAULT_STATUS_LIST_CONTEXT)))
+      .type(mutableListOf(DEFAULT_VC_TYPE, DEFAULT_STATUS_LIST_2021_VC_TYPE))
       .issuer(URI.create(issuer))
       .issuanceDate(Date())
-      .context(URI.create("https://w3id.org/vc/status-list/2021/v1"))
-      .type("StatusList2021Credential")
       .credentialSubject(credSubject)
       .build()
 
@@ -142,10 +150,11 @@ public object StatusListCredential {
     statusListCredential: VerifiableCredential
   ): Boolean {
     val statusListEntryValue: StatusList2021Entry =
-      StatusList2021Entry.fromJsonObject(credentialToValidate.vcDataModel.credentialStatus.jsonObject)
+      StatusList2021Entry.fromJsonObject(credentialToValidate.vcDataModel.credentialStatus!!.toJson())
 
-    val statusListCredStatusPurpose: String? =
-      statusListCredential.vcDataModel.credentialSubject.jsonObject[STATUS_PURPOSE] as? String?
+    val credentialSubject = statusListCredential.vcDataModel.credentialSubject
+
+    val statusListCredStatusPurpose: String? = credentialSubject.additionalClaims[STATUS_PURPOSE] as? String?
 
     require(statusListEntryValue.statusPurpose != null) {
       "Status purpose in the credential to validate is null"
@@ -160,7 +169,7 @@ public object StatusListCredential {
     }
 
     val compressedBitstring: String? =
-      statusListCredential.vcDataModel.credentialSubject.jsonObject[ENCODED_LIST] as? String?
+      credentialSubject.additionalClaims[ENCODED_LIST] as? String?
 
     require(!compressedBitstring.isNullOrEmpty()) {
       "Compressed bitstring is null or empty"
@@ -203,7 +212,7 @@ public object StatusListCredential {
 
       try {
         val statusListEntryValue: StatusList2021Entry =
-          StatusList2021Entry.fromJsonObject(credentialToValidate.vcDataModel.credentialStatus.jsonObject)
+          StatusList2021Entry.fromJsonObject(credentialToValidate.vcDataModel.credentialStatus!!.toJson())
         val statusListCredential =
           client.fetchStatusListCredential(statusListEntryValue.statusListCredential.toString())
 
@@ -261,9 +270,11 @@ public object StatusListCredential {
       requireNotNull(vc.vcDataModel.credentialStatus) { "no credential status found in credential" }
 
       val statusListEntry: StatusList2021Entry =
-        StatusList2021Entry.fromJsonObject(vc.vcDataModel.credentialStatus.jsonObject)
+        StatusList2021Entry.fromJsonObject(vc.vcDataModel.credentialStatus.toJson())
 
-      require(statusListEntry.statusPurpose == statusPurpose.toString().lowercase()) { "status purpose mismatch" }
+      require(statusListEntry.statusPurpose == statusPurpose.toString().lowercase()) {
+        "status purpose mismatch"
+      }
 
       if (!duplicateSet.add(statusListEntry.statusListIndex)) {
         throw IllegalArgumentException("duplicate entry found with index: ${statusListEntry.statusListIndex}")

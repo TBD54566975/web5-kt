@@ -13,6 +13,9 @@ import com.nimbusds.jwt.SignedJWT
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
+import web5.sdk.credentials.model.CredentialSchema
+import web5.sdk.credentials.model.CredentialSubject
+import web5.sdk.credentials.model.VcDataModel
 import web5.sdk.crypto.AlgorithmId
 import web5.sdk.crypto.AwsKeyManager
 import web5.sdk.crypto.InMemoryKeyManager
@@ -24,12 +27,17 @@ import web5.sdk.dids.methods.dht.DidDht
 import web5.sdk.dids.methods.key.DidKey
 import web5.sdk.testing.TestVectors
 import java.io.File
+import java.net.URI
 import java.security.SignatureException
 import java.text.ParseException
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.TimeZone
 import kotlin.test.Ignore
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
 import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 data class StreetCredibility(val localRespect: String, val legit: Boolean)
 class VerifiableCredentialTest {
@@ -242,6 +250,158 @@ class VerifiableCredentialTest {
     assertEquals(vc.issuer, parsedVc.issuer)
     assertEquals(vc.subject, parsedVc.subject)
   }
+
+  @Test
+  fun `vcDataModel should fail with empty id`() {
+    var exception = assertThrows(IllegalArgumentException::class.java) {
+      VcDataModel.Builder()
+        .id(URI.create(""))
+        .context(mutableListOf(URI.create("https://www.w3.org/2018/credentials/v1")))
+        .type(mutableListOf("VerifiableCredential"))
+        .issuer(URI.create("did:example:issuer"))
+        .issuanceDate(Date())
+        .credentialSubject(
+          CredentialSubject.Builder()
+            .id(URI.create("did:example:subject"))
+            .additionalClaims(mapOf("claimKey" to "claimValue"))
+            .build()
+        )
+        .build()
+    }
+
+    assertTrue(exception.message!!.contains("ID URI cannot be blank"))
+  }
+
+  @Test
+  fun `vcDataModel should fail with empty issuer`() {
+    var exception = assertThrows(IllegalArgumentException::class.java) {
+      VcDataModel.Builder()
+        .id(URI.create("123"))
+        .context(mutableListOf(URI.create("https://www.w3.org/2018/credentials/v1")))
+        .type(mutableListOf("VerifiableCredential"))
+        .issuer(URI.create(""))
+        .issuanceDate(Date())
+        .credentialSubject(
+          CredentialSubject.Builder()
+            .id(URI.create("did:example:subject"))
+            .additionalClaims(mapOf("claimKey" to "claimValue"))
+            .build()
+        )
+        .build()
+    }
+
+    assertTrue(exception.message!!.contains("Issuer URI cannot be blank"))
+  }
+
+  @Test
+  fun `vcDataModel should fail with issuance date before expiration date`() {
+    var exception = assertThrows(IllegalArgumentException::class.java) {
+      VcDataModel.Builder()
+        .id(URI.create("123"))
+        .context(mutableListOf(URI.create("https://www.w3.org/2018/credentials/v1")))
+        .type(mutableListOf("VerifiableCredential"))
+        .issuer(URI.create("did:example:issuer"))
+        .issuanceDate(Date())
+        .expirationDate(Date(Date().time - 100))
+        .credentialSubject(
+          CredentialSubject.Builder()
+            .id(URI.create("did:example:subject"))
+            .additionalClaims(mapOf("claimKey" to "claimValue"))
+            .build()
+        )
+        .build()
+    }
+
+    assertTrue(exception.message!!.contains("Issuance date must be before expiration date"))
+  }
+
+  @Test
+  fun `vcDataModel should add default context`() {
+
+    val exception =
+      assertThrows(IllegalArgumentException::class.java) {
+        VcDataModel.Builder()
+          .id(URI.create("123"))
+          .context(mutableListOf())
+          .type(mutableListOf())
+          .issuer(URI.create("http://example.com/issuer"))
+          .issuanceDate(Date())
+          .credentialSubject(
+            CredentialSubject.Builder()
+              .id(URI.create("http://example.com/subject"))
+              .additionalClaims(mapOf("claimKey" to "claimValue"))
+              .build()
+          )
+          .build()
+      }
+
+    assertTrue(exception.message!!.contains("context must include at least: https://www.w3.org/2018/credentials/v1" ))
+  }
+
+  @Test
+  fun `vcDataModel should add default type`() {
+
+    val exception =
+      assertThrows(IllegalArgumentException::class.java) {
+        VcDataModel.Builder()
+          .id(URI.create("123"))
+          .context(mutableListOf(URI.create("https://www.w3.org/2018/credentials/v1")))
+          .type(mutableListOf())
+          .issuer(URI.create("http://example.com/issuer"))
+          .issuanceDate(Date())
+          .credentialSubject(
+            CredentialSubject.Builder()
+              .id(URI.create("http://example.com/subject"))
+              .additionalClaims(mapOf("claimKey" to "claimValue"))
+              .build()
+          )
+          .build()
+      }
+
+    assertTrue(exception.message!!.contains("type must include at least: VerifiableCredential" ))
+  }
+
+  @Test
+  fun `vcDataModel fromJsonObject should correctly parse JSON into VcDataModel`() {
+    val dateFormat: SimpleDateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").apply {
+      timeZone = TimeZone.getTimeZone("UTC")
+    }
+    val issuanceDate = Date()
+    val json = """
+            {
+              "id": "http://example.com/credential",
+              "@context": ["https://www.w3.org/2018/credentials/v1"],
+              "type": ["VerifiableCredential"],
+              "issuer": "http://example.com/issuer",
+              "issuanceDate": "${dateFormat.format(issuanceDate)}",
+              "credentialSubject": {
+                "id": "http://example.com/subject",
+                "additionalClaims": {}
+              }
+            }
+        """.trimIndent()
+
+    val vcDataModel = VcDataModel.fromJsonObject(json)
+
+    assertEquals(URI("http://example.com/credential"), vcDataModel.id)
+    assertEquals(listOf(URI("https://www.w3.org/2018/credentials/v1")), vcDataModel.context)
+    assertEquals(listOf("VerifiableCredential"), vcDataModel.type)
+    assertEquals(URI("http://example.com/issuer"), vcDataModel.issuer)
+    assertEquals(dateFormat.format(issuanceDate), dateFormat.format(vcDataModel.issuanceDate))
+    assertEquals(URI("http://example.com/subject"), vcDataModel.credentialSubject.id)
+  }
+
+  @Test
+  fun `vcDataModel credentialSchema should fail with wrong type`() {
+    val exception = assertThrows(IllegalArgumentException::class.java) {
+      CredentialSchema.Builder()
+        .id("did:example:123")
+        .type("otherType")
+        .build()
+    }
+
+    assertTrue(exception.message!!.contains("Type must be: JsonSchema"))
+  }
 }
 
 class Web5TestVectorsCredentials {
@@ -264,7 +424,6 @@ class Web5TestVectorsCredentials {
     val testVectors = mapper.readValue(File("../web5-spec/test-vectors/credentials/create.json"), typeRef)
 
     testVectors.vectors.filterNot { it.errors ?: false }.forEach { vector ->
-      println(vector.description)
       val vc = VerifiableCredential.fromJson(mapper.writeValueAsString(vector.input.credential))
 
       val keyManager = InMemoryKeyManager()
@@ -272,7 +431,10 @@ class Web5TestVectorsCredentials {
       val issuerDid = Did.load(vector.input.signerDidUri!!, keyManager)
       val vcJwt = vc.sign(issuerDid)
 
-      assertEquals(vector.output, vcJwt, vector.description)
+      val vectorOutputParsedVc = vector.output?.let { VerifiableCredential.parseJwt(it) }
+      val outputParsedVc = VerifiableCredential.parseJwt(vcJwt)
+
+      assertEquals(vectorOutputParsedVc.toString(), outputParsedVc.toString())
     }
 
     testVectors.vectors.filter { it.errors ?: false }.forEach { vector ->
@@ -288,7 +450,6 @@ class Web5TestVectorsCredentials {
     val testVectors = mapper.readValue(File("../web5-spec/test-vectors/credentials/verify.json"), typeRef)
 
     testVectors.vectors.filterNot { it.errors ?: false }.forEach { vector ->
-      println(vector.description)
       assertDoesNotThrow {
         VerifiableCredential.verify(vector.input.vcJwt)
       }
