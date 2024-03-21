@@ -5,7 +5,11 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import web5.sdk.common.Convert
 import web5.sdk.common.Json
+import web5.sdk.credentials.model.ConstraintsV2
+import web5.sdk.credentials.model.FieldV2
 import web5.sdk.credentials.model.InputDescriptorMapping
+import web5.sdk.credentials.model.InputDescriptorV2
+import web5.sdk.credentials.model.PresentationDefinitionV2
 import web5.sdk.credentials.model.PresentationSubmission
 import web5.sdk.crypto.AlgorithmId
 import web5.sdk.crypto.InMemoryKeyManager
@@ -13,6 +17,7 @@ import web5.sdk.crypto.Jwa
 import web5.sdk.dids.didcore.Purpose
 import web5.sdk.dids.methods.dht.CreateDidDhtOptions
 import web5.sdk.dids.methods.dht.DidDht
+import web5.sdk.dids.methods.jwk.DidJwk
 import web5.sdk.dids.methods.key.DidKey
 import web5.sdk.jose.jws.JwsHeader
 import web5.sdk.jose.jwt.Jwt
@@ -251,5 +256,78 @@ class VerifiablePresentationTest {
     assertContains(
       exception.message!!, "Malformed JWT. Invalid base64url encoding for JWT payload.",
     )
+  }
+
+  data class EmploymentStatus(val employmentStatus: String)
+  data class PIICredential(val name: String, val dateOfBirth: String)
+
+  @Test
+  fun `full flow with did dht`() {
+    val keyManager = InMemoryKeyManager()
+    val issuerDid = DidDht.create(keyManager)
+    val holderDid = DidDht.create(keyManager)
+
+    val vc = VerifiableCredential.create(
+      type = "EmploymentCredential",
+      issuer = issuerDid.did.uri,
+      subject = holderDid.did.uri,
+      data = EmploymentStatus(employmentStatus = "employed")
+    )
+
+    val vc2 = VerifiableCredential.create(
+      type = "PIICredential",
+      issuer = issuerDid.did.uri,
+      subject = holderDid.did.uri,
+      data = PIICredential(name = "Alice Smith", dateOfBirth = "2001-12-21T17:02:01Z")
+    )
+
+    val vcJwt1 = vc.sign(issuerDid)
+    val vcJwt2 = vc2.sign(issuerDid)
+
+    val presentationDefinition = PresentationDefinitionV2(
+      id = "presDefIdloanAppVerification123",
+      name = "Loan Application Employment Verification",
+      purpose = "To verify applicant’s employment, date of birth, and name",
+      inputDescriptors = listOf(
+        InputDescriptorV2(
+          id = "employmentVerification",
+          purpose = "Confirm current employment status",
+          constraints = ConstraintsV2(
+            fields = listOf(FieldV2(path = listOf("$.vc.credentialSubject.employmentStatus")))
+          )
+        ),
+        InputDescriptorV2(
+          id = "dobVerification",
+          purpose = "Confirm the applicant’s date of birth",
+          constraints = ConstraintsV2(
+            fields = listOf(FieldV2(path = listOf("$.vc.credentialSubject.dateOfBirth")))
+          )
+        ),
+        InputDescriptorV2(
+          id = "nameVerification",
+          purpose = "Confirm the applicant’s legal name",
+          constraints = ConstraintsV2(
+            fields = listOf(FieldV2(path = listOf("$.vc.credentialSubject.name")))
+          )
+        )
+      )
+    )
+
+    val presentationResult = PresentationExchange.createPresentationFromCredentials(
+      vcJwts= listOf(vcJwt1, vcJwt2),
+      presentationDefinition= presentationDefinition
+    )
+
+    val verifiablePresentation = VerifiablePresentation.create(
+      vcJwts = listOf(vcJwt1, vcJwt2),
+      holder = holderDid.did.uri,
+      additionalData = mapOf("presentation_submission" to presentationResult)
+    )
+
+    val vpJwt = verifiablePresentation.sign(holderDid)
+
+    assertDoesNotThrow {
+      VerifiablePresentation.verify(vpJwt)
+    }
   }
 }

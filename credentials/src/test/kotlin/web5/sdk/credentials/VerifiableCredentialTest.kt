@@ -106,6 +106,23 @@ class VerifiableCredentialTest {
   }
 
   @Test
+  fun `verify does not throw an exception if vc signed with did dht is legit`() {
+    val keyManager = InMemoryKeyManager()
+    val issuerDid = DidDht.create(keyManager)
+    val holderDid = DidDht.create(keyManager)
+
+    val vc = VerifiableCredential.create(
+      type = "StreetCred",
+      issuer = issuerDid.uri,
+      subject = holderDid.uri,
+      data = StreetCredibility(localRespect = "high", legit = true)
+    )
+
+    val vcJwt = vc.sign(issuerDid)
+    VerifiableCredential.verify(vcJwt)
+  }
+
+  @Test
   fun `verify handles DIDs without an assertionMethod`() {
     val keyManager = InMemoryKeyManager()
 
@@ -245,7 +262,6 @@ class Web5TestVectorsCredentials {
     val testVectors = mapper.readValue(File("../web5-spec/test-vectors/credentials/verify.json"), typeRef)
 
     testVectors.vectors.filterNot { it.errors ?: false }.forEach { vector ->
-      println(vector.description)
       assertDoesNotThrow {
         VerifiableCredential.verify(vector.input.vcJwt)
       }

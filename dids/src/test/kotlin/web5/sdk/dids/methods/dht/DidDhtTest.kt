@@ -348,6 +348,12 @@ class Web5TestVectorsDidDht {
   }
 
   @Test
+  fun `resolve fails with an invalid did`() {
+    val result = DidDht.resolve("this-is-an-invalid-did")
+    assertEquals("invalidDid", result.didResolutionMetadata.error)
+  }
+
+  @Test
   fun resolve() {
     val typeRef = object : TypeReference<TestVectors<ResolveTestInput, DidResolutionResult>>() {}
     val testVectors = mapper.readValue(File("../web5-spec/test-vectors/did_dht/resolve.json"), typeRef)

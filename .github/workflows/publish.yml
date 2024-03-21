@@ -5,9 +5,7 @@ on:
       version:
         description: 'Version to publish. For example "0.0.1"'
         required: true
-        default: '0.0.0'
-  release:
-    types: [ published ]
+        default: "0.0.0"
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -37,3 +35,13 @@ jobs:
           ORG_GRADLE_PROJECT_signingPassword: ${{ secrets.ORG_GRADLE_PROJECT_SIGNINGPASSWORD }}
           ORG_GRADLE_PROJECT_sonatypeUsername: ${{ secrets.ORG_GRADLE_PROJECT_SONATYPEUSERNAME }}
           ORG_GRADLE_PROJECT_sonatypePassword: ${{ secrets.ORG_GRADLE_PROJECT_SONATYPEPASSWORD }}
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        # skips snapshot releases
+        if: contains(github.event.inputs.version, 'SNAPSHOT') == false
+        with:
+          tag_name: v${{ github.event.inputs.version }}
+          draft: false
+          prerelease: true
+          generate_release_notes: true
