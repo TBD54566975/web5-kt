@@ -96,7 +96,7 @@
     <!-- Versioning for Dependencies -->
     <version.com.amazonaws>1.12.668</version.com.amazonaws>
     <version.com.danubetech>1.6.0</version.com.danubetech>
-    <version.com.fasterxml.jackson.module>2.14.2</version.com.fasterxml.jackson.module>
+    <version.com.fasterxml.jackson>2.14.2</version.com.fasterxml.jackson>
     <version.com.github.multiformats>1.1.0</version.com.github.multiformats>
     <version.com.google.crypto.tink>1.10.0</version.com.google.crypto.tink>
     <version.com.nimbusds>9.37.2</version.com.nimbusds>
@@ -140,7 +140,7 @@
       <dependency>
         <groupId>com.fasterxml.jackson.module</groupId>
         <artifactId>jackson-module-kotlin</artifactId>
-        <version>${version.com.fasterxml.jackson.module}</version>
+        <version>${version.com.fasterxml.jackson}</version>
       </dependency>
       <dependency>
         <groupId>com.github.multiformats</groupId>
@@ -402,6 +402,7 @@
               <include>**/*TestCase.java</include>
               <include>**/*Web5TestVectors*.java</include>
             </includes>
+            <trimStackTrace>false</trimStackTrace>
           </configuration>
         </plugin>
         <plugin>
