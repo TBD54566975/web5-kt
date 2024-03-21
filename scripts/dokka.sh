@@ -2,7 +2,7 @@
 
 # setup dokka cli
 if [ ! -d "./target/dokka-cli" ]; then
-  mkdir ./target/dokka-cli
+  mkdir -p ./target/dokka-cli
   wget -O ./target/dokka-cli/dokka-cli.jar https://repo1.maven.org/maven2/org/jetbrains/dokka/dokka-cli/1.9.20/dokka-cli-1.9.20.jar
   wget -O ./target/dokka-cli/dokka-base.jar https://repo1.maven.org/maven2/org/jetbrains/dokka/dokka-base/1.9.20/dokka-base-1.9.20.jar
   wget -O ./target/dokka-cli/analysis-kotlin-descriptors.jar https://repo1.maven.org/maven2/org/jetbrains/dokka/analysis-kotlin-descriptors/1.9.20/analysis-kotlin-descriptors-1.9.20.jar
