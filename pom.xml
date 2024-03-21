@@ -54,8 +54,8 @@
     <module>credentials</module>
     <module>crypto</module>
     <module>dids</module>
+    <module>distribution</module>
     <module>testing</module>
-    <module>web5</module>
   </modules>
 
   <!-- Properties -->
@@ -96,7 +96,7 @@
     <!-- Versioning for Dependencies -->
     <version.com.amazonaws>1.12.668</version.com.amazonaws>
     <version.com.danubetech>1.6.0</version.com.danubetech>
-    <version.com.fasterxml.jackson>2.14.2</version.com.fasterxml.jackson>
+    <version.com.fasterxml.jackson>2.17.0</version.com.fasterxml.jackson>
     <version.com.github.multiformats>1.1.0</version.com.github.multiformats>
     <version.com.google.crypto.tink>1.10.0</version.com.google.crypto.tink>
     <version.com.nimbusds>9.37.2</version.com.nimbusds>
@@ -116,7 +116,6 @@
     These are overrides for deps brought in transitively; reasoning
     and approach is documented below in <dependencyManagement> section
     -->
-    <version.com.fasterxml.jackson.core>2.16.1</version.com.fasterxml.jackson.core>
     <version.com.google.guava>32.0.0-android</version.com.google.guava>
     <version.com.google.protobuf>3.19.6</version.com.google.protobuf>
     <version.com.squareup.okio>3.6.0</version.com.squareup.okio>
@@ -301,17 +300,17 @@
       <dependency>
         <groupId>com.fasterxml.jackson.core</groupId>
         <artifactId>jackson-annotations</artifactId>
-        <version>${version.com.fasterxml.jackson.core}</version>
+        <version>${version.com.fasterxml.jackson}</version>
       </dependency>
       <dependency>
         <groupId>com.fasterxml.jackson.core</groupId>
         <artifactId>jackson-core</artifactId>
-        <version>${version.com.fasterxml.jackson.core}</version>
+        <version>${version.com.fasterxml.jackson}</version>
       </dependency>
       <dependency>
         <groupId>com.fasterxml.jackson.core</groupId>
         <artifactId>jackson-databind</artifactId>
-        <version>${version.com.fasterxml.jackson.core}</version>
+        <version>${version.com.fasterxml.jackson}</version>
       </dependency>
       <!-- Addresss https://github.com/TBD54566975/web5-kt/issues/243 -->
       <dependency>
