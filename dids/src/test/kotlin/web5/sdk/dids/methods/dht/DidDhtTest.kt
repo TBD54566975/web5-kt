@@ -22,7 +22,6 @@ import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.crypto.JwaCurve
 import web5.sdk.crypto.jwk.Jwk
 import web5.sdk.dids.DidResolutionResult
-import web5.sdk.dids.JwkDeserializer
 import web5.sdk.dids.PurposesDeserializer
 import web5.sdk.dids.didcore.DidDocument
 import web5.sdk.dids.didcore.Purpose
@@ -355,7 +354,6 @@ class Web5TestVectorsDidDht {
   )
 
   data class VerificationMethodInput(
-    @JsonDeserialize(using = JwkDeserializer::class)
     val jwk: Jwk,
     @JsonDeserialize(using = PurposesDeserializer::class)
     val purposes: List<Purpose>

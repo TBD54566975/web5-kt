@@ -1,10 +1,6 @@
 package web5.sdk.dids.didcore
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize
-import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import web5.sdk.crypto.jwk.Jwk
-import web5.sdk.dids.JwkSerializer
-import web5.sdk.dids.JwkDeserializer
 
 /**
  * VerificationMethod expresses verification methods, such as cryptographic
@@ -26,8 +22,6 @@ public class VerificationMethod(
   public val id: String,
   public val type: String,
   public val controller: String,
-  @JsonSerialize(using = JwkSerializer::class)
-  @JsonDeserialize(using = JwkDeserializer::class)
   public val publicKeyJwk: Jwk? = null
 ) {
   /**
