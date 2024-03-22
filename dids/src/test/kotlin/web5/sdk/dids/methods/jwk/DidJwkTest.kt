@@ -9,9 +9,9 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import web5.sdk.common.Convert
+import web5.sdk.common.Json
 import web5.sdk.crypto.AlgorithmId
 import web5.sdk.crypto.InMemoryKeyManager
-import web5.sdk.crypto.Jwa
 import web5.sdk.dids.DidResolutionResult
 import web5.sdk.dids.DidResolvers
 import web5.sdk.testing.TestVectors
@@ -29,11 +29,12 @@ class DidJwkTest {
       val did = DidJwk.create(manager)
 
       val didResolutionResult = DidResolvers.resolve(did.uri)
-      val verificationMethod = didResolutionResult.didDocument!!.allVerificationMethods[0]
+      val verificationMethod = didResolutionResult.didDocument!!.verificationMethod?.get(0)
 
       assertNotNull(verificationMethod)
 
-      val jwk = JWK.parse(verificationMethod.publicKeyJwk)
+      val jwk = verificationMethod.publicKeyJwk
+      assertNotNull(jwk)
       val keyAlias = did.keyManager.getDeterministicAlias(jwk)
       val publicKey = did.keyManager.getPublicKey(keyAlias)
 
@@ -77,6 +78,19 @@ class DidJwkTest {
 
   @Nested
   inner class ResolveTest {
+
+    @Test
+    fun `throws exception if did cannot be parsed`() {
+      val result = DidJwk.resolve("did:jwk:invalid")
+      assertEquals("invalidDid", result.didResolutionMetadata.error)
+    }
+
+    @Test
+    fun `throws exception if did method is not jwk`() {
+      val result = DidJwk.resolve("did:example:123")
+      assertEquals("methodNotSupported", result.didResolutionMetadata.error)
+    }
+
     @Test
     fun `private key throws exception`() {
       val manager = InMemoryKeyManager()
@@ -85,15 +99,18 @@ class DidJwkTest {
       val encodedPrivateJwk = Convert(privateJwk.toJSONString()).toBase64Url(padding = false)
 
       val did = "did:jwk:$encodedPrivateJwk"
-      assertThrows<IllegalArgumentException>("decoded jwk value cannot be a private key") { DidJwk.resolve(did) }
+      assertThrows<IllegalArgumentException>(
+        "decoded jwk value cannot be a private key"
+      ) { DidJwk.resolve(did) }
     }
 
     @Test
     fun `test vector 1`() {
       // test vector taken from: https://github.com/quartzjer/did-jwk/blob/main/spec.md#p-256
-      @Suppress("MaxLineLength")
       val did =
-        "did:jwk:eyJjcnYiOiJQLTI1NiIsImt0eSI6IkVDIiwieCI6ImFjYklRaXVNczNpOF91c3pFakoydHBUdFJNNEVVM3l6OTFQSDZDZEgyVjAiLCJ5IjoiX0tjeUxqOXZXTXB0bm1LdG00NkdxRHo4d2Y3NEk1TEtncmwyR3pIM25TRSJ9"
+        "did:jwk:eyJjcnYiOiJQLTI1NiIsImt0eSI6IkVDIiwieCI6ImFjYklRaXVNczNpOF91c3pFa" +
+          "koydHBUdFJNNEVVM3l6OTFQSDZDZEgyVjAiLCJ5IjoiX0tjeUxqOXZXTXB0bm1LdG00Nkdx" +
+          "RHo4d2Y3NEk1TEtncmwyR3pIM25TRSJ9"
       val result = DidJwk.resolve(did)
       assertNotNull(result)
 
@@ -101,15 +118,18 @@ class DidJwkTest {
       assertNotNull(didDocument)
 
       val expectedJson = File("src/test/resources/did_jwk_p256_document.json").readText()
-      assertEquals(JsonCanonicalizer(expectedJson).encodedString, JsonCanonicalizer(didDocument.toJson()).encodedString)
+      assertEquals(
+        JsonCanonicalizer(expectedJson).encodedString,
+        JsonCanonicalizer(Json.stringify(didDocument)).encodedString
+      )
     }
 
     @Test
     fun `test vector 2`() {
       // test vector taken from: https://github.com/quartzjer/did-jwk/blob/main/spec.md#x25519
-      @Suppress("MaxLineLength")
       val did =
-        "did:jwk:eyJrdHkiOiJPS1AiLCJjcnYiOiJYMjU1MTkiLCJ1c2UiOiJlbmMiLCJ4IjoiM3A3YmZYdDl3YlRUVzJIQzdPUTFOei1EUThoYmVHZE5yZngtRkctSUswOCJ9"
+        "did:jwk:eyJrdHkiOiJPS1AiLCJjcnYiOiJYMjU1MTkiLCJ1c2UiOiJlbmMiLCJ4IjoiM3A3YmZY" +
+          "dDl3YlRUVzJIQzdPUTFOei1EUThoYmVHZE5yZngtRkctSUswOCJ9"
       val result = DidJwk.resolve(did)
       assertNotNull(result)
 
@@ -117,7 +137,10 @@ class DidJwkTest {
       assertNotNull(didDocument)
 
       val expectedJson = File("src/test/resources/did_jwk_x25519_document.json").readText()
-      assertEquals(JsonCanonicalizer(expectedJson).encodedString, JsonCanonicalizer(didDocument.toJson()).encodedString)
+      assertEquals(
+        JsonCanonicalizer(expectedJson).encodedString,
+        JsonCanonicalizer(Json.stringify(didDocument)).encodedString
+      )
     }
   }
 }

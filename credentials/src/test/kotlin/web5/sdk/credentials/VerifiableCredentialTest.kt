@@ -17,18 +17,17 @@ import web5.sdk.crypto.AlgorithmId
 import web5.sdk.crypto.AwsKeyManager
 import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.dids.Did
+import web5.sdk.dids.didcore.Purpose
 import web5.sdk.dids.extensions.load
-import web5.sdk.dids.methods.ion.CreateDidIonOptions
-import web5.sdk.dids.methods.ion.DidIon
-import web5.sdk.dids.methods.ion.JsonWebKey2020VerificationMethod
 import web5.sdk.dids.methods.jwk.DidJwk
+import web5.sdk.dids.methods.dht.CreateDidDhtOptions
+import web5.sdk.dids.methods.dht.DidDht
 import web5.sdk.dids.methods.key.DidKey
 import web5.sdk.testing.TestVectors
 import java.io.File
 import java.security.SignatureException
 import java.text.ParseException
 import java.util.Date
-import java.util.UUID
 import kotlin.test.Ignore
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
@@ -50,7 +49,7 @@ class VerifiableCredentialTest {
         "2aWNlcyI6W119fV0sInVwZGF0ZUNvbW1pdG1lbnQiOiJFaUNsaVVIbHBQQjE0VVpkVzk4S250aG8zV2YxRjQxOU83cFhSMGhPeFAzRkNnIn0" +
         "sInN1ZmZpeERhdGEiOnsiZGVsdGFIYXNoIjoiRWlEU2FMNHZVNElzNmxDalp4YVp6Zl9lWFFMU3V5T3E5T0pNbVJHa2FFTzRCQSIsInJlY29" +
         "2ZXJ5Q29tbWl0bWVudCI6IkVpQzI0TFljVEdRN1JzaDdIRUl2TXQ0MGNGbmNhZGZReTdibDNoa3k0RkxUQ2cifX0"
-    val issuerDid = DidIon.load(didUri, keyManager)
+    val issuerDid = DidDht.load(didUri, keyManager)
     val holderDid = DidKey.create(keyManager)
 
     val vc = VerifiableCredential.create(
@@ -146,26 +145,44 @@ class VerifiableCredentialTest {
   }
 
   @Test
+  fun `verify does not throw an exception if vc signed with did dht is legit`() {
+    val keyManager = InMemoryKeyManager()
+    val issuerDid = DidDht.create(keyManager)
+    val holderDid = DidDht.create(keyManager)
+
+    val vc = VerifiableCredential.create(
+      type = "StreetCred",
+      issuer = issuerDid.uri,
+      subject = holderDid.uri,
+      data = StreetCredibility(localRespect = "high", legit = true)
+    )
+
+    val vcJwt = vc.sign(issuerDid)
+    VerifiableCredential.verify(vcJwt)
+  }
+
+  @Test
   fun `verify handles DIDs without an assertionMethod`() {
     val keyManager = InMemoryKeyManager()
 
-    //Create an ION DID without an assertionMethod
+    // Create a DHT DID without an assertionMethod
     val alias = keyManager.generatePrivateKey(AlgorithmId.secp256k1)
     val verificationJwk = keyManager.getPublicKey(alias)
-    val key = JsonWebKey2020VerificationMethod(
-      id = UUID.randomUUID().toString(),
-      publicKeyJwk = verificationJwk,
-      relationships = emptyList() //No assertionMethod
-    )
-    val issuerDid = DidIon.create(
+
+    val verificationMethodsToAdd = listOf(Triple(
+      verificationJwk,
+      emptyList<Purpose>(),
+      "did:web:tbd.website"
+    ))
+    val issuerDid = DidDht.create(
       InMemoryKeyManager(),
-      CreateDidIonOptions(verificationMethodsToAdd = listOf(key))
+      CreateDidDhtOptions(verificationMethods = verificationMethodsToAdd)
     )
 
     val header = JWSHeader.Builder(JWSAlgorithm.ES256K)
       .keyID(issuerDid.uri)
       .build()
-    //A detached payload JWT
+    // A detached payload JWT
     val vcJwt = "${header.toBase64URL()}..fakeSig"
 
     val exception = assertThrows(SignatureException::class.java) {
