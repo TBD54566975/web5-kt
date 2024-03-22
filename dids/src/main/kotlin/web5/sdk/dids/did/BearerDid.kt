@@ -50,11 +50,11 @@ public class BearerDid(
   public fun getSigner(selector: VMSelector? = null): Pair<DidSigner, VerificationMethod> {
     val verificationMethod = document.selectVerificationMethod(selector)
 
-    val keyAliasResult = runCatching { verificationMethod.publicKeyJwk?.computeThumbprint() }
-    val keyAlias = keyAliasResult.getOrNull() ?: throw Exception("Failed to compute key alias")
+    val kid = verificationMethod.publicKeyJwk?.computeThumbprint()
+      ?: throw Exception("Failed to compute key alias")
 
     val signer: DidSigner = { payload ->
-      keyManager.sign(keyAlias, payload)
+      keyManager.sign(kid, payload)
     }
 
     return Pair(signer, verificationMethod)
