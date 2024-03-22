@@ -54,7 +54,8 @@ class BearerDidTest {
     assertEquals(portableDid.document, bearerDid.document)
     val portableDidKid = portableDid.privateKeys[0].kid ?: portableDid.privateKeys[0].computeThumbprint()
     assertNotNull(bearerDid.keyManager.getPublicKey(portableDidKid))
-    val bearerDidKid = bearerDid.document.verificationMethod?.first()?.publicKeyJwk?.kid ?: bearerDid.document.verificationMethod?.first()?.publicKeyJwk?.computeThumbprint()
+    val bearerDidKid = bearerDid.document.verificationMethod?.first()?.publicKeyJwk?.kid
+      ?: bearerDid.document.verificationMethod?.first()?.publicKeyJwk?.computeThumbprint()
     assertEquals(portableDidKid, bearerDidKid)
   }
 
