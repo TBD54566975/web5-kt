@@ -58,19 +58,18 @@ public class JwtClaimsSetDeserializer : JsonDeserializer<JwtClaimsSet>() {
     )
 
     // extract misc nodes
-    val miscClaims: MutableMap<String, Any> = mutableMapOf()
-    val mc = Json.jsonMapper.createObjectNode()
+    val miscClaims = Json.jsonMapper.createObjectNode()
     val fields = jsonNode.fields()
 
     while (fields.hasNext()) {
       val (key, value) = fields.next()
 
       if (!reservedClaims.contains(key)) {
-        mc.set<JsonNode>(key, value)
+        miscClaims.set<JsonNode>(key, value)
       }
     }
 
-    val yo = Json.jsonMapper.convertValue(mc, Map::class.java)
+    val miscClaimsMap = Json.jsonMapper.convertValue(miscClaims, Map::class.java)
 
     return JwtClaimsSet(
       iss = jsonNode.get("iss")?.asText(),
@@ -80,7 +79,7 @@ public class JwtClaimsSetDeserializer : JsonDeserializer<JwtClaimsSet>() {
       nbf = jsonNode.get("nbf")?.asLong(),
       iat = jsonNode.get("iat")?.asLong(),
       jti = jsonNode.get("jti")?.asText(),
-      misc = yo as Map<String, Any>
+      misc = miscClaimsMap as Map<String, Any>
     )
   }
 }
