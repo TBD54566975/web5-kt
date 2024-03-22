@@ -16,13 +16,6 @@ dependencies {
    * Deps are declared in alphabetical order.
    */
 
-  // API
-  /*
-   * API Leak: https://github.com/TBD54566975/web5-kt/issues/229
-   *
-   * Change and move to "implementation" when completed
-   */
-  api(libs.comNimbusdsJoseJwt)
   /*
    * API Leak: https://github.com/TBD54566975/web5-kt/issues/230
    *
@@ -37,6 +30,7 @@ dependencies {
   implementation(libs.comGoogleCryptoTink)
   implementation(libs.bundles.orgBouncycastle)
   implementation(libs.comFasterXmlJacksonModuleKotlin)
+  implementation(libs.comNimbusdsJoseJwt)
 
   // Test
   /**
