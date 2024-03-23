@@ -41,6 +41,8 @@ import kotlin.text.Charsets.UTF_8
  * A "did:web" DID is an implementation that uses the web domains existing reputation system. More details can be
  * read in https://w3c-ccg.github.io/did-method-web/
  *
+ * DidWeb API does not support creating DIDs, only resolving them.
+ *
  * ### Usage Example:
  * ```kotlin
  * val keyManager = InMemoryKeyManager()
@@ -78,7 +80,7 @@ private const val WELL_KNOWN_URL_PATH = "/.well-known"
 private const val DID_DOC_FILE_NAME = "/did.json"
 
 /**
- * Implements [resolve] and [create] according to https://w3c-ccg.github.io/did-method-web/
+ * Implements [resolve] according to https://w3c-ccg.github.io/did-method-web/
  */
 public sealed class DidWebApi(
   configuration: DidWebApiConfiguration
