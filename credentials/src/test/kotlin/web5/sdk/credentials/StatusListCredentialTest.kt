@@ -123,7 +123,7 @@ class StatusListCredentialTest {
       issuer = issuerDid.uri,
       subject = holderDid.uri,
       data = StreetCredibility(localRespect = "high", legit = true),
-      credentialStatus2
+      credentialStatus = credentialStatus2
     )
 
     val statusListCredential = StatusListCredential.create(
@@ -198,7 +198,7 @@ class StatusListCredentialTest {
       issuer = issuerDid.uri,
       subject = holderDid.uri,
       data = StreetCredibility(localRespect = "high", legit = true),
-      credentialStatus2
+      credentialStatus = credentialStatus2
     )
 
     val exception = assertThrows<StatusListCredentialCreateException> {
@@ -321,7 +321,7 @@ class StatusListCredentialTest {
       issuer = issuerDid.uri,
       subject = holderDid.uri,
       data = StreetCredibility(localRespect = "high", legit = true),
-      credentialStatus2
+      credentialStatus = credentialStatus2
     )
 
     val credentialStatus3 = StatusList2021Entry.builder()
@@ -336,7 +336,7 @@ class StatusListCredentialTest {
       issuer = issuerDid.uri,
       subject = holderDid.uri,
       data = StreetCredibility(localRespect = "high", legit = true),
-      credentialStatus3
+      credentialStatus = credentialStatus3
     )
 
     val statusListCredential =
@@ -390,7 +390,7 @@ class StatusListCredentialTest {
       issuer = issuerDid.uri,
       subject = holderDid.uri,
       data = StreetCredibility(localRespect = "high", legit = true),
-      credentialStatus2
+      credentialStatus = credentialStatus2
     )
 
     val statusListCredential =
