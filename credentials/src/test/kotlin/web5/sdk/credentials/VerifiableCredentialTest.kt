@@ -42,8 +42,8 @@ class VerifiableCredentialTest {
 
     val vc = VerifiableCredential.create(
       type = "StreetCred",
-      issuer = issuerDid.did.uri,
-      subject = holderDid.did.uri,
+      issuer = issuerDid.uri,
+      subject = holderDid.uri,
       data = StreetCredibility(localRespect = "high", legit = true)
     )
 
@@ -62,8 +62,8 @@ class VerifiableCredentialTest {
 
     val vc = VerifiableCredential.create(
       type = "StreetCred",
-      issuer = issuerDid.did.uri,
-      subject = holderDid.did.uri,
+      issuer = issuerDid.uri,
+      subject = holderDid.uri,
       data = StreetCredibility(localRespect = "high", legit = true)
     )
     assertNotNull(vc)
@@ -78,8 +78,8 @@ class VerifiableCredentialTest {
     val exception = assertThrows(IllegalArgumentException::class.java) {
       VerifiableCredential.create(
         type = "StreetCred",
-        issuer = issuerDid.did.uri,
-        subject = holderDid.did.uri,
+        issuer = issuerDid.uri,
+        subject = holderDid.uri,
         data = "trials & tribulations"
       )
     }
@@ -96,8 +96,8 @@ class VerifiableCredentialTest {
 
     val vc = VerifiableCredential.create(
       type = "StreetCred",
-      issuer = issuerDid.did.uri,
-      subject = holderDid.did.uri,
+      issuer = issuerDid.uri,
+      subject = holderDid.uri,
       data = StreetCredibility(localRespect = "high", legit = true)
     )
 
@@ -113,8 +113,8 @@ class VerifiableCredentialTest {
 
     val vc = VerifiableCredential.create(
       type = "StreetCred",
-      issuer = issuerDid.did.uri,
-      subject = holderDid.did.uri,
+      issuer = issuerDid.uri,
+      subject = holderDid.uri,
       data = StreetCredibility(localRespect = "high", legit = true)
     )
 
@@ -143,7 +143,7 @@ class VerifiableCredentialTest {
     val header = JwsHeader.Builder()
       .type("JWT")
       .algorithm(Jwa.ES256K.name)
-      .keyId(issuerDid.did.uri)
+      .keyId(issuerDid.uri)
       .build()
     // A detached payload JWT
     val vcJwt = "${Convert(Json.stringify(header)).toBase64Url()}..fakeSig"
@@ -204,8 +204,8 @@ class VerifiableCredentialTest {
 
     val vc = VerifiableCredential.create(
       type = "StreetCred",
-      issuer = issuerDid.did.uri,
-      subject = holderDid.did.uri,
+      issuer = issuerDid.uri,
+      subject = holderDid.uri,
       data = StreetCredibility(localRespect = "high", legit = true)
     )
 

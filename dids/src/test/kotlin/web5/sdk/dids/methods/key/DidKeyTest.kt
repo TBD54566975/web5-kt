@@ -19,11 +19,11 @@ class DidKeyTest {
   @Nested
   inner class CreateTest {
     @Test
-    fun `it works`() {
+    fun `creates and resolves did key`() {
       val manager = InMemoryKeyManager()
       val bearerDid = DidKey.create(manager)
 
-      val didResolutionResult = DidResolvers.resolve(bearerDid.did.uri)
+      val didResolutionResult = DidResolvers.resolve(bearerDid.uri)
 
       assertNotNull(didResolutionResult.didDocument)
       val verificationMethod = didResolutionResult.didDocument!!.verificationMethod?.get(0)
@@ -104,7 +104,7 @@ class DidKeyTest {
       val bearerDid = DidKey.create(manager)
       val portableDid = bearerDid.export()
       val importedDid = DidKey.import(portableDid, manager)
-      assertEquals(bearerDid.did.uri, importedDid.did.uri)
+      assertEquals(bearerDid.uri, importedDid.uri)
     }
 
     @Test

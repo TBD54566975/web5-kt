@@ -29,7 +29,7 @@ class DidJwkTest {
       val manager = InMemoryKeyManager()
       val did = DidJwk.create(manager)
 
-      val didResolutionResult = DidResolvers.resolve(did.did.uri)
+      val didResolutionResult = DidResolvers.resolve(did.uri)
       val verificationMethod = didResolutionResult.didDocument!!.verificationMethod?.get(0)
 
       assertNotNull(verificationMethod)
@@ -50,7 +50,7 @@ class DidJwkTest {
       val bearerDid = DidJwk.create(manager)
       val portableDid = bearerDid.export()
       val importedDid = DidJwk.import(portableDid, manager)
-      assertEquals(bearerDid.did.uri, importedDid.did.uri)
+      assertEquals(bearerDid.uri, importedDid.uri)
     }
 
     @Test

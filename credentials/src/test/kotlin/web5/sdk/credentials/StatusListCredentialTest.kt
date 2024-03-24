@@ -59,8 +59,8 @@ class StatusListCredentialTest {
 
     val credWithCredStatus = VerifiableCredential.create(
       type = "StreetCred",
-      issuer = issuerDid.did.uri,
-      subject = holderDid.did.uri,
+      issuer = issuerDid.uri,
+      subject = holderDid.uri,
       data = StreetCredibility(localRespect = "high", legit = true),
       credentialStatus = credentialStatus
     )
@@ -75,7 +75,7 @@ class StatusListCredentialTest {
     )
 
     assertEquals(credWithCredStatus.type, "StreetCred")
-    assertEquals(credWithCredStatus.issuer, issuerDid.did.uri)
+    assertEquals(credWithCredStatus.issuer, issuerDid.uri)
     assertNotNull(credWithCredStatus.vcDataModel.issuanceDate)
     assertNotNull(credWithCredStatus.vcDataModel.credentialStatus)
     assertEquals(credWithCredStatus.vcDataModel.credentialSubject.claims.get("localRespect"), "high")
@@ -105,8 +105,8 @@ class StatusListCredentialTest {
 
     val vc1 = VerifiableCredential.create(
       type = "StreetCred",
-      issuer = issuerDid.did.uri,
-      subject = holderDid.did.uri,
+      issuer = issuerDid.uri,
+      subject = holderDid.uri,
       data = StreetCredibility(localRespect = "high", legit = true),
       credentialStatus = credentialStatus1
     )
@@ -120,15 +120,15 @@ class StatusListCredentialTest {
 
     val vc2 = VerifiableCredential.create(
       type = "StreetCred",
-      issuer = issuerDid.did.uri,
-      subject = holderDid.did.uri,
+      issuer = issuerDid.uri,
+      subject = holderDid.uri,
       data = StreetCredibility(localRespect = "high", legit = true),
       credentialStatus2
     )
 
     val statusListCredential = StatusListCredential.create(
       "revocation-id",
-      issuerDid.did.uri,
+      issuerDid.uri,
       StatusPurpose.REVOCATION,
       listOf(vc1, vc2)
     )
@@ -180,8 +180,8 @@ class StatusListCredentialTest {
 
     val vc1 = VerifiableCredential.create(
       type = "StreetCred",
-      issuer = issuerDid.did.uri,
-      subject = holderDid.did.uri,
+      issuer = issuerDid.uri,
+      subject = holderDid.uri,
       data = StreetCredibility(localRespect = "high", legit = true),
       credentialStatus = credentialStatus1
     )
@@ -195,8 +195,8 @@ class StatusListCredentialTest {
 
     val vc2 = VerifiableCredential.create(
       type = "StreetCred",
-      issuer = issuerDid.did.uri,
-      subject = holderDid.did.uri,
+      issuer = issuerDid.uri,
+      subject = holderDid.uri,
       data = StreetCredibility(localRespect = "high", legit = true),
       credentialStatus2
     )
@@ -204,7 +204,7 @@ class StatusListCredentialTest {
     val exception = assertThrows<StatusListCredentialCreateException> {
       StatusListCredential.create(
         "revocation-id",
-        issuerDid.did.uri,
+        issuerDid.uri,
         StatusPurpose.REVOCATION,
         listOf(vc1, vc2)
       )
@@ -231,8 +231,8 @@ class StatusListCredentialTest {
 
     val vc1 = VerifiableCredential.create(
       type = "StreetCred",
-      issuer = issuerDid.did.uri,
-      subject = holderDid.did.uri,
+      issuer = issuerDid.uri,
+      subject = holderDid.uri,
       data = StreetCredibility(localRespect = "high", legit = true),
       credentialStatus = credentialStatus1
     )
@@ -240,7 +240,7 @@ class StatusListCredentialTest {
     val exception = assertThrows<StatusListCredentialCreateException> {
       StatusListCredential.create(
         "revocation-id",
-        issuerDid.did.uri,
+        issuerDid.uri,
         StatusPurpose.REVOCATION,
         listOf(vc1)
       )
@@ -267,8 +267,8 @@ class StatusListCredentialTest {
 
     val vc1 = VerifiableCredential.create(
       type = "StreetCred",
-      issuer = issuerDid.did.uri,
-      subject = holderDid.did.uri,
+      issuer = issuerDid.uri,
+      subject = holderDid.uri,
       data = StreetCredibility(localRespect = "high", legit = true),
       credentialStatus = credentialStatus1
     )
@@ -276,7 +276,7 @@ class StatusListCredentialTest {
     val exception = assertThrows<StatusListCredentialCreateException> {
       StatusListCredential.create(
         "revocation-id",
-        issuerDid.did.uri,
+        issuerDid.uri,
         StatusPurpose.REVOCATION,
         listOf(vc1)
       )
@@ -303,8 +303,8 @@ class StatusListCredentialTest {
 
     val vc1 = VerifiableCredential.create(
       type = "StreetCred",
-      issuer = issuerDid.did.uri,
-      subject = holderDid.did.uri,
+      issuer = issuerDid.uri,
+      subject = holderDid.uri,
       data = StreetCredibility(localRespect = "high", legit = true),
       credentialStatus = credentialStatus1
     )
@@ -318,8 +318,8 @@ class StatusListCredentialTest {
 
     val vc2 = VerifiableCredential.create(
       type = "StreetCred",
-      issuer = issuerDid.did.uri,
-      subject = holderDid.did.uri,
+      issuer = issuerDid.uri,
+      subject = holderDid.uri,
       data = StreetCredibility(localRespect = "high", legit = true),
       credentialStatus2
     )
@@ -333,8 +333,8 @@ class StatusListCredentialTest {
 
     val vc3 = VerifiableCredential.create(
       type = "StreetCred",
-      issuer = issuerDid.did.uri,
-      subject = holderDid.did.uri,
+      issuer = issuerDid.uri,
+      subject = holderDid.uri,
       data = StreetCredibility(localRespect = "high", legit = true),
       credentialStatus3
     )
@@ -342,7 +342,7 @@ class StatusListCredentialTest {
     val statusListCredential =
       StatusListCredential.create(
         "revocation-id",
-        issuerDid.did.uri,
+        issuerDid.uri,
         StatusPurpose.REVOCATION,
         listOf(vc1, vc2)
       )
@@ -372,8 +372,8 @@ class StatusListCredentialTest {
 
     val vc1 = VerifiableCredential.create(
       type = "StreetCred",
-      issuer = issuerDid.did.uri,
-      subject = holderDid.did.uri,
+      issuer = issuerDid.uri,
+      subject = holderDid.uri,
       data = StreetCredibility(localRespect = "high", legit = true),
       credentialStatus = credentialStatus1
     )
@@ -387,8 +387,8 @@ class StatusListCredentialTest {
 
     val vc2 = VerifiableCredential.create(
       type = "StreetCred",
-      issuer = issuerDid.did.uri,
-      subject = holderDid.did.uri,
+      issuer = issuerDid.uri,
+      subject = holderDid.uri,
       data = StreetCredibility(localRespect = "high", legit = true),
       credentialStatus2
     )
@@ -396,7 +396,7 @@ class StatusListCredentialTest {
     val statusListCredential =
       StatusListCredential.create(
         "revocation-id",
-        issuerDid.did.uri,
+        issuerDid.uri,
         StatusPurpose.REVOCATION,
         listOf(vc1)
       )
@@ -442,8 +442,8 @@ class StatusListCredentialTest {
 
     val credToValidate = VerifiableCredential.create(
       type = "StreetCred",
-      issuer = issuerDid.did.uri,
-      subject = holderDid.did.uri,
+      issuer = issuerDid.uri,
+      subject = holderDid.uri,
       data = StreetCredibility(localRespect = "high", legit = true),
       credentialStatus = credentialStatus1
     )

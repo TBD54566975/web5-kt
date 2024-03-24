@@ -199,7 +199,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) {
 
     val id = this.suffix(didUri)
     val did = Did(method = methodName, uri = didUri, url = didUri, id = id)
-    return BearerDid(did, keyManager, didDocument)
+    return BearerDid(didUri, did, keyManager, didDocument)
   }
 
   /**

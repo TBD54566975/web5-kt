@@ -198,10 +198,10 @@ class DidDocumentTest {
       val manager = InMemoryKeyManager()
       val bearerDid = DidKey.create(manager)
 
-      val verificationMethod = DidKey.resolve(bearerDid.did.uri)
+      val verificationMethod = DidKey.resolve(bearerDid.uri)
         .didDocument!!
         .findAssertionMethodById()
-      assertEquals("${bearerDid.did.uri}#${Did.parse(bearerDid.did.uri).id}", verificationMethod.id)
+      assertEquals("${bearerDid.uri}#${Did.parse(bearerDid.uri).id}", verificationMethod.id)
     }
 
     @Test
@@ -209,8 +209,8 @@ class DidDocumentTest {
       val manager = InMemoryKeyManager()
       val bearerDid = DidKey.create(manager)
 
-      val assertionMethodId = "${bearerDid.did.uri}#${Did.parse(bearerDid.did.uri).id}"
-      val verificationMethod = DidKey.resolve(bearerDid.did.uri)
+      val assertionMethodId = "${bearerDid.uri}#${Did.parse(bearerDid.uri).id}"
+      val verificationMethod = DidKey.resolve(bearerDid.uri)
         .didDocument!!
         .findAssertionMethodById(assertionMethodId)
       assertEquals(assertionMethodId, verificationMethod.id)
@@ -222,7 +222,7 @@ class DidDocumentTest {
       val bearerDid = DidKey.create(manager)
 
       val exception = assertThrows<SignatureException> {
-        DidKey.resolve(bearerDid.did.uri)
+        DidKey.resolve(bearerDid.uri)
           .didDocument!!
           .findAssertionMethodById("made up assertion method id")
       }

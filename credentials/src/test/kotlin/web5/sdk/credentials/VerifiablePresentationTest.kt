@@ -51,11 +51,11 @@ class VerifiablePresentationTest {
 
     val vp = VerifiablePresentation.create(
       vcJwts = vcJwts,
-      holder = holderDid.did.uri
+      holder = holderDid.uri
     )
 
     assertNotNull(vp, "VerifiablePresentation should not be null")
-    assertEquals(holderDid.did.uri, vp.holder, "holder should match")
+    assertEquals(holderDid.uri, vp.holder, "holder should match")
     assertEquals(vcJwts, vp.verifiableCredential, "vcJwts should match")
   }
 
@@ -80,7 +80,7 @@ class VerifiablePresentationTest {
 
     val vp = VerifiablePresentation.create(
       vcJwts = vcJwts,
-      holder = holderDid.did.uri,
+      holder = holderDid.uri,
       additionalData = mapOf("presentation_submission" to presentationSubmission)
     )
 
@@ -99,7 +99,7 @@ class VerifiablePresentationTest {
 
     val vp = VerifiablePresentation.create(
       vcJwts = listOf("vcjwt1", "vcjwt2"),
-      holder = holderDid.did.uri
+      holder = holderDid.uri
     )
 
     val vpJwt = vp.sign(holderDid)
@@ -127,7 +127,7 @@ class VerifiablePresentationTest {
 
     val vp = VerifiablePresentation.create(
       vcJwts = vcJwts,
-      holder = holderDid.did.uri,
+      holder = holderDid.uri,
       type = "PresentationSubmission",
       additionalData = mapOf("presentation_submission" to presentationSubmission)
     )
@@ -148,7 +148,7 @@ class VerifiablePresentationTest {
 
     val vp = VerifiablePresentation.create(
       vcJwts = vcJwts,
-      holder = holderDid.did.uri
+      holder = holderDid.uri
     )
 
     val vpJwt = vp.sign(holderDid)
@@ -164,7 +164,7 @@ class VerifiablePresentationTest {
     val header = JwsHeader.Builder()
       .type("JWT")
       .algorithm(Jwa.ES256K.name)
-      .keyId(holderDid.did.uri)
+      .keyId(holderDid.uri)
       .build()
 
     val vpJwt = "${Convert(Json.stringify(header)).toBase64Url()}..fakeSig"
@@ -187,7 +187,7 @@ class VerifiablePresentationTest {
 
     val vp = VerifiablePresentation.create(
       vcJwts = vcJwts,
-      holder = holderDid.did.uri
+      holder = holderDid.uri
     )
 
     val vpJwt = vp.sign(holderDid)
@@ -245,7 +245,7 @@ class VerifiablePresentationTest {
     val header = JwsHeader.Builder()
       .type("JWT")
       .algorithm(Jwa.ES256K.name)
-      .keyId(issuerDid.did.uri)
+      .keyId(issuerDid.uri)
       .build()
     //A detached payload JWT
     val vpJwt = "${Convert(Json.stringify(header)).toBase64Url()}..fakeSig"
@@ -269,15 +269,15 @@ class VerifiablePresentationTest {
 
     val vc = VerifiableCredential.create(
       type = "EmploymentCredential",
-      issuer = issuerDid.did.uri,
-      subject = holderDid.did.uri,
+      issuer = issuerDid.uri,
+      subject = holderDid.uri,
       data = EmploymentStatus(employmentStatus = "employed")
     )
 
     val vc2 = VerifiableCredential.create(
       type = "PIICredential",
-      issuer = issuerDid.did.uri,
-      subject = holderDid.did.uri,
+      issuer = issuerDid.uri,
+      subject = holderDid.uri,
       data = PIICredential(name = "Alice Smith", dateOfBirth = "2001-12-21T17:02:01Z")
     )
 
@@ -320,7 +320,7 @@ class VerifiablePresentationTest {
 
     val verifiablePresentation = VerifiablePresentation.create(
       vcJwts = listOf(vcJwt1, vcJwt2),
-      holder = holderDid.did.uri,
+      holder = holderDid.uri,
       additionalData = mapOf("presentation_submission" to presentationResult)
     )
 

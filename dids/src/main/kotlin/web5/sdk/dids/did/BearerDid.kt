@@ -21,6 +21,7 @@ public typealias DidSigner = (payload: ByteArray) -> ByteArray
  * @param document The DID Document associated with the DID.
  */
 public class BearerDid(
+  public val uri: String,
   public val did: Did,
   public val keyManager: KeyManager,
   public val document: DidDocument
@@ -74,21 +75,25 @@ public class BearerDid(
    */
   public fun export(): PortableDid {
 
-    val keyExporter = keyManager as? KeyExporter
+    check(keyManager is KeyExporter) {
+      "KeyManager must implement KeyExporter to export keys"
+    }
+
+    val keyExporter = keyManager as KeyExporter
     val privateKeys = mutableListOf<Jwk>()
 
     document.verificationMethod?.forEach { vm ->
       val keyAliasResult = runCatching { vm.publicKeyJwk?.computeThumbprint() }
       if (keyAliasResult.isSuccess) {
         val keyAlias = keyAliasResult.getOrNull()
-        keyExporter?.exportKey(keyAlias!!.toString())?.let { key ->
+        keyExporter.exportKey(keyAlias!!.toString()).let { key ->
           privateKeys.add(key)
         }
       }
     }
 
     return PortableDid(
-      uri = this.did.uri,
+      uri = this.uri,
       document = this.document,
       privateKeys = privateKeys,
       metadata = mapOf()
@@ -116,6 +121,11 @@ public class BearerDid(
       portableDid: PortableDid,
       keyManager: KeyManager = InMemoryKeyManager()
     ): BearerDid {
+
+      check(keyManager is KeyImporter) {
+        "KeyManager must implement KeyImporter to import keys"
+      }
+
       check(portableDid.document.verificationMethod?.size != 0) {
         "PortableDID must contain at least one verification method"
       }
@@ -131,11 +141,11 @@ public class BearerDid(
       val did = Did.parse(portableDid.uri)
 
       for (key in portableDid.privateKeys) {
-        val keyImporter = keyManager as? KeyImporter
-        keyImporter!!.importKey(key)
+        val keyImporter = keyManager as KeyImporter
+        keyImporter.importKey(key)
       }
 
-      return BearerDid(did, keyManager, portableDid.document)
+      return BearerDid(portableDid.uri, did, keyManager, portableDid.document)
     }
   }
 

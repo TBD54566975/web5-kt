@@ -61,7 +61,7 @@ public object DidJwk {
 
     val did = Did(method = methodName, uri = didUri, url = didUri, id = base64Encoded)
 
-    return BearerDid(did, keyManager, createDocument(did, publicKeyJwk))
+    return BearerDid(didUri, did, keyManager, createDocument(did, publicKeyJwk))
 
   }
 

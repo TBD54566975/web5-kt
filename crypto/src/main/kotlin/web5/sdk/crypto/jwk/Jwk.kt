@@ -36,7 +36,7 @@ public class Jwk(
   public val use: String?,
   public val alg: String?,
   public var kid: String?,
-  public val d: String? = null,
+  public val d: String?,
   public val x: String?,
   public val y: String?
 ) {

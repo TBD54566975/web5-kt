@@ -104,7 +104,7 @@ public class DidKey(public val uri: String, public val keyManager: KeyManager) {
       check(resolutionResult.didDocument != null) {
         "DidDocument not found"
       }
-      return BearerDid(did, keyManager, resolutionResult.didDocument)
+      return BearerDid(didUrl, did, keyManager, resolutionResult.didDocument)
     }
 
     /**

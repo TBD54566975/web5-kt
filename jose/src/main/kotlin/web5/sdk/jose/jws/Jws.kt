@@ -74,7 +74,7 @@ public object Jws {
     }
 
     val kid = if (verificationMethod.id.startsWith("#")) {
-      "${bearerDid.did.uri}${verificationMethod.id}"
+      "${bearerDid.uri}${verificationMethod.id}"
     } else {
       verificationMethod.id
     }

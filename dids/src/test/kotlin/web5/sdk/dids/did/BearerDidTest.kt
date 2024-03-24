@@ -40,7 +40,7 @@ class BearerDidTest {
     val bearerDid = DidJwk.create(InMemoryKeyManager())
     val portableDid = bearerDid.export()
 
-    assertEquals(portableDid.uri, bearerDid.did.uri)
+    assertEquals(portableDid.uri, bearerDid.uri)
     assertEquals(portableDid.document, bearerDid.document)
     assertEquals(1, portableDid.privateKeys.size)
   }
@@ -50,7 +50,7 @@ class BearerDidTest {
     val portableDid = DidJwk.create(InMemoryKeyManager()).export()
     val bearerDid = DidJwk.import(portableDid)
 
-    assertEquals(portableDid.uri, bearerDid.did.uri)
+    assertEquals(portableDid.uri, bearerDid.uri)
     assertEquals(portableDid.document, bearerDid.document)
     val portableDidKid = portableDid.privateKeys[0].kid ?: portableDid.privateKeys[0].computeThumbprint()
     assertNotNull(bearerDid.keyManager.getPublicKey(portableDidKid))

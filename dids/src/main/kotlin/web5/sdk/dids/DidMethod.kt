@@ -18,17 +18,3 @@ package web5.sdk.dids
  * ```
  */
 public interface CreateDidOptions
-
-/**
- * Represents metadata that results from the creation of a Decentralized Identifier (DID).
- *
- * Implementers can include information that would be considered useful for callers.
- *
- * ### Usage Example
- * ```
- * class MyDidMethodCreatedMetadata : CreationMetadata {
- *     // implementation-specific metadata about the created did
- * }
- * ```
- */
-public interface CreationMetadata

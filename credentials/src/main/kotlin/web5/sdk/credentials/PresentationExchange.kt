@@ -164,12 +164,13 @@ public object PresentationExchange {
     vcJwtList: Iterable<String>,
     presentationDefinition: PresentationDefinitionV2
   ): Map<InputDescriptorV2, List<String>> {
+
+    val jwtModule = SimpleModule().addSerializer(JwtClaimsSet::class.java, JwtClaimsSetSerializer())
+    Json.jsonMapper.registerModule(jwtModule)
+
     val vcJwtListWithNodes = vcJwtList.zip(
       vcJwtList.map { vcJwt ->
         val vc = Jwt.decode(vcJwt)
-
-        val jwtModule = SimpleModule().addSerializer(JwtClaimsSet::class.java, JwtClaimsSetSerializer())
-        Json.jsonMapper.registerModule(jwtModule)
         val jsonString = Json.jsonMapper.writeValueAsString(vc.claims)
         Json.jsonMapper.readTree(jsonString)
           ?: throw JsonPathParseException()

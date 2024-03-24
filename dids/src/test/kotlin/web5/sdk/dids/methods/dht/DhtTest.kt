@@ -175,9 +175,9 @@ class DhtTest {
       val bep44Message = DhtClient.createBep44PutRequest(manager, kid, message)
       assertNotNull(bep44Message)
 
-      assertDoesNotThrow { dhtClient.pkarrPut(suffix(bearerDid.did.uri), bep44Message) }
+      assertDoesNotThrow { dhtClient.pkarrPut(suffix(bearerDid.uri), bep44Message) }
 
-      val retrievedMessage = assertDoesNotThrow { dhtClient.pkarrGet(suffix(bearerDid.did.uri)) }
+      val retrievedMessage = assertDoesNotThrow { dhtClient.pkarrGet(suffix(bearerDid.uri)) }
       assertNotNull(retrievedMessage)
     }
 

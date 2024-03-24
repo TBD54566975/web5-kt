@@ -18,10 +18,7 @@ import com.nimbusds.jose.jwk.ECKey
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo
 import org.bouncycastle.crypto.ExtendedDigest
 import org.bouncycastle.crypto.digests.SHA256Digest
-import org.bouncycastle.jce.spec.ECNamedCurveSpec
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter
-import web5.sdk.common.Convert
-import web5.sdk.common.EncodingFormat
 import web5.sdk.crypto.jwk.Jwk
 import java.nio.ByteBuffer
 import java.security.PublicKey
@@ -131,7 +128,7 @@ public class AwsKeyManager @JvmOverloads constructor(
     val algorithmDetails = getAlgorithmDetails(publicKeyResponse.keySpec.enum())
     val jwkBuilder = when (publicKey) {
       is ECPublicKey -> {
-        val key = ECKey.Builder(JwaCurve.toJwkCurve(algorithmDetails.curve), publicKey).build()
+        val key = ECKey.Builder(JwaCurve.toNimbusCurve(algorithmDetails.curve), publicKey).build()
         Jwk.Builder("EC", key.curve.name)
           .x(key.x.toString())
           .y(key.y.toString())
@@ -172,7 +169,7 @@ public class AwsKeyManager @JvmOverloads constructor(
    * @return The alias belonging to [publicKey]
    */
   override fun getDeterministicAlias(publicKey: Jwk): String {
-    val jwkThumbprint = publicKey.kid ?: publicKey.computeThumbprint()
+    val jwkThumbprint = publicKey.computeThumbprint()
     return "alias/$jwkThumbprint"
   }
 

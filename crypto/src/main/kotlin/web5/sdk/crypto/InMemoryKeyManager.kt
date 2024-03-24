@@ -82,7 +82,7 @@ public class InMemoryKeyManager : KeyManager, KeyExporter, KeyImporter {
    * @throws IllegalArgumentException if the key is not known to the [KeyManager]
    */
   override fun getDeterministicAlias(publicKey: Jwk): String {
-    val kid = publicKey.kid ?: publicKey.computeThumbprint()
+    val kid = publicKey.computeThumbprint()
     require(keyStore.containsKey(kid)) {
       "key with alias $kid not found"
     }

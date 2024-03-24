@@ -14,13 +14,13 @@ public enum class JwaCurve {
   public companion object {
 
     /**
-     * Convert JwaCurve nimbusds JWK curve.
+     * Convert JwaCurve to nimbusds JWK curve.
      * Used to temporarily bridge the gap between moving from nimbusds JWK methods
      * to rolling our own JWK methods
      * @param curve
      * @return nimbus JWK Curve
      */
-    public fun toJwkCurve(curve: JwaCurve): Curve {
+    public fun toNimbusCurve(curve: JwaCurve): Curve {
       return when (curve) {
         secp256k1 -> Curve.SECP256K1
         Ed25519 -> Curve.Ed25519
