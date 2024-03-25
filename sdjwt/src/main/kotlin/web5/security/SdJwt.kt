@@ -1,0 +1,277 @@
+package web5.security
+
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.nimbusds.jose.JWSAlgorithm
+import com.nimbusds.jose.JWSHeader
+import com.nimbusds.jose.JWSObject.State
+import com.nimbusds.jose.JWSSigner
+import com.nimbusds.jose.JWSVerifier
+import com.nimbusds.jose.crypto.bc.BouncyCastleProviderSingleton
+import com.nimbusds.jose.crypto.factories.DefaultJWSVerifierFactory
+import com.nimbusds.jose.jwk.ECKey
+import com.nimbusds.jose.jwk.JWK
+import com.nimbusds.jose.jwk.OctetKeyPair
+import com.nimbusds.jose.proc.SecurityContext
+import com.nimbusds.jwt.JWTClaimsSet
+import com.nimbusds.jwt.SignedJWT
+import com.nimbusds.jwt.proc.DefaultJWTClaimsVerifier
+import java.security.Key
+import java.security.Provider
+import java.security.SignatureException
+
+private const val separator = "~"
+
+internal const val blindedArrayKey = "..."
+
+/**
+ * Represents a Selective Disclosure JWT as defined in https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-05.html#name-terms-and-definitions.
+ * A more detailed overview is available in https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-05.html#name-sd-jwt-structure.
+ *
+ * Note: While [issuerJwt] and [keyBindingJwt] are of type [SignedJWT], they may or may not be signed.
+ */
+public class SdJwt(
+  public val issuerJwt: SignedJWT,
+  public val disclosures: Iterable<Disclosure>,
+  public val keyBindingJwt: SignedJWT? = null,
+  private val serializedSdJwt: String? = null) {
+
+  /** Builder class for constructing a [SdJwt]. */
+  public class Builder(public var issuerHeader: JWSHeader? = null,
+                       public var jwtClaimsSet: JWTClaimsSet? = null,
+                       public var disclosures: Iterable<Disclosure>? = null,
+                       public var keyBindingJwt: SignedJWT? = null) {
+
+    /** Returns an [SdJwt], throwing errors when there are missing values which are required. */
+    public fun build(): SdJwt {
+
+      return SdJwt(
+        SignedJWT(issuerHeader, jwtClaimsSet),
+        disclosures!!,
+        keyBindingJwt,
+      )
+    }
+  }
+
+  /**
+   * Serializes this sd-jwt to the serialization format described in https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-05.html#name-sd-jwt-structure
+   *
+   * [issuerJwt] must have been previously signed.
+   * [keyBindingJwt], if present, must have been previously signed.
+   */
+  @JvmOverloads
+  public fun serialize(mapper: ObjectMapper = defaultMapper): String {
+    if (serializedSdJwt != null) {
+      return serializedSdJwt
+    }
+    require(issuerJwt.state == State.SIGNED) {
+      "issuerJwt is not signed"
+    }
+    if (keyBindingJwt != null) {
+      require(keyBindingJwt.state == State.SIGNED) {
+        "keyBindingJwt is not signed"
+      }
+    }
+    return buildList {
+      add(issuerJwt.serialize())
+      addAll(disclosures.map { it.serialize(mapper) })
+      add(keyBindingJwt?.serialize() ?: "")
+    }.joinToString(separator)
+  }
+
+  /** Signs the [issuerJwt] with [signer]. */
+  @Synchronized
+  public fun signAsIssuer(signer: JWSSigner) {
+    issuerJwt.sign(signer)
+  }
+
+  /**
+   * Signs the [keyBindingJwt] with [signer].
+   */
+  @Synchronized
+  public fun signKeyBinding(signer: JWSSigner) {
+    keyBindingJwt?.sign(signer)
+  }
+
+  /**
+   * TODO: only accept a subset of algos for verification.
+   *
+   * Verifies this SD-JWT according to https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-05.html#name-verification
+   * Options for verification are provided via [verificationOptions].
+   *
+   * Any issues found during verification will throw an [Exception], with a message describing the issue
+   * encountered.
+   *
+   * ## Example
+   * ```kt
+   * val issuerPublicJwk = JWK.parse("""{"kty":"EC","use":"sig","crv":"secp256k1","kid":"IgOoELyADeleZ2aRFpbGSujatncrPgK1NtTeTJGjhJQ","x":"br1bYYLXTV-FpxnORwLOP80i_5ewwhZcIL6B5-fYL34","y":"CYiM_DhgdXsZQZXMHtt2o9LgPUPuZZz8EcPmCTZb7-U","alg":"ES256K"}""")
+   * val sdJwt = "eyJraWQiOiJJZ09vRUx5QURlbGVaMmFSRnBiR1N1amF0bmNyUGdLMU50VGVUSkdqaEpRIiwidHlwIjoiSldUIiwiYWxnIjoiRVMyNTZLIn0.eyJfc2QiOlsiUXpZeE9GeUUxQmpaQjZfTGJINjlyZHVOSzAybk5lRzNNcnh0em9lWkltcyIsIjE2QlBXeHVGdEZ1cFBKTzdMWENKMmlhOW80U0RHanJ4SU81R0N5NThRbjQiLCJiT1M5TGgyNVlOaEQxelhON3lxeVdVNy1ScUdBQ2ZnazMxYlVZLUlYNGk0IiwicjNPNE13MXNwT0g5UWpFcDFtNURTcGxTTWtKVHJMR3FuZms3c3RQd2xOVSJdLCJuYXRpb25hbGl0aWVzIjpbeyIuLi4iOiJ5UDNWNXQ5SjdPTDR3WExYNzVPbWVPMTB3VEJ4WDg5cDh0OGxfeUFPNUxjIn0seyIuLi4iOiJyXzF4aXliWUJPUldCU0hUTGdVR2ZPNjV4SUl3TF9uUzQ4aGJidU9TaV80In0seyIuLi4iOiIyaWV6NERiSkxBZUQzT1QwNmc1bGJvQmh0QlNwUm5GSEg4V1kzbklROFNzIn0seyIuLi4iOiJZLUJKV2pScjRhamNFZlRoazNQOVFOOTNfTGZYOVlhRDYycGdYcUFUUXM0In1dLCJhZGRyZXNzIjp7Il9zZCI6WyJwVFJKM0hxcEZOODdZX3hScTBfMENwNVpHOHlnOGJqZHM3ZXhSS0lWekNZIiwidFoxZXFkcXNjVHBjeVNhVmd5OFF3MzBVaTZZXzJPSW10QzJNVm5fenJ5YyIsInM2UThiXy1XaC1kNGp5cm5meDlrazlZMTBoY05XaXRjWFpoWnMtallOWmciLCJmcjloN3RNX0RoWGI3MWplMlYtc0NBWG11dFVlb0ZxZ3l6UnljaVFycVVrIl19LCJfc2RfYWxnIjoic2hhLTI1NiJ9.efUzQxOAZT5x5PzPmehMoRrR7quxfa6pgqQc1r6kDjwhuC8sFX3zgsZJOC_4zbQONURpPnwFHYdtTC9IRsJyTw~WyJfUjlmMTBVOGVkaVR6ejZZZ2pNeXpBIiwgImdpdmVuX25hbWUiLCAiTWlzdGVyIl0~WyJKSURWXzV2dHBtbzB5UkUtN1lUZGtBIiwgImZhbWlseV9uYW1lIiwgIlRlZSJd~WyJVY09Icnp5SGpsWVdXUlFWQlNiVDN3IiwgImJpcnRoZGF0ZSIsICIxOTQwLTEwLTMxIl0~WyJLdnJuTlpXVUVUWDF1dEY5NDgwX2lRIiwgIlVTIl0~WyJkU0hJVVhuRDJSUTF2Mi1SZnA5REt3IiwgIkRFIl0~WyJBeFhsNW5kN1BhZ2lqQkxSdUZmTXNRIiwgIlBPIl0~WyJReGFDTVNaX1IzM0o4aWJNNGpybGNRIiwgInN0cmVldCIsICJoYXBweSBzdHJlZXQgMTIzIl0~WyJaS0loU0dGcUF3Nm9mWm81cHI5NDd3IiwgInppcF9jb2RlIiwgIjEyMzQ1Il0~"
+   * sdJwt.verify(
+   *   VerificationOptions(
+   *     issuerPublicJwk = issuerPublicJwk,
+   *     supportedAlgorithms = setOf(JWSAlgorithm.ES256K),
+   *     holderBindingOption = HolderBindingOption.SkipVerifyHolderBinding,
+   *   )
+   * )
+   * ```
+   */
+  @Throws(Exception::class)
+  public fun verify(
+    verificationOptions: VerificationOptions
+  ) {
+    // Validate the SD-JWT:
+    require(verificationOptions.supportedAlgorithms.contains(issuerJwt.header.algorithm)) {
+      "the algorithm of issuerJwt (${issuerJwt.header.algorithm}) is not part of the declared list of supported " +
+        "algorithms (${verificationOptions.supportedAlgorithms})"
+    }
+    // The none algorithm MUST NOT be accepted.
+    require(issuerJwt.header.algorithm != JWSAlgorithm.NONE) {
+      "algorithm in issuerJwt must not be `none`"
+    }
+    // Validate the signature over the SD-JWT.
+    // Validate the Issuer of the SD-JWT and that the signing key belongs to this Issuer.
+    val verifier = issuerVerifier(verificationOptions)
+    if (!issuerJwt.verify(verifier)) {
+      throw SignatureException("Verifying the issuerJwt failed: ${issuerJwt.serialize()}")
+    }
+
+    // Check that the SD-JWT is valid using nbf, iat, and exp claims, if provided in the SD-JWT, and not selectively disclosed.
+    val claimsVerifier = DefaultJWTClaimsVerifier<SecurityContext>(null, null)
+    claimsVerifier.verify(issuerJwt.jwtClaimsSet, null)
+
+    if (verificationOptions.holderBindingOption == HolderBindingOption.VerifyHolderBinding) {
+      // If Holder Binding JWT is not provided, the Verifier MUST reject the Presentation.
+      require(keyBindingJwt != null) {
+        "Holder binding required, but holder binding JWT not found"
+      }
+
+      // Ensure that a signing algorithm was used that was deemed secure for the application. Refer to [RFC8725], Sections 3.1
+      // and 3.2 for details.
+      require(verificationOptions.supportedAlgorithms.contains(keyBindingJwt.header.algorithm)) {
+        "the algorithm of keyBindingJwt (${keyBindingJwt.header.algorithm}) is not part of the declared list of " +
+          "supported algorithms (${verificationOptions.supportedAlgorithms})"
+      }
+      // The none algorithm MUST NOT be accepted.
+      require(keyBindingJwt.header.algorithm != JWSAlgorithm.NONE) {
+        "algorithm in keyBindingJwt must not be `none`"
+      }
+
+      // Validate the signature over the Holder Binding JWT.
+      // Check that the Holder Binding JWT is valid using nbf, iat, and exp claims, if provided in the Holder Binding JWT.
+      // Determine that the Holder Binding JWT is bound to the current transaction and was created for this Verifier (replay
+      // protection). This is usually achieved by a nonce and aud field within the Holder Binding JWT.
+      val holderVerifier = keyBindingVerifier(verificationOptions)
+      require(keyBindingJwt.verify(holderVerifier)) {
+        throw SignatureException("Verifying the issuerJwt failed: ${keyBindingJwt.serialize()}")
+      }
+
+      val holderClaimsVerifier = DefaultJWTClaimsVerifier<SecurityContext>(
+        JWTClaimsSet.Builder()
+          .audience(verificationOptions.desiredAudience)
+          .claim("nonce", verificationOptions.desiredNonce)
+          .build(),
+        null
+      )
+      holderClaimsVerifier.verify(keyBindingJwt.jwtClaimsSet, null)
+    }
+  }
+
+  private fun issuerVerifier(verificationOptions: VerificationOptions): JWSVerifier {
+    val verifier = DefaultJWSVerifierFactory().createJWSVerifier(
+      issuerJwt.header,
+      jwkToKey(verificationOptions.issuerPublicJwk)
+    )
+    verifier.jcaContext.provider = BouncyCastleProviderSingleton.getInstance() as Provider
+    return verifier
+  }
+
+  private fun keyBindingVerifier(verificationOptions: VerificationOptions): JWSVerifier {
+    val verifier = DefaultJWSVerifierFactory().createJWSVerifier(
+      keyBindingJwt!!.header,
+      jwkToKey(verificationOptions.keyBindingPublicJwk!!)
+    )
+    verifier.jcaContext.provider = BouncyCastleProviderSingleton.getInstance() as Provider
+    return verifier
+  }
+
+  private fun jwkToKey(jwk: JWK): Key {
+    return when (jwk) {
+      is ECKey -> jwk.toPublicKey()
+      is OctetKeyPair -> jwk.toPublicKey()
+      else -> throw InvalidJwkException("jwk not supported for value: $jwk")
+    }
+  }
+
+  /**
+   * Returns a set of indices for disclosures contained within this SD-JWT. The
+   * indices are selected such that the disclosure's digest is contained inside the [digests] map.
+   */
+  public fun selectDisclosures(digests: Set<String>): Set<Int> {
+    val hashAlg = issuerJwt.jwtClaimsSet.getHashAlg()
+    return buildSet {
+      for (disclosureAndIndex in disclosures.withIndex()) {
+        val disclosure = disclosureAndIndex.value
+        if (digests.contains(disclosure.digest(hashAlg))) {
+          add(disclosureAndIndex.index)
+        }
+      }
+    }
+  }
+
+  /**
+   * Returns the digest for the disclosure that matches [name].
+   */
+  @JvmOverloads
+  public fun digestsOf(name: String, disclosedValue: Any? = null): String? {
+    val hashAlg = issuerJwt.jwtClaimsSet.getHashAlg()
+    val objectDisclosure = disclosures.map { it as? ObjectDisclosure }.firstOrNull { it?.claimName == name }
+    if (objectDisclosure != null) {
+      return objectDisclosure.digest(hashAlg)
+    }
+    val claim = issuerJwt.jwtClaimsSet.getClaim(name)
+    val disclosuresByDigest = disclosures.associateBy { it.digest(hashAlg) }
+    if (claim != null && claim is List<*>) {
+      for (value in claim) {
+        require(value is Map<*, *>)
+        val digest = value[blindedArrayKey]
+        if (digest is String && (disclosuresByDigest[digest] as ArrayDisclosure?)?.claimValue == disclosedValue) {
+          return digest
+        }
+      }
+    }
+    return null
+  }
+
+  /** Same as [SdJwtUnblinder.unblind]. */
+  public fun unblind(): JWTClaimsSet = SdJwtUnblinder().unblind(this.serialize())
+
+  public companion object {
+    /**
+     * The reverse of the [serialize] operation. Given the serialized format of an SD-JWT, returns a [SdJwt].
+     * Verification of the signature of each JWT is left to the caller.
+     */
+    @JvmStatic
+    public fun parse(input: String): SdJwt {
+      val parts = input.split(separator)
+      require(parts.isNotEmpty()) {
+        "input must not be empty"
+      }
+      val keyBindingInput = parts[parts.size - 1]
+      val keyBindingJwt = keyBindingInput.takeUnless { it.isEmpty() }?.run(SignedJWT::parse)
+      return SdJwt(
+        SignedJWT.parse(parts[0]),
+        parts.subList(1, parts.size - 1).map { Disclosure.parse(it) },
+        keyBindingJwt,
+        input,
+      )
+    }
+  }
+}
+
+/**
+ * The hash algorithm as described in https://www.ietf.org/archive/id/draft-ietf-oauth-selective-disclosure-jwt-05.html#name-hash-function-claim
+ */
+public typealias HashFunc = (ByteArray) -> ByteArray
+
+internal val defaultMapper = jacksonObjectMapper()
+
