@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+  <!-- Parent -->
+  <parent>
+    <groupId>xyz.block</groupId>
+    <artifactId>web5-parent</artifactId>
+    <version>0.0.0-main-SNAPSHOT</version>
+    <relativePath>../pom.xml</relativePath>
+  </parent>
+
+  <!-- Model Version -->
+  <modelVersion>4.0.0</modelVersion>
+
+  <!-- Artifact Configuration -->
+  <artifactId>web5</artifactId>
+  <name>Web5 Distribution</name>
+  <description>Single-POM Definition to export the Web5 Dependencies in proper scope</description>
+  <packaging>pom</packaging>
+
+
+  <!-- Properties -->
+  <properties>
+
+    <!-- Versioning -->
+
+  </properties>
+
+  <!-- Dependencies -->
+  <dependencies>
+
+    <!-- Internal Dependencies -->
+    <dependency>
+      <groupId>xyz.block</groupId>
+      <artifactId>web5-common</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>xyz.block</groupId>
+      <artifactId>web5-credentials</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>xyz.block</groupId>
+      <artifactId>web5-crypto</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>xyz.block</groupId>
+      <artifactId>web5-dids</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <!-- External -->
+
+  </dependencies>
+
+  <!-- Build Configuration -->
+  <build>
+
+  </build>
+</project>

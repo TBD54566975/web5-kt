@@ -1,0 +1,38 @@
+{
+  "moduleName": "Web5 SDK Documentation",
+  "failOnWarning": false,
+  "suppressObviousFunctions": true,
+  "suppressInheritedMembers": false,
+  "offlineMode": false,
+  "outputDir": "./target/apidocs",
+  "sourceSets": [
+    {
+      "documentedVisibilities": [
+        "PUBLIC",
+        "PROTECTED"
+      ],
+      "sourceSetID": {
+        "scopeId": "web5",
+        "sourceSetName": "main"
+      },
+      "sourceRoots": [
+        "common/src/main/kotlin",
+        "credentials/src/main/kotlin",
+        "crypto/src/main/kotlin",
+        "dids/src/main/kotlin"
+      ],
+      "includes": [
+        "common/module.md",
+        "credentials/module.md",
+        "crypto/module.md",
+        "dids/module.md"
+      ]
+    }
+  ],
+  "pluginsClasspath": [
+    "./target/dokka-cli/dokka-base.jar",
+    "./target/dokka-cli/kotlinx-html-jvm.jar",
+    "./target/dokka-cli/analysis-kotlin-descriptors.jar",
+    "./target/dokka-cli/freemarker.jar"
+  ]
+}
