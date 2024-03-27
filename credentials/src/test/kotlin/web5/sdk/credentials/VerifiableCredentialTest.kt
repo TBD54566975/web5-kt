@@ -256,7 +256,6 @@ class Web5TestVectorsCredentials {
     val uri: String?,
     val privateKeys: List<Jwk>?,
     val document: DidDocument?,
-    val metadata: Map<String, Any>?,
     val credential: Map<String, Any>?,
   )
 
@@ -271,13 +270,13 @@ class Web5TestVectorsCredentials {
     val typeRef = object : TypeReference<TestVectors<CreateTestInput, String>>() {}
     val testVectors = mapper.readValue(File("../web5-spec/test-vectors/credentials/create.json"), typeRef)
 
-    testVectors.vectors.filterNot { it.errors ?: false }.forEach { vector ->
+    testVectors.vectors.filter { it.errors == false }.forEach { vector ->
       val vc = VerifiableCredential.fromJson(mapper.writeValueAsString(vector.input.credential))
       val portableDid = PortableDid(
         vector.input.uri!!,
         vector.input.privateKeys!!,
         vector.input.document!!,
-        vector.input.metadata!!
+        mapOf()
       )
 
       val keyManager = InMemoryKeyManager()
@@ -287,7 +286,7 @@ class Web5TestVectorsCredentials {
       assertEquals(vector.output, vcJwt, vector.description)
     }
 
-    testVectors.vectors.filter { it.errors ?: false }.forEach { vector ->
+    testVectors.vectors.filter { it.errors == true }.forEach { vector ->
       assertFails(vector.description) {
         VerifiableCredential.fromJson(mapper.writeValueAsString(vector.input.credential))
       }
