@@ -12,8 +12,10 @@ import web5.sdk.crypto.AlgorithmId
 import web5.sdk.crypto.AwsKeyManager
 import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.crypto.Jwa
+import web5.sdk.crypto.jwk.Jwk
 import web5.sdk.dids.did.BearerDid
 import web5.sdk.dids.did.PortableDid
+import web5.sdk.dids.didcore.DidDocument
 import web5.sdk.dids.didcore.Purpose
 import web5.sdk.jose.jws.JwsHeader
 import web5.sdk.jose.jwt.Jwt
@@ -251,7 +253,10 @@ class VerifiableCredentialTest {
 class Web5TestVectorsCredentials {
 
   data class CreateTestInput(
-    val signerPortableDid: PortableDid?,
+    val uri: String?,
+    val privateKeys: List<Jwk>?,
+    val document: DidDocument?,
+    val metadata: Map<String, Any>?,
     val credential: Map<String, Any>?,
   )
 
@@ -268,7 +273,12 @@ class Web5TestVectorsCredentials {
 
     testVectors.vectors.filterNot { it.errors ?: false }.forEach { vector ->
       val vc = VerifiableCredential.fromJson(mapper.writeValueAsString(vector.input.credential))
-      val portableDid = Json.parse<PortableDid>(Json.stringify(vector.input.signerPortableDid!!))
+      val portableDid = PortableDid(
+        vector.input.uri!!,
+        vector.input.privateKeys!!,
+        vector.input.document!!,
+        vector.input.metadata!!
+      )
 
       val keyManager = InMemoryKeyManager()
       val bearerDid = BearerDid.import(portableDid, keyManager)
