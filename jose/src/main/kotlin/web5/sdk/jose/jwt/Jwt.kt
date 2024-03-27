@@ -205,7 +205,7 @@ public class JwtClaimsSet(
     public fun notBeforeTime(nbf: Long): Builder = apply { this.nbf = nbf }
 
     /**
-     * Sets Issued At (iat) claim.
+     * Sets Issued At (iat) claim. Denominated in seconds.
      *
      * @param iat The time at which the JWT was issued
      * @return Builder object

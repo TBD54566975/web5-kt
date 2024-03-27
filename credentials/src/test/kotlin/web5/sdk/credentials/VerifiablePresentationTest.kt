@@ -164,7 +164,8 @@ class VerifiablePresentationTest {
     val header = JwsHeader.Builder()
       .type("JWT")
       .algorithm(Jwa.ES256K.name)
-      .keyId(holderDid.uri)
+      // todo does fragment always start with a # ? if not need to add # in the middle
+      .keyId("${holderDid.uri}${holderDid.did.fragment}")
       .build()
 
     val vpJwt = "${Convert(Json.stringify(header)).toBase64Url()}..fakeSig"

@@ -60,7 +60,7 @@ public class VerifiablePresentation internal constructor(public val vpDataModel:
   public fun sign(bearerDid: BearerDid, assertionMethodId: String? = null): String {
     val payload = JwtClaimsSet.Builder()
       .issuer(bearerDid.uri)
-      .issueTime(Date().time)
+      .issueTime(Date().time / 1000)
       .misc("vp", vpDataModel.toMap())
       .build()
 

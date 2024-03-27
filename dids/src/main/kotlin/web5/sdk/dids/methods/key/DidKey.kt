@@ -141,7 +141,7 @@ public class DidKey(public val uri: String, public val keyManager: KeyManager) {
         .id(verificationMethodId)
         .publicKeyJwk(publicKeyJwk)
         .controller(did)
-        .type("JsonWebKey2020")
+        .type("JsonWebKey")
         .build()
 
       val didDocument = DidDocument.Builder()
