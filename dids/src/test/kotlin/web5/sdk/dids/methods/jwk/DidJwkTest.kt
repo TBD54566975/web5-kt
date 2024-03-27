@@ -25,7 +25,7 @@ class DidJwkTest {
   @Nested
   inner class CreateTest {
     @Test
-    fun `creates an EdDSA key when no options are passed`() {
+    fun `creates an Ed25519 key when no options are passed`() {
       val manager = InMemoryKeyManager()
       val did = DidJwk.create(manager)
 
