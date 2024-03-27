@@ -132,7 +132,7 @@ jobs:
         with:
           tag_name: v${{ github.event.inputs.version }}
           draft: false
-          prerelease: true
+          prerelease: false
           generate_release_notes: true
 
   deploy-api-docs:
