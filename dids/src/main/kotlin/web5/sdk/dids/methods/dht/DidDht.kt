@@ -1,7 +1,5 @@
 package web5.sdk.dids.methods.dht
 
-import com.nimbusds.jose.JWSAlgorithm
-import com.nimbusds.jose.jwk.JWK
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.okhttp.OkHttp
@@ -16,17 +14,19 @@ import web5.sdk.common.ZBase32
 import web5.sdk.crypto.AlgorithmId
 import web5.sdk.crypto.Crypto
 import web5.sdk.crypto.Ed25519
+import web5.sdk.crypto.InMemoryKeyManager
+import web5.sdk.crypto.Jwa
 import web5.sdk.crypto.KeyManager
 import web5.sdk.crypto.Secp256k1
+import web5.sdk.crypto.jwk.Jwk
 import web5.sdk.dids.CreateDidOptions
-import web5.sdk.dids.Did
-import web5.sdk.dids.DidMethod
 import web5.sdk.dids.DidResolutionResult
 import web5.sdk.dids.ResolutionError
-import web5.sdk.dids.ResolveDidOptions
-import web5.sdk.dids.didcore.DidUri
-import web5.sdk.dids.didcore.DIDDocument
-import web5.sdk.dids.didcore.DIDDocumentMetadata
+import web5.sdk.dids.did.BearerDid
+import web5.sdk.dids.did.PortableDid
+import web5.sdk.dids.didcore.Did
+import web5.sdk.dids.didcore.DidDocument
+import web5.sdk.dids.didcore.DidDocumentMetadata
 import web5.sdk.dids.didcore.Purpose
 import web5.sdk.dids.didcore.Service
 import web5.sdk.dids.didcore.VerificationMethod
@@ -36,18 +36,6 @@ import web5.sdk.dids.exceptions.InvalidMethodNameException
 import web5.sdk.dids.exceptions.ParserException
 import web5.sdk.dids.exceptions.PkarrRecordNotFoundException
 import web5.sdk.dids.exceptions.PublicKeyJwkMissingException
-import web5.sdk.dids.validateKeyMaterialInsideKeyManager
-
-/**
- * Configuration for the [DidDhtApi].
- *
- * @property gateway The DID DHT gateway URL.
- * @property engine The engine to use. When absent, a new one will be created from the [OkHttp] factory.
- */
-public class DidDhtConfiguration internal constructor(
-  public val gateway: String = "https://diddht.tbddev.org",
-  public var engine: HttpClientEngine = OkHttp.create {},
-)
 
 /**
  * Type indexing types as per https://tbd54566975.github.io/did-dht-method/#type-indexing
@@ -71,6 +59,17 @@ public enum class DidDhtTypeIndexing(public val index: Int) {
 }
 
 /**
+ * Configuration for the [DidDhtApi].
+ *
+ * @property gateway The DID DHT gateway URL.
+ * @property engine The engine to use. When absent, a new one will be created from the [OkHttp] factory.
+ */
+public class DidDhtConfiguration internal constructor(
+  public val gateway: String = "https://diddht.tbddev.org",
+  public var engine: HttpClientEngine = OkHttp.create {},
+)
+
+/**
  * Returns a [DidDhtApi] after applying [configurationBlock] on the default [DidDhtConfiguration].
  */
 public fun DidDhtApi(configurationBlock: DidDhtConfiguration.() -> Unit): DidDhtApi {
@@ -83,7 +82,7 @@ private class DidDhtApiImpl(configuration: DidDhtConfiguration) : DidDhtApi(conf
 
 /**
  * Specifies options for creating a new "did:dht" Decentralized Identifier (DID).
- * @property verificationMethods A list of [JWK]s to add to the DID Document mapped to their purposes
+ * @property verificationMethods A list of [Jwk]s to add to the DID Document mapped to their purposes
  * as verification methods, and an optional controller for the verification method.
  * @property services A list of [Service]s to add to the DID Document.
  * @property publish Whether to publish the DID Document to the DHT after creation.
@@ -91,7 +90,7 @@ private class DidDhtApiImpl(configuration: DidDhtConfiguration) : DidDhtApi(conf
  * @property alsoKnownAses A list of also known as identifiers to add to the DID Document.
  */
 public class CreateDidDhtOptions(
-  public val verificationMethods: Iterable<Triple<JWK, List<Purpose>, String?>>? = null,
+  public val verificationMethods: Iterable<Triple<Jwk, List<Purpose>, String?>>? = null,
   public val services: Iterable<Service>? = null,
   public val publish: Boolean = true,
   public val controllers: Iterable<String>? = null,
@@ -99,21 +98,20 @@ public class CreateDidDhtOptions(
 ) : CreateDidOptions
 
 private const val PROPERTY_SEPARATOR = ";"
-
 private const val ARRAY_SEPARATOR = ","
-
 private val logger = KotlinLogging.logger {}
+
 
 /**
  * Base class for managing DID DHT operations. Uses the given [DidDhtConfiguration].
  */
-public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<DidDht, CreateDidDhtOptions> {
+public sealed class DidDhtApi(configuration: DidDhtConfiguration) {
 
   private val engine: HttpClientEngine = configuration.engine
   private val dhtClient = DhtClient(configuration.gateway, engine)
   private val ttl: Long = 7200
 
-  override val methodName: String = "dht"
+  public val methodName: String = "dht"
 
   /**
    * Creates a new "did:dht" DID, derived from an initial identity key, and stores the associated private key in the
@@ -128,7 +126,8 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
    * publishing during creation.
    * @return A [DidDht] instance representing the newly created "did:dht" DID.
    */
-  override fun create(keyManager: KeyManager, options: CreateDidDhtOptions?): DidDht {
+  @JvmOverloads
+  public fun create(keyManager: KeyManager, options: CreateDidDhtOptions? = null): BearerDid {
     // TODO(gabe): enforce that provided keys are of supported types according to the did:dht spec
     val opts = options ?: CreateDidDhtOptions()
 
@@ -137,7 +136,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
     val publicKey = keyManager.getPublicKey(keyAlias)
 
     // build DID Document
-    val id = DidDht.getDidIdentifier(publicKey)
+    val didUri = DidDht.getDidIdentifier(publicKey)
 
     // map to the DID object model's services
     val services = opts.services?.map { service ->
@@ -146,15 +145,15 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
       requireNotNull(service.serviceEndpoint) { "Service serviceEndpoint cannot be null" }
 
       Service(
-        id = "$id#${service.id}",
+        id = "$didUri#${service.id}",
         type = service.type,
         serviceEndpoint = service.serviceEndpoint
       )
     }
 
     // build DID Document
-    val didDocumentBuilder = DIDDocument.Builder()
-      .id(id)
+    val didDocumentBuilder = DidDocument.Builder()
+      .id(didUri)
       .services(services)
 
     opts.controllers?.let { didDocumentBuilder.controllers(it.toList()) }
@@ -163,10 +162,10 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
     // add identity key to relationships map
     val identityVerificationMethod =
       VerificationMethod(
-        id = "$id#0",
+        id = "$didUri#0",
         type = "JsonWebKey",
-        controller = id,
-        publicKeyJwk = publicKey.toPublicJWK()
+        controller = didUri,
+        publicKeyJwk = publicKey
       )
 
     didDocumentBuilder.verificationMethodForPurposes(
@@ -179,18 +178,17 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
       )
     )
 
-    opts.verificationMethods?.map { (key, purposes, controller) ->
+    opts.verificationMethods?.map { (publicKey, purposes, controller) ->
       VerificationMethod.Builder()
-        .id("$id#${key.keyID}")
+        .id("$didUri#${publicKey.kid ?: publicKey.computeThumbprint()}")
         .type("JsonWebKey")
-        .controller(controller ?: id)
-        .publicKeyJwk(key.toPublicJWK())
+        .controller(controller ?: didUri)
+        .publicKeyJwk(publicKey)
         .build().also { verificationMethod ->
           didDocumentBuilder.verificationMethodForPurposes(verificationMethod, purposes.toList())
 
         }
     }
-
 
     val didDocument = didDocumentBuilder.build()
 
@@ -199,7 +197,9 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
       publish(keyManager, didDocument)
     }
 
-    return DidDht(id, keyManager, didDocument, this)
+    val id = this.suffix(didUri)
+    val did = Did(method = methodName, uri = didUri, url = didUri, id = id)
+    return BearerDid(didUri, did, keyManager, didDocument)
   }
 
   /**
@@ -212,15 +212,52 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
    *
    * @param did The "did:dht" DID that needs to be resolved.
    * @return A [DidResolutionResult] instance containing the DID Document and related context, including types
-   * as part of the [DIDDocumentMetadata], if available.
+   * as part of the [DidDocumentMetadata], if available.
    */
-  override fun resolve(did: String, options: ResolveDidOptions?): DidResolutionResult {
+  public fun resolve(did: String): DidResolutionResult {
     return try {
       resolveInternal(did)
     } catch (e: Exception) {
       logger.warn(e) { "resolving DID $did failed" }
       DidResolutionResult.fromResolutionError(ResolutionError.INTERNAL_ERROR)
     }
+  }
+
+  /**
+   * Instantiates a [BearerDid] object for the DID DHT method from a given [PortableDid].
+   *
+   * This method allows for the creation of a `BearerDid` object using a previously created DID's
+   * key material, DID document, and metadata.
+   *
+   * @param portableDid - The PortableDid object to import.
+   * @param keyManager - Optionally specify an external Key Management System (KMS) used to
+   *                            generate keys and sign data. If not given, a new
+   *                            [InMemoryKeyManager] instance will be created and
+   *                            used.
+   * @returns a BearerDid object representing the DID formed from the
+   *          provided PortableDid.
+   * @throws InvalidMethodNameException if importing incorrect DID method
+   * @throws IllegalStateException if PortableDid document does not contain any verification methods,
+   *         lacks an Identity Key, or the keys for any verification method are missing in the key
+   *         manager.
+   */
+  @JvmOverloads
+  public fun import(portableDid: PortableDid, keyManager: KeyManager = InMemoryKeyManager()): BearerDid {
+    val parsedDid = Did.parse(portableDid.uri)
+    if (parsedDid.method != methodName) {
+      throw InvalidMethodNameException("Method not supported")
+    }
+    val bearerDid = BearerDid.import(portableDid, keyManager)
+
+    val containsOneVmWithFragmentId0 = bearerDid.document.verificationMethod
+      ?.none { vm ->
+        vm.id.split("#").last() == "0"
+      } ?: false
+
+    check(containsOneVmWithFragmentId0) {
+      "DidDht DID document must contain at least one verification method with fragment of 0"
+    }
+    return bearerDid
   }
 
   private fun resolveInternal(did: String): DidResolutionResult {
@@ -245,22 +282,22 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
     fromDnsPacket(did, dnsPacket).let { (didDocument, types) ->
       return DidResolutionResult(
         didDocument = didDocument,
-        didDocumentMetadata = DIDDhtDocumentMetadata(types = types.map { it.index })
+        didDocumentMetadata = DidDhtDocumentMetadata(types = types.map { it.index })
       )
     }
   }
 
   /**
-   * Publishes a [DIDDocument] to the DHT.
+   * Publishes a [DidDocument] to the DHT.
    *
    * @param manager The [KeyManager] instance to use for signing the message.
-   * @param didDocument The [DIDDocument] to publish.
+   * @param didDocument The [DidDocument] to publish.
    * @param types A list of types to include in the packet.
    * @throws IllegalArgumentException if the provided DID does not conform to the "did:dht" method.
    * @throws Exception if the message is not successfully put to the DHT.
    */
   @JvmOverloads
-  public fun publish(manager: KeyManager, didDocument: DIDDocument, types: List<DidDhtTypeIndexing>? = null) {
+  public fun publish(manager: KeyManager, didDocument: DidDocument, types: List<DidDhtTypeIndexing>? = null) {
     validate(didDocument.id)
     val publishId = DidDht.suffix(didDocument.id)
 
@@ -272,11 +309,11 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
   /**
    * Returns the suffix of the DID, which is the last part of the DID's method-specific identifier.
    *
-   * @param id The DID to get the suffix of.
+   * @param didUrl The DID to get the suffix of.
    * @return The suffix of the DID [String].
    */
-  public fun suffix(id: String): String {
-    return id.split(":").last()
+  public fun suffix(didUrl: String): String {
+    return didUrl.split(":").last()
   }
 
   /**
@@ -286,25 +323,19 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
    * @return The kid of the identity key.
    * @throws IllegalArgumentException if the provided DID does not conform to the "did:dht" method.
    */
-  private fun getIdentityKid(didDocument: DIDDocument): String {
+  private fun getIdentityKid(didDocument: DidDocument): String {
     validate(didDocument.id)
 
     val publicKeyJwk = didDocument.verificationMethod?.first()?.publicKeyJwk
       ?: throw PublicKeyJwkMissingException("publicKeyJwk is null")
-    return publicKeyJwk.keyID
-  }
-
-  override fun load(uri: String, keyManager: KeyManager): DidDht {
-    validateKeyMaterialInsideKeyManager(uri, keyManager)
-    validateIdentityKey(uri, keyManager)
-    return DidDht(uri, keyManager, null, this)
+    return publicKeyJwk.kid ?: publicKeyJwk.computeThumbprint()
   }
 
   internal fun validateIdentityKey(did: String, keyManager: KeyManager) {
-    val parsedDidUri = DidUri.parse(did)
-    val decodedId = ZBase32.decode(parsedDidUri.id)
+    val parsedDid = Did.parse(did)
+    val decodedId = ZBase32.decode(parsedDid.id)
     require(decodedId.size == 32) {
-      "expected size of decoded identifier ${parsedDidUri.id} to be 32"
+      "expected size of decoded identifier ${parsedDid.id} to be 32"
     }
 
     val publicKeyJwk = Ed25519.bytesToPublicKey(decodedId)
@@ -317,8 +348,20 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
    *
    * @param identityKey the key used to generate the DID's identifier
    */
-  internal fun getDidIdentifier(identityKey: JWK): String {
-    val publicKeyJwk = identityKey.toPublicJWK()
+  internal fun getDidIdentifier(identityKey: Jwk): String {
+    val publicKeyJwk = Jwk.Builder(identityKey.kty, identityKey.crv)
+      .apply {
+        identityKey.x?.let { x(it) }
+        identityKey.y?.let { y(it) }
+        identityKey.alg?.let { algorithm(it) }
+        (identityKey.kid
+          ?: identityKey.computeThumbprint())
+          .let { keyId(it) }
+      }
+      .build()
+
+    publicKeyJwk.kid = publicKeyJwk.computeThumbprint()
+
     val publicKeyBytes = Crypto.publicKeyToBytes(publicKeyJwk)
     val zBase32Encoded = ZBase32.encode(publicKeyBytes)
     return "did:dht:$zBase32Encoded"
@@ -335,13 +378,13 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
    * @throws InvalidIdentifierException if decoded identifier length is not 32
    */
   internal fun validate(did: String) {
-    val parsedDidUri = DidUri.parse(did)
-    require(parsedDidUri.method == DidDht.methodName) {
+    val parsedDid = Did.parse(did)
+    require(parsedDid.method == DidDht.methodName) {
       throw InvalidMethodNameException("expected method to be dht")
     }
 
     val decodedId = try {
-      ZBase32.decode(parsedDidUri.id)
+      ZBase32.decode(parsedDid.id)
     } catch (e: IllegalArgumentException) {
       throw InvalidIdentifierException("expected method-specific identifier to be z-base-32 encoded", e)
     }
@@ -352,15 +395,15 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
   }
 
   /**
-   * Converts a [DIDDocument] to a DNS packet according to the did:dht spec
+   * Converts a [DidDocument] to a DNS packet according to the did:dht spec
    * https://tbd54566975.github.io/did-dht-method/#dids-as-a-dns-packet
    *
-   * @param didDocument The [DIDDocument] to convert.
+   * @param didDocument The [DidDocument] to convert.
    * @param types A list of types to include in the packet.
    * @return A [Message] instance containing the DNS packet.
    */
   @JvmOverloads
-  internal fun toDnsPacket(didDocument: DIDDocument, types: List<DidDhtTypeIndexing>? = null): Message {
+  internal fun toDnsPacket(didDocument: DidDocument, types: List<DidDhtTypeIndexing>? = null): Message {
     val message = Message(0).apply { header.setFlag(5) } // Set authoritative answer flag
 
     // Add Resource Records for each Verification Method
@@ -434,23 +477,23 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
     return message
   }
 
-  private fun addVerificationMethodRecords(didDocument: DIDDocument, message: Message):
+  private fun addVerificationMethodRecords(didDocument: DidDocument, message: Message):
     Pair<List<String>, Map<String, String>> {
     val verificationMethodsById = mutableMapOf<String, String>()
     val verificationMethods = buildList {
       didDocument.verificationMethod?.forEachIndexed { i, verificationMethod ->
         val publicKeyJwk = verificationMethod.publicKeyJwk ?: throw PublicKeyJwkMissingException("publicKeyJwk is null")
         val publicKeyBytes = Crypto.publicKeyToBytes(publicKeyJwk)
-        val base64UrlEncodedKey = Convert(publicKeyBytes).toBase64Url(padding = false)
+        val base64UrlEncodedKey = Convert(publicKeyBytes).toBase64Url()
         val verificationMethodId = "k$i"
 
         verificationMethodsById[verificationMethod.id] = verificationMethodId
 
-        val keyType = when (publicKeyJwk.algorithm) {
-          JWSAlgorithm.EdDSA -> 0
-          JWSAlgorithm.ES256K -> 1
-          JWSAlgorithm.ES256 -> 2
-          else -> throw IllegalArgumentException("unsupported algorithm: ${publicKeyJwk.algorithm}")
+        // TODO support Jwa.ES256 alg https://github.com/TBD54566975/web5-kt/issues/272
+        val keyType = when (publicKeyJwk.alg) {
+          Jwa.EdDSA.name -> 0
+          Jwa.ES256K.name -> 1
+          else -> throw IllegalArgumentException("unsupported algorithm: ${publicKeyJwk.alg}")
         }
 
         message.addRecord(
@@ -459,7 +502,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
             DClass.IN,
             ttl,
             buildList {
-              val fragment = DidUri.parse(verificationMethod.id).fragment
+              val fragment = Did.parse(verificationMethod.id).fragment
               add("id=$fragment")
               add("t=$keyType")
               add("k=$base64UrlEncodedKey")
@@ -476,7 +519,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
     return Pair(verificationMethods, verificationMethodsById)
   }
 
-  private fun addAlsoKnownAsRecord(didDocument: DIDDocument, message: Message) {
+  private fun addAlsoKnownAsRecord(didDocument: DidDocument, message: Message) {
     if (didDocument.alsoKnownAs.isNullOrEmpty()) {
       return
     }
@@ -490,7 +533,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
     )
   }
 
-  private fun addControllerRecord(didDocument: DIDDocument, message: Message) {
+  private fun addControllerRecord(didDocument: DidDocument, message: Message) {
     message.addRecord(
       TXTRecord(
         Name("_cnt._did."),
@@ -502,16 +545,16 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
   }
 
   /**
-   * Converts a DNS packet to a [DIDDocument] according to the did:dht spec
+   * Converts a DNS packet to a [DidDocument] according to the did:dht spec
    * https://tbd54566975.github.io/did-dht-method/#dids-as-a-dns-packet
    *
    * @param did The DID that the packet is for.
    * @param msg The [Message] instance containing the DNS packet.
-   * @return A [Pair] containing the [DIDDocument] and a list of types.
+   * @return A [Pair] containing the [DidDocument] and a list of types.
    * @throws IllegalArgumentException if the provided DID does not conform to the "did:dht" method.
    */
-  internal fun fromDnsPacket(did: String, msg: Message): Pair<DIDDocument, List<DidDhtTypeIndexing>> {
-    val doc = DIDDocument.Builder().id(did)
+  internal fun fromDnsPacket(did: String, msg: Message): Pair<DidDocument, List<DidDhtTypeIndexing>> {
+    val doc = DidDocument.Builder().id(did)
 
     val services = mutableListOf<Service>()
     val types = mutableListOf<DidDhtTypeIndexing>()
@@ -568,12 +611,12 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
     return doc.build() to types
   }
 
-  private fun handleAlsoKnownAsRecord(rr: TXTRecord, doc: DIDDocument.Builder) {
+  private fun handleAlsoKnownAsRecord(rr: TXTRecord, doc: DidDocument.Builder) {
     val data = rr.strings.joinToString("")
     doc.alsoKnownAses(data.split(ARRAY_SEPARATOR))
   }
 
-  private fun handleControllerRecord(rr: TXTRecord, doc: DIDDocument.Builder) {
+  private fun handleControllerRecord(rr: TXTRecord, doc: DidDocument.Builder) {
     val data = rr.strings.joinToString("")
     doc.controllers(data.split(ARRAY_SEPARATOR))
   }
@@ -583,13 +626,13 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
     did: String,
     keyLookup: MutableMap<String, String>,
     name: String,
-    didDocBuilder: DIDDocument.Builder
+    didDocBuilder: DidDocument.Builder
   ) {
     val data = parseTxtData(rr.strings.joinToString(""))
     val verificationMethodId = data["id"]!!
     val keyBytes = Convert(data["k"]!!, EncodingFormat.Base64Url).toByteArray()
 
-    // TODO(gabe): support other key types
+    // TODO(gabe): support other key types https://github.com/TBD54566975/web5-kt/issues/272
     val publicKeyJwk = when (data["t"]!!) {
       "0" -> Ed25519.bytesToPublicKey(keyBytes)
       "1" -> Secp256k1.bytesToPublicKey(keyBytes)
@@ -599,7 +642,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
     val vmBuilder = VerificationMethod.Builder()
       .id("$did#$verificationMethodId")
       .type("JsonWebKey")
-      .publicKeyJwk(publicKeyJwk.toPublicJWK())
+      .publicKeyJwk(publicKeyJwk)
 
     if (data.containsKey("c")) {
       vmBuilder.controller(data["c"]!!)
@@ -616,7 +659,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
   private fun handleRootRecord(
     rr: TXTRecord,
     keyLookup: Map<String, String>,
-    doc: DIDDocument.Builder,
+    doc: DidDocument.Builder,
   ) {
     val rootData = rr.strings.joinToString(PROPERTY_SEPARATOR).split(PROPERTY_SEPARATOR)
 
@@ -667,41 +710,20 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) : DidMethod<Di
  *
  * @property uri The URI of the "did:dht" which conforms to the DID standard.
  * @property keyManager A [KeyManager] instance utilized to manage the cryptographic keys associated with the DID.
- * @property didDocument The [DIDDocument] associated with the DID, created by the class.
+ * @property didDocument The [DidDocument] associated with the DID, created by the class.
  */
 public class DidDht(
-  uri: String, keyManager: KeyManager,
-  public val didDocument: DIDDocument? = null,
-  private val didDhtApi: DidDhtApi
-) : Did(uri, keyManager) {
-
-  /**
-   * Calls [DidDhtApi.create] with the provided [CreateDidDhtOptions] and returns the result.
-   */
-  public fun create(createDidDhtOptions: CreateDidDhtOptions): DidDht {
-    return didDhtApi.create(keyManager, createDidDhtOptions)
-  }
-
-  /**
-   * Calls [DidDhtApi.resolve] with the provided [ResolveDidOptions] and returns the result.
-   */
-  public fun resolve(resolveDidOptions: ResolveDidOptions): DidResolutionResult {
-    return didDhtApi.resolve(uri, resolveDidOptions)
-  }
-
-  /**
-   * Calls [DidDhtApi.publish] with the provided [keyManager] and [didDocument].
-   */
-  public fun publish() {
-    didDhtApi.publish(keyManager, didDocument!!)
-  }
+  public val uri: String,
+  public val keyManager: KeyManager,
+  public val didDocument: DidDocument? = null
+) {
 
   /**
    * Calls [DidDht.suffix] with the provided [id] and returns the result.
    */
   @JvmOverloads
   public fun suffix(id: String = this.uri): String {
-    return DidDht.suffix(id)
+    return suffix(id)
   }
 
   /**
@@ -716,7 +738,7 @@ public class DidDht(
    * Calls [DidDht.toDnsPacket] with the provided [didDocument] and [types] and returns the result.
    */
   @JvmOverloads
-  public fun toDnsPacket(didDocument: DIDDocument, types: List<DidDhtTypeIndexing>? = emptyList()): Message {
+  public fun toDnsPacket(didDocument: DidDocument, types: List<DidDhtTypeIndexing>? = emptyList()): Message {
     return DidDht.toDnsPacket(didDocument, types)
   }
 
@@ -724,7 +746,7 @@ public class DidDht(
    * Calls [DidDht.fromDnsPacket] with the provided [did] and [msg] and returns the result.
    */
   @JvmOverloads
-  public fun fromDnsPacket(did: String = this.uri, msg: Message): Pair<DIDDocument, List<DidDhtTypeIndexing>> {
+  public fun fromDnsPacket(did: String = this.uri, msg: Message): Pair<DidDocument, List<DidDhtTypeIndexing>> {
     return DidDht.fromDnsPacket(did, msg)
   }
 

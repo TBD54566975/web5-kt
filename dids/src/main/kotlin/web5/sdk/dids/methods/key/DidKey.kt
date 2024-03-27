@@ -1,21 +1,22 @@
 package web5.sdk.dids.methods.key
 
 import io.ipfs.multibase.Multibase
+import org.apache.http.MethodNotSupportedException
 import web5.sdk.common.Varint
 import web5.sdk.crypto.AlgorithmId
 import web5.sdk.crypto.Crypto
+import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.crypto.KeyManager
 import web5.sdk.crypto.Secp256k1
 import web5.sdk.dids.CreateDidOptions
-import web5.sdk.dids.Did
-import web5.sdk.dids.DidMethod
 import web5.sdk.dids.DidResolutionResult
-import web5.sdk.dids.ResolveDidOptions
-import web5.sdk.dids.didcore.DidUri
-import web5.sdk.dids.didcore.DIDDocument
+import web5.sdk.dids.did.BearerDid
+import web5.sdk.dids.did.PortableDid
+import web5.sdk.dids.didcore.Did
+import web5.sdk.dids.didcore.DidDocument
 import web5.sdk.dids.didcore.Purpose
 import web5.sdk.dids.didcore.VerificationMethod
-import web5.sdk.dids.validateKeyMaterialInsideKeyManager
+import web5.sdk.dids.exceptions.InvalidMethodNameException
 
 /**
  * Specifies options for creating a new "did:key" Decentralized Identifier (DID).
@@ -31,7 +32,7 @@ import web5.sdk.dids.validateKeyMaterialInsideKeyManager
  * ```
  */
 public class CreateDidKeyOptions(
-  public val algorithmId: AlgorithmId = AlgorithmId.secp256k1,
+  public val algorithmId: AlgorithmId = AlgorithmId.Ed25519,
 ) : CreateDidOptions
 
 /**
@@ -47,7 +48,7 @@ public class CreateDidKeyOptions(
  *
  * @constructor Initializes a new instance of [DidKey] with the provided [uri] and [keyManager].
  */
-public class DidKey(uri: String, keyManager: KeyManager) : Did(uri, keyManager) {
+public class DidKey(public val uri: String, public val keyManager: KeyManager) {
   /**
    * Resolves the current instance's [uri] to a [DidResolutionResult], which contains the DID Document
    * and possible related metadata.
@@ -60,8 +61,8 @@ public class DidKey(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
     return resolve(this.uri)
   }
 
-  public companion object : DidMethod<DidKey, CreateDidKeyOptions> {
-    override val methodName: String = "key"
+  public companion object {
+    public const val methodName: String = "key"
 
     /**
      * Creates a new "did:key" DID, derived from a public key, and stores the associated private key in the
@@ -77,7 +78,8 @@ public class DidKey(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
      *
      * @throws UnsupportedOperationException if the specified curve is not supported.
      */
-    override fun create(keyManager: KeyManager, options: CreateDidKeyOptions?): DidKey {
+    @JvmOverloads
+    public fun create(keyManager: KeyManager, options: CreateDidKeyOptions? = null): BearerDid {
       val opts = options ?: CreateDidKeyOptions()
 
       val keyAlias = keyManager.generatePrivateKey(opts.algorithmId)
@@ -95,24 +97,14 @@ public class DidKey(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
       val idBytes = multiCodecBytes + publicKeyBytes
       val multibaseEncodedId = Multibase.encode(Multibase.Base.Base58BTC, idBytes)
 
-      val did = "did:key:$multibaseEncodedId"
+      val didUrl = "did:key:$multibaseEncodedId"
 
-      return DidKey(did, keyManager)
-    }
-
-    /**
-     * Instantiates a [DidKey] instance from [uri] (which has to start with "did:key:"), and validates that the
-     * associated key material exists in the provided [keyManager].
-     *
-     * ### Usage Example:
-     * ```kotlin
-     * val keyManager = InMemoryKeyManager()
-     * val did = DidKey.load("did:key:example", keyManager)
-     * ```
-     */
-    override fun load(uri: String, keyManager: KeyManager): DidKey {
-      validateKeyMaterialInsideKeyManager(uri, keyManager)
-      return DidKey(uri, keyManager)
+      val did = Did(method = methodName, uri = didUrl, url = didUrl, id = multibaseEncodedId)
+      val resolutionResult = resolve(didUrl)
+      check(resolutionResult.didDocument != null) {
+        "DidDocument not found"
+      }
+      return BearerDid(didUrl, did, keyManager, resolutionResult.didDocument)
     }
 
     /**
@@ -126,12 +118,12 @@ public class DidKey(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
      *
      * @throws IllegalArgumentException if the provided DID does not conform to the "did:key" method.
      */
-    override fun resolve(did: String, options: ResolveDidOptions?): DidResolutionResult {
-      val parsedDidUri = DidUri.parse(did)
+    public fun resolve(did: String): DidResolutionResult {
+      val parsedDid = Did.parse(did)
 
-      require(parsedDidUri.method == methodName) { throw IllegalArgumentException("expected did:key") }
+      require(parsedDid.method == methodName) { throw IllegalArgumentException("expected did:key") }
 
-      val id = parsedDidUri.id
+      val id = parsedDid.id
       val idBytes = Multibase.decode(id)
       val (multiCodec, numBytes) = Varint.decode(idBytes)
 
@@ -144,15 +136,15 @@ public class DidKey(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
 
       val publicKeyJwk = keyGenerator.bytesToPublicKey(publicKeyBytes)
 
-      val verificationMethodId = "${parsedDidUri.uri}#$id"
+      val verificationMethodId = "${parsedDid.uri}#$id"
       val verificationMethod = VerificationMethod.Builder()
         .id(verificationMethodId)
         .publicKeyJwk(publicKeyJwk)
         .controller(did)
-        .type("JsonWebKey2020")
+        .type("JsonWebKey")
         .build()
 
-      val didDocument = DIDDocument.Builder()
+      val didDocument = DidDocument.Builder()
         .id(did)
         .verificationMethodForPurposes(
           verificationMethod,
@@ -166,6 +158,37 @@ public class DidKey(uri: String, keyManager: KeyManager) : Did(uri, keyManager) 
         .build()
 
       return DidResolutionResult(didDocument = didDocument, context = "https://w3id.org/did-resolution/v1")
+    }
+
+    /**
+     * Instantiates a [BearerDid] object for the DID KEY method from a given [PortableDid].
+     *
+     * This method allows for the creation of a `BearerDid` object using a previously created DID's
+     * key material, DID document, and metadata.
+     *
+     * @param portableDid - The PortableDid object to import.
+     * @param keyManager - Optionally specify an external Key Management System (KMS) used to
+     *                            generate keys and sign data. If not given, a new
+     *                            [InMemoryKeyManager] instance will be created and
+     *                            used.
+     * @returns a BearerDid object representing the DID formed from the
+     *          provided PortableDid.
+     * @throws InvalidMethodNameException if importing incorrect DID method
+     */
+    @JvmOverloads
+    public fun import(portableDid: PortableDid, keyManager: KeyManager = InMemoryKeyManager()): BearerDid {
+      val parsedDid = Did.parse(portableDid.uri)
+      if (parsedDid.method != methodName) {
+        throw InvalidMethodNameException("Method not supported")
+      }
+
+      val bearerDid = BearerDid.import(portableDid, keyManager)
+
+      check(bearerDid.document.verificationMethod?.size == 1) {
+        "DidKey DID document must contain exactly one verification method"
+      }
+
+      return bearerDid
     }
   }
 }

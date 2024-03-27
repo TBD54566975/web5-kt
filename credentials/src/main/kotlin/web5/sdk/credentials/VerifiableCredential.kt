@@ -10,11 +10,10 @@ import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.convertValue
 import com.nfeld.jsonpathkt.JsonPath
 import com.nfeld.jsonpathkt.extension.read
-import com.nimbusds.jwt.JWTClaimsSet
-import com.nimbusds.jwt.JWTParser
-import com.nimbusds.jwt.SignedJWT
-import web5.sdk.credentials.util.JwtUtil
-import web5.sdk.dids.Did
+import web5.sdk.common.Json
+import web5.sdk.dids.did.BearerDid
+import web5.sdk.jose.jwt.Jwt
+import web5.sdk.jose.jwt.JwtClaimsSet
 import java.net.URI
 import java.security.SignatureException
 import java.util.Date
@@ -53,7 +52,7 @@ public class VerifiableCredential internal constructor(public val vcDataModel: V
    * If the [assertionMethodId] is null, the function will attempt to use the first available verification method from
    * the [did]. The result is a String in a JWT format.
    *
-   * @param did The [Did] used to sign the credential.
+   * @param did The [BearerDid] used to sign the credential.
    * @param assertionMethodId An optional identifier for the assertion method that will be used for verification of the
    *        produced signature.
    * @return The JWT representing the signed verifiable credential.
@@ -64,15 +63,15 @@ public class VerifiableCredential internal constructor(public val vcDataModel: V
    * ```
    */
   @JvmOverloads
-  public fun sign(did: Did, assertionMethodId: String? = null): String {
-    val payload = JWTClaimsSet.Builder()
+  public fun sign(did: BearerDid, assertionMethodId: String? = null): String {
+    val payload = JwtClaimsSet.Builder()
       .issuer(vcDataModel.issuer.toString())
-      .issueTime(vcDataModel.issuanceDate)
+      .issueTime(vcDataModel.issuanceDate.time)
       .subject(vcDataModel.credentialSubject.id.toString())
-      .claim("vc", vcDataModel.toMap())
+      .misc("vc", vcDataModel.toMap())
       .build()
 
-    return JwtUtil.sign(did, assertionMethodId, payload)
+    return Jwt.sign(did, payload)
   }
 
   /**
@@ -188,7 +187,8 @@ public class VerifiableCredential internal constructor(public val vcDataModel: V
      * ```
      */
     public fun verify(vcJwt: String) {
-      JwtUtil.verify(vcJwt)
+      val decodedJwt = Jwt.decode(vcJwt)
+      decodedJwt.verify()
     }
 
     /**
@@ -203,15 +203,12 @@ public class VerifiableCredential internal constructor(public val vcDataModel: V
      * ```
      */
     public fun parseJwt(vcJwt: String): VerifiableCredential {
-      val jwt = JWTParser.parse(vcJwt) as SignedJWT
-      val jwtPayload = jwt.payload.toJSONObject()
-      val vcDataModelValue = jwtPayload.getOrElse("vc") {
+      val jwt = Jwt.decode(vcJwt)
+      val jwtPayload = jwt.claims
+      val vcDataModelValue = jwtPayload.misc["vc"] ?:
         throw IllegalArgumentException("jwt payload missing vc property")
-      }
 
-      @Suppress("UNCHECKED_CAST") // only partially unchecked. can only safely cast to Map<*, *>
-      val vcDataModelMap = vcDataModelValue as? Map<String, Any>
-        ?: throw IllegalArgumentException("expected vc property in JWT payload to be an object")
+      val vcDataModelMap = Json.parse<Map<String, Any>>(Json.stringify(vcDataModelValue))
 
       val vcDataModel = VcDataModel.fromMap(vcDataModelMap)
 

@@ -4,12 +4,15 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.assertThrows
 import web5.sdk.crypto.AlgorithmId
 import web5.sdk.crypto.InMemoryKeyManager
+import web5.sdk.dids.methods.jwk.DidJwk
+import web5.sdk.dids.methods.key.DidKey
 import java.security.SignatureException
 import kotlin.test.Test
+import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
-class DIDDocumentTest {
+class DidDocumentTest {
 
   @Nested
   inner class SelectVerificationMethodTest {
@@ -17,7 +20,7 @@ class DIDDocumentTest {
     @Test
     fun `selectVerificationMethod throws exception if vmMethod is empty`() {
 
-      val doc = DIDDocument("did:example:123")
+      val doc = DidDocument("did:example:123")
 
       assertThrows<Exception> {
         doc.selectVerificationMethod(Purpose.AssertionMethod)
@@ -34,7 +37,7 @@ class DIDDocumentTest {
       val vmList = listOf(
         VerificationMethod("id", "type", "controller", publicKeyJwk)
       )
-      val doc = DIDDocument(id = "did:example:123", verificationMethod = vmList)
+      val doc = DidDocument(id = "did:example:123", verificationMethod = vmList)
 
       val vm = doc.selectVerificationMethod(null)
       assertEquals("id", vm.id)
@@ -54,7 +57,7 @@ class DIDDocumentTest {
         VerificationMethod("id", "type", "controller", publicKeyJwk)
       )
       val assertionMethods = listOf("id")
-      val doc = DIDDocument(
+      val doc = DidDocument(
         id = "did:example:123",
         verificationMethod = vmList,
         assertionMethod = assertionMethods
@@ -78,7 +81,7 @@ class DIDDocumentTest {
         VerificationMethod("id", "type", "controller", publicKeyJwk)
       )
       val assertionMethods = listOf("id")
-      val doc = DIDDocument(
+      val doc = DidDocument(
         id = "did:example:123",
         verificationMethod = vmList,
         assertionMethod = assertionMethods
@@ -101,7 +104,7 @@ class DIDDocumentTest {
       val vmList = listOf(
         VerificationMethod("id", "type", "controller", publicKeyJwk)
       )
-      val doc = DIDDocument(
+      val doc = DidDocument(
         id = "did:example:123",
         verificationMethod = vmList
       )
@@ -117,14 +120,14 @@ class DIDDocumentTest {
   inner class GetAbsoluteResourceIDTest {
     @Test
     fun `getAbsoluteResourceID returns absolute resource id if passed in fragment`() {
-      val doc = DIDDocument("did:example:123")
+      val doc = DidDocument("did:example:123")
       val resourceID = doc.getAbsoluteResourceID("#0")
       assertEquals("did:example:123#0", resourceID)
     }
 
     @Test
     fun `getAbsoluteResourceID returns absolute resource id if passed in full id`() {
-      val doc = DIDDocument("did:example:123")
+      val doc = DidDocument("did:example:123")
       val resourceID = doc.getAbsoluteResourceID("did:example:123#1")
       assertEquals("did:example:123#1", resourceID)
     }
@@ -135,7 +138,7 @@ class DIDDocumentTest {
   inner class FindAssertionMethodByIdTest {
     @Test
     fun `findAssertionMethodById throws exception if assertionMethod list is empty`() {
-      val doc = DIDDocument("did:example:123")
+      val doc = DidDocument("did:example:123")
 
       assertThrows<SignatureException> {
         doc.findAssertionMethodById()
@@ -146,7 +149,7 @@ class DIDDocumentTest {
     fun `findAssertionMethodById throws exception if assertionMethod does not have provided id`() {
       val assertionMethods = listOf("foo")
 
-      val doc = DIDDocument(id = "did:example:123", assertionMethod = assertionMethods)
+      val doc = DidDocument(id = "did:example:123", assertionMethod = assertionMethods)
 
       assertThrows<SignatureException> {
         doc.findAssertionMethodById("bar")
@@ -164,7 +167,7 @@ class DIDDocumentTest {
         VerificationMethod("foo", "type", "controller", publicKeyJwk)
       )
 
-      val doc = DIDDocument(id = "did:example:123", verificationMethod = vmList, assertionMethod = assertionMethods)
+      val doc = DidDocument(id = "did:example:123", verificationMethod = vmList, assertionMethod = assertionMethods)
 
       assertThrows<SignatureException> {
         doc.findAssertionMethodById()
@@ -173,28 +176,75 @@ class DIDDocumentTest {
 
     @Test
     fun `findAssertionMethodById returns assertion verification method if id is found`() {
-      val assertionMethods = listOf("foo")
+      val assertionMethods = listOf("#foo")
       val manager = InMemoryKeyManager()
       val keyAlias = manager.generatePrivateKey(AlgorithmId.secp256k1)
       val publicKeyJwk = manager.getPublicKey(keyAlias)
 
       val vmList = listOf(
-        VerificationMethod("foo", "type", "controller", publicKeyJwk)
+        VerificationMethod("#foo", "type", "controller", publicKeyJwk)
       )
 
-      val doc = DIDDocument(id = "did:example:123", verificationMethod = vmList, assertionMethod = assertionMethods)
+      val doc = DidDocument(id = "did:example:123", verificationMethod = vmList, assertionMethod = assertionMethods)
 
-      val assertionMethod = doc.findAssertionMethodById("foo")
-      assertEquals("foo", assertionMethod.id)
+      val assertionMethod = doc.findAssertionMethodById("#foo")
+      assertEquals("#foo", assertionMethod.id)
       assertEquals("type", assertionMethod.type)
       assertEquals("controller", assertionMethod.controller)
+    }
+
+    @Test
+    fun `findAssertionMethodById works with default`() {
+      val manager = InMemoryKeyManager()
+      val bearerDid = DidKey.create(manager)
+
+      val verificationMethod = DidKey.resolve(bearerDid.uri)
+        .didDocument!!
+        .findAssertionMethodById()
+      assertEquals("${bearerDid.uri}#${Did.parse(bearerDid.uri).id}", verificationMethod.id)
+    }
+
+    @Test
+    fun `findAssertionMethodById finds with id`() {
+      val manager = InMemoryKeyManager()
+      val bearerDid = DidKey.create(manager)
+
+      val assertionMethodId = "${bearerDid.uri}#${Did.parse(bearerDid.uri).id}"
+      val verificationMethod = DidKey.resolve(bearerDid.uri)
+        .didDocument!!
+        .findAssertionMethodById(assertionMethodId)
+      assertEquals(assertionMethodId, verificationMethod.id)
+    }
+
+    @Test
+    fun `findAssertionMethodById throws exception`() {
+      val manager = InMemoryKeyManager()
+      val bearerDid = DidKey.create(manager)
+
+      val exception = assertThrows<SignatureException> {
+        DidKey.resolve(bearerDid.uri)
+          .didDocument!!
+          .findAssertionMethodById("made up assertion method id")
+      }
+      assertContains(exception.message!!, "assertion method \"made up assertion method id\" not found")
+    }
+
+    @Test
+    fun `findAssertionMethodById throws exception when no assertion methods are found`() {
+      val manager = InMemoryKeyManager()
+      val did = DidJwk.create(manager)
+      val exception = assertThrows<SignatureException> {
+        did.document.findAssertionMethodById("made up assertion method id")
+      }
+      assertEquals("assertion method \"made up assertion method id\" " +
+        "not found in list of assertion methods", exception.message)
     }
   }
 
   @Nested
   inner class BuilderTest {
     @Test
-    fun `builder creates a DIDDocument with the provided id`() {
+    fun `builder creates a DidDocument with the provided id`() {
 
       val svc = Service.Builder()
         .id("service_id")
@@ -202,7 +252,7 @@ class DIDDocumentTest {
         .serviceEndpoint(listOf("https://example.com"))
         .build()
 
-      val doc = DIDDocument.Builder()
+      val doc = DidDocument.Builder()
         .id("did:ex:foo")
         .context(listOf("https://www.w3.org/ns/did/v1"))
         .controllers(listOf("did:ex:foo"))
@@ -224,7 +274,7 @@ class DIDDocumentTest {
       val publicKeyJwk = manager.getPublicKey(keyAlias)
       val vm = VerificationMethod("foo", "type", "controller", publicKeyJwk)
 
-      val doc = DIDDocument.Builder()
+      val doc = DidDocument.Builder()
         .id("did:ex:foo")
         .context(listOf("https://www.w3.org/ns/did/v1"))
         .verificationMethodForPurposes(vm,
@@ -253,7 +303,7 @@ class DIDDocumentTest {
       val publicKeyJwk = manager.getPublicKey(keyAlias)
       val vm = VerificationMethod("foo", "type", "controller", publicKeyJwk)
 
-      val doc = DIDDocument.Builder()
+      val doc = DidDocument.Builder()
         .id("did:ex:foo")
         .context(listOf("https://www.w3.org/ns/did/v1"))
         .verificationMethodForPurposes(vm,listOf(Purpose.Authentication))
@@ -274,7 +324,7 @@ class DIDDocumentTest {
       val publicKeyJwk = manager.getPublicKey(keyAlias)
       val vm = VerificationMethod("foo", "type", "controller", publicKeyJwk)
 
-      val doc = DIDDocument.Builder()
+      val doc = DidDocument.Builder()
         .id("did:ex:foo")
         .context(listOf("https://www.w3.org/ns/did/v1"))
         .verificationMethodForPurposes(vm)
@@ -290,7 +340,7 @@ class DIDDocumentTest {
 
     @Test
     fun `verificationMethodIdsForPurpose builds list for one purpose`() {
-      val doc = DIDDocument.Builder()
+      val doc = DidDocument.Builder()
         .id("did:ex:foo")
         .context(listOf("https://www.w3.org/ns/did/v1"))
         .verificationMethodIdsForPurpose(mutableListOf("keyagreementId"), Purpose.KeyAgreement)

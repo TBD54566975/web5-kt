@@ -63,6 +63,7 @@ dependencies {
   api(project(":credentials"))
   api(project(":crypto"))
   api(project(":dids"))
+  api(project(":jose"))
 
   detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.23.+")
 }

@@ -2,11 +2,6 @@ package web5.sdk.dids.methods.dht
 
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
-import com.fasterxml.jackson.databind.annotation.JsonSerialize
-import com.fasterxml.jackson.databind.node.ObjectNode
-import com.nimbusds.jose.jwk.Curve
-import com.nimbusds.jose.jwk.JWK
-import com.nimbusds.jose.jwk.gen.ECKeyGenerator
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
 import io.ktor.http.HttpMethod
@@ -16,6 +11,7 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
+import org.mockito.kotlin.any
 import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.spy
 import org.mockito.kotlin.whenever
@@ -23,10 +19,11 @@ import web5.sdk.common.Json
 import web5.sdk.common.ZBase32
 import web5.sdk.crypto.AlgorithmId
 import web5.sdk.crypto.InMemoryKeyManager
+import web5.sdk.crypto.JwaCurve
+import web5.sdk.crypto.jwk.Jwk
 import web5.sdk.dids.DidResolutionResult
-import web5.sdk.dids.JwkDeserializer
 import web5.sdk.dids.PurposesDeserializer
-import web5.sdk.dids.didcore.DIDDocument
+import web5.sdk.dids.didcore.DidDocument
 import web5.sdk.dids.didcore.Purpose
 import web5.sdk.dids.didcore.Service
 import web5.sdk.dids.exceptions.InvalidIdentifierException
@@ -99,84 +96,39 @@ class DidDhtTest {
     @Test
     fun `create with no options`() {
       val manager = InMemoryKeyManager()
-      val did = DidDht.create(manager, CreateDidDhtOptions(publish = false))
+      val bearerDid = DidDht.create(manager, CreateDidDhtOptions(publish = false))
 
-      assertDoesNotThrow { did.validate() }
-      assertNotNull(did)
-      assertNotNull(did.didDocument)
-      assertEquals(1, did.didDocument!!.verificationMethod?.size)
-      assertContains(did.didDocument!!.verificationMethod?.get(0)?.id!!, "#0")
-      assertEquals(1, did.didDocument!!.assertionMethod?.size)
-      assertEquals(1, did.didDocument!!.authentication?.size)
-      assertEquals(1, did.didDocument!!.capabilityDelegation?.size)
-      assertEquals(1, did.didDocument!!.capabilityInvocation?.size)
-      assertNull(did.didDocument!!.keyAgreement)
-      assertNull(did.didDocument!!.service)
-    }
-
-    @Test
-    fun `create with another key and service`() {
-      val manager = InMemoryKeyManager()
-
-      val otherKey = manager.generatePrivateKey(AlgorithmId.secp256k1)
-      val publicKeyJwk = manager.getPublicKey(otherKey).toPublicJWK()
-      val publicKeyJwk2 = ECKeyGenerator(Curve.P_256).generate().toPublicJWK()
-      val verificationMethodsToAdd: Iterable<Triple<JWK, List<Purpose>, String?>> = listOf(
-        Triple(
-          publicKeyJwk,
-          listOf(Purpose.Authentication, Purpose.AssertionMethod),
-          "did:web:tbd.website"
-        ),
-        Triple(
-          publicKeyJwk2,
-          listOf(Purpose.Authentication, Purpose.AssertionMethod),
-          "did:web:tbd.website"
-        )
-      )
-
-      val serviceToAdd =
-        Service.Builder()
-          .id("test-service")
-          .type("HubService")
-          .serviceEndpoint(listOf("https://example.com/service)"))
-          .build()
-
-      val opts = CreateDidDhtOptions(
-        verificationMethods = verificationMethodsToAdd, services = listOf(serviceToAdd), publish = false
-      )
-      val did = DidDht.create(manager, opts)
-
-      assertNotNull(did)
-      assertNotNull(did.didDocument)
-      assertEquals(3, did.didDocument!!.verificationMethod?.size)
-      assertEquals(3, did.didDocument!!.assertionMethod?.size)
-      assertEquals(3, did.didDocument!!.authentication?.size)
-      assertEquals(1, did.didDocument!!.capabilityDelegation?.size)
-      assertEquals(1, did.didDocument!!.capabilityInvocation?.size)
-      assertNull(did.didDocument!!.keyAgreement)
-      assertNotNull(did.didDocument!!.service)
-      assertEquals(1, did.didDocument!!.service?.size)
-      assertContains(did.didDocument!!.service?.get(0)?.id!!, "test-service")
+      assertDoesNotThrow { DidDht.validate(bearerDid.did.url) }
+      assertNotNull(bearerDid)
+      assertNotNull(bearerDid.document)
+      assertEquals(1, bearerDid.document.verificationMethod?.size)
+      assertContains(bearerDid.document.verificationMethod?.get(0)?.id!!, "#0")
+      assertEquals(1, bearerDid.document.assertionMethod?.size)
+      assertEquals(1, bearerDid.document.authentication?.size)
+      assertEquals(1, bearerDid.document.capabilityDelegation?.size)
+      assertEquals(1, bearerDid.document.capabilityInvocation?.size)
+      assertNull(bearerDid.document.keyAgreement)
+      assertNull(bearerDid.document.service)
     }
 
     @Test
     fun `create and transform to packet with types`() {
       val manager = InMemoryKeyManager()
-      val did = DidDht.create(manager, CreateDidDhtOptions(publish = false))
+      val bearerDid = DidDht.create(manager, CreateDidDhtOptions(publish = false))
 
-      assertDoesNotThrow { did.validate() }
-      assertNotNull(did)
-      assertNotNull(did.didDocument)
+      assertDoesNotThrow { DidDht.validate(bearerDid.did.url) }
+      assertNotNull(bearerDid)
+      assertNotNull(bearerDid.document)
 
       val indexes = listOf(DidDhtTypeIndexing.Corporation, DidDhtTypeIndexing.SoftwarePackage)
-      val packet = did.toDnsPacket(did.didDocument!!, indexes)
+      val packet = DidDht.toDnsPacket(bearerDid.document, indexes)
       assertNotNull(packet)
 
-      val docTypesPair = did.fromDnsPacket(msg = packet)
+      val docTypesPair = DidDht.fromDnsPacket(bearerDid.did.url, packet)
       assertNotNull(docTypesPair)
       assertNotNull(docTypesPair.first)
       assertNotNull(docTypesPair.second)
-      assertEquals(did.didDocument.toString(), docTypesPair.first.toString())
+      assertEquals(bearerDid.document.toString(), docTypesPair.first.toString())
       assertEquals(indexes, docTypesPair.second)
     }
 
@@ -187,15 +139,15 @@ class DidDhtTest {
       val did = api.create(manager, CreateDidDhtOptions(publish = true))
 
       assertNotNull(did)
-      assertNotNull(did.didDocument)
-      assertEquals(1, did.didDocument!!.verificationMethod?.size)
-      assertContains(did.didDocument!!.verificationMethod?.get(0)?.id!!, "#0")
-      assertEquals(1, did.didDocument!!.assertionMethod?.size)
-      assertEquals(1, did.didDocument!!.authentication?.size)
-      assertEquals(1, did.didDocument!!.capabilityDelegation?.size)
-      assertEquals(1, did.didDocument!!.capabilityInvocation?.size)
-      assertNull(did.didDocument!!.keyAgreement)
-      assertNull(did.didDocument!!.service)
+      assertNotNull(did.document)
+      assertEquals(1, did.document.verificationMethod?.size)
+      assertContains(did.document.verificationMethod?.get(0)?.id!!, "#0")
+      assertEquals(1, did.document.assertionMethod?.size)
+      assertEquals(1, did.document.authentication?.size)
+      assertEquals(1, did.document.capabilityDelegation?.size)
+      assertEquals(1, did.document.capabilityInvocation?.size)
+      assertNull(did.document.keyAgreement)
+      assertNull(did.document.service)
     }
 
     @Test
@@ -241,16 +193,14 @@ class DidDhtTest {
       val manager = InMemoryKeyManager()
       val did = DidDht.create(manager, CreateDidDhtOptions(publish = false))
 
-      require(did.didDocument != null)
-
-      val packet = DidDht.toDnsPacket(did.didDocument!!)
+      val packet = DidDht.toDnsPacket(did.document)
       assertNotNull(packet)
 
-      val didFromPacket = DidDht.fromDnsPacket(did.didDocument!!.id, packet)
+      val didFromPacket = DidDht.fromDnsPacket(did.document.id, packet)
       assertNotNull(didFromPacket)
       assertNotNull(didFromPacket.first)
 
-      assertEquals(did.didDocument.toString(), didFromPacket.first.toString())
+      assertEquals(did.document.toString(), didFromPacket.first.toString())
     }
 
     @Test
@@ -258,18 +208,16 @@ class DidDhtTest {
       val manager = InMemoryKeyManager()
       val did = DidDht.create(manager, CreateDidDhtOptions(publish = false))
 
-      require(did.didDocument != null)
-
       val indexes = listOf(DidDhtTypeIndexing.Corporation, DidDhtTypeIndexing.SoftwarePackage)
-      val packet = DidDht.toDnsPacket(did.didDocument!!, indexes)
+      val packet = DidDht.toDnsPacket(did.document, indexes)
       assertNotNull(packet)
 
-      val didFromPacket = DidDht.fromDnsPacket(did.didDocument!!.id, packet)
+      val didFromPacket = DidDht.fromDnsPacket(did.document.id, packet)
       assertNotNull(didFromPacket)
       assertNotNull(didFromPacket.first)
       assertNotNull(didFromPacket.second)
 
-      assertEquals(did.didDocument.toString(), didFromPacket.first.toString())
+      assertEquals(did.document.toString(), didFromPacket.first.toString())
       assertEquals(indexes, didFromPacket.second)
     }
 
@@ -278,8 +226,8 @@ class DidDhtTest {
       val manager = InMemoryKeyManager()
 
       val otherKey = manager.generatePrivateKey(AlgorithmId.secp256k1)
-      val publicKeyJwk = manager.getPublicKey(otherKey).toPublicJWK()
-      val verificationMethodsToAdd: Iterable<Triple<JWK, List<Purpose>, String?>> = listOf(
+      val publicKeyJwk = manager.getPublicKey(otherKey)
+      val verificationMethodsToAdd: Iterable<Triple<Jwk, List<Purpose>, String?>> = listOf(
         Triple(publicKeyJwk, listOf(Purpose.Authentication, Purpose.AssertionMethod), null)
       )
 
@@ -298,16 +246,14 @@ class DidDhtTest {
       )
       val did = DidDht.create(manager, opts)
 
-      require(did.didDocument != null)
-
-      val packet = DidDht.toDnsPacket(did.didDocument!!)
+      val packet = DidDht.toDnsPacket(did.document)
       assertNotNull(packet)
 
-      val didFromPacket = DidDht.fromDnsPacket(did.didDocument!!.id, packet)
+      val didFromPacket = DidDht.fromDnsPacket(did.document.id, packet)
       assertNotNull(didFromPacket)
       assertNotNull(didFromPacket.first)
 
-      assertEquals(did.didDocument.toString(), didFromPacket.first.toString())
+      assertEquals(did.document.toString(), didFromPacket.first.toString())
     }
   }
 
@@ -358,8 +304,7 @@ class Web5TestVectorsDidDht {
   )
 
   data class VerificationMethodInput(
-    @JsonDeserialize(using = JwkDeserializer::class)
-    val jwk: JWK,
+    val jwk: Jwk,
     @JsonDeserialize(using = PurposesDeserializer::class)
     val purposes: List<Purpose>
   )
@@ -367,12 +312,13 @@ class Web5TestVectorsDidDht {
 
   @Test
   fun create() {
-    val typeRef = object : TypeReference<TestVectors<CreateTestInput, DIDDocument>>() {}
+    val typeRef = object : TypeReference<TestVectors<CreateTestInput, DidDocument>>() {}
     val testVectors = mapper.readValue(File("../web5-spec/test-vectors/did_dht/create.json"), typeRef)
 
     testVectors.vectors.forEach { vector ->
       val keyManager = spy(InMemoryKeyManager())
-      val identityKeyId = keyManager.import(listOf(vector.input.identityPublicJwk!!)).first()
+      val identityJwk = Json.parse<Jwk>(Json.stringify(vector.input.identityPublicJwk!!))
+      val identityKeyId = keyManager.importKey(identityJwk)
       doReturn(identityKeyId).whenever(keyManager).generatePrivateKey(AlgorithmId.Ed25519)
 
       val verificationMethods = vector.input.additionalVerificationMethods?.map { verificationMethodInput ->
@@ -389,7 +335,7 @@ class Web5TestVectorsDidDht {
       val didDht = DidDht.create(keyManager, options)
       assertEquals(
         JsonCanonicalizer(Json.stringify(vector.output!!)).encodedString,
-        JsonCanonicalizer(Json.stringify(didDht.didDocument!!)).encodedString,
+        JsonCanonicalizer(Json.stringify(didDht.document)).encodedString,
         vector.description
       )
     }

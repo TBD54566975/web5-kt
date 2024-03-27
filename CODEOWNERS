@@ -9,7 +9,7 @@
 # The format is described: https://github.blog/2017-07-06-introducing-code-owners/
 
 # These owners will be the default owners for everything in the repo.
-* @amika-sq @mistermoe @nitro-neal @tomdaffurn @phoebe-lew @diehuxx @kirahsapong @jiyoontbd @frankhinek
+* @mistermoe @nitro-neal @tomdaffurn @phoebe-lew @diehuxx @kirahsapong @jiyoontbd @frankhinek
 
 /crypto/src/main/kotlin/web5/sdk/crypto/AwsKeyManager.kt @tomdaffurn
 # -----------------------------------------------

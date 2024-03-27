@@ -1,34 +1,35 @@
 package web5.sdk.credentials
 
 import com.fasterxml.jackson.core.type.TypeReference
+import com.fasterxml.jackson.databind.exc.MismatchedInputException
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.nimbusds.jose.JWSAlgorithm
-import com.nimbusds.jose.JWSHeader
-import com.nimbusds.jose.JWSSigner
-import com.nimbusds.jose.crypto.Ed25519Signer
-import com.nimbusds.jose.jwk.Curve
-import com.nimbusds.jose.jwk.gen.OctetKeyPairGenerator
-import com.nimbusds.jwt.JWTClaimsSet
-import com.nimbusds.jwt.SignedJWT
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
+import web5.sdk.common.Convert
+import web5.sdk.common.Json
 import web5.sdk.crypto.AlgorithmId
 import web5.sdk.crypto.AwsKeyManager
 import web5.sdk.crypto.InMemoryKeyManager
-import web5.sdk.dids.Did
+import web5.sdk.crypto.Jwa
+import web5.sdk.crypto.jwk.Jwk
+import web5.sdk.dids.did.BearerDid
+import web5.sdk.dids.did.PortableDid
+import web5.sdk.dids.didcore.DidDocument
 import web5.sdk.dids.didcore.Purpose
-import web5.sdk.dids.extensions.load
-import web5.sdk.dids.methods.jwk.DidJwk
+import web5.sdk.jose.jws.JwsHeader
+import web5.sdk.jose.jwt.Jwt
+import web5.sdk.jose.jwt.JwtClaimsSet
 import web5.sdk.dids.methods.dht.CreateDidDhtOptions
 import web5.sdk.dids.methods.dht.DidDht
+import web5.sdk.dids.methods.jwk.DidJwk
 import web5.sdk.dids.methods.key.DidKey
 import web5.sdk.testing.TestVectors
 import java.io.File
 import java.security.SignatureException
-import java.text.ParseException
 import java.util.Date
 import kotlin.test.Ignore
+import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
 import kotlin.test.assertNotNull
@@ -39,17 +40,7 @@ class VerifiableCredentialTest {
   @Ignore("Testing with a prev created ion did")
   fun `create a vc with a previously created DID in the key manager`() {
     val keyManager = AwsKeyManager()
-    val didUri =
-      "did:ion:EiCTb6TakNEaBkYK0ZVtCC26mdv8mGZ8Z7YnbsSf-kiMyg" +
-        ":eyJkZWx0YSI6eyJwYXRjaGVzIjpbeyJhY3Rpb24iOiJyZXBsYWNlIiwiZG9jdW1lbnQiOnsicHVibGljS2V5cyI6W3siaWQiOiIwMzlhZTc" +
-        "xYy04OTZjLTQ2MzgtYjA3My0zYTQyM2IwMjhiMDEiLCJwdWJsaWNLZXlKd2siOnsiYWxnIjoiRVMyNTZLIiwiY3J2Ijoic2VjcDI1NmsxIiw" +
-        "ia2lkIjoiYWxpYXMvTzNmZUVhSDlaTVFmdkg3cTFkSUw3OFNxUmRJWkhnVUJlcFU3c1RtbHY1OCIsImt0eSI6IkVDIiwidXNlIjoic2lnIiw" +
-        "ieCI6IllwbTNZWS1oVnNqWjV2ME83aGRhZS1WVi1DRm1Ib0hldWFZODAtV08wS0UiLCJ5IjoiUnU5QlA2RzctU0lxU3E0MFdUenk5MnpiWXd" +
-        "aRHBuVmlDUWxRSHpNWVQzVSJ9LCJwdXJwb3NlcyI6WyJhc3NlcnRpb25NZXRob2QiXSwidHlwZSI6Ikpzb25XZWJLZXkyMDIwIn1dLCJzZXJ" +
-        "2aWNlcyI6W119fV0sInVwZGF0ZUNvbW1pdG1lbnQiOiJFaUNsaVVIbHBQQjE0VVpkVzk4S250aG8zV2YxRjQxOU83cFhSMGhPeFAzRkNnIn0" +
-        "sInN1ZmZpeERhdGEiOnsiZGVsdGFIYXNoIjoiRWlEU2FMNHZVNElzNmxDalp4YVp6Zl9lWFFMU3V5T3E5T0pNbVJHa2FFTzRCQSIsInJlY29" +
-        "2ZXJ5Q29tbWl0bWVudCI6IkVpQzI0TFljVEdRN1JzaDdIRUl2TXQ0MGNGbmNhZGZReTdibDNoa3k0RkxUQ2cifX0"
-    val issuerDid = DidDht.load(didUri, keyManager)
+    val issuerDid = DidDht.create(keyManager)
     val holderDid = DidKey.create(keyManager)
 
     val vc = VerifiableCredential.create(
@@ -179,46 +170,41 @@ class VerifiableCredentialTest {
       CreateDidDhtOptions(verificationMethods = verificationMethodsToAdd)
     )
 
-    val header = JWSHeader.Builder(JWSAlgorithm.ES256K)
-      .keyID(issuerDid.uri)
+    val header = JwsHeader.Builder()
+      .type("JWT")
+      .algorithm(Jwa.ES256K.name)
+      .keyId(issuerDid.uri)
       .build()
     // A detached payload JWT
-    val vcJwt = "${header.toBase64URL()}..fakeSig"
+    val vcJwt = "${Convert(Json.stringify(header)).toBase64Url()}..fakeSig"
 
     val exception = assertThrows(SignatureException::class.java) {
       VerifiableCredential.verify(vcJwt)
     }
-    assertEquals(
-      "Signature verification failed: Expected kid in JWS header to dereference a DID Document " +
-        "Verification Method with an Assertion verification relationship", exception.message
+    assertContains(
+      exception.message!!, "Malformed JWT. Invalid base64url encoding for JWT payload.",
     )
   }
 
   @Test
-  fun `parseJwt throws ParseException if argument is not a valid JWT`() {
-    assertThrows(ParseException::class.java) {
+  fun `parseJwt throws IllegalStateException if argument is not a valid JWT`() {
+    assertThrows(IllegalStateException::class.java) {
       VerifiableCredential.parseJwt("hi")
     }
   }
 
   @Test
   fun `parseJwt throws if vc property is missing in JWT`() {
-    val jwk = OctetKeyPairGenerator(Curve.Ed25519).generate()
-    val signer: JWSSigner = Ed25519Signer(jwk)
+    val signerDid = DidDht.create(InMemoryKeyManager())
 
-    val claimsSet = JWTClaimsSet.Builder()
+    val claimsSet = JwtClaimsSet.Builder()
       .subject("alice")
       .build()
 
-    val signedJWT = SignedJWT(
-      JWSHeader.Builder(JWSAlgorithm.EdDSA).keyID(jwk.keyID).build(),
-      claimsSet
-    )
+    val signedJWT = Jwt.sign(signerDid, claimsSet)
 
-    signedJWT.sign(signer)
-    val randomJwt = signedJWT.serialize()
     val exception = assertThrows(IllegalArgumentException::class.java) {
-      VerifiableCredential.parseJwt(randomJwt)
+      VerifiableCredential.parseJwt(signedJWT)
     }
 
     assertEquals("jwt payload missing vc property", exception.message)
@@ -226,27 +212,18 @@ class VerifiableCredentialTest {
 
   @Test
   fun `parseJwt throws if vc property in JWT payload is not an object`() {
-    val jwk = OctetKeyPairGenerator(Curve.Ed25519).generate()
-    val signer: JWSSigner = Ed25519Signer(jwk)
+    val signerDid = DidDht.create(InMemoryKeyManager())
 
-    val claimsSet = JWTClaimsSet.Builder()
+    val claimsSet = JwtClaimsSet.Builder()
       .subject("alice")
-      .claim("vc", "hehe troll")
+      .misc("vc", "hehe troll")
       .build()
 
-    val signedJWT = SignedJWT(
-      JWSHeader.Builder(JWSAlgorithm.EdDSA).keyID(jwk.keyID).build(),
-      claimsSet
-    )
-
-    signedJWT.sign(signer)
-    val randomJwt = signedJWT.serialize()
-
-    val exception = assertThrows(IllegalArgumentException::class.java) {
-      VerifiableCredential.parseJwt(randomJwt)
+    val signedJWT = Jwt.sign(signerDid, claimsSet)
+    assertThrows(MismatchedInputException::class.java) {
+      VerifiableCredential.parseJwt(signedJWT)
     }
 
-    assertEquals("expected vc property in JWT payload to be an object", exception.message)
   }
 
   @Test
@@ -276,8 +253,7 @@ class VerifiableCredentialTest {
 class Web5TestVectorsCredentials {
 
   data class CreateTestInput(
-    val signerDidUri: String?,
-    val signerPrivateJwk: Map<String, Any>?,
+    val signerPortableDid: PortableDid?,
     val credential: Map<String, Any>?,
   )
 
@@ -292,18 +268,18 @@ class Web5TestVectorsCredentials {
     val typeRef = object : TypeReference<TestVectors<CreateTestInput, String>>() {}
     val testVectors = mapper.readValue(File("../web5-spec/test-vectors/credentials/create.json"), typeRef)
 
-    testVectors.vectors.filterNot { it.errors ?: false }.forEach { vector ->
+    testVectors.vectors.filter { it.errors == false }.forEach { vector ->
       val vc = VerifiableCredential.fromJson(mapper.writeValueAsString(vector.input.credential))
+      val portableDid = Json.parse<PortableDid>(Json.stringify(vector.input.signerPortableDid!!))
 
       val keyManager = InMemoryKeyManager()
-      keyManager.import(listOf(vector.input.signerPrivateJwk!!))
-      val issuerDid = Did.load(vector.input.signerDidUri!!, keyManager)
-      val vcJwt = vc.sign(issuerDid)
+      val bearerDid = BearerDid.import(portableDid, keyManager)
+      val vcJwt = vc.sign(bearerDid)
 
       assertEquals(vector.output, vcJwt, vector.description)
     }
 
-    testVectors.vectors.filter { it.errors ?: false }.forEach { vector ->
+    testVectors.vectors.filter { it.errors == true }.forEach { vector ->
       assertFails(vector.description) {
         VerifiableCredential.fromJson(mapper.writeValueAsString(vector.input.credential))
       }

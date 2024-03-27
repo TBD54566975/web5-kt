@@ -16,6 +16,7 @@ import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.dids.methods.key.DidKey
 import web5.sdk.testing.TestVectors
 import java.io.File
+import java.security.SignatureException
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
@@ -246,10 +247,9 @@ class PresentationExchangeTest {
 
       val vcJwt = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
 
-      assertThrows<JsonPathParseException> {
+      assertThrows<SignatureException> {
         PresentationExchange.satisfiesPresentationDefinition(listOf(vcJwt), pd)
       }
-
     }
 
     @Test

@@ -1,18 +1,21 @@
 package web5.sdk.credentials
 
 import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.networknt.schema.JsonSchema
 import com.nfeld.jsonpathkt.JsonPath
 import com.nfeld.jsonpathkt.extension.read
-import com.nimbusds.jwt.JWTParser
-import com.nimbusds.jwt.SignedJWT
+import web5.sdk.common.Json
 import web5.sdk.credentials.model.InputDescriptorMapping
 import web5.sdk.credentials.model.InputDescriptorV2
 import web5.sdk.credentials.model.PresentationDefinitionV2
 import web5.sdk.credentials.model.PresentationDefinitionV2Validator
 import web5.sdk.credentials.model.PresentationSubmission
 import web5.sdk.credentials.model.PresentationSubmissionValidator
+import web5.sdk.jose.JwtClaimsSetSerializer
+import web5.sdk.jose.jwt.Jwt
+import web5.sdk.jose.jwt.JwtClaimsSet
 import java.util.UUID
 
 /**
@@ -161,12 +164,17 @@ public object PresentationExchange {
     vcJwtList: Iterable<String>,
     presentationDefinition: PresentationDefinitionV2
   ): Map<InputDescriptorV2, List<String>> {
-    val vcJwtListWithNodes = vcJwtList.zip(vcJwtList.map { vcJwt ->
-      val vc = JWTParser.parse(vcJwt) as SignedJWT
 
-      JsonPath.parse(vc.payload.toString())
-        ?: throw JsonPathParseException()
-    })
+    val jwtModule = SimpleModule().addSerializer(JwtClaimsSet::class.java, JwtClaimsSetSerializer())
+    Json.jsonMapper.registerModule(jwtModule)
+
+    val vcJwtListWithNodes = vcJwtList.zip(
+      vcJwtList.map { vcJwt ->
+        val vc = Jwt.decode(vcJwt)
+        val jsonString = Json.jsonMapper.writeValueAsString(vc.claims)
+        Json.jsonMapper.readTree(jsonString)
+          ?: throw JsonPathParseException()
+      })
     return presentationDefinition.inputDescriptors.associateWith { inputDescriptor ->
       vcJwtListWithNodes.filter { (_, node) ->
         vcSatisfiesInputDescriptor(node, inputDescriptor)

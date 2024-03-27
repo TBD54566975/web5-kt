@@ -2,8 +2,11 @@ package web5.sdk.common
 
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.ObjectReader
 import com.fasterxml.jackson.databind.ObjectWriter
 import com.fasterxml.jackson.databind.SerializationFeature
+import com.fasterxml.jackson.databind.module.SimpleModule
+import com.fasterxml.jackson.module.kotlin.readValue
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 
 /**
@@ -21,6 +24,7 @@ import com.fasterxml.jackson.module.kotlin.registerKotlinModule
  * ```
  */
 public object Json {
+
   /**
    * The Jackson object mapper instance, shared across the lib.
    *
@@ -32,7 +36,10 @@ public object Json {
     .setSerializationInclusion(JsonInclude.Include.NON_NULL)
     .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
 
+
+
   private val objectWriter: ObjectWriter = jsonMapper.writer()
+  public val objectReader: ObjectReader = jsonMapper.reader()
 
   /**
    * Converts a kotlin object to a json string.
@@ -42,5 +49,25 @@ public object Json {
    */
   public fun stringify(obj: Any): String {
     return objectWriter.writeValueAsString(obj)
+  }
+
+  /**
+   * Parse a json string into a kotlin object.
+   *
+   * @param T type of the object to parse.
+   * @param payload JSON string to parse
+   * @return parsed type T
+   */
+  public inline fun <reified T> parse(payload: String): T {
+    return objectReader.readValue(payload, T::class.java)
+  }
+
+  /**
+   * Parse a JSON string into a Map.
+   *
+   * @return String parsed into a Map
+   */
+  public fun String.toMap(): Map<String, Any> {
+    return jsonMapper.readValue(this)
   }
 }

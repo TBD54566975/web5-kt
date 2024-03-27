@@ -1,6 +1,6 @@
 package web5.sdk.dids.methods.dht
 
-import web5.sdk.dids.didcore.DIDDocumentMetadata
+import web5.sdk.dids.didcore.DidDocumentMetadata
 
 /**
  * Did document metadata for did:dht that extends the base did document metadata.
@@ -8,6 +8,6 @@ import web5.sdk.dids.didcore.DIDDocumentMetadata
  * @property types list of types
  * @constructor Create empty Did dht document metadata
  */
-public class DIDDhtDocumentMetadata(
+public class DidDhtDocumentMetadata(
   public val types: List<Int>? = null
-) : DIDDocumentMetadata()
+) : DidDocumentMetadata()

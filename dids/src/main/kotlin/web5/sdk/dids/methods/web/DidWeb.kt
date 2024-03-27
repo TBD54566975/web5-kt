@@ -1,6 +1,5 @@
 package web5.sdk.dids.methods.web
 
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.okhttp.OkHttp
@@ -19,17 +18,16 @@ import okhttp3.Cache
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.dnsoverhttps.DnsOverHttps
+import web5.sdk.common.Json
+import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.crypto.KeyManager
-import web5.sdk.dids.CreateDidOptions
-import web5.sdk.dids.didcore.DidUri
-import web5.sdk.dids.didcore.DIDDocument
-import web5.sdk.dids.Did
-import web5.sdk.dids.DidMethod
+import web5.sdk.dids.didcore.Did
+import web5.sdk.dids.didcore.DidDocument
 import web5.sdk.dids.DidResolutionResult
 import web5.sdk.dids.exceptions.ParserException
 import web5.sdk.dids.ResolutionError
-import web5.sdk.dids.ResolveDidOptions
-import web5.sdk.dids.validateKeyMaterialInsideKeyManager
+import web5.sdk.dids.did.BearerDid
+import web5.sdk.dids.did.PortableDid
 import java.io.File
 import java.net.InetAddress
 import java.net.URL
@@ -38,29 +36,20 @@ import java.net.UnknownHostException
 import kotlin.text.Charsets.UTF_8
 
 /**
- * Provides a specific implementation for creating and resolving "did:web" method Decentralized Identifiers (DIDs).
+ * Provides a specific implementation for creating "did:web" method Decentralized Identifiers (DIDs).
  *
  * A "did:web" DID is an implementation that uses the web domains existing reputation system. More details can be
  * read in https://w3c-ccg.github.io/did-method-web/
  *
- * @property uri The URI of the "did:web" which conforms to the DID standard.
- * @property keyManager A [KeyManager] instance utilized to manage the cryptographic keys associated with the DID.
+ * DidWeb API does not support creating DIDs, only resolving them.
  *
  * ### Usage Example:
  * ```kotlin
  * val keyManager = InMemoryKeyManager()
- * val did = StatefulWebDid("did:web:tbd.website", keyManager)
+ * val did = DidWeb.resolve("did:web:tbd.website")
  * ```
  */
-public class DidWeb(
-  uri: String,
-  keyManager: KeyManager,
-  private val didWebApi: DidWebApi
-) : Did(uri, keyManager) {
-  /**
-   * Calls [DidWebApi.resolve] for this DID.
-   */
-  public fun resolve(options: ResolveDidOptions?): DidResolutionResult = didWebApi.resolve(uri, options)
+public class DidWeb {
 
   /**
    * Default companion object for creating a [DidWebApi] with a default configuration.
@@ -81,8 +70,8 @@ public class DidWebApiConfiguration internal constructor(
  * Returns a [DidWebApi] instance after applying [blockConfiguration].
  */
 public fun DidWebApi(blockConfiguration: DidWebApiConfiguration.() -> Unit): DidWebApi {
-  val conf = DidWebApiConfiguration().apply(blockConfiguration)
-  return DidWebApiImpl(conf)
+  val config = DidWebApiConfiguration().apply(blockConfiguration)
+  return DidWebApiImpl(config)
 }
 
 private class DidWebApiImpl(configuration: DidWebApiConfiguration) : DidWebApi(configuration)
@@ -91,15 +80,16 @@ private const val WELL_KNOWN_URL_PATH = "/.well-known"
 private const val DID_DOC_FILE_NAME = "/did.json"
 
 /**
- * Implements [resolve] and [create] according to https://w3c-ccg.github.io/did-method-web/
+ * Implements [resolve] according to https://w3c-ccg.github.io/did-method-web/
  */
 public sealed class DidWebApi(
   configuration: DidWebApiConfiguration
-) : DidMethod<DidWeb, CreateDidOptions> {
+) {
+  public val methodName: String = "web"
 
   private val logger = KotlinLogging.logger {}
 
-  private val mapper = jacksonObjectMapper()
+  private val mapper = Json.jsonMapper
 
   private val engine: HttpClientEngine = configuration.engine ?: OkHttp.create {
     val appCache = Cache(File("cacheDir", "okhttpcache"), 10 * 1024 * 1024)
@@ -120,28 +110,63 @@ public sealed class DidWebApi(
     }
   }
 
-  override val methodName: String = "web"
-
-  override fun resolve(did: String, options: ResolveDidOptions?): DidResolutionResult {
+  /**
+   * Resolves a `did:jwk` URI into a [DidResolutionResult].
+   *   
+   * This method parses the provided `did` URI to extract the Jwk information.
+   * It validates the method of the DID URI and then attempts to parse the
+   * Jwk from the URI. If successful, it constructs a [DidDocument] with the
+   * resolved Jwk, generating a [DidResolutionResult].
+   *   
+   * The method ensures that the DID URI adheres to the `did:jwk` method
+   * specification and handles exceptions that may arise during the parsing
+   * and resolution process.
+   *   
+   * @param did did URI to parse
+   * @return [DidResolutionResult] containing the resolved DID document.
+   * If the DID URI is invalid, not conforming to the `did:jwk` method, or
+   * if any other error occurs during the resolution process, it returns
+   * an invalid [DidResolutionResult].
+   */
+  public fun resolve(did: String): DidResolutionResult {
     return try {
-      resolveInternal(did, options)
+      resolveInternal(did)
     } catch (e: Exception) {
-      logger.warn(e) { "resolving DID $did failed" }
+      logger.warn(e) { "resolving DID $did failed, ${e.message}" }
       DidResolutionResult.fromResolutionError(ResolutionError.INTERNAL_ERROR)
     }
   }
 
-  private fun resolveInternal(did: String, options: ResolveDidOptions?): DidResolutionResult {
-    val parsedDidUri = try {
-      DidUri.parse(did)
+  /**
+   * Instantiates a [BearerDid] object for the DID WEB method from a given [PortableDid].
+   *
+   * This method allows for the creation of a `BearerDid` object using a previously created DID's
+   * key material, DID document, and metadata.
+   *
+   * @param portableDid - The PortableDid object to import.
+   * @param keyManager - Optionally specify an external Key Management System (KMS) used to
+   *                            generate keys and sign data. If not given, a new
+   *                            [InMemoryKeyManager] instance will be created and
+   *                            used.
+   * @returns a BearerDid object representing the DID formed from the
+   *          provided PortableDid.
+   */
+  @JvmOverloads
+  public fun import(portableDid: PortableDid, keyManager: KeyManager = InMemoryKeyManager()): BearerDid {
+    return BearerDid.import(portableDid, keyManager)
+  }
+
+  private fun resolveInternal(did: String): DidResolutionResult {
+    val parsedDid = try {
+      Did.parse(did)
     } catch (_: ParserException) {
       return DidResolutionResult.fromResolutionError(ResolutionError.INVALID_DID)
     }
 
-    if (parsedDidUri.method != methodName) {
+    if (parsedDid.method != methodName) {
       return DidResolutionResult.fromResolutionError(ResolutionError.METHOD_NOT_SUPPORTED)
     }
-    val docURL = getDocURL(parsedDidUri)
+    val docURL = decodeId(parsedDid)
 
     val resp: HttpResponse = try {
       runBlocking {
@@ -149,7 +174,8 @@ public sealed class DidWebApi(
           contentType(ContentType.Application.Json)
         }
       }
-    } catch (_: UnknownHostException) {
+    } catch (e: UnknownHostException) {
+      logger.warn(e) { "failed to make GET request to $did doc URL, ${e.message}" }
       return DidResolutionResult.fromResolutionError(ResolutionError.NOT_FOUND)
     }
 
@@ -159,17 +185,12 @@ public sealed class DidWebApi(
       throw ResponseException(resp, "resolution error response: '$body'")
     }
     return DidResolutionResult(
-      didDocument = mapper.readValue(body, DIDDocument::class.java),
+      didDocument = mapper.readValue(body, DidDocument::class.java),
     )
   }
 
-  override fun load(uri: String, keyManager: KeyManager): DidWeb {
-    validateKeyMaterialInsideKeyManager(uri, keyManager)
-    return DidWeb(uri, keyManager, this)
-  }
-
-  private fun getDocURL(parsedDidUri: DidUri): String {
-    val domainNameWithPath = parsedDidUri.id.replace(":", "/")
+  private fun decodeId(parsedDid: Did): String {
+    val domainNameWithPath = parsedDid.id.replace(":", "/")
     val decodedDomain = URLDecoder.decode(domainNameWithPath, UTF_8)
 
     val targetUrl = StringBuilder("https://$decodedDomain")
@@ -182,7 +203,4 @@ public sealed class DidWebApi(
     return targetUrl.toString()
   }
 
-  public override fun create(keyManager: KeyManager, options: CreateDidOptions?): DidWeb {
-    throw UnsupportedOperationException("Create operation is not supported for did:web")
-  }
 }

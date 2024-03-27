@@ -3,11 +3,10 @@ package web5.sdk.credentials
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
-import com.nimbusds.jwt.JWTClaimsSet
-import com.nimbusds.jwt.JWTParser
-import com.nimbusds.jwt.SignedJWT
-import web5.sdk.credentials.util.JwtUtil
-import web5.sdk.dids.Did
+import web5.sdk.common.Json
+import web5.sdk.dids.did.BearerDid
+import web5.sdk.jose.jwt.Jwt
+import web5.sdk.jose.jwt.JwtClaimsSet
 import java.net.URI
 import java.security.SignatureException
 import java.util.Date
@@ -37,17 +36,17 @@ public class VerifiablePresentation internal constructor(public val vpDataModel:
   public val verifiableCredential: List<String>
     get() = vpDataModel.toMap()["verifiableCredential"] as List<String>
 
-    public val holder: String
+  public val holder: String
     get() = vpDataModel.holder.toString()
 
   /**
-   * Sign a verifiable presentation using a specified decentralized identifier ([did]) with the private key that pairs
+   * Sign a verifiable presentation using a specified decentralized identifier ([bearerDid]) with the private key that pairs
    * with the public key identified by [assertionMethodId].
    *
    * If the [assertionMethodId] is null, the function will attempt to use the first available verification method from
-   * the [did]. The result is a String in a JWT format.
+   * the [bearerDid]. The result is a String in a JWT format.
    *
-   * @param did The [Did] used to sign the credential.
+   * @param bearerDid The [BearerDid] used to sign the credential.
    * @param assertionMethodId An optional identifier for the assertion method that will be used for verification of the
    *        produced signature.
    * @return The JWT representing the signed verifiable credential.
@@ -58,14 +57,14 @@ public class VerifiablePresentation internal constructor(public val vpDataModel:
    * ```
    */
   @JvmOverloads
-  public fun sign(did: Did, assertionMethodId: String? = null): String {
-    val payload = JWTClaimsSet.Builder()
-      .issuer(did.uri)
-      .issueTime(Date())
-      .claim("vp", vpDataModel.toMap())
+  public fun sign(bearerDid: BearerDid, assertionMethodId: String? = null): String {
+    val payload = JwtClaimsSet.Builder()
+      .issuer(bearerDid.uri)
+      .issueTime(Date().time / 1000)
+      .misc("vp", vpDataModel.toMap())
       .build()
 
-    return JwtUtil.sign(did, assertionMethodId, payload)
+    return Jwt.sign(bearerDid, payload)
   }
 
   /**
@@ -153,7 +152,8 @@ public class VerifiablePresentation internal constructor(public val vpDataModel:
      * ```
      */
     public fun verify(vpJwt: String) {
-      JwtUtil.verify(vpJwt)
+      val decodedJwt = Jwt.decode(vpJwt)
+      decodedJwt.verify()
 
       val vp = this.parseJwt(vpJwt)
       vp.verifiableCredential.forEach {
@@ -177,15 +177,12 @@ public class VerifiablePresentation internal constructor(public val vpDataModel:
      * ```
      */
     public fun parseJwt(vpJwt: String): VerifiablePresentation {
-      val jwt = JWTParser.parse(vpJwt) as SignedJWT
-      val jwtPayload = jwt.payload.toJSONObject()
-      val vpDataModelValue = jwtPayload.getOrElse("vp") {
-        throw IllegalArgumentException("jwt payload missing vp property")
-      }
+      val jwt = Jwt.decode(vpJwt)
+      val jwtPayload = jwt.claims
+      val vpDataModelValue = jwtPayload.misc["vp"]
+        ?: throw IllegalArgumentException("jwt payload missing vp property")
 
-      @Suppress("UNCHECKED_CAST") // only partially unchecked. can only safely cast to Map<*, *>
-      val vpDataModelMap = vpDataModelValue as? Map<String, Any>
-        ?: throw IllegalArgumentException("expected vp property in JWT payload to be an object")
+      val vpDataModelMap = Json.parse<Map<String, Any>>(Json.stringify(vpDataModelValue))
 
       val vpDataModel = VpDataModel.fromMap(vpDataModelMap)
 

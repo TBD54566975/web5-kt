@@ -1,16 +1,10 @@
 package web5.sdk.credentials
 
-import com.nimbusds.jose.JWSAlgorithm
-import com.nimbusds.jose.JWSHeader
-import com.nimbusds.jose.JWSSigner
-import com.nimbusds.jose.crypto.Ed25519Signer
-import com.nimbusds.jose.jwk.Curve
-import com.nimbusds.jose.jwk.gen.OctetKeyPairGenerator
-import com.nimbusds.jwt.JWTClaimsSet
-import com.nimbusds.jwt.SignedJWT
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
+import web5.sdk.common.Convert
+import web5.sdk.common.Json
 import web5.sdk.credentials.model.ConstraintsV2
 import web5.sdk.credentials.model.FieldV2
 import web5.sdk.credentials.model.InputDescriptorMapping
@@ -19,13 +13,18 @@ import web5.sdk.credentials.model.PresentationDefinitionV2
 import web5.sdk.credentials.model.PresentationSubmission
 import web5.sdk.crypto.AlgorithmId
 import web5.sdk.crypto.InMemoryKeyManager
+import web5.sdk.crypto.Jwa
 import web5.sdk.dids.didcore.Purpose
 import web5.sdk.dids.methods.dht.CreateDidDhtOptions
 import web5.sdk.dids.methods.dht.DidDht
 import web5.sdk.dids.methods.jwk.DidJwk
 import web5.sdk.dids.methods.key.DidKey
+import web5.sdk.jose.jws.JwsHeader
+import web5.sdk.jose.jwt.Jwt
+import web5.sdk.jose.jwt.JwtClaimsSet
 import java.security.SignatureException
 import java.text.ParseException
+import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 
@@ -42,6 +41,7 @@ class VerifiablePresentationTest {
     "M1oiLCJjcmVkZW50aWFsU3ViamVjdCI6eyJpZCI6ImRpZDprZXk6elEzc2h3ZDR5VUFmV2dmR0VScVVrNDd4Rzk1cU5Vc2lzRDc3NkpMdVo3" +
     "eXo5blFpaiIsImxvY2FsUmVzcGVjdCI6ImhpZ2giLCJsZWdpdCI6dHJ1ZX19fQ.Bx0JrQERWRLpYeg3TnfrOIo4zexo3q1exPZ-Ej6j0T0YO" +
     "BVZaZ9-RqpiAM-fHKrdGUzVyXr77pOl7yGgwIO90g"
+
   @Test
   fun `create simple vp`() {
     val vcJwts: Iterable<String> = listOf("vcjwt1")
@@ -161,19 +161,21 @@ class VerifiablePresentationTest {
     val keyManager = InMemoryKeyManager()
     val holderDid = DidKey.create(keyManager)
 
-    val header = JWSHeader.Builder(JWSAlgorithm.ES256K)
-      .keyID(holderDid.uri)
+    val header = JwsHeader.Builder()
+      .type("JWT")
+      .algorithm(Jwa.ES256K.name)
+      // todo does fragment always start with a # ? if not need to add # in the middle
+      .keyId("${holderDid.uri}${holderDid.did.fragment}")
       .build()
 
-    val vpJwt = "${header.toBase64URL()}..fakeSig"
+    val vpJwt = "${Convert(Json.stringify(header)).toBase64Url()}..fakeSig"
 
     val exception = assertThrows(SignatureException::class.java) {
       VerifiablePresentation.verify(vpJwt)
     }
 
-    assertEquals(
-      "Signature verification failed: Expected kid in JWS header to dereference a DID Document " +
-        "Verification Method with an Assertion verification relationship", exception.message
+    assertContains(
+      exception.message!!, "Malformed JWT. Invalid base64url encoding for JWT payload.",
     )
   }
 
@@ -199,30 +201,24 @@ class VerifiablePresentationTest {
   }
 
   @Test
-  fun `parseJwt throws ParseException if argument is not a valid JWT`() {
-    assertThrows(ParseException::class.java) {
+  fun `parseJwt throws IllegalStateException if argument is not a valid JWT`() {
+    assertThrows(IllegalStateException::class.java) {
       VerifiablePresentation.parseJwt("hi")
     }
   }
 
   @Test
   fun `parseJwt throws if vp property is missing in JWT`() {
-    val jwk = OctetKeyPairGenerator(Curve.Ed25519).generate()
-    val signer: JWSSigner = Ed25519Signer(jwk)
+    val signerDid = DidDht.create(InMemoryKeyManager())
 
-    val claimsSet = JWTClaimsSet.Builder()
+    val claimsSet = JwtClaimsSet.Builder()
       .subject("alice")
       .build()
 
-    val signedJWT = SignedJWT(
-      JWSHeader.Builder(JWSAlgorithm.EdDSA).keyID(jwk.keyID).build(),
-      claimsSet
-    )
+    val signedJWT = Jwt.sign(signerDid, claimsSet)
 
-    signedJWT.sign(signer)
-    val randomJwt = signedJWT.serialize()
     val exception = assertThrows(IllegalArgumentException::class.java) {
-      VerifiablePresentation.parseJwt(randomJwt)
+      VerifiablePresentation.parseJwt(signedJWT)
     }
 
     assertEquals("jwt payload missing vp property", exception.message)
@@ -235,34 +231,37 @@ class VerifiablePresentationTest {
     //Create a DHT DID without an assertionMethod
     val alias = keyManager.generatePrivateKey(AlgorithmId.secp256k1)
     val verificationJwk = keyManager.getPublicKey(alias)
-    val verificationMethodsToAdd = listOf(Triple(
-      verificationJwk,
-      emptyList<Purpose>(),
-      "did:web:tbd.website"
-    ))
+    val verificationMethodsToAdd = listOf(
+      Triple(
+        verificationJwk,
+        emptyList<Purpose>(),
+        "did:web:tbd.website"
+      )
+    )
     val issuerDid = DidDht.create(
       InMemoryKeyManager(),
       CreateDidDhtOptions(verificationMethods = verificationMethodsToAdd)
     )
 
-    val header = JWSHeader.Builder(JWSAlgorithm.ES256K)
-      .keyID(issuerDid.uri)
+    val header = JwsHeader.Builder()
+      .type("JWT")
+      .algorithm(Jwa.ES256K.name)
+      .keyId(issuerDid.uri)
       .build()
     //A detached payload JWT
-    val vpJwt = "${header.toBase64URL()}..fakeSig"
+    val vpJwt = "${Convert(Json.stringify(header)).toBase64Url()}..fakeSig"
 
     val exception = assertThrows(SignatureException::class.java) {
       VerifiablePresentation.verify(vpJwt)
     }
-    assertEquals(
-      "Signature verification failed: Expected kid in JWS header to dereference a DID Document " +
-        "Verification Method with an Assertion verification relationship", exception.message
+    assertContains(
+      exception.message!!, "Malformed JWT. Invalid base64url encoding for JWT payload.",
     )
   }
 
   data class EmploymentStatus(val employmentStatus: String)
   data class PIICredential(val name: String, val dateOfBirth: String)
-  
+
   @Test
   fun `full flow with did dht`() {
     val keyManager = InMemoryKeyManager()

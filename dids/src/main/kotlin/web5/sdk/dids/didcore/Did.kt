@@ -28,7 +28,7 @@ import java.util.regex.Pattern
  * 	         a specific part of a DID document.
  * 	         Spec: https://www.w3.org/TR/did-core/#fragment
  */
-public class DidUri(
+public class Did(
   public val uri: String,
   public val url: String,
   public val method: String,
@@ -57,7 +57,7 @@ public class DidUri(
    * @param byteArray
    * @return DID object
    */
-  public fun unmarshalText(byteArray: ByteArray): DidUri {
+  public fun unmarshalText(byteArray: ByteArray): Did {
     return parse(byteArray.toString(Charsets.UTF_8))
   }
 
@@ -85,7 +85,7 @@ public class DidUri(
      * @param didUri The DID URI to parse.
      * @return DID object
      */
-    public fun parse(didUri: String): DidUri {
+    public fun parse(didUri: String): Did {
       val matcher = DID_URI_PATTERN.matcher(didUri)
       matcher.find()
       if (!matcher.matches()) {
@@ -111,7 +111,7 @@ public class DidUri(
       val query = matcher.group(7)?.drop(1)
       val fragment = matcher.group(8)?.drop(1)
 
-      return DidUri(
+      return Did(
         uri = "did:$method:$id",
         url = didUri,
         method = method,

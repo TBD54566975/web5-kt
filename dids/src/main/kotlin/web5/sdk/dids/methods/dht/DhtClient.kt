@@ -1,6 +1,5 @@
 package web5.sdk.dids.methods.dht
 
-import com.nimbusds.jose.jwk.JWK
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.okhttp.OkHttp
@@ -122,7 +121,7 @@ internal class DhtClient(
      *  the current time in milliseconds.
      *
      * @param manager The key manager to use to sign the message [KeyManager].
-     * @param keyAlias The alias of an Ed25519 key to sign the message with [JWK].
+     * @param keyAlias The alias of an Ed25519 key to sign the message with [String].
      * @param message The message to publish (a DNS packet) [Message].
      * @return A BEP44 signed message [Bep44Message].
      * @throws IllegalArgumentException if the private key is not an Ed25519 key.
@@ -131,7 +130,7 @@ internal class DhtClient(
     fun createBep44PutRequest(manager: KeyManager, keyAlias: String, message: Message): Bep44Message {
       // get the public key to verify it is an Ed25519 key
       val pubKey = manager.getPublicKey(keyAlias)
-      val curve = pubKey.toJSONObject()["crv"]
+      val curve = pubKey.crv
       require(curve == Ed25519.curve.name) {
         "Must supply an Ed25519 key"
       }
@@ -171,7 +170,7 @@ internal class DhtClient(
      * https://www.bittorrent.org/beps/bep_0044.html
      *
      * @param manager The key manager to use to sign the message [KeyManager].
-     * @param keyAlias The alias of an Ed25519 key to sign the message with [JWK].
+     * @param keyAlias The alias of an Ed25519 key to sign the message with [String].
      * @param seq The sequence number of the message.
      * @param v The value to be written to the DHT.
      * @return A BEP44 signed message [Bep44Message].
@@ -183,7 +182,7 @@ internal class DhtClient(
       // get the public key to verify it is an Ed25519 key
       val pubKey = manager.getPublicKey(keyAlias)
 
-      val curve = pubKey.toJSONObject()["crv"]
+      val curve = pubKey.crv
       require(curve == Ed25519.curve.name) {
         "Must supply an Ed25519 key"
       }
@@ -234,7 +233,7 @@ internal class DhtClient(
       // prepare buffer and verify
       val bytesToVerify = "3:seqi${message.seq}e1:v".toByteArray() + vEncoded
 
-      // create a JWK representation of the public key
+      // create a Jwk representation of the public key
       val ed25519PublicKey = Ed25519.bytesToPublicKey(message.k)
 
       // verify the signature

@@ -1,9 +1,5 @@
 package web5.sdk.dids.methods.dht
 
-import io.ktor.client.engine.mock.MockEngine
-import io.ktor.client.engine.mock.respond
-import io.ktor.http.HttpMethod
-import io.ktor.http.HttpStatusCode
 import org.junit.jupiter.api.Assertions.assertArrayEquals
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -13,6 +9,7 @@ import web5.sdk.crypto.AlgorithmId
 import web5.sdk.crypto.Ed25519
 import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.dids.methods.dht.DhtClient.Companion.bencode
+import web5.sdk.dids.methods.dht.DidDht.Default.suffix
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
@@ -76,9 +73,14 @@ class DhtTest {
       val v = "Hello World!".toByteArray()
 
       val manager = InMemoryKeyManager()
-      manager.import(privateKey)
+      manager.importKey(privateKey)
 
-      val bep44SignedMessage = DhtClient.signBep44Message(manager, privateKey.keyID, seq, v)
+      val bep44SignedMessage = DhtClient.signBep44Message(
+        manager,
+        privateKey.kid ?: privateKey.computeThumbprint(),
+        seq,
+        v
+      )
       assertNotNull(bep44SignedMessage)
 
       assertEquals("48656c6c6f20576f726c6421", bep44SignedMessage.v.toHexString())
@@ -140,12 +142,11 @@ class DhtTest {
       val diddht = DidDhtApi {}
       val did = diddht.create(manager)
 
-      require(did.didDocument != null)
-
-      val kid = did.didDocument!!.verificationMethod?.first()?.publicKeyJwk?.keyID?.toString()
+      val kid = did.document.verificationMethod?.first()?.publicKeyJwk?.kid
+        ?: did.document.verificationMethod?.first()?.publicKeyJwk?.computeThumbprint()
       assertNotNull(kid)
 
-      val message = did.didDocument?.let { diddht.toDnsPacket(it) }
+      val message = did.document.let { diddht.toDnsPacket(it) }
       assertNotNull(message)
 
       val bep44Message = DhtClient.createBep44PutRequest(manager, kid, message)
@@ -162,22 +163,21 @@ class DhtTest {
       val dhtClient = DhtClient()
       val manager = InMemoryKeyManager()
       val diddht = DidDhtApi {}
-      val did = diddht.create(manager)
+      val bearerDid = diddht.create(manager)
 
-      require(did.didDocument != null)
-
-      val kid = did.didDocument!!.verificationMethod?.first()?.publicKeyJwk?.keyID?.toString()
+      val kid = bearerDid.document.verificationMethod?.first()?.publicKeyJwk?.kid
+        ?: bearerDid.document.verificationMethod?.first()?.publicKeyJwk?.computeThumbprint()
       assertNotNull(kid)
 
-      val message = did.didDocument?.let { diddht.toDnsPacket(it) }
+      val message = bearerDid.document.let { diddht.toDnsPacket(it) }
       assertNotNull(message)
 
       val bep44Message = DhtClient.createBep44PutRequest(manager, kid, message)
       assertNotNull(bep44Message)
 
-      assertDoesNotThrow { dhtClient.pkarrPut(did.suffix(), bep44Message) }
+      assertDoesNotThrow { dhtClient.pkarrPut(suffix(bearerDid.uri), bep44Message) }
 
-      val retrievedMessage = assertDoesNotThrow { dhtClient.pkarrGet(did.suffix()) }
+      val retrievedMessage = assertDoesNotThrow { dhtClient.pkarrGet(suffix(bearerDid.uri)) }
       assertNotNull(retrievedMessage)
     }
 

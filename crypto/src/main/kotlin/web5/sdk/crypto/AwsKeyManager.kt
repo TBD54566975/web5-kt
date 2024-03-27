@@ -15,12 +15,11 @@ import com.amazonaws.services.kms.model.SigningAlgorithmSpec
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.crypto.impl.ECDSA
 import com.nimbusds.jose.jwk.ECKey
-import com.nimbusds.jose.jwk.JWK
-import com.nimbusds.jose.jwk.KeyUse
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo
 import org.bouncycastle.crypto.ExtendedDigest
 import org.bouncycastle.crypto.digests.SHA256Digest
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter
+import web5.sdk.crypto.jwk.Jwk
 import java.nio.ByteBuffer
 import java.security.PublicKey
 import java.security.interfaces.ECPublicKey
@@ -30,7 +29,7 @@ import java.security.interfaces.ECPublicKey
  * connection details for [AWSKMS] client as per
  * [Configure the AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html)
  *
- * Key aliases are generated from the key's JWK thumbprint, and stored in AWS KMS.
+ * Key aliases are generated from the key's Jwk thumbprint, and stored in AWS KMS.
  * e.g. alias/6uNnyj7xZUgtKTEOFV2mz0f7Hd3cxIH1o5VXsOo4u1M
  *
  * AWSKeyManager supports a limited set ECDSA curves for signing:
@@ -118,24 +117,25 @@ public class AwsKeyManager @JvmOverloads constructor(
    * Retrieves the public key associated with a previously stored private key, identified by the provided alias.
    *
    * @param keyAlias The alias referencing the stored private key.
-   * @return The associated public key in JWK (JSON Web Key) format.
+   * @return The associated public key in Jwk (JSON Web Key) format.
    * @throws [AWSKMSException] for any error originating from the [AWSKMS] client
    */
-  override fun getPublicKey(keyAlias: String): JWK {
+  override fun getPublicKey(keyAlias: String): Jwk {
     val getPublicKeyRequest = GetPublicKeyRequest().withKeyId(keyAlias)
     val publicKeyResponse = kmsClient.getPublicKey(getPublicKeyRequest)
     val publicKey = convertToJavaPublicKey(publicKeyResponse.publicKey)
 
     val algorithmDetails = getAlgorithmDetails(publicKeyResponse.keySpec.enum())
     val jwkBuilder = when (publicKey) {
-      is ECPublicKey -> ECKey.Builder(JwaCurve.toJwkCurve(algorithmDetails.curve), publicKey)
+      is ECPublicKey -> {
+        val key = ECKey.Builder(JwaCurve.toNimbusCurve(algorithmDetails.curve), publicKey).build()
+        Jwk.Builder("EC", key.curve.name)
+          .x(key.x.toString())
+          .y(key.y.toString())
+      }
       else -> throw IllegalArgumentException("Unknown key type $publicKey")
     }
-    return jwkBuilder
-      .algorithm(Jwa.toJwsAlgorithm(algorithmDetails.algorithm))
-      .keyID(keyAlias)
-      .keyUse(KeyUse.SIGNATURE)
-      .build()
+    return jwkBuilder.build()
   }
 
   /**
@@ -165,10 +165,10 @@ public class AwsKeyManager @JvmOverloads constructor(
   /**
    * Return the alias of [publicKey], as was originally returned by [generatePrivateKey].
    *
-   * @param publicKey A public key in JWK (JSON Web Key) format
+   * @param publicKey A public key in Jwk (JSON Web Key) format
    * @return The alias belonging to [publicKey]
    */
-  override fun getDeterministicAlias(publicKey: JWK): String {
+  override fun getDeterministicAlias(publicKey: Jwk): String {
     val jwkThumbprint = publicKey.computeThumbprint()
     return "alias/$jwkThumbprint"
   }
