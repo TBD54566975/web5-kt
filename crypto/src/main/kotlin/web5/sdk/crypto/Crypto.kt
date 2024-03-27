@@ -161,6 +161,7 @@ public object Crypto {
 
   /**
    * Retrieves a [KeyGenerator] based on the provided algorithmId.
+   * Currently, we provide key generators for keys that use ECC (see [AlgorithmId] enum)
    *
    * This function looks up and retrieves the relevant [KeyGenerator] based on the provided
    * algorithmId.
