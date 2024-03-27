@@ -253,9 +253,7 @@ class VerifiableCredentialTest {
 class Web5TestVectorsCredentials {
 
   data class CreateTestInput(
-    val uri: String?,
-    val privateKeys: List<Jwk>?,
-    val document: DidDocument?,
+    val signerPortableDid: PortableDid?,
     val credential: Map<String, Any>?,
   )
 
@@ -272,12 +270,7 @@ class Web5TestVectorsCredentials {
 
     testVectors.vectors.filter { it.errors == false }.forEach { vector ->
       val vc = VerifiableCredential.fromJson(mapper.writeValueAsString(vector.input.credential))
-      val portableDid = PortableDid(
-        vector.input.uri!!,
-        vector.input.privateKeys!!,
-        vector.input.document!!,
-        mapOf()
-      )
+      val portableDid = Json.parse<PortableDid>(Json.stringify(vector.input.signerPortableDid!!))
 
       val keyManager = InMemoryKeyManager()
       val bearerDid = BearerDid.import(portableDid, keyManager)
