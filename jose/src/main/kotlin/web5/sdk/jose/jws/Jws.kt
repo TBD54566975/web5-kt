@@ -8,6 +8,7 @@ import web5.sdk.crypto.Crypto
 import web5.sdk.crypto.JwaCurve
 import web5.sdk.dids.DidResolvers
 import web5.sdk.dids.did.BearerDid
+import web5.sdk.dids.didcore.Did
 import web5.sdk.dids.exceptions.PublicKeyJwkMissingException
 import java.security.SignatureException
 
@@ -24,8 +25,8 @@ public object Jws {
    * @return DecodedJws
    */
   @Suppress("SwallowedException")
-  public fun decode(jws: String): DecodedJws {
-    val parts = jws.split(".")
+  public fun decode(jws: String, detachedPayload: ByteArray? = null): DecodedJws {
+    val parts = jws.split(".").toMutableList()
     check(parts.size == 3) {
       "Malformed JWT. Expected 3 parts, got ${parts.size}"
     }
@@ -38,10 +39,15 @@ public object Jws {
     }
 
     val payload: ByteArray
-    try {
-      payload = Convert(parts[1], EncodingFormat.Base64Url).toByteArray()
-    } catch (e: Exception) {
-      throw SignatureException("Malformed JWT. Failed to decode payload: ${e.message}")
+    if (detachedPayload == null) {
+      try {
+        payload = Convert(parts[1], EncodingFormat.Base64Url).toByteArray()
+      } catch (e: Exception) {
+        throw SignatureException("Malformed JWT. Failed to decode payload: ${e.message}")
+      }
+    } else {
+      payload = detachedPayload
+      parts[1] = Convert(detachedPayload).toBase64Url()
     }
 
     val signature: ByteArray
@@ -51,7 +57,12 @@ public object Jws {
       throw SignatureException("Malformed JWT. Failed to decode signature: ${e.message}")
     }
 
-    return DecodedJws(header, payload, signature, parts)
+    check(header.kid != null) {
+      "Malformed JWS. Expected header to contain kid."
+    }
+    val signerDid = Did.parse(header.kid).uri
+
+    return DecodedJws(header, payload, signature, parts, signerDid)
   }
 
   /**
@@ -111,8 +122,8 @@ public object Jws {
    * @param jws The JWS to verify
    * @return DecodedJws
    */
-  public fun verify(jws: String): DecodedJws {
-    val decodedJws = decode(jws)
+  public fun verify(jws: String, detachedPayload: ByteArray? = null): DecodedJws {
+    val decodedJws = decode(jws, detachedPayload)
     decodedJws.verify()
     return decodedJws
   }
@@ -227,7 +238,8 @@ public class DecodedJws(
   public val header: JwsHeader,
   public val payload: ByteArray,
   public val signature: ByteArray,
-  public val parts: List<String>
+  public val parts: List<String>,
+  public val signerDid: String? = null
 ) {
 
   /**
