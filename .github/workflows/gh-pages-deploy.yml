@@ -1,9 +1,13 @@
 name: Deploy examples to GitHub Pages
 
 on:
+  # Runs on new releases publishing
   push:
-    branches:
-      - main
+    tags:
+      - v**
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
 
 jobs:
   build-web5-sdk-kotlin:
