@@ -115,6 +115,40 @@ class VerifiableCredentialTest {
     VerifiableCredential.verify(vcJwt)
   }
 
+  @Test
+  fun `verify does not throw an exception with vc with evidence`() {
+    val keyManager = InMemoryKeyManager()
+    val issuerDid = DidJwk.create(keyManager)
+    val holderDid = DidJwk.create(keyManager)
+
+    val evidence = listOf(
+      mapOf(
+        "id" to "https://example.edu/evidence/f2aeec97-fc0d-42bf-8ca7-0548192d4231",
+        "type" to listOf("DocumentVerification"),
+        "verifier" to "https://example.edu/issuers/14",
+        "evidenceDocument" to "DriversLicense",
+        "subjectPresence" to "Physical",
+        "documentPresence" to "Physical",
+        "licenseNumber" to "123AB4567"
+      )
+    )
+
+    val vc = VerifiableCredential.create(
+      type = "StreetCred",
+      issuer = issuerDid.uri,
+      subject = holderDid.uri,
+      data = StreetCredibility(localRespect = "high", legit = true),
+      evidence = evidence
+    )
+
+    assertEquals(vc.evidence, evidence)
+    val vcJwt = vc.sign(issuerDid)
+    VerifiableCredential.verify(vcJwt)
+
+    val parsedVc = VerifiableCredential.parseJwt(vcJwt)
+    assertEquals(parsedVc.evidence, evidence)
+  }
+
 
   data class KnowYourCustomerCred(val country: String)
   @Test
