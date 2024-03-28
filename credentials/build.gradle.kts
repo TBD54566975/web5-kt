@@ -5,17 +5,15 @@ plugins {
 
 repositories {
   mavenCentral()
-  // temp maven repo for danubetech
+  // block's cache artifactory for tbd's oss third party dependencies
+  // that do not live in maven central
   maven {
-    name = "tbd-danubetech-temp"
-    url = uri("https://blockxyz.jfrog.io/artifactory/danubetech-temp/")
+    name = "tbd-oss-thirdparty"
+    url = uri("https://blockxyz.jfrog.io/artifactory/tbd-oss-thirdparty-maven2/")
     mavenContent {
       releasesOnly()
     }
   }
-  maven("https://jitpack.io")
-  maven("https://repo.danubetech.com/repository/maven-public/")
-  maven("https://repository.jboss.org/nexus/content/repositories/thirdparty-releases/")
 }
 
 dependencies {
