@@ -152,7 +152,7 @@ public class VerifiableCredential internal constructor(public val vcDataModel: V
         .apply {
           evidence?.let {
             properties(
-              mutableMapOf(
+              mapOf(
                 "evidence" to evidence
               ) as Map<String, Any>?
             )
