@@ -35,15 +35,25 @@ class PresentationExchangeTest {
     .setSerializationInclusion(JsonInclude.Include.NON_NULL)
 
   val sanctionsVcJwt =
-    "eyJhbGciOiJFZERTQSJ9.eyJpc3MiOiJkaWQ6a2V5Ono2TWtrdU5tSmF0ZUNUZXI1V0JycUhCVUM0YUM3TjlOV1NyTUR" +
-      "KNmVkQXY1V0NmMiIsInN1YiI6ImRpZDprZXk6ejZNa2t1Tm1KYXRlQ1RlcjVXQnJxSEJVQzRhQzdOOU5XU3JNREo2Z" +
-      "WRBdjVXQ2YyIiwidmMiOnsiQGNvbnRleHQiOlsiaHR0cHM6Ly93d3cudzMub3JnLzIwMTgvY3JlZGVudGlhbHMvdjE" +
-      "iXSwiaWQiOiIxNjk4NDIyNDAxMzUyIiwidHlwZSI6WyJWZXJpZmlhYmxlQ3JlZGVudGlhbCIsIlNhbmN0aW9uc0NyZ" +
-      "WRlbnRpYWwiXSwiaXNzdWVyIjoiZGlkOmtleTp6Nk1ra3VObUphdGVDVGVyNVdCcnFIQlVDNGFDN045TldTck1ESjZ" +
-      "lZEF2NVdDZjIiLCJpc3N1YW5jZURhdGUiOiIyMDIzLTEwLTI3VDE2OjAwOjAxWiIsImNyZWRlbnRpYWxTdWJqZWN0I" +
-      "jp7ImlkIjoiZGlkOmtleTp6Nk1ra3VObUphdGVDVGVyNVdCcnFIQlVDNGFDN045TldTck1ESjZlZEF2NVdDZjIiLCJ" +
-      "iZWVwIjoiYm9vcCJ9fX0.Xhd9nDdkGarYFr6FP7wqsgj5CK3oGTfKU2LHNMvFIsvatgYlSucShDPI8uoeJ_G31uYPk" +
-      "e-LJlRy-WVIhkudDg"
+    "eyJhbGciOiJFZERTQSIsImtpZCI6ImRpZDpqd2s6ZXlKcmRIa2lPaUpQUzFBa" +
+      "UxDSmpjbllpT2lKRlpESTFOVEU1SWl3aWVDSTZJbWRsWjI5YWNuWTVjemxuV" +
+      "WtwT1praFBlVGt5Tm1oa1drNTBVMWxZWjJoaFlsOVJSbWhGTlRNM1lrMGlmU" +
+      "SMwIiwidHlwIjoiSldUIn0" +
+      ".eyJpc3MiOiJkaWQ6andrOmV5SnJkSGtpT2lKUFMxQWlMQ0pqY25ZaU9pSkZa" +
+      "REkxTlRFNUlpd2llQ0k2SW1kbFoyOWFjblk1Y3psblVrcE9aa2hQZVRreU5ta" +
+      "GtXazUwVTFsWVoyaGhZbDlSUm1oRk5UTTNZazBpZlEiLCJqdGkiOiJ1cm46dmM" +
+      "6dXVpZDozMmY4N2NmOC03YzhjLTQ3ZDYtYjNlNi1kNzhlNjFiNjAzNDEiLCJuY" +
+      "mYiOjE3MTE2NTI5MzIsInN1YiI6IjEyMyIsInZjIjp7IkBjb250ZXh0IjpbImh" +
+      "0dHBzOi8vd3d3LnczLm9yZy8yMDE4L2NyZWRlbnRpYWxzL3YxIl0sInR5cGUiOl" +
+      "siVmVyaWZpYWJsZUNyZWRlbnRpYWwiLCJTYW5jdGlvbnNDcmVkZW50aWFsIl0sI" +
+      "mlzc3VlciI6ImRpZDpqd2s6ZXlKcmRIa2lPaUpQUzFBaUxDSmpjbllpT2lKRlpES" +
+      "TFOVEU1SWl3aWVDSTZJbWRsWjI5YWNuWTVjemxuVWtwT1praFBlVGt5Tm1oa1drN" +
+      "TBVMWxZWjJoaFlsOVJSbWhGTlRNM1lrMGlmUSIsImNyZWRlbnRpYWxTdWJqZWN0Ij" +
+      "p7ImlkIjoiMTIzIn0sImlkIjoidXJuOnZjOnV1aWQ6MzJmODdjZjgtN2M4Yy00N2" +
+      "Q2LWIzZTYtZDc4ZTYxYjYwMzQxIiwiaXNzdWFuY2VEYXRlIjoiMjAyNC0wMy0yOFQx" +
+      "OTowODo1MloifX0" +
+      ".TMwyWqv6kSnY1qX06QJILovuKSj33a99RDSAGmg5YBLb3x4kPfqxOF7j-dKRj646T" +
+      "gQC6iNzTrrnjX8fNwnfDg"
 
 
   private fun readPd(path: String): String {
@@ -247,7 +257,7 @@ class PresentationExchangeTest {
 
       val vcJwt = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
 
-      assertThrows<SignatureException> {
+      assertThrows<IllegalStateException> {
         PresentationExchange.satisfiesPresentationDefinition(listOf(vcJwt), pd)
       }
     }
