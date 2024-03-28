@@ -11,9 +11,88 @@ import java.security.SignatureException
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
-import kotlin.test.assertNull
 
 class JwsTest {
+
+  @Nested
+  inner class VerifyTest {
+
+    @Test
+    fun `verify succeeds`() {
+      val jwsString = "eyJhbGciOiJFZERTQSIsImtpZCI6ImRpZDpqd2s6ZXlKcmRIa2lPaUpQUzFBaU" +
+        "xDSmpjbllpT2lKRlpESTFOVEU1SWl3aWVDSTZJbWRsWjI5YWNuWTVjemxuVWtwT1praFBlVGt5Tm" +
+        "1oa1drNTBVMWxZWjJoaFlsOVJSbWhGTlRNM1lrMGlmUSMwIiwidHlwIjoiSldUIn0" +
+        ".eyJpc3MiOiJkaWQ6andrOmV5SnJkSGtpT2lKUFMxQWlMQ0pqY25ZaU9pSkZaREkxTlRFNUlpd2ll" +
+        "Q0k2SW1kbFoyOWFjblk1Y3psblVrcE9aa2hQZVRreU5taGtXazUwVTFsWVoyaGhZbDlSUm1oRk5UTT" +
+        "NZazBpZlEiLCJqdGkiOiJ1cm46dmM6dXVpZDpjNWMzZGExMi02ODhmLTQxZDYtOTQzMC1lYzViNDAy" +
+        "NTFmMzMiLCJuYmYiOjE3MTE2NTA4MjcsInN1YiI6IjEyMyIsInZjIjp7IkBjb250ZXh0IjpbImh0dHB" +
+        "zOi8vd3d3LnczLm9yZy8yMDE4L2NyZWRlbnRpYWxzL3YxIl0sInR5cGUiOlsiVmVyaWZpYWJsZUNyZW" +
+        "RlbnRpYWwiXSwiaXNzdWVyIjoiZGlkOmp3azpleUpyZEhraU9pSlBTMUFpTENKamNuWWlPaUpGWkRJMU" +
+        "5URTVJaXdpZUNJNkltZGxaMjlhY25ZNWN6bG5Va3BPWmtoUGVUa3lObWhrV2s1MFUxbFlaMmhoWWw5UlJ" +
+        "taEZOVE0zWWswaWZRIiwiY3JlZGVudGlhbFN1YmplY3QiOnsiaWQiOiIxMjMifSwiaWQiOiJ1cm46dmM" +
+        "6dXVpZDpjNWMzZGExMi02ODhmLTQxZDYtOTQzMC1lYzViNDAyNTFmMzMiLCJpc3N1YW5jZURhdGUiOiIy" +
+        "MDI0LTAzLTI4VDE4OjMzOjQ3WiJ9fQ" +
+        ".ydUiwf33dDCdk4RyPfoTdgbK3yTUpLCDpPBIECbn-rCGn_W3q5QxzAt43ClOIWibpOXHs-9T86UDBFPyd79vAQ"
+
+      val decodedJws = Jws.verify(jwsString)
+
+      assertEquals("EdDSA", decodedJws.header.alg)
+      assertEquals("JWT", decodedJws.header.typ)
+      val payloadStr = Convert(decodedJws.payload).toStr()
+      val payload = Json.parse<Map<String, Any>>(payloadStr)
+      assertEquals(
+        "did:jwk:eyJrdHkiOiJPS1AiLCJjcnYiOiJFZDI1NTE5IiwieCI6Imdl" +
+          "Z29acnY5czlnUkpOZkhPeTkyNmhkWk50U1lYZ2hhYl9RRmhFNTM3Yk0ifQ",
+        payload["iss"]
+      )
+      assertEquals(1711650827, payload["nbf"])
+      assertEquals(
+        "did:jwk:eyJrdHkiOiJPS1AiLCJjcnYiOiJFZDI1NTE5IiwieCI6Imdl" +
+          "Z29acnY5czlnUkpOZkhPeTkyNmhkWk50U1lYZ2hhYl9RRmhFNTM3Yk0ifQ",
+        decodedJws.signerDid
+      )
+      assertEquals(3, decodedJws.parts.size)
+    }
+
+    @Test
+    fun `verify succeeds with detached payload`() {
+      val jwsStringWithoutPayload = "eyJhbGciOiJFZERTQSIsImtpZCI6ImRpZDpqd2s6ZXlKcmRIa2lPaUpQUzFBaU" +
+        "xDSmpjbllpT2lKRlpESTFOVEU1SWl3aWVDSTZJbWRsWjI5YWNuWTVjemxuVWtwT1praFBlVGt5Tm" +
+        "1oa1drNTBVMWxZWjJoaFlsOVJSbWhGTlRNM1lrMGlmUSMwIiwidHlwIjoiSldUIn0" +
+        "..ydUiwf33dDCdk4RyPfoTdgbK3yTUpLCDpPBIECbn-rCGn_W3q5QxzAt43ClOIWibpOXHs-9T86UDBFPyd79vAQ"
+
+      val payloadBase64Url = "eyJpc3MiOiJkaWQ6andrOmV5SnJkSGtpT2lKUFMxQWlMQ0pqY25ZaU9pSkZaREkxTlRFNUlpd2ll" +
+        "Q0k2SW1kbFoyOWFjblk1Y3psblVrcE9aa2hQZVRreU5taGtXazUwVTFsWVoyaGhZbDlSUm1oRk5UTT" +
+        "NZazBpZlEiLCJqdGkiOiJ1cm46dmM6dXVpZDpjNWMzZGExMi02ODhmLTQxZDYtOTQzMC1lYzViNDAy" +
+        "NTFmMzMiLCJuYmYiOjE3MTE2NTA4MjcsInN1YiI6IjEyMyIsInZjIjp7IkBjb250ZXh0IjpbImh0dHB" +
+        "zOi8vd3d3LnczLm9yZy8yMDE4L2NyZWRlbnRpYWxzL3YxIl0sInR5cGUiOlsiVmVyaWZpYWJsZUNyZW" +
+        "RlbnRpYWwiXSwiaXNzdWVyIjoiZGlkOmp3azpleUpyZEhraU9pSlBTMUFpTENKamNuWWlPaUpGWkRJMU" +
+        "5URTVJaXdpZUNJNkltZGxaMjlhY25ZNWN6bG5Va3BPWmtoUGVUa3lObWhrV2s1MFUxbFlaMmhoWWw5UlJ" +
+        "taEZOVE0zWWswaWZRIiwiY3JlZGVudGlhbFN1YmplY3QiOnsiaWQiOiIxMjMifSwiaWQiOiJ1cm46dmM" +
+        "6dXVpZDpjNWMzZGExMi02ODhmLTQxZDYtOTQzMC1lYzViNDAyNTFmMzMiLCJpc3N1YW5jZURhdGUiOiIy" +
+        "MDI0LTAzLTI4VDE4OjMzOjQ3WiJ9fQ"
+      val payloadBytes = Convert(payloadBase64Url, EncodingFormat.Base64Url).toByteArray()
+      val decodedJws = Jws.verify(jwsStringWithoutPayload, payloadBytes)
+
+      assertEquals("EdDSA", decodedJws.header.alg)
+      assertEquals("JWT", decodedJws.header.typ)
+      val payloadStr = Convert(decodedJws.payload).toStr()
+      val payload = Json.parse<Map<String, Any>>(payloadStr)
+      assertEquals(
+        "did:jwk:eyJrdHkiOiJPS1AiLCJjcnYiOiJFZDI1NTE5IiwieCI6Imdl" +
+          "Z29acnY5czlnUkpOZkhPeTkyNmhkWk50U1lYZ2hhYl9RRmhFNTM3Yk0ifQ",
+        payload["iss"]
+      )
+      assertEquals(1711650827, payload["nbf"])
+      assertEquals(
+        "did:jwk:eyJrdHkiOiJPS1AiLCJjcnYiOiJFZDI1NTE5IiwieCI6Imdl" +
+          "Z29acnY5czlnUkpOZkhPeTkyNmhkWk50U1lYZ2hhYl9RRmhFNTM3Yk0ifQ",
+        decodedJws.signerDid
+      )
+      assertEquals(3, decodedJws.parts.size)
+    }
+
+  }
 
   @Nested
   inner class DecodeTest {
@@ -76,6 +155,7 @@ class JwsTest {
 
       assertContains(exception.message!!, "Expected header to contain kid")
     }
+
     @Test
     fun `decode succeeds with test jwt`() {
       val jwsString = "eyJhbGciOiJFZERTQSIsImtpZCI6ImRpZDpqd2s6ZXlKcmRIa2lPaUpQUzFBaU" +
