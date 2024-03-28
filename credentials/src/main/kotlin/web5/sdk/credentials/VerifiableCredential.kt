@@ -44,6 +44,8 @@ public class VerifiableCredential internal constructor(public val vcDataModel: V
 
   public val subject: String
     get() = vcDataModel.credentialSubject.id.toString()
+  public val evidence: List<Any>?
+    get() = vcDataModel.toMap().get("evidence") as List<Any>?
 
   /**
    * Sign a verifiable credential using a specified decentralized identifier ([did]) with the private key that pairs
@@ -106,9 +108,10 @@ public class VerifiableCredential internal constructor(public val vcDataModel: V
      * @param type The type of the credential, as a [String].
      * @param issuer The issuer URI of the credential, as a [String].
      * @param subject The subject URI of the credential, as a [String].
+     * @param data The credential data, as a generic type [T].
      * @param issuanceDate Optional date to set in the `issuanceDate` property of the credential.
      * @param expirationDate Optional date to set in the `expirationDate` property of the credential.
-     * @param data The credential data, as a generic type [T].
+     * @param evidence Optional evidence property that gives additional supporting data
      * @return A [VerifiableCredential] instance.
      *
      * Example:
@@ -124,7 +127,8 @@ public class VerifiableCredential internal constructor(public val vcDataModel: V
       data: T,
       credentialStatus: CredentialStatus? = null,
       issuanceDate: Date = Date(),
-      expirationDate: Date? = null
+      expirationDate: Date? = null,
+      evidence: List<Any>? = null
     ): VerifiableCredential {
 
       val jsonData: JsonNode = objectMapper.valueToTree(data)
@@ -143,8 +147,17 @@ public class VerifiableCredential internal constructor(public val vcDataModel: V
         .id(URI.create("urn:uuid:${UUID.randomUUID()}"))
         .issuer(URI.create(issuer))
         .issuanceDate(issuanceDate)
-        .apply { expirationDate?.let { expirationDate(it) } }
         .credentialSubject(credentialSubject)
+        .apply { expirationDate?.let { expirationDate(it) } }
+        .apply {
+          evidence?.let {
+            properties(
+              mapOf(
+                "evidence" to evidence
+              ) as Map<String, Any>?
+            )
+          }
+        }
         .apply {
           credentialStatus?.let {
             credentialStatus(it)
