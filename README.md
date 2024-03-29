@@ -4,12 +4,13 @@
 [![SDK Kotlin CI](https://github.com/TBD54566975/web5-kt/actions/workflows/ci.yml/badge.svg)](https://github.com/TBD54566975/web5-kt/actions/workflows/ci.yml) [![Coverage](https://img.shields.io/codecov/c/gh/tbd54566975/web5-kt/main?logo=codecov&logoColor=FFFFFF&style=flat-square&token=YI87CKF1LI)](https://codecov.io/github/TBD54566975/web5-kt)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/TBD54566975/web5-kt/badge)](https://securityscorecards.dev/viewer/?uri=github.com/TBD54566975/web5-kt)
 
-This repo contains 4 jvm packages:
+This repo contains 5 packages:
 
 * [common](./common) - utilities for encoding, decoding, and hashing
 * [crypto](./crypto) - key generation, signing, signature verification, encryption, and decryption
 * [dids](./dids) - did generation and resolution
 * [credentials](./credentials) - creation and verification of verifiable claims
+* [jose](./jose) - JSON Object Signing with JWS and JWT support for encoding/decoding, signing, and serialization 
 
 # Quickstart
 
