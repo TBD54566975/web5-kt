@@ -170,6 +170,8 @@ git push
 
 # Other Docs
 
+* [API Reference Guide](https://tbd54566975.github.io/web5-kt/docs/htmlMultiModule/index.html)
+* [Developer Docs](https://developer.tbd.website/docs/web5/)
 * [Guidelines](./CONVENTIONS.md)
 * [Code of Conduct](./CODE_OF_CONDUCT.md)
 * [Governance](./GOVERNANCE.md)
