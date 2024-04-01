@@ -350,18 +350,14 @@ class Web5TestVectorsCredentials {
       }
     }
 
-    testVectors.vectors.filter { it.errors == true }.forEach { vector ->
-      if(vector.errorMessage == null || vector.errorMessage!!["web5-kt"] == null) {
-        assertFails(vector.description) {
-          VerifiableCredential.verify(vector.input.vcJwt)
-        }
-      } else {
-        val result = runCatching {
-          VerifiableCredential.verify(vector.input.vcJwt)
-        }
+    testVectors.vectors.filter { it.errors ?: false }.forEach { vector ->
+      val result = runCatching {
+        VerifiableCredential.verify(vector.input.vcJwt)
+      }
 
-        assert(result.isFailure) { "Test Vector was expected to fail for vector: ${vector.description}" }
+      assert(result.isFailure) { "Test Vector was expected to fail for vector: ${vector.description}" }
 
+      if(vector.errorMessage != null && vector.errorMessage!!["web5-kt"] != null) {
         val expectedErrorMessage = vector.errorMessage!!["web5-kt"]
         val actualErrorMessage = result.exceptionOrNull()?.message
 
