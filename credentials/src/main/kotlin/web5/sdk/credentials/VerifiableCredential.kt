@@ -175,9 +175,14 @@ public class VerifiableCredential internal constructor(public val vcDataModel: V
     /**
      * Verifies the integrity and authenticity of a Verifiable Credential (VC) encoded as a JSON Web Token (JWT).
      *
-     * If any of these steps fail, the function will throw a [IllegalArgumentException] with a message indicating the nature of the failure:
+     * This method conforms to wording about VC data model JWT encoding
+     * https://www.w3.org/TR/vc-data-model/#jwt-encoding
+     *
+     * If any of these steps fail, the function will throw a [IllegalArgumentException]
+     * with a message indicating the nature of the failure:
      * - exp MUST represent the expirationDate property, encoded as a UNIX timestamp (NumericDate).
-     * - iss MUST represent the issuer property of a verifiable credential or the holder property of a verifiable presentation.
+     * - iss MUST represent the issuer property of a verifiable credential or the holder property
+     *   of a verifiable presentation.
      * - nbf MUST represent issuanceDate, encoded as a UNIX timestamp (NumericDate).
      * - jti MUST represent the id property of the verifiable credential or verifiable presentation.
      * - sub MUST represent the id property contained in the credentialSubject.
