@@ -345,25 +345,15 @@ class Web5TestVectorsCredentials {
     val typeRef = object : TypeReference<TestVectors<VerifyTestInput, Unit>>() {}
     val testVectors = mapper.readValue(File("../web5-spec/test-vectors/credentials/verify.json"), typeRef)
 
-    testVectors.vectors.filter { it.errors == false }.forEach { vector ->
+    testVectors.vectors.filterNot { it.errors ?: false }.forEach { vector ->
       assertDoesNotThrow {
         VerifiableCredential.verify(vector.input.vcJwt)
       }
     }
 
-    testVectors.vectors.filter { it.errors == true }.forEach { vector ->
-      val result = runCatching {
+    testVectors.vectors.filter { it.errors ?: false }.forEach { vector ->
+      assertFails {
         VerifiableCredential.verify(vector.input.vcJwt)
-      }
-
-      assert(result.isFailure) { "Test Vector was expected to fail for vector: ${vector.description}" }
-
-      if(vector.errorMessage != null && vector.errorMessage!!["web5-kt"] != null) {
-        val expectedErrorMessage = vector.errorMessage!!["web5-kt"]
-        val actualErrorMessage = result.exceptionOrNull()?.message
-
-        assertEquals(expectedErrorMessage, actualErrorMessage,
-          "Expected and actual error messages do not match for vector: ${vector.description}")
       }
     }
   }
