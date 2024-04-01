@@ -12,10 +12,8 @@ import web5.sdk.crypto.AlgorithmId
 import web5.sdk.crypto.AwsKeyManager
 import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.crypto.Jwa
-import web5.sdk.crypto.jwk.Jwk
 import web5.sdk.dids.did.BearerDid
 import web5.sdk.dids.did.PortableDid
-import web5.sdk.dids.didcore.DidDocument
 import web5.sdk.dids.didcore.Purpose
 import web5.sdk.jose.jws.JwsHeader
 import web5.sdk.jose.jwt.Jwt
@@ -28,7 +26,6 @@ import web5.sdk.testing.TestVectors
 import java.io.File
 import java.security.SignatureException
 import java.util.Calendar
-import java.util.Date
 import kotlin.test.Ignore
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
@@ -359,7 +356,7 @@ class Web5TestVectorsCredentials {
   }
 
   @Test
-  fun verifyVcwt() {
+  fun verifyVcJwt() {
     val typeRef = object : TypeReference<TestVectors<String, Unit>>() {}
     val testVectors = mapper.readValue(File("../web5-spec/test-vectors/vc_jwt/verify.json"), typeRef)
 
