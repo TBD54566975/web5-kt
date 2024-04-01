@@ -129,30 +129,12 @@ class VerifiableCredentialTest {
     )
 
     val vcJwt = vc.sign(issuerDid)
-//    VerifiableCredential.verify(vcJwt)
+
     assertFails("should fail with fake issuer") {
-//          VerifiableCredential.fromJson(mapper.writeValueAsString(vector.input.credential))
       VerifiableCredential.verify(vcJwt)
     }
   }
-//  it('should throw and error if wrong issuer', async () => {
-//    const issuerDid = await DidKey.create();
-//    const vc = await VerifiableCredential.create({
-//      type    : 'StreetCred',
-//      issuer  : 'did:fakeissuer:123',
-//      subject : 'did:subject:123',
-//      data    : new StreetCredibility('high', true),
-//    });
-//
-//    const vcJwt = await vc.sign({ did: issuerDid });
-//
-//    try {
-//      await VerifiableCredential.verify({ vcJwt });
-//      expect.fail();
-//    } catch(e: any) {
-//      expect(e.message).to.include('Verification failed: iss claim does not match expected issuer');
-//    }
-//  });
+
   @Test
   fun `verify does not throw an exception with vc with evidence`() {
     val keyManager = InMemoryKeyManager()
@@ -186,7 +168,6 @@ class VerifiableCredentialTest {
     val parsedVc = VerifiableCredential.parseJwt(vcJwt)
     assertEquals(parsedVc.evidence, evidence)
   }
-
 
   data class KnowYourCustomerCred(val country: String)
   @Test
@@ -347,7 +328,7 @@ class Web5TestVectorsCredentials {
       val keyManager = InMemoryKeyManager()
       val bearerDid = BearerDid.import(portableDid, keyManager)
       val vcJwt = vc.sign(bearerDid)
-      
+
       assertEquals(vector.output, vcJwt, vector.description)
     }
 
