@@ -27,6 +27,7 @@ import web5.sdk.dids.methods.key.DidKey
 import web5.sdk.testing.TestVectors
 import java.io.File
 import java.security.SignatureException
+import java.util.Calendar
 import java.util.Date
 import kotlin.test.Ignore
 import kotlin.test.assertContains
@@ -180,7 +181,7 @@ class VerifiableCredentialTest {
       type = "KnowYourCustomerCred",
       issuer = issuerDid.uri,
       subject = subjectDid.uri,
-      expirationDate = Date(2055,11,21),
+      expirationDate = Calendar.Builder().setDate(2055, 11, 21).build().time,
       data = KnowYourCustomerCred(country = "us")
     )
 
@@ -344,13 +345,13 @@ class Web5TestVectorsCredentials {
     val typeRef = object : TypeReference<TestVectors<VerifyTestInput, Unit>>() {}
     val testVectors = mapper.readValue(File("../web5-spec/test-vectors/credentials/verify.json"), typeRef)
 
-    testVectors.vectors.filterNot { it.errors ?: false }.forEach { vector ->
+    testVectors.vectors.filter { it.errors == false }.forEach { vector ->
       assertDoesNotThrow {
         VerifiableCredential.verify(vector.input.vcJwt)
       }
     }
 
-    testVectors.vectors.filter { it.errors ?: false }.forEach { vector ->
+    testVectors.vectors.filter { it.errors == true }.forEach { vector ->
       val result = runCatching {
         VerifiableCredential.verify(vector.input.vcJwt)
       }
