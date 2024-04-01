@@ -357,4 +357,22 @@ class Web5TestVectorsCredentials {
       }
     }
   }
+
+  @Test
+  fun verifyVcwt() {
+    val typeRef = object : TypeReference<TestVectors<String, Unit>>() {}
+    val testVectors = mapper.readValue(File("../web5-spec/test-vectors/vc_jwt/verify.json"), typeRef)
+
+    testVectors.vectors.filter { it.errors == false }.forEach { vector ->
+      assertDoesNotThrow {
+        VerifiableCredential.verify(vector.input)
+      }
+    }
+
+    testVectors.vectors.filter { it.errors == true }.forEach { vector ->
+      assertFails {
+        VerifiableCredential.verify(vector.input)
+      }
+    }
+  }
 }
