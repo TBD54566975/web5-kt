@@ -116,6 +116,44 @@ class VerifiableCredentialTest {
   }
 
   @Test
+  fun `verify throws if it is the wrong issuer that signed the vc`() {
+    val keyManager = InMemoryKeyManager()
+    val issuerDid = DidJwk.create(keyManager)
+    val holderDid = DidJwk.create(keyManager)
+
+    val vc = VerifiableCredential.create(
+      type = "StreetCred",
+      issuer = "did:fakeissuer:123",
+      subject = holderDid.uri,
+      data = StreetCredibility(localRespect = "high", legit = true)
+    )
+
+    val vcJwt = vc.sign(issuerDid)
+//    VerifiableCredential.verify(vcJwt)
+    assertFails("should fail with fake issuer") {
+//          VerifiableCredential.fromJson(mapper.writeValueAsString(vector.input.credential))
+      VerifiableCredential.verify(vcJwt)
+    }
+  }
+//  it('should throw and error if wrong issuer', async () => {
+//    const issuerDid = await DidKey.create();
+//    const vc = await VerifiableCredential.create({
+//      type    : 'StreetCred',
+//      issuer  : 'did:fakeissuer:123',
+//      subject : 'did:subject:123',
+//      data    : new StreetCredibility('high', true),
+//    });
+//
+//    const vcJwt = await vc.sign({ did: issuerDid });
+//
+//    try {
+//      await VerifiableCredential.verify({ vcJwt });
+//      expect.fail();
+//    } catch(e: any) {
+//      expect(e.message).to.include('Verification failed: iss claim does not match expected issuer');
+//    }
+//  });
+  @Test
   fun `verify does not throw an exception with vc with evidence`() {
     val keyManager = InMemoryKeyManager()
     val issuerDid = DidJwk.create(keyManager)
@@ -309,7 +347,7 @@ class Web5TestVectorsCredentials {
       val keyManager = InMemoryKeyManager()
       val bearerDid = BearerDid.import(portableDid, keyManager)
       val vcJwt = vc.sign(bearerDid)
-
+      
       assertEquals(vector.output, vcJwt, vector.description)
     }
 
@@ -331,9 +369,23 @@ class Web5TestVectorsCredentials {
       }
     }
 
-    testVectors.vectors.filter { it.errors ?: false }.forEach { vector ->
-      assertFails {
-        VerifiableCredential.verify(vector.input.vcJwt)
+    testVectors.vectors.filter { it.errors == true }.forEach { vector ->
+      if(vector.errorMessage == null || vector.errorMessage!!["web5-kt"] == null) {
+        assertFails(vector.description) {
+          VerifiableCredential.verify(vector.input.vcJwt)
+        }
+      } else {
+        val result = runCatching {
+          VerifiableCredential.verify(vector.input.vcJwt)
+        }
+
+        assert(result.isFailure) { "Test Vector was expected to fail for vector: ${vector.description}" }
+
+        val expectedErrorMessage = vector.errorMessage!!["web5-kt"]
+        val actualErrorMessage = result.exceptionOrNull()?.message
+
+        assertEquals(expectedErrorMessage, actualErrorMessage,
+          "Expected and actual error messages do not match for vector: ${vector.description}")
       }
     }
   }

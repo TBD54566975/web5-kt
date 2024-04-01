@@ -67,7 +67,7 @@ public class VerifiableCredential internal constructor(public val vcDataModel: V
   @JvmOverloads
   public fun sign(did: BearerDid, assertionMethodId: String? = null): String {
     val payload = JwtClaimsSet.Builder()
-      .issuer(vcDataModel.issuer.toString())
+      .issuer(did.uri)
       .issueTime(vcDataModel.issuanceDate.time)
       .subject(vcDataModel.credentialSubject.id.toString())
       .misc("vc", vcDataModel.toMap())
@@ -175,19 +175,15 @@ public class VerifiableCredential internal constructor(public val vcDataModel: V
     /**
      * Verifies the integrity and authenticity of a Verifiable Credential (VC) encoded as a JSON Web Token (JWT).
      *
-     * This function performs several crucial validation steps to ensure the trustworthiness of the provided VC:
-     * - Parses and validates the structure of the JWT.
-     * - Ensures the presence of critical header elements `alg` and `kid` in the JWT header.
-     * - Resolves the Decentralized Identifier (DID) and retrieves the associated DID Document.
-     * - Validates the DID and establishes a set of valid verification method IDs.
-     * - Identifies the correct Verification Method from the DID Document based on the `kid` parameter.
-     * - Verifies the JWT's signature using the public key associated with the Verification Method.
-     *
-     * If any of these steps fail, the function will throw a [SignatureException] with a message indicating the nature of the failure.
+     * If any of these steps fail, the function will throw a [IllegalArgumentException] with a message indicating the nature of the failure:
+     * - exp MUST represent the expirationDate property, encoded as a UNIX timestamp (NumericDate).
+     * - iss MUST represent the issuer property of a verifiable credential or the holder property of a verifiable presentation.
+     * - nbf MUST represent issuanceDate, encoded as a UNIX timestamp (NumericDate).
+     * - jti MUST represent the id property of the verifiable credential or verifiable presentation.
+     * - sub MUST represent the id property contained in the credentialSubject.
      *
      * @param vcJwt The Verifiable Credential in JWT format as a [String].
-     * @throws SignatureException if the verification fails at any step, providing a message with failure details.
-     * @throws IllegalArgumentException if critical JWT header elements are absent.
+     * @throws IllegalArgumentException if the verification fails at any step, providing a message with failure details.
      *
      * ### Example:
      * ```
@@ -201,6 +197,48 @@ public class VerifiableCredential internal constructor(public val vcDataModel: V
      */
     public fun verify(vcJwt: String) {
       val decodedJwt = Jwt.decode(vcJwt)
+
+      val exp = decodedJwt.claims.exp
+      val iss =  decodedJwt.claims.iss
+      val nbf =  decodedJwt.claims.nbf
+      val jti =  decodedJwt.claims.jti
+      val sub =  decodedJwt.claims.sub
+      val vc = parseJwt(vcJwt)
+      val vcTyped = vc.vcDataModel
+
+      // exp MUST represent the expirationDate property, encoded as a UNIX timestamp (NumericDate).
+      require(exp == null || vcTyped.expirationDate == null || exp == vcTyped.expirationDate.time / 1000) {
+        "Verification failed: exp claim does not match expirationDate"
+      }
+
+      require(iss != null) { "Verification failed: iss claim is required" }
+
+      // iss MUST represent the issuer property of a verifiable credential or the holder property of a verifiable presentation.
+      require(iss == vcTyped.issuer.toString()) {
+        "Verification failed: iss claim does not match expected issuer"
+      }
+
+      // nbf cannot represent time in the future
+      require(nbf == null || nbf <= Date().time / 1000) {
+        "Verification failed: nbf claim is in the future"
+      }
+
+      // nbf MUST represent issuanceDate, encoded as a UNIX timestamp (NumericDate).
+      require(nbf == null || vcTyped.issuanceDate == null || nbf == vcTyped.issuanceDate.time / 1000) {
+        "Verification failed: nbf claim does not match issuanceDate"
+      }
+
+      // sub MUST represent the id property contained in the credentialSubject.
+      require(sub == null || vcTyped.credentialSubject is List<*> || sub == vcTyped.credentialSubject.id.toString()) {
+        "Verification failed: sub claim does not match credentialSubject.id"
+      }
+
+      // jti MUST represent the id property of the verifiable credential or verifiable presentation.
+      require(jti == null || jti == vcTyped.id.toString()) {
+        "Verification failed: jti claim does not match id"
+      }
+
+      validateDataModel(vcTyped.toMap())
       decodedJwt.verify()
     }
 
