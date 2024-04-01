@@ -229,7 +229,7 @@ public class VerifiableCredential internal constructor(public val vcDataModel: V
       }
 
       // sub MUST represent the id property contained in the credentialSubject.
-      require(sub == null || vcTyped.credentialSubject is List<*> || sub == vcTyped.credentialSubject.id.toString()) {
+      require(sub == null || sub == vcTyped.credentialSubject.id.toString()) {
         "Verification failed: sub claim does not match credentialSubject.id"
       }
 
