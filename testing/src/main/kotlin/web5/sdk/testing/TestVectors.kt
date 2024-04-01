@@ -19,5 +19,5 @@ public class TestVector<I,O>(
   public val description: String,
   public val input: I,
   public val output: O?,
-  public val errors: Boolean? = false
+  public val errors: Boolean? = false,
 )
