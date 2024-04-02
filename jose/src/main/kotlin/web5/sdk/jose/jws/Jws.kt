@@ -244,6 +244,12 @@ public class DecodedJws(
 
   /**
    * Verify the JWS signature is valid.
+   *
+   * - Ensures the presence of critical header elements `alg` and `kid` in the JWT header.
+   * - Resolves the Decentralized Identifier (DID) and retrieves the associated DID Document.
+   * - Validates the DID and establishes a set of valid verification method IDs.
+   * - Identifies the correct Verification Method from the DID Document based on the `kid` parameter.
+   * - Verifies the JWT's signature using the public key associated with the Verification Method.
    */
   public fun verify() {
     check(header.kid != null || header.alg != null) {

@@ -11,11 +11,12 @@ import com.fasterxml.jackson.module.kotlin.convertValue
 import com.nfeld.jsonpathkt.JsonPath
 import com.nfeld.jsonpathkt.extension.read
 import web5.sdk.common.Json
+import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.dids.did.BearerDid
+import web5.sdk.dids.methods.dht.DidDht
 import web5.sdk.jose.jwt.Jwt
 import web5.sdk.jose.jwt.JwtClaimsSet
 import java.net.URI
-import java.security.SignatureException
 import java.util.Date
 import java.util.UUID
 
@@ -67,7 +68,7 @@ public class VerifiableCredential internal constructor(public val vcDataModel: V
   @JvmOverloads
   public fun sign(did: BearerDid, assertionMethodId: String? = null): String {
     val payload = JwtClaimsSet.Builder()
-      .issuer(vcDataModel.issuer.toString())
+      .issuer(did.uri)
       .issueTime(vcDataModel.issuanceDate.time)
       .subject(vcDataModel.credentialSubject.id.toString())
       .misc("vc", vcDataModel.toMap())
@@ -175,19 +176,20 @@ public class VerifiableCredential internal constructor(public val vcDataModel: V
     /**
      * Verifies the integrity and authenticity of a Verifiable Credential (VC) encoded as a JSON Web Token (JWT).
      *
-     * This function performs several crucial validation steps to ensure the trustworthiness of the provided VC:
-     * - Parses and validates the structure of the JWT.
-     * - Ensures the presence of critical header elements `alg` and `kid` in the JWT header.
-     * - Resolves the Decentralized Identifier (DID) and retrieves the associated DID Document.
-     * - Validates the DID and establishes a set of valid verification method IDs.
-     * - Identifies the correct Verification Method from the DID Document based on the `kid` parameter.
-     * - Verifies the JWT's signature using the public key associated with the Verification Method.
+     * This method conforms to wording about VC data model JWT encoding
+     * https://www.w3.org/TR/vc-data-model/#jwt-encoding
      *
-     * If any of these steps fail, the function will throw a [SignatureException] with a message indicating the nature of the failure.
+     * If any of these steps fail, the function will throw a [IllegalArgumentException]
+     * with a message indicating the nature of the failure:
+     * - exp MUST represent the expirationDate property, encoded as a UNIX timestamp (NumericDate).
+     * - iss MUST represent the issuer property of a verifiable credential or the holder property
+     *   of a verifiable presentation.
+     * - nbf MUST represent issuanceDate, encoded as a UNIX timestamp (NumericDate).
+     * - jti MUST represent the id property of the verifiable credential or verifiable presentation.
+     * - sub MUST represent the id property contained in the credentialSubject.
      *
      * @param vcJwt The Verifiable Credential in JWT format as a [String].
-     * @throws SignatureException if the verification fails at any step, providing a message with failure details.
-     * @throws IllegalArgumentException if critical JWT header elements are absent.
+     * @throws IllegalArgumentException if the verification fails at any step, providing a message with failure details.
      *
      * ### Example:
      * ```
@@ -201,6 +203,56 @@ public class VerifiableCredential internal constructor(public val vcDataModel: V
      */
     public fun verify(vcJwt: String) {
       val decodedJwt = Jwt.decode(vcJwt)
+
+      val exp = decodedJwt.claims.exp
+      val iss = decodedJwt.claims.iss
+      val nbf = decodedJwt.claims.nbf
+      val jti = decodedJwt.claims.jti
+      val sub = decodedJwt.claims.sub
+      val vc = parseJwt(vcJwt)
+      val vcDataModel = vc.vcDataModel
+
+      // exp MUST represent the expirationDate property, encoded as a UNIX timestamp (NumericDate).
+      // IF exp is present, check that vc's exp date is same as the jwt's exp date
+      if (
+        exp != null &&
+        vcDataModel.expirationDate != null &&
+        exp != vcDataModel.expirationDate.time / 1000
+      ) {
+        throw IllegalArgumentException("Verification failed: exp claim does not match expirationDate")
+      }
+
+      require(iss != null) { "Verification failed: iss claim is required" }
+
+      // if iss is present, iss MUST represent the issuer property of a vc or the holder property of a vp.
+      require(iss == vcDataModel.issuer.toString()) {
+        "Verification failed: iss claim does not match expected issuer"
+      }
+
+      // if nbf is present, nbf cannot represent time in the future
+      if (nbf != null && nbf >= Date().time / 1000) {
+        throw IllegalArgumentException("Verification failed: nbf claim is in the future")
+      }
+
+      // if nbf is present, nbf MUST represent issuanceDate, encoded as a UNIX timestamp (NumericDate).
+      if (
+        nbf != null &&
+        vcDataModel.issuanceDate != null &&
+        nbf != vcDataModel.issuanceDate.time / 1000) {
+        throw IllegalArgumentException("Verification failed: nbf claim does not match issuanceDate")
+      }
+
+      // if sub is present, sub MUST represent the id property contained in the credentialSubject.
+      if (sub != null && sub != vcDataModel.credentialSubject.id.toString()) {
+        throw IllegalArgumentException("Verification failed: sub claim does not match credentialSubject.id")
+      }
+
+      // if jti is present, jti MUST represent the id property of the verifiable credential or verifiable presentation.
+      if (jti != null && jti != vcDataModel.id.toString()) {
+        throw IllegalArgumentException("Verification failed: jti claim does not match id")
+      }
+
+      validateDataModel(vcDataModel.toMap())
       decodedJwt.verify()
     }
 
@@ -218,8 +270,7 @@ public class VerifiableCredential internal constructor(public val vcDataModel: V
     public fun parseJwt(vcJwt: String): VerifiableCredential {
       val jwt = Jwt.decode(vcJwt)
       val jwtPayload = jwt.claims
-      val vcDataModelValue = jwtPayload.misc["vc"] ?:
-        throw IllegalArgumentException("jwt payload missing vc property")
+      val vcDataModelValue = jwtPayload.misc["vc"] ?: throw IllegalArgumentException("jwt payload missing vc property")
 
       val vcDataModelMap = Json.parse<Map<String, Any>>(Json.stringify(vcDataModelValue))
 

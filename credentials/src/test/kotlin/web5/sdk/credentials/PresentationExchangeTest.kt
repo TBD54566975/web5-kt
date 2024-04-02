@@ -664,13 +664,13 @@ class Web5TestVectorsPresentationExchange {
     val testVectors =
       mapper.readValue(File("../web5-spec/test-vectors/presentation_exchange/validate_definition.json"), typeRef)
 
-    testVectors.vectors.filterNot { it.errors ?: false }.forEach { vector ->
+    testVectors.vectors.filter { it.errors == false }.forEach { vector ->
       assertDoesNotThrow {
         PresentationExchange.validateDefinition(vector.input.presentationDefinition)
       }
     }
 
-    testVectors.vectors.filter { it.errors ?: false }.forEach { vector ->
+    testVectors.vectors.filter { it.errors == true }.forEach { vector ->
       assertFails {
           PresentationExchange.validateDefinition(vector.input.presentationDefinition)
       }
@@ -687,13 +687,13 @@ class Web5TestVectorsPresentationExchange {
     val testVectors =
       mapper.readValue(File("../web5-spec/test-vectors/presentation_exchange/validate_submission.json"), typeRef)
 
-    testVectors.vectors.filterNot { it.errors ?: false }.forEach { vector ->
+    testVectors.vectors.filter { it.errors == false }.forEach { vector ->
       assertDoesNotThrow {
         PresentationExchange.validateSubmission(vector.input.presentationSubmission)
       }
     }
 
-    testVectors.vectors.filter { it.errors ?: false }.forEach { vector ->
+    testVectors.vectors.filter { it.errors == true }.forEach { vector ->
       assertFails {
         PresentationExchange.validateSubmission(vector.input.presentationSubmission)
       }

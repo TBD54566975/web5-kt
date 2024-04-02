@@ -12,10 +12,8 @@ import web5.sdk.crypto.AlgorithmId
 import web5.sdk.crypto.AwsKeyManager
 import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.crypto.Jwa
-import web5.sdk.crypto.jwk.Jwk
 import web5.sdk.dids.did.BearerDid
 import web5.sdk.dids.did.PortableDid
-import web5.sdk.dids.didcore.DidDocument
 import web5.sdk.dids.didcore.Purpose
 import web5.sdk.jose.jws.JwsHeader
 import web5.sdk.jose.jwt.Jwt
@@ -27,7 +25,7 @@ import web5.sdk.dids.methods.key.DidKey
 import web5.sdk.testing.TestVectors
 import java.io.File
 import java.security.SignatureException
-import java.util.Date
+import java.util.Calendar
 import kotlin.test.Ignore
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
@@ -116,6 +114,26 @@ class VerifiableCredentialTest {
   }
 
   @Test
+  fun `verify throws if it is the wrong issuer that signed the vc`() {
+    val keyManager = InMemoryKeyManager()
+    val issuerDid = DidJwk.create(keyManager)
+    val holderDid = DidJwk.create(keyManager)
+
+    val vc = VerifiableCredential.create(
+      type = "StreetCred",
+      issuer = "did:fakeissuer:123",
+      subject = holderDid.uri,
+      data = StreetCredibility(localRespect = "high", legit = true)
+    )
+
+    val vcJwt = vc.sign(issuerDid)
+
+    assertFails("should fail with fake issuer") {
+      VerifiableCredential.verify(vcJwt)
+    }
+  }
+
+  @Test
   fun `verify does not throw an exception with vc with evidence`() {
     val keyManager = InMemoryKeyManager()
     val issuerDid = DidJwk.create(keyManager)
@@ -149,7 +167,6 @@ class VerifiableCredentialTest {
     assertEquals(parsedVc.evidence, evidence)
   }
 
-
   data class KnowYourCustomerCred(val country: String)
   @Test
   fun `kyc credential verify does not throw an exception if vc is legit`() {
@@ -161,7 +178,7 @@ class VerifiableCredentialTest {
       type = "KnowYourCustomerCred",
       issuer = issuerDid.uri,
       subject = subjectDid.uri,
-      expirationDate = Date(2055,11,21),
+      expirationDate = Calendar.Builder().setDate(2055, 11, 21).build().time,
       data = KnowYourCustomerCred(country = "us")
     )
 
@@ -334,6 +351,24 @@ class Web5TestVectorsCredentials {
     testVectors.vectors.filter { it.errors ?: false }.forEach { vector ->
       assertFails {
         VerifiableCredential.verify(vector.input.vcJwt)
+      }
+    }
+  }
+
+  @Test
+  fun verifyVcJwt() {
+    val typeRef = object : TypeReference<TestVectors<String, Unit>>() {}
+    val testVectors = mapper.readValue(File("../web5-spec/test-vectors/vc_jwt/verify.json"), typeRef)
+
+    testVectors.vectors.filter { it.errors == false }.forEach { vector ->
+      assertDoesNotThrow {
+        VerifiableCredential.verify(vector.input)
+      }
+    }
+
+    testVectors.vectors.filter { it.errors == true }.forEach { vector ->
+      assertFails {
+        VerifiableCredential.verify(vector.input)
       }
     }
   }
