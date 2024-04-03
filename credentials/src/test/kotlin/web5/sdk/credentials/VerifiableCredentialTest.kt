@@ -1,5 +1,6 @@
 package web5.sdk.credentials
 
+import com.danubetech.verifiablecredentials.credentialstatus.CredentialStatus
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.exc.MismatchedInputException
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
@@ -12,21 +13,21 @@ import web5.sdk.crypto.AlgorithmId
 import web5.sdk.crypto.AwsKeyManager
 import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.crypto.Jwa
-import web5.sdk.crypto.jwk.Jwk
-import web5.sdk.dids.did.BearerDid
 import web5.sdk.dids.did.PortableDid
-import web5.sdk.dids.didcore.DidDocument
 import web5.sdk.dids.didcore.Purpose
-import web5.sdk.jose.jws.JwsHeader
-import web5.sdk.jose.jwt.Jwt
-import web5.sdk.jose.jwt.JwtClaimsSet
 import web5.sdk.dids.methods.dht.CreateDidDhtOptions
 import web5.sdk.dids.methods.dht.DidDht
 import web5.sdk.dids.methods.jwk.DidJwk
 import web5.sdk.dids.methods.key.DidKey
+import web5.sdk.jose.jws.JwsHeader
+import web5.sdk.jose.jwt.Jwt
+import web5.sdk.jose.jwt.JwtClaimsSet
 import web5.sdk.testing.TestVectors
 import java.io.File
 import java.security.SignatureException
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import java.util.Calendar
 import java.util.Date
 import kotlin.test.Ignore
@@ -34,6 +35,7 @@ import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
 import kotlin.test.assertNotNull
+
 
 data class StreetCredibility(val localRespect: String, val legit: Boolean)
 class VerifiableCredentialTest {
@@ -319,23 +321,62 @@ class Web5TestVectorsCredentials {
 
   @Test
   fun create() {
-    val typeRef = object : TypeReference<TestVectors<CreateTestInput, String>>() {}
+    val typeRef = object : TypeReference<TestVectors<CreateTestInput, Map<String, Any>?>>() {}
     val testVectors = mapper.readValue(File("../web5-spec/test-vectors/credentials/create.json"), typeRef)
 
     testVectors.vectors.filter { it.errors == false }.forEach { vector ->
-      val vc = VerifiableCredential.fromJson(mapper.writeValueAsString(vector.input.credential))
-      val portableDid = Json.parse<PortableDid>(Json.stringify(vector.input.signerPortableDid!!))
+      var issuanceDate = Date()
+      vector.input.credential?.get("issuanceDate")?.let {
+        issuanceDate = Date.from(Instant.parse(it as String))
+      }
 
-      val keyManager = InMemoryKeyManager()
-      val bearerDid = BearerDid.import(portableDid, keyManager)
-      val vcJwt = vc.sign(bearerDid)
+      var expirationDate: Date? = null
+      vector.input.credential?.get("expirationDate")?.let {
+        expirationDate = Date.from(Instant.parse(it as String))
+      }
 
-      assertEquals(vector.output, vcJwt, vector.description)
-    }
+      var credentialStatus: CredentialStatus? = null
+      (vector.input.credential?.get("credentialStatus") as? Map<String, Any>)?.let {
+        credentialStatus = CredentialStatus.fromMap(it)
+      }
 
-    testVectors.vectors.filter { it.errors == true }.forEach { vector ->
-      assertFails(vector.description) {
-        VerifiableCredential.fromJson(mapper.writeValueAsString(vector.input.credential))
+      val evidence = vector.input.credential?.get("evidence") as? List<Any>
+
+      val vc = VerifiableCredential.create(
+        type = vector.input.credential?.get("type") as String,
+        issuer = vector.input.credential?.get("issuer") as String,
+        subject = vector.input.credential?.get("subject") as String,
+        data = vector.input.credential?.get("credentialSubject"),
+
+        // Applying the optional fields
+        credentialStatus = credentialStatus,
+        issuanceDate = issuanceDate,
+        expirationDate = expirationDate,
+        evidence = evidence
+      )
+
+      assertNotNull(vc.vcDataModel.id)
+      assertNotNull(vc.vcDataModel.issuanceDate)
+
+      assertEquals(vector.output?.get("@context"), vc.vcDataModel.contexts.map { it.toString() })
+      assertEquals(vector.output?.get("type"), vc.vcDataModel.types)
+      assertEquals(vector.output?.get("issuer"), vc.vcDataModel.issuer.toString())
+      assertEquals(vector.output?.get("credentialSubject"), vc.vcDataModel.credentialSubject.toMap())
+
+      vector.output?.get("issuanceDate")?.let { expectedIssuanceDate ->
+        assertEquals(expectedIssuanceDate, vc.vcDataModel.issuanceDate.toInstant().atZone(ZoneId.of("UTC")).format(DateTimeFormatter.ISO_INSTANT))
+      }
+
+      vector.output?.get("expirationDate")?.let { expectedExpirationDate ->
+        assertEquals(expectedExpirationDate, vc.vcDataModel.expirationDate.toInstant().atZone(ZoneId.of("UTC")).format(DateTimeFormatter.ISO_INSTANT))
+      }
+
+      vector.output?.get("credentialStatus")?.let { expectedCredentialStatus ->
+        assertEquals(expectedCredentialStatus, vc.vcDataModel.credentialStatus)
+      }
+
+      vector.output?.get("evidence")?.let { expectedEvidence ->
+        assertEquals(expectedEvidence as List<Any>, vc.evidence)
       }
     }
   }

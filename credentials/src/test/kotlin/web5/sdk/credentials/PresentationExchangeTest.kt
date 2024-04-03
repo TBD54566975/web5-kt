@@ -16,7 +16,6 @@ import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.dids.methods.key.DidKey
 import web5.sdk.testing.TestVectors
 import java.io.File
-import java.security.SignatureException
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFails

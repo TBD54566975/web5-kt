@@ -17,13 +17,11 @@ import web5.sdk.crypto.Jwa
 import web5.sdk.dids.didcore.Purpose
 import web5.sdk.dids.methods.dht.CreateDidDhtOptions
 import web5.sdk.dids.methods.dht.DidDht
-import web5.sdk.dids.methods.jwk.DidJwk
 import web5.sdk.dids.methods.key.DidKey
 import web5.sdk.jose.jws.JwsHeader
 import web5.sdk.jose.jwt.Jwt
 import web5.sdk.jose.jwt.JwtClaimsSet
 import java.security.SignatureException
-import java.text.ParseException
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
