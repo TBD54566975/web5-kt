@@ -36,7 +36,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFails
 import kotlin.test.assertNotNull
 
-
 data class StreetCredibility(val localRespect: String, val legit: Boolean)
 class VerifiableCredentialTest {
   @Test
@@ -364,11 +363,13 @@ class Web5TestVectorsCredentials {
       assertEquals(vector.output?.get("credentialSubject"), vc.vcDataModel.credentialSubject.toMap())
 
       vector.output?.get("issuanceDate")?.let { expectedIssuanceDate ->
-        assertEquals(expectedIssuanceDate, vc.vcDataModel.issuanceDate.toInstant().atZone(ZoneId.of("UTC")).format(DateTimeFormatter.ISO_INSTANT))
+        assertEquals(expectedIssuanceDate, vc.vcDataModel.issuanceDate.toInstant()
+          .atZone(ZoneId.of("UTC")).format(DateTimeFormatter.ISO_INSTANT))
       }
 
       vector.output?.get("expirationDate")?.let { expectedExpirationDate ->
-        assertEquals(expectedExpirationDate, vc.vcDataModel.expirationDate.toInstant().atZone(ZoneId.of("UTC")).format(DateTimeFormatter.ISO_INSTANT))
+        assertEquals(expectedExpirationDate, vc.vcDataModel.expirationDate.toInstant()
+          .atZone(ZoneId.of("UTC")).format(DateTimeFormatter.ISO_INSTANT))
       }
 
       vector.output?.get("credentialStatus")?.let { expectedCredentialStatus ->
