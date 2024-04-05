@@ -141,7 +141,6 @@ jobs:
           path: |
             **/target/surefire-reports/*.xml
 
-      # Uncomment these before merging upstream again; this Action is custom to TBD and can't be verified in ALRubinger fork
       - name: Generate an access token to trigger downstream repo
         uses: actions/create-github-app-token@2986852ad836768dfea7781f31828eb3e17990fa # v1.6.2
         id: generate_token
