@@ -288,8 +288,14 @@ pushing changes to `web5-kt`.
 
 ```sh
 cd web5-spec
+git checkout main
+git checkout -b my-branch
+git add .
+git commit -m "your commit message"
 git push
 cd ..
+git add .
+git commit -m "updating tbdex submodule"
 git push
 ```
 
