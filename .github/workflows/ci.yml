@@ -141,28 +141,28 @@ jobs:
           path: |
             **/target/surefire-reports/*.xml
 
-      - name: Generate an access token to trigger downstream repo
-        uses: actions/create-github-app-token@2986852ad836768dfea7781f31828eb3e17990fa # v1.6.2
-        id: generate_token
-        if: github.ref == 'refs/heads/main'
-        with:
-          app-id: ${{ secrets.CICD_ROBOT_GITHUB_APP_ID }}
-          private-key: ${{ secrets.CICD_ROBOT_GITHUB_APP_PRIVATE_KEY }}
-          owner: TBD54566975
-          repositories: sdk-report-runner
+      #- name: Generate an access token to trigger downstream repo
+      #  uses: actions/create-github-app-token@2986852ad836768dfea7781f31828eb3e17990fa # v1.6.2
+      #  id: generate_token
+      #  if: github.ref == 'refs/heads/main'
+      #  with:
+      #    app-id: ${{ secrets.CICD_ROBOT_GITHUB_APP_ID }}
+      #    private-key: ${{ secrets.CICD_ROBOT_GITHUB_APP_PRIVATE_KEY }}
+      #    owner: TBD54566975
+      #    repositories: sdk-report-runner
 
-      - name: Trigger sdk-report-runner report build
-        if: github.ref == 'refs/heads/main'
-        run: |
-          curl -L \
-          -H "Authorization: Bearer ${APP_TOKEN}" \
-          -H "X-GitHub-Api-Version: 2022-11-28" \
-          -H "Content-Type: application/json" \
-          --fail \
-          --data '{"ref": "main"}' \
-          https://api.github.com/repos/TBD54566975/sdk-report-runner/actions/workflows/build-report.yaml/dispatches
-        env:
-          APP_TOKEN: ${{ steps.generate_token.outputs.token }}
+      #- name: Trigger sdk-report-runner report build
+      #  if: github.ref == 'refs/heads/main'
+      #  run: |
+      #    curl -L \
+      #    -H "Authorization: Bearer ${APP_TOKEN}" \
+      #    -H "X-GitHub-Api-Version: 2022-11-28" \
+      #    -H "Content-Type: application/json" \
+      #    --fail \
+      #    --data '{"ref": "main"}' \
+      #    https://api.github.com/repos/TBD54566975/sdk-report-runner/actions/workflows/build-report.yaml/dispatches
+      #  env:
+      #    APP_TOKEN: ${{ steps.generate_token.outputs.token }}
 
   # Ensure both MacOS and Ubuntu build/test jobs succeeded
   confirm-successful-build-and-tests:
