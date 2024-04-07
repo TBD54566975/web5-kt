@@ -68,6 +68,13 @@ jobs:
           echo "Version to be released: $version"
           echo "Setting next development version back to original in pom.xml: $nextVersion"
 
+          # Make a branch to stage the release commits
+          longSHA=$(git rev-parse --verify HEAD)
+          shortSHA=$(echo "${longSHA:0:7}")
+          branchName="prerelease-$shortSHA-$version"
+          echo "Staging release commits in branch: $branchName"
+          git checkout -b $branchName
+
           mvn -e \
             release:prepare \
             release:perform \
