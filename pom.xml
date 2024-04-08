@@ -649,7 +649,7 @@
             <extensions>true</extensions>
             <configuration>
               <serverId>ossrh-releases</serverId>
-              <nexusUrl>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</nexusUrl>
+              <nexusUrl>https://s01.oss.sonatype.org/</nexusUrl>
               <autoReleaseAfterClose>true</autoReleaseAfterClose>
             </configuration>
           </plugin>
@@ -697,17 +697,6 @@
         <enabled>false</enabled>
       </snapshots>
       <url>https://blockxyz.jfrog.io/artifactory/tbd-oss-thirdparty-maven2/</url>
-    </repository>
-    <repository>
-      <id>tbd-oss-releases</id>
-      <name>tbd-oss-releases</name>
-      <releases>
-        <enabled>true</enabled>
-      </releases>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-      <url>https://blockxyz.jfrog.io/artifactory/tbd-oss-releases-maven2/</url>
     </repository>
     <repository>
       <id>tbd-oss-snapshots</id>
