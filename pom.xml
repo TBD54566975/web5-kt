@@ -470,17 +470,6 @@
           </executions>
         </plugin>
         <plugin>
-          <groupId>org.sonatype.plugins</groupId>
-          <artifactId>nexus-staging-maven-plugin</artifactId>
-          <version>1.6.13</version>
-          <extensions>true</extensions>
-          <configuration>
-            <serverId>ossrh-releases</serverId>
-            <nexusUrl>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</nexusUrl>
-            <autoReleaseAfterClose>true</autoReleaseAfterClose>
-          </configuration>
-        </plugin>
-        <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-source-plugin</artifactId>
           <version>3.3.0</version>
@@ -651,6 +640,21 @@
     <profile>
       <!-- https://central.sonatype.org/publish/publish-maven/#deployment -->
       <id>ossrh</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.sonatype.plugins</groupId>
+            <artifactId>nexus-staging-maven-plugin</artifactId>
+            <version>1.6.13</version>
+            <extensions>true</extensions>
+            <configuration>
+              <serverId>ossrh-releases</serverId>
+              <nexusUrl>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</nexusUrl>
+              <autoReleaseAfterClose>true</autoReleaseAfterClose>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
       <distributionManagement>
         <snapshotRepository>
           <id>ossrh-snapshots</id>
