@@ -28,6 +28,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: true
+          token: ${{ secrets.TBD_RELEASE_GITHUB_PERSONAL_ACCESS_TOKEN }}
 
       # https://cashapp.github.io/hermit/usage/ci/
       - name: Init Hermit
