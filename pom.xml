@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
   <!-- Model Information -->
   <modelVersion>4.0.0</modelVersion>
@@ -8,7 +7,7 @@
   <!-- Artifact Information  -->
   <groupId>xyz.block</groupId>
   <artifactId>web5-parent</artifactId>
-  <version>0.0.0-main-SNAPSHOT</version>
+  <version>1.0.0</version>
   <packaging>pom</packaging>
   <name>Web5 SDK for the JVM</name>
   <url>https://developer.tbd.website</url>
@@ -21,7 +20,7 @@
     <!-- This has to be HTTPS, not git://, for maven-release-plugin to do AUTH correctly -->
     <developerConnection>scm:git:https://github.com/TBD54566975/web5-kt.git</developerConnection>
     <url>https://github.com/TBD54566975/web5-kt</url>
-    <tag>HEAD</tag>
+    <tag>v1.0.0</tag>
   </scm>
 
   <!-- Developers -->
