@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html class="no-js">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>Convert</title>
+    <link href="../../../images/logo-icon.svg" rel="icon" type="image/svg">
+    <script>var pathToRoot = "../../../";</script>
+    <script>document.documentElement.classList.replace("no-js","js");</script>
+    <script>const storage = localStorage.getItem("dokka-dark-mode")
+    if (storage == null) {
+        const osDarkSchemePreferred = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        if (osDarkSchemePreferred === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    } else {
+        const savedDarkMode = JSON.parse(storage)
+        if(savedDarkMode === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    }
+    </script>
+<script type="text/javascript" src="https://unpkg.com/kotlin-playground@1/dist/playground.min.js" async="async"></script>
+<script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async="async"></script>
+<link href="../../../styles/style.css" rel="Stylesheet">
+<link href="../../../styles/main.css" rel="Stylesheet">
+<link href="../../../styles/prism.css" rel="Stylesheet">
+<link href="../../../styles/logo-styles.css" rel="Stylesheet">
+<link href="../../../styles/font-jb-sans-auto.css" rel="Stylesheet">
+<script type="text/javascript" src="../../../scripts/clipboard.js" async="async"></script>
+<script type="text/javascript" src="../../../scripts/navigation-loader.js" async="async"></script>
+<script type="text/javascript" src="../../../scripts/platform-content-handler.js" async="async"></script>
+<script type="text/javascript" src="../../../scripts/main.js" defer="defer"></script>
+<script type="text/javascript" src="../../../scripts/prism.js" async="async"></script>
+<script type="text/javascript" src="../../../scripts/symbol-parameters-wrapper_deferred.js" defer="defer"></script>
+</head>
+<body>
+    <div class="root">
+<nav class="navigation" id="navigation-wrapper">
+    <div class="navigation--inner">
+        <div class="navigation-title">
+            <button class="menu-toggle" id="menu-toggle" type="button">toggle menu</button>
+            <div class="library-name">
+                    <a class="library-name--link" href="../../../index.html">
+                            Web5 SDK Documentation
+                    </a>
+            </div>
+            <div class="library-version">
+            </div>
+        </div>
+        <div class="filter-section" id="filter-section">
+                <button class="platform-tag platform-selector jvm-like" data-active="" data-filter="web5/main">JVM</button>
+        </div>
+    </div>
+    <div class="navigation-controls">
+        <button class="navigation-controls--btn navigation-controls--theme" id="theme-toggle-button" type="button">switch theme</button>
+        <div class="navigation-controls--btn navigation-controls--search" id="searchBar" role="button">search in API</div>
+    </div>
+</nav>
+        <div id="container">
+            <div class="sidebar" id="leftColumn">
+                <div class="sidebar--inner" id="sideMenu"></div>
+            </div>
+            <div id="main">
+<div class="main-content" data-page-type="classlike" id="content" pageIds="Web5 SDK Documentation::web5.sdk.common/Convert///PointingToDeclaration//-844833367">
+  <div class="breadcrumbs"><a href="../../../index.html">Web5 SDK Documentation</a><span class="delimiter">/</span><a href="../index.html">web5.sdk.common</a><span class="delimiter">/</span><span class="current">Convert</span></div>
+  <div class="cover ">
+    <h1 class="cover"><span><span>Convert</span></span></h1>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable="web5/main"><div class="symbol monospace"><span class="token keyword">class </span><a href="index.html">Convert</a><span class="token operator">&lt;</span><a href="index.html">T</a><span class="token operator">&gt;</span><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">value<span class="token operator">: </span><a href="index.html">T</a><span class="token punctuation">, </span></span><span class="parameter ">kind<span class="token operator">: </span><a href="../-encoding-format/index.html">EncodingFormat</a><span class="token operator">?</span><span class="token operator"> = </span>null</span></span><span class="token punctuation">)</span></div><p class="paragraph">A utility class <a href="index.html">Convert</a> to facilitate various conversions including Base64 and Base58BTC.</p><h4 class="">Parameters</h4><div class="table"><div class="table-row" data-filterable-current="web5/main" data-filterable-set="web5/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><u><span><span>T</span></span></u></div></span></div><div><div class="title"><p class="paragraph">The type of the value to be converted.</p></div></div></div></div><div class="table-row" data-filterable-current="web5/main" data-filterable-set="web5/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><u><span><span>value</span></span></u></div></span></div><div><div class="title"><p class="paragraph">The actual value to be converted.</p></div></div></div></div><div class="table-row" data-filterable-current="web5/main" data-filterable-set="web5/main"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><u><span><span>kind</span></span></u></div></span></div><div><div class="title"><p class="paragraph">Specifies the kind of conversion (optional parameter).</p><p class="paragraph">Note: Usage of this class should ensure that the type <a href="index.html">T</a> and <span data-unresolved-link="web5.sdk.common/Convert/kind/#/PointingToDeclaration/">kind</span> are compatible with the conversion methods, as certain methods may not support all data types or kinds</p><p class="paragraph">Example Usage:</p><div class="sample-container"><pre><code class="block lang-kotlin" theme="idea">// Example 1: Convert a ByteArray to a Base64Url encoded string without padding<br>val byteArray = byteArrayOf(1, 2, 3)<br>val base64Url = Convert(byteArray).toBase64Url() // same as .toBase64Url(padding = false)<br>println(base64Url)  // Output should be a Base64Url encoded string without padding<br><br>// Example 2: Convert a Base64Url encoded string to a ByteArray<br>val base64Str = &quot;AQID&quot;<br>val originalByteArray = Convert(base64Str, EncodingFormat.Base64Url).toByteArray()<br><br>// Example 3: Convert a ByteArray to a Base58Btc encoded string<br>val byteArray = byteArrayOf(1, 2, 3)<br>val base58BtcStr = Convert(byteArray).toBase58Btc()<br>println(base58BtcStr)  // Output should be a Base58Btc encoded string<br><br>// Example 4: Convert a Base64Url encoded string to a regular string<br>val base64UrlStr = &quot;SGVsbG8gd29ybGQ=&quot;<br>val decodedStr = Convert(base64UrlStr, EncodingFormat.Base64Url).toStr()<br>println(decodedStr)  // Output should be: &quot;Hello world&quot;</code></pre><span class="top-right-position"><span class="copy-icon"></span><div class="copy-popup-wrapper popup-to-left"><span class="copy-popup-icon"></span><span>Content copied to clipboard</span></div></span></div></div></div></div></div></div></div></div>
+  </div>
+  <div class="tabbedcontent">
+    <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="CONSTRUCTOR,TYPE,PROPERTY,FUNCTION">Members</button></div>
+    <div class="tabs-section-body">
+      <div data-togglable="CONSTRUCTOR">
+        <h2 class="">Constructors</h2>
+        <div class="table"><a data-name="-803785243%2FConstructors%2F-844833367" anchor-label="Convert" id="-803785243%2FConstructors%2F-844833367" data-filterable-set="web5/main"></a>
+          <div class="table-row" data-togglable="CONSTRUCTOR" data-filterable-current="web5/main" data-filterable-set="web5/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="-convert.html"><span><span>Convert</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-803785243%2FConstructors%2F-844833367"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable="web5/main"><div class="symbol monospace"><span class="token keyword">constructor</span><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">value<span class="token operator">: </span><a href="index.html">T</a><span class="token punctuation">, </span></span><span class="parameter ">kind<span class="token operator">: </span><a href="../-encoding-format/index.html">EncodingFormat</a><span class="token operator">?</span><span class="token operator"> = </span>null</span></span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div data-togglable="FUNCTION">
+        <h2 class="">Functions</h2>
+        <div class="table"><a data-name="732558106%2FFunctions%2F-844833367" anchor-label="toBase58Btc" id="732558106%2FFunctions%2F-844833367" data-filterable-set="web5/main"></a>
+          <div class="table-row" data-filterable-current="web5/main" data-filterable-set="web5/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="to-base58-btc.html"><span>to</span><wbr></wbr><span><span>Base58Btc</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="732558106%2FFunctions%2F-844833367"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable="web5/main"><div class="symbol monospace"><span class="token keyword">fun </span><a href="to-base58-btc.html"><span class="token function">toBase58Btc</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></div><div class="brief "><p class="paragraph">Converts the <span data-unresolved-link="web5.sdk.common/Convert/value/#/PointingToDeclaration/">value</span> to a Base58BTC-encoded string.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-886036900%2FFunctions%2F-844833367" anchor-label="toBase64Url" id="-886036900%2FFunctions%2F-844833367" data-filterable-set="web5/main"></a>
+          <div class="table-row" data-filterable-current="web5/main" data-filterable-set="web5/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="to-base64-url.html"><span>to</span><wbr></wbr><span><span>Base64Url</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-886036900%2FFunctions%2F-844833367"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable="web5/main"><div class="symbol monospace"><span class="token keyword">fun </span><a href="to-base64-url.html"><span class="token function">toBase64Url</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">padding<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-boolean/index.html">Boolean</a><span class="token operator"> = </span><span class="token boolean">false</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></div><div class="brief "><p class="paragraph">Converts the <span data-unresolved-link="web5.sdk.common/Convert/value/#/PointingToDeclaration/">value</span> to a Base64Url-encoded string.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-216011802%2FFunctions%2F-844833367" anchor-label="toByteArray" id="-216011802%2FFunctions%2F-844833367" data-filterable-set="web5/main"></a>
+          <div class="table-row" data-filterable-current="web5/main" data-filterable-set="web5/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="to-byte-array.html"><span>to</span><wbr></wbr><span>Byte</span><wbr></wbr><span><span>Array</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-216011802%2FFunctions%2F-844833367"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable="web5/main"><div class="symbol monospace"><span class="token keyword">fun </span><a href="to-byte-array.html"><span class="token function">toByteArray</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-byte-array/index.html">ByteArray</a></div><div class="brief "><p class="paragraph">Converts the <span data-unresolved-link="web5.sdk.common/Convert/value/#/PointingToDeclaration/">value</span> to a byte array representation.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-2056345754%2FFunctions%2F-844833367" anchor-label="toStr" id="-2056345754%2FFunctions%2F-844833367" data-filterable-set="web5/main"></a>
+          <div class="table-row" data-filterable-current="web5/main" data-filterable-set="web5/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="to-str.html"><span>to</span><wbr></wbr><span><span>Str</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-2056345754%2FFunctions%2F-844833367"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable="web5/main"><div class="symbol monospace"><span class="token keyword">fun </span><a href="to-str.html"><span class="token function">toStr</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></div><div class="brief "><p class="paragraph">Converts the <span data-unresolved-link="web5.sdk.common/Convert/value/#/PointingToDeclaration/">value</span> to a string representation.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="114952365%2FFunctions%2F-844833367" anchor-label="toZBase32" id="114952365%2FFunctions%2F-844833367" data-filterable-set="web5/main"></a>
+          <div class="table-row" data-filterable-current="web5/main" data-filterable-set="web5/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="to-z-base32.html"><span>to</span><wbr></wbr><span><span>ZBase32</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="114952365%2FFunctions%2F-844833367"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable="web5/main"><div class="symbol monospace"><span class="token keyword">fun </span><a href="to-z-base32.html"><span class="token function">toZBase32</span></a><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-string/index.html">String</a></div><div class="brief "><p class="paragraph">Converts the <span data-unresolved-link="web5.sdk.common/Convert/value/#/PointingToDeclaration/">value</span> to a ZBase32-encoded string.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      <div class="footer">
+        <span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2024 Copyright</span><span
+                class="pull-right"><span>Generated by </span><a
+                href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span>
+      </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
