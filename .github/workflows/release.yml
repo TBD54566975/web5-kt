@@ -83,6 +83,41 @@ jobs:
             -DreleaseVersion=$version \
             -DdevelopmentVersion=$nextVersion \
             -P sign-artifacts
+
+          # Create a PR for the release commits
+          repoUrl=$(git config --get remote.origin.url)
+          repoOwner=$(echo "$repoUrl" | cut -d '/' -f 1 | cut -d ":" -f 2)
+          repoName=$(echo "$repoUrl" | cut -d ':' -f 2 | cut -d '/' -f 2 | cut -d "." -f 1)
+          baseBranch="main"
+          head=$branchName
+          echo "Opening a PR for the release commits staged in: $branchName"
+          echo "RepoURL: $repoUrl"
+          echo "Repo Owner: $repoOwner"
+          echo "Repo Name: $repoName"
+          echo "HEAD: $head"
+          echo "base: $baseBranch"
+
+          # Other variables
+          accessToken="$TBD_RELEASE_GITHUB_PERSONAL_ACCESS_TOKEN"
+
+          # Create pull request payload
+          payload=$(jq -n \
+            --arg title "Merge release commits from $branchName to main" \
+            --arg body "Automated PR for merging release commits to mainline development" \
+            --arg head "$head" \
+            --arg base "$baseBranch" \
+            '{title: $title, body: $body, head: $head, base: $base}')
+          echo "Payload for PR request to GitHub REST API:\n$payload"
+
+          # Create the pull request
+          response=$(curl -X POST \
+            -H "Authorization: token $accessToken" \
+            -H "Accept: application/vnd.github.v3+json" \
+            -d "$payload" \
+            "https://api.github.com/repos/$repoOwner/$repoName/pulls")
+
+          # Print the response
+          echo "$response"
         env:
           ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
           ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
