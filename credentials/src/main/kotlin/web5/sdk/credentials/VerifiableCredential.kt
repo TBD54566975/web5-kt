@@ -27,6 +27,14 @@ import java.util.UUID
 public typealias VcDataModel = com.danubetech.verifiablecredentials.VerifiableCredential
 
 /**
+ * A credential schema defines the structure and content of the data, enabling verifiers to assess if the data adheres to the established schema.
+ */
+public class CredentialSchema(
+  public val id: String,
+  public val type: String
+)
+
+/**
  * `VerifiableCredential` represents a digitally verifiable credential according to the
  * [W3C Verifiable Credentials Data Model](https://www.w3.org/TR/vc-data-model/).
  *
@@ -42,11 +50,12 @@ public class VerifiableCredential internal constructor(public val vcDataModel: V
     get() = vcDataModel.types.last()
   public val issuer: String
     get() = vcDataModel.issuer.toString()
-
   public val subject: String
     get() = vcDataModel.credentialSubject.id.toString()
   public val evidence: List<Any>?
-    get() = vcDataModel.toMap().get("evidence") as List<Any>?
+    get() = vcDataModel.toMap()["evidence"] as List<Any>?
+  public val credentialSchema: CredentialSchema?
+    get() = vcDataModel.toMap()["credentialSchema"] as CredentialSchema?
 
   /**
    * Sign a verifiable credential using a specified decentralized identifier ([did]) with the private key that pairs
@@ -126,9 +135,10 @@ public class VerifiableCredential internal constructor(public val vcDataModel: V
       issuer: String,
       subject: String,
       data: T,
-      credentialStatus: CredentialStatus? = null,
       issuanceDate: Date = Date(),
       expirationDate: Date? = null,
+      credentialStatus: CredentialStatus? = null,
+      credentialSchema: CredentialSchema? = null,
       evidence: List<Any>? = null
     ): VerifiableCredential {
 
@@ -149,20 +159,17 @@ public class VerifiableCredential internal constructor(public val vcDataModel: V
         .issuer(URI.create(issuer))
         .issuanceDate(issuanceDate)
         .credentialSubject(credentialSubject)
-        .apply { expirationDate?.let { expirationDate(it) } }
-        .apply {
-          evidence?.let {
-            properties(
-              mapOf(
-                "evidence" to evidence
-              ) as Map<String, Any>?
-            )
+        .also { builder ->
+          expirationDate?.let { builder.expirationDate(it) }
+          credentialStatus?.let { status ->
+            builder.credentialStatus(status)
+            builder.context(URI.create("https://w3id.org/vc/status-list/2021/v1"))
           }
-        }
-        .apply {
-          credentialStatus?.let {
-            credentialStatus(it)
-            context(URI.create("https://w3id.org/vc/status-list/2021/v1"))
+          credentialSchema?.let { schema ->
+            builder.properties(mapOf("credentialSchema" to schema))
+          }
+          evidence?.let { ev ->
+            builder.properties(mapOf("evidence" to ev))
           }
         }
         .build()

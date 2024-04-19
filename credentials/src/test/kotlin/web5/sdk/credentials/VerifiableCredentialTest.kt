@@ -24,6 +24,7 @@ import web5.sdk.dids.methods.jwk.DidJwk
 import web5.sdk.dids.methods.key.DidKey
 import web5.sdk.testing.TestVectors
 import java.io.File
+import java.net.URI
 import java.security.SignatureException
 import java.util.Calendar
 import kotlin.test.Ignore
@@ -167,24 +168,52 @@ class VerifiableCredentialTest {
     assertEquals(parsedVc.evidence, evidence)
   }
 
-  data class KnowYourCustomerCred(val country: String)
-  @Test
-  fun `kyc credential verify does not throw an exception if vc is legit`() {
-    val keyManager = InMemoryKeyManager()
-    val issuerDid = DidJwk.create(keyManager)
-    val subjectDid = DidJwk.create(keyManager)
+  data class KnownCustomerCredential(val id: String, val country_of_residence: String, val tier: String)
 
-    val vc = VerifiableCredential.create(
-      type = "KnowYourCustomerCred",
-      issuer = issuerDid.uri,
-      subject = subjectDid.uri,
-      expirationDate = Calendar.Builder().setDate(2055, 11, 21).build().time,
-      data = KnowYourCustomerCred(country = "us")
-    )
+@Test
+fun `kyc credential verify does not throw an exception if vc is legit`() {
+  val keyManager = InMemoryKeyManager()
+  val issuerDid = DidJwk.create(keyManager)
+  val subjectDid = DidJwk.create(keyManager)
 
-    val vcJwt = vc.sign(issuerDid)
-    VerifiableCredential.verify(vcJwt)
+  val expirationCalendar = Calendar.getInstance().apply {
+    set(2055, Calendar.DECEMBER, 21) // Note: Calendar months are zero-based in Java/Kotlin
   }
+
+  val expectedEvidence = listOf(
+    mapOf("kind" to "document_verification", "checks" to listOf("passport", "utility_bill")),
+    mapOf("kind" to "sanctions_check", "checks" to listOf("daily"))
+  )
+
+
+  val vc = VerifiableCredential.create(
+    type = "KnowYourCustomerCred",
+    issuer = issuerDid.uri,
+    subject = subjectDid.uri,
+    issuanceDate = Calendar.getInstance().time, // For the current time
+    expirationDate = expirationCalendar.time,
+    data = KnownCustomerCredential(id = subjectDid.uri, country_of_residence = "US", tier = "Tier 1"),
+    credentialSchema = CredentialSchema(
+      id = "https://schema.org/PFI",
+      type = "JsonSchema"
+    ),
+    evidence = expectedEvidence
+  )
+
+  val vcJwt = vc.sign(issuerDid)
+  VerifiableCredential.verify(vcJwt)
+
+  val parsedVc = VerifiableCredential.parseJwt(vcJwt)
+  assertEquals(vc.issuer, parsedVc.issuer)
+  assertEquals(vc.subject, parsedVc.subject)
+  assertEquals(vc.type, parsedVc.type)
+  assertEquals(vc.vcDataModel.issuanceDate, parsedVc.vcDataModel.issuanceDate)
+  assertEquals(vc.vcDataModel.expirationDate, parsedVc.vcDataModel.expirationDate)
+  assertEquals(vc.vcDataModel.credentialSubject, parsedVc.vcDataModel.credentialSubject)
+  assertEquals(vc.credentialSchema, parsedVc.credentialSchema)
+
+  assertEquals(vc.evidence, parsedVc.evidence)
+}
 
   @Test
   fun `verify does not throw an exception if vc signed with did dht is legit`() {
