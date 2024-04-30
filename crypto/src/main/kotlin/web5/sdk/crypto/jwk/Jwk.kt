@@ -2,6 +2,7 @@ package web5.sdk.crypto.jwk
 
 import web5.sdk.common.Convert
 import web5.sdk.common.Json
+import web5.sdk.core.Jwk as JwkCore
 import web5.sdk.crypto.Ed25519
 import java.security.MessageDigest
 
@@ -52,23 +53,10 @@ public class Jwk(
    * @return a Base64URL-encoded string representing the thumbprint.
    */
   public fun computeThumbprint(): String {
-    val thumbprintPayload = Json.jsonMapper.createObjectNode().apply {
-      put("crv", crv)
-      put("kty", kty)
-      put("x", x)
-      if (y != null) {
-        put("y", y)
-      }
-    }
-
-    val thumbprintPayloadString = Json.stringify(thumbprintPayload)
-    val thumbprintPayloadBytes = Convert(thumbprintPayloadString).toByteArray()
-
-    val messageDigest = MessageDigest.getInstance("SHA-256")
-    val thumbprintPayloadDigest = messageDigest.digest(thumbprintPayloadBytes)
-
-    return Convert(thumbprintPayloadDigest).toBase64Url()
-
+    // TODO we have fundamentally different assumptions about what is a required param and what isn't
+    //    just to make this work, we'll coalesce into empty strings
+    val jwk = JwkCore(alg as? String ?: "", kty, crv, d, x as? String ?: "", y)
+    return jwk.computeThumbprint()
   }
 
   override fun toString(): String {
