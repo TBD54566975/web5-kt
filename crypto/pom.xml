@@ -41,12 +41,6 @@
       <scope>test</scope>
     </dependency>
 
-    <dependency>
-      <groupId>web5.sdk.core</groupId>
-      <artifactId>web5-kt</artifactId>
-      <version>1.0-SNAPSHOT</version>
-    </dependency>
-
     <!-- External -->
     <dependency>
       <groupId>com.nimbusds</groupId>

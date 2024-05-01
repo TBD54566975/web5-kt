@@ -32,6 +32,8 @@ import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
 import kotlin.test.assertNotNull
+import web5.sdk.core.LocalKeyManager
+import web5.sdk.core.bearerDidFromKeyManager
 
 data class StreetCredibility(val localRespect: String, val legit: Boolean)
 class VerifiableCredentialTest {
@@ -100,8 +102,8 @@ class VerifiableCredentialTest {
   @Test
   fun `verify does not throw an exception if vc is legit`() {
     val keyManager = InMemoryKeyManager()
-    val issuerDid = DidJwk.create(keyManager)
     val holderDid = DidJwk.create(keyManager)
+    val issuerDid = DidJwk.create(keyManager)
 
     val vc = VerifiableCredential.create(
       type = "StreetCred",
