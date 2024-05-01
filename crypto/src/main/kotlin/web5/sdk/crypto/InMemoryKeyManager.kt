@@ -25,11 +25,6 @@ import web5.sdk.crypto.jwk.Jwk
  */
 public class InMemoryKeyManager : KeyManager, KeyExporter, KeyImporter {
 
-  /**
-   * An in-memory keystore represented as a flat key-value map, where the key is a key ID.
-   */
-  private val keyStore: MutableMap<String, Jwk> = HashMap()
-
   private val coreKeyManager: LocalKeyManager = LocalKeyManager.newInMemory()
 
   /**
@@ -66,8 +61,7 @@ public class InMemoryKeyManager : KeyManager, KeyExporter, KeyImporter {
    * @return The signature in JWS R+S format
    */
   override fun sign(keyAlias: String, signingInput: ByteArray): ByteArray {
-    val privateKey = getPrivateKey(keyAlias)
-    return Crypto.sign(privateKey, signingInput)
+    return coreKeyManager.sign(keyAlias, signingInput.map { it.toUByte() })
   }
 
   /**
@@ -86,9 +80,6 @@ public class InMemoryKeyManager : KeyManager, KeyExporter, KeyImporter {
     }
     return alias
   }
-
-  private fun getPrivateKey(keyAlias: String) =
-    keyStore[keyAlias] ?: throw IllegalArgumentException("key with alias $keyAlias not found")
 
   override fun exportKey(keyId: String): Jwk {
     val privateKeys = coreKeyManager.exportPrivateKeys()
