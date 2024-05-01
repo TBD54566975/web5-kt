@@ -2,6 +2,7 @@ package web5.sdk.crypto
 
 import com.nimbusds.jose.JWSAlgorithm
 import com.nimbusds.jose.jwk.Curve
+import web5.sdk.core.Curve as CurveCore
 
 /**
  * JSON Web Algorithm Curve.
@@ -119,5 +120,14 @@ public enum class AlgorithmId(public val curveName: String, public val algorithm
         )
       }
     }
+  }
+
+  fun toCurveCore(): CurveCore {
+    if (curveName == JwaCurve.secp256k1.name) {
+      return CurveCore.SECP256K1
+    } else if (curveName == JwaCurve.Ed25519.name) {
+      return CurveCore.ED25519
+    }
+    throw IllegalArgumentException("Unknown curve: $curveName")
   }
 }
