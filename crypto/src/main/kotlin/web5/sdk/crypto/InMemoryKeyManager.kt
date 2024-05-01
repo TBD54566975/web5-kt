@@ -2,7 +2,6 @@ package web5.sdk.crypto
 
 import web5.sdk.core.LocalKeyManager
 import web5.sdk.core.privateKeyFromJwk
-import web5.sdk.core.Jwk as JwkCore
 import web5.sdk.crypto.jwk.Jwk
 
 /**
@@ -41,7 +40,7 @@ public class InMemoryKeyManager : KeyManager, KeyExporter, KeyImporter {
    * @return The key ID of the generated private key.
    */
   override fun generatePrivateKey(algorithmId: AlgorithmId, options: KeyGenOptions?): String {
-    return coreKeyManager.generatePrivateKey(algorithmId.to_core_curve(), null)
+    return coreKeyManager.generatePrivateKey(algorithmId.toCurveCore(), null)
   }
 
   /**
