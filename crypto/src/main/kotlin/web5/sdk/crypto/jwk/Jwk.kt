@@ -42,6 +42,27 @@ public class Jwk(
   public val y: String?
 ) {
 
+  companion object {
+    fun fromCore(jwkCore: JwkCore): Jwk {
+      return Jwk(
+        jwkCore.getKty(),
+        jwkCore.getCrv(),
+        null,
+        jwkCore.getAlg(),
+        null,
+        jwkCore.getD(),
+        jwkCore.getX(),
+        jwkCore.getY()
+      )
+    }
+  }
+
+  fun toCore(): JwkCore {
+    // TODO we have different assumptions about what is a required param and what isn't
+    //    just to make this work, we'll coalesce into empty strings
+    return JwkCore(alg as? String ?: "", kty, crv, d, x as? String ?: "", y)
+  }
+
   /**
    * Computes the thumbprint of the Jwk.
    * [Specification](https://www.rfc-editor.org/rfc/rfc7638.html).
@@ -53,10 +74,7 @@ public class Jwk(
    * @return a Base64URL-encoded string representing the thumbprint.
    */
   public fun computeThumbprint(): String {
-    // TODO we have fundamentally different assumptions about what is a required param and what isn't
-    //    just to make this work, we'll coalesce into empty strings
-    val jwk = JwkCore(alg as? String ?: "", kty, crv, d, x as? String ?: "", y)
-    return jwk.computeThumbprint()
+    return toCore().computeThumbprint()
   }
 
   override fun toString(): String {

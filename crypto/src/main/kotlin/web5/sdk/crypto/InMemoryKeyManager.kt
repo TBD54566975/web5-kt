@@ -1,7 +1,8 @@
 package web5.sdk.crypto
 
-import web5.sdk.common.Json
-import web5.sdk.common.Json.toMap
+import web5.sdk.core.LocalKeyManager
+import web5.sdk.core.privateKeyFromJwk
+import web5.sdk.core.Jwk as JwkCore
 import web5.sdk.crypto.jwk.Jwk
 
 /**
@@ -30,6 +31,8 @@ public class InMemoryKeyManager : KeyManager, KeyExporter, KeyImporter {
    */
   private val keyStore: MutableMap<String, Jwk> = HashMap()
 
+  private val coreKeyManager: LocalKeyManager = LocalKeyManager.newInMemory()
+
   /**
    * Generates a private key using specified algorithmId, and stores it in the in-memory keyStore.
    *
@@ -38,13 +41,7 @@ public class InMemoryKeyManager : KeyManager, KeyExporter, KeyImporter {
    * @return The key ID of the generated private key.
    */
   override fun generatePrivateKey(algorithmId: AlgorithmId, options: KeyGenOptions?): String {
-    val jwk = Crypto.generatePrivateKey(algorithmId, options)
-    if (jwk.kid.isNullOrEmpty()) {
-      jwk.kid = jwk.computeThumbprint()
-    }
-
-    keyStore[jwk.kid!!] = jwk
-    return jwk.kid!!
+    return coreKeyManager.generatePrivateKey(algorithmId.to_core_curve(), null)
   }
 
   /**
@@ -55,9 +52,9 @@ public class InMemoryKeyManager : KeyManager, KeyExporter, KeyImporter {
    * @throws Exception if a key with the provided alias is not found in the keyStore.
    */
   override fun getPublicKey(keyAlias: String): Jwk {
-    // TODO: decide whether to return null or throw an exception
-    val privateKey = getPrivateKey(keyAlias)
-    return Crypto.computePublicKey(privateKey)
+    val publicKey = coreKeyManager.getPublicKey(keyAlias)
+    val jwkCore = publicKey.jwk()
+    return Jwk.fromCore(jwkCore)
   }
 
   /**
@@ -82,24 +79,32 @@ public class InMemoryKeyManager : KeyManager, KeyExporter, KeyImporter {
    * @throws IllegalArgumentException if the key is not known to the [KeyManager]
    */
   override fun getDeterministicAlias(publicKey: Jwk): String {
-    val kid = publicKey.computeThumbprint()
-    require(keyStore.containsKey(kid)) {
-      "key with alias $kid not found"
+    val alias = publicKey.computeThumbprint()
+    try {
+      coreKeyManager.getPublicKey(alias)
+    } catch (ex: Exception) {
+      throw IllegalArgumentException("key with alias $alias not found")
     }
-    return kid
+    return alias
   }
 
   private fun getPrivateKey(keyAlias: String) =
     keyStore[keyAlias] ?: throw IllegalArgumentException("key with alias $keyAlias not found")
 
   override fun exportKey(keyId: String): Jwk {
-    return this.getPrivateKey(keyId)
+    val privateKeys = coreKeyManager.exportPrivateKeys()
+    val privateKey = privateKeys.find { it.alias() == keyId }
+    requireNotNull(privateKey) {
+      "Key not found: $keyId"
+    }
+    val jwkCore = privateKey.jwk()
+    return Jwk.fromCore(jwkCore)
   }
 
   override fun importKey(jwk: Jwk): String {
-    val keyAlias = jwk.computeThumbprint()
-    keyStore[keyAlias] = jwk
-    return keyAlias
+    val jwkCore = jwk.toCore()
+    val privateKeyCore = privateKeyFromJwk(jwkCore)
+    coreKeyManager.importPrivateKeys(listOf(privateKeyCore))
+    return privateKeyCore.alias()
   }
-
 }
