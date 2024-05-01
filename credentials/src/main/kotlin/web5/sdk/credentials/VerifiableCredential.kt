@@ -19,6 +19,12 @@ import web5.sdk.jose.jwt.JwtClaimsSet
 import java.net.URI
 import java.util.Date
 import java.util.UUID
+import web5.sdk.core.VerifiableCredential as CoreVerifiableCredential
+import kotlinx.coroutines.runBlocking
+import web5.sdk.core.KeySelector
+import web5.sdk.core.VerificationMethodType
+import web5.sdk.core.bearerDidFromKeyManager
+import web5.sdk.core.verifyJwt
 
 /**
  * Type alias representing the danubetech Verifiable Credential data model.
@@ -76,14 +82,19 @@ public class VerifiableCredential internal constructor(public val vcDataModel: V
    */
   @JvmOverloads
   public fun sign(did: BearerDid, assertionMethodId: String? = null): String {
-    val payload = JwtClaimsSet.Builder()
-      .issuer(did.uri)
-      .issueTime(vcDataModel.issuanceDate.time)
-      .subject(vcDataModel.credentialSubject.id.toString())
-      .misc("vc", vcDataModel.toMap())
-      .build()
-
-    return Jwt.sign(did, payload)
+    val coreBearerDid = runBlocking {
+      bearerDidFromKeyManager(did.uri, did.keyManager.getCore())
+    }
+    val contexts = vcDataModel.contexts.map { it.toString() }
+    val id = vcDataModel.id.toString()
+    val types = vcDataModel.types
+    val issuer = vcDataModel.issuer.toString()
+    val issuanceDate = vcDataModel.issuanceDate.time
+    val expirationDate = vcDataModel.expirationDate?.time
+    val credentialSubject = web5.sdk.core.CredentialSubject(vcDataModel.credentialSubject.id.toString(), null)
+    val coreVc = CoreVerifiableCredential(contexts, id, types, issuer, issuanceDate, expirationDate, credentialSubject)
+    val signedJwt = coreVc.sign(coreBearerDid, KeySelector.MethodType(VerificationMethodType.VERIFICATION_METHOD))
+    return signedJwt
   }
 
   /**
@@ -209,58 +220,9 @@ public class VerifiableCredential internal constructor(public val vcDataModel: V
      * ```
      */
     public fun verify(vcJwt: String) {
-      val decodedJwt = Jwt.decode(vcJwt)
-
-      val exp = decodedJwt.claims.exp
-      val iss = decodedJwt.claims.iss
-      val nbf = decodedJwt.claims.nbf
-      val jti = decodedJwt.claims.jti
-      val sub = decodedJwt.claims.sub
-      val vc = parseJwt(vcJwt)
-      val vcDataModel = vc.vcDataModel
-
-      // exp MUST represent the expirationDate property, encoded as a UNIX timestamp (NumericDate).
-      // IF exp is present, check that vc's exp date is same as the jwt's exp date
-      if (
-        exp != null &&
-        vcDataModel.expirationDate != null &&
-        exp != vcDataModel.expirationDate.time / 1000
-      ) {
-        throw IllegalArgumentException("Verification failed: exp claim does not match expirationDate")
+      runBlocking {
+        verifyJwt(vcJwt)
       }
-
-      require(iss != null) { "Verification failed: iss claim is required" }
-
-      // if iss is present, iss MUST represent the issuer property of a vc or the holder property of a vp.
-      require(iss == vcDataModel.issuer.toString()) {
-        "Verification failed: iss claim does not match expected issuer"
-      }
-
-      // if nbf is present, nbf cannot represent time in the future
-      if (nbf != null && nbf >= Date().time / 1000) {
-        throw IllegalArgumentException("Verification failed: nbf claim is in the future")
-      }
-
-      // if nbf is present, nbf MUST represent issuanceDate, encoded as a UNIX timestamp (NumericDate).
-      if (
-        nbf != null &&
-        vcDataModel.issuanceDate != null &&
-        nbf != vcDataModel.issuanceDate.time / 1000) {
-        throw IllegalArgumentException("Verification failed: nbf claim does not match issuanceDate")
-      }
-
-      // if sub is present, sub MUST represent the id property contained in the credentialSubject.
-      if (sub != null && sub != vcDataModel.credentialSubject.id.toString()) {
-        throw IllegalArgumentException("Verification failed: sub claim does not match credentialSubject.id")
-      }
-
-      // if jti is present, jti MUST represent the id property of the verifiable credential or verifiable presentation.
-      if (jti != null && jti != vcDataModel.id.toString()) {
-        throw IllegalArgumentException("Verification failed: jti claim does not match id")
-      }
-
-      validateDataModel(vcDataModel.toMap())
-      decodedJwt.verify()
     }
 
     /**

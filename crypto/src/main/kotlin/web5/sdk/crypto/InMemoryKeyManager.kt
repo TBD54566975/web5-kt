@@ -1,6 +1,7 @@
 package web5.sdk.crypto
 
 import web5.sdk.core.LocalKeyManager
+import web5.sdk.core.keyManagerFromLocalKeyManager
 import web5.sdk.core.privateKeyFromJwk
 import web5.sdk.crypto.jwk.Jwk
 
@@ -27,6 +28,10 @@ public class InMemoryKeyManager : KeyManager, KeyExporter, KeyImporter {
 
   private val coreKeyManager: LocalKeyManager = LocalKeyManager.newInMemory()
 
+  override fun getCore(): web5.sdk.core.KeyManager {
+    return keyManagerFromLocalKeyManager(coreKeyManager)
+  }
+
   /**
    * Generates a private key using specified algorithmId, and stores it in the in-memory keyStore.
    *
@@ -35,7 +40,7 @@ public class InMemoryKeyManager : KeyManager, KeyExporter, KeyImporter {
    * @return The key ID of the generated private key.
    */
   override fun generatePrivateKey(algorithmId: AlgorithmId, options: KeyGenOptions?): String {
-    return coreKeyManager.generatePrivateKey(algorithmId.toCurveCore(), null)
+    return coreKeyManager.generatePrivateKey(algorithmId.toCurveCore(), options?.keyAlias)
   }
 
   /**

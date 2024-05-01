@@ -39,6 +39,10 @@ public class AwsKeyManager @JvmOverloads constructor(
   private val kmsClient: AWSKMS = AWSKMSClientBuilder.standard().build()
 ) : KeyManager {
 
+  override fun getCore(): web5.sdk.core.KeyManager {
+    TODO("Not yet implemented")
+  }
+
   private data class AlgorithmDetails(
     val algorithm: Jwa,
     val curve: JwaCurve,

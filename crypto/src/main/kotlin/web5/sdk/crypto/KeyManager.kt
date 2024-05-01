@@ -1,6 +1,7 @@
 package web5.sdk.crypto
 
 import web5.sdk.crypto.jwk.Jwk
+import web5.sdk.core.KeyManager as KeyManagerCore
 
 /**
  * A key management interface that provides functionality for generating, storing, and utilizing
@@ -13,6 +14,8 @@ import web5.sdk.crypto.jwk.Jwk
  * each adhering to the same consistent API for usage within applications.
  */
 public interface KeyManager {
+
+  fun getCore(): KeyManagerCore
 
   /**
    * Generates and securely stores a private key based on the provided algorithm and options,
