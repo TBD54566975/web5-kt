@@ -54,8 +54,6 @@ public object DidJwk {
 
     val keyAlias = keyManager.generatePrivateKey(algorithmId)
     val publicKeyJwk = keyManager.getPublicKey(keyAlias)
-    println(keyAlias)
-    println(publicKeyJwk)
 
     val base64Encoded = Convert(Json.stringify(publicKeyJwk)).toBase64Url()
 

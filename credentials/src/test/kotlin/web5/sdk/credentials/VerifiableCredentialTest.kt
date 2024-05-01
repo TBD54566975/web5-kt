@@ -101,9 +101,8 @@ class VerifiableCredentialTest {
 
   @Test
   fun `verify does not throw an exception if vc is legit`() {
-    val keyManager = InMemoryKeyManager()
-    val holderDid = DidJwk.create(keyManager)
-    val issuerDid = DidJwk.create(keyManager)
+    val issuerDid = DidJwk.create(InMemoryKeyManager())
+    val holderDid = DidJwk.create(InMemoryKeyManager())
 
     val vc = VerifiableCredential.create(
       type = "StreetCred",

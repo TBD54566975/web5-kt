@@ -85,8 +85,6 @@ public class VerifiableCredential internal constructor(public val vcDataModel: V
     val coreBearerDid = runBlocking {
       bearerDidFromKeyManager(did.uri, did.keyManager.getCore())
     }
-    println(coreBearerDid)
-    println(did.document.verificationMethod)
     val contexts = vcDataModel.contexts.map { it.toString() }
     val id = vcDataModel.id.toString()
     val types = vcDataModel.types
@@ -95,10 +93,7 @@ public class VerifiableCredential internal constructor(public val vcDataModel: V
     val expirationDate = vcDataModel.expirationDate?.time
     val credentialSubject = web5.sdk.core.CredentialSubject(vcDataModel.credentialSubject.id.toString(), null)
     val coreVc = CoreVerifiableCredential(contexts, id, types, issuer, issuanceDate, expirationDate, credentialSubject)
-    println(coreVc)
     val signedJwt = coreVc.sign(coreBearerDid, KeySelector.MethodType(VerificationMethodType.VERIFICATION_METHOD))
-    println(signedJwt)
-
     return signedJwt
   }
 
