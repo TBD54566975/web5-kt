@@ -60,9 +60,8 @@ class VerifiableCredentialTest {
 
   @Test
   fun `create works`() {
-    val keyManager = InMemoryKeyManager()
-    val issuerDid = DidKey.create(keyManager)
-    val holderDid = DidKey.create(keyManager)
+    val issuerDid = DidKey.create(InMemoryKeyManager())
+    val holderDid = DidKey.create(InMemoryKeyManager())
 
     val vc = VerifiableCredential.create(
       type = "StreetCred",
@@ -82,9 +81,8 @@ class VerifiableCredentialTest {
 
   @Test
   fun `create throws if data cannot be parsed into a json object`() {
-    val keyManager = InMemoryKeyManager()
-    val issuerDid = DidKey.create(keyManager)
-    val holderDid = DidKey.create(keyManager)
+    val issuerDid = DidKey.create(InMemoryKeyManager())
+    val holderDid = DidKey.create(InMemoryKeyManager())
 
     val exception = assertThrows(IllegalArgumentException::class.java) {
       VerifiableCredential.create(
@@ -117,9 +115,8 @@ class VerifiableCredentialTest {
 
   @Test
   fun `verify throws if it is the wrong issuer that signed the vc`() {
-    val keyManager = InMemoryKeyManager()
-    val issuerDid = DidJwk.create(keyManager)
-    val holderDid = DidJwk.create(keyManager)
+    val issuerDid = DidJwk.create(InMemoryKeyManager())
+    val holderDid = DidJwk.create(InMemoryKeyManager())
 
     val vc = VerifiableCredential.create(
       type = "StreetCred",
@@ -137,9 +134,8 @@ class VerifiableCredentialTest {
 
   @Test
   fun `verify does not throw an exception with vc with evidence`() {
-    val keyManager = InMemoryKeyManager()
-    val issuerDid = DidJwk.create(keyManager)
-    val holderDid = DidJwk.create(keyManager)
+    val issuerDid = DidJwk.create(InMemoryKeyManager())
+    val holderDid = DidJwk.create(InMemoryKeyManager())
 
     val evidence = listOf(
       mapOf(
@@ -173,9 +169,8 @@ class VerifiableCredentialTest {
 
 @Test
 fun `kyc credential verify does not throw an exception if vc is legit`() {
-  val keyManager = InMemoryKeyManager()
-  val issuerDid = DidJwk.create(keyManager)
-  val subjectDid = DidJwk.create(keyManager)
+  val issuerDid = DidJwk.create(InMemoryKeyManager())
+  val subjectDid = DidJwk.create(InMemoryKeyManager())
 
   val expirationCalendar = Calendar.getInstance().apply {
     set(2055, Calendar.DECEMBER, 21) // Note: Calendar months are zero-based in Java/Kotlin
@@ -185,7 +180,6 @@ fun `kyc credential verify does not throw an exception if vc is legit`() {
     mapOf("kind" to "document_verification", "checks" to listOf("passport", "utility_bill")),
     mapOf("kind" to "sanctions_check", "checks" to listOf("daily"))
   )
-
 
   val vc = VerifiableCredential.create(
     type = "KnowYourCustomerCred",
@@ -218,9 +212,8 @@ fun `kyc credential verify does not throw an exception if vc is legit`() {
 
   @Test
   fun `verify does not throw an exception if vc signed with did dht is legit`() {
-    val keyManager = InMemoryKeyManager()
-    val issuerDid = DidDht.create(keyManager)
-    val holderDid = DidDht.create(keyManager)
+    val issuerDid = DidDht.create(InMemoryKeyManager())
+    val holderDid = DidDht.create(InMemoryKeyManager())
 
     val vc = VerifiableCredential.create(
       type = "StreetCred",
@@ -309,9 +302,8 @@ fun `kyc credential verify does not throw an exception if vc is legit`() {
 
   @Test
   fun `parseJwt returns an instance of VerifiableCredential on success`() {
-    val keyManager = InMemoryKeyManager()
-    val issuerDid = DidKey.create(keyManager)
-    val holderDid = DidKey.create(keyManager)
+    val issuerDid = DidKey.create(InMemoryKeyManager())
+    val holderDid = DidKey.create(InMemoryKeyManager())
 
     val vc = VerifiableCredential.create(
       type = "StreetCred",

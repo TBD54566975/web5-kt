@@ -4,7 +4,9 @@ import web5.sdk.common.Convert
 import web5.sdk.common.EncodingFormat
 import web5.sdk.common.Json
 import web5.sdk.crypto.AlgorithmId
+import web5.sdk.crypto.DefaultKeyGenOptions
 import web5.sdk.crypto.InMemoryKeyManager
+import web5.sdk.crypto.KeyGenOptions
 import web5.sdk.crypto.KeyManager
 import web5.sdk.crypto.jwk.Jwk
 import web5.sdk.dids.DidResolutionMetadata
@@ -52,7 +54,7 @@ public object DidJwk {
     keyManager: KeyManager = InMemoryKeyManager(),
     algorithmId: AlgorithmId = AlgorithmId.Ed25519): BearerDid {
 
-    val keyAlias = keyManager.generatePrivateKey(algorithmId)
+    val keyAlias = keyManager.generatePrivateKey(algorithmId, DefaultKeyGenOptions("0"))
     val publicKeyJwk = keyManager.getPublicKey(keyAlias)
 
     val base64Encoded = Convert(Json.stringify(publicKeyJwk)).toBase64Url()

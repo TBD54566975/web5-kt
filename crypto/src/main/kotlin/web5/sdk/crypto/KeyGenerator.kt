@@ -28,7 +28,11 @@ import web5.sdk.crypto.jwk.Jwk
  * While it may not be mandatory to specify key generation options during key generation,
  * implementations must ensure that secure defaults are utilized when options are not provided.
  */
-public interface KeyGenOptions
+public interface KeyGenOptions {
+  val keyAlias: String
+}
+
+public class DefaultKeyGenOptions(override val keyAlias: String) : KeyGenOptions
 
 /**
  * The `KeyGenerator` interface provides a blueprint for implementing cryptographic key

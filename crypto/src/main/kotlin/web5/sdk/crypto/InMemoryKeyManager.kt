@@ -40,7 +40,7 @@ public class InMemoryKeyManager : KeyManager, KeyExporter, KeyImporter {
    * @return The key ID of the generated private key.
    */
   override fun generatePrivateKey(algorithmId: AlgorithmId, options: KeyGenOptions?): String {
-    return coreKeyManager.generatePrivateKey(algorithmId.toCurveCore(), "0")
+    return coreKeyManager.generatePrivateKey(algorithmId.toCurveCore(), options?.keyAlias)
   }
 
   /**

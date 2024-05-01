@@ -223,59 +223,6 @@ public class VerifiableCredential internal constructor(public val vcDataModel: V
       runBlocking {
         verifyJwt(vcJwt)
       }
-
-//      val decodedJwt = Jwt.decode(vcJwt)
-//
-//      val exp = decodedJwt.claims.exp
-//      val iss = decodedJwt.claims.iss
-//      val nbf = decodedJwt.claims.nbf
-//      val jti = decodedJwt.claims.jti
-//      val sub = decodedJwt.claims.sub
-//      val vc = parseJwt(vcJwt)
-//      val vcDataModel = vc.vcDataModel
-//
-//      // exp MUST represent the expirationDate property, encoded as a UNIX timestamp (NumericDate).
-//      // IF exp is present, check that vc's exp date is same as the jwt's exp date
-//      if (
-//        exp != null &&
-//        vcDataModel.expirationDate != null &&
-//        exp != vcDataModel.expirationDate.time / 1000
-//      ) {
-//        throw IllegalArgumentException("Verification failed: exp claim does not match expirationDate")
-//      }
-//
-//      require(iss != null) { "Verification failed: iss claim is required" }
-//
-//      // if iss is present, iss MUST represent the issuer property of a vc or the holder property of a vp.
-//      require(iss == vcDataModel.issuer.toString()) {
-//        "Verification failed: iss claim does not match expected issuer"
-//      }
-//
-//      // if nbf is present, nbf cannot represent time in the future
-//      if (nbf != null && nbf >= Date().time / 1000) {
-//        throw IllegalArgumentException("Verification failed: nbf claim is in the future")
-//      }
-//
-//      // if nbf is present, nbf MUST represent issuanceDate, encoded as a UNIX timestamp (NumericDate).
-//      if (
-//        nbf != null &&
-//        vcDataModel.issuanceDate != null &&
-//        nbf != vcDataModel.issuanceDate.time / 1000) {
-//        throw IllegalArgumentException("Verification failed: nbf claim does not match issuanceDate")
-//      }
-//
-//      // if sub is present, sub MUST represent the id property contained in the credentialSubject.
-//      if (sub != null && sub != vcDataModel.credentialSubject.id.toString()) {
-//        throw IllegalArgumentException("Verification failed: sub claim does not match credentialSubject.id")
-//      }
-//
-//      // if jti is present, jti MUST represent the id property of the verifiable credential or verifiable presentation.
-//      if (jti != null && jti != vcDataModel.id.toString()) {
-//        throw IllegalArgumentException("Verification failed: jti claim does not match id")
-//      }
-//
-//      validateDataModel(vcDataModel.toMap())
-//      decodedJwt.verify()
     }
 
     /**
