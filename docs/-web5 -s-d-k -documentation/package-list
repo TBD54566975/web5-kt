@@ -116,6 +116,10 @@ $dokka.location:web5.sdk.credentials.model/SubmissionRequirement/rule/#/Pointing
 $dokka.location:web5.sdk.credentials////PointingToDeclaration/-web5 -s-d-k -documentation/web5.sdk.credentials/index.html
 $dokka.location:web5.sdk.credentials/BitstringExpansionException///PointingToDeclaration/-web5 -s-d-k -documentation/web5.sdk.credentials/-bitstring-expansion-exception/index.html
 $dokka.location:web5.sdk.credentials/BitstringExpansionException/BitstringExpansionException/#kotlin.Throwable#kotlin.String?/PointingToDeclaration/-web5 -s-d-k -documentation/web5.sdk.credentials/-bitstring-expansion-exception/-bitstring-expansion-exception.html
+$dokka.location:web5.sdk.credentials/CredentialSchema///PointingToDeclaration/-web5 -s-d-k -documentation/web5.sdk.credentials/-credential-schema/index.html
+$dokka.location:web5.sdk.credentials/CredentialSchema/CredentialSchema/#kotlin.String#kotlin.String/PointingToDeclaration/-web5 -s-d-k -documentation/web5.sdk.credentials/-credential-schema/-credential-schema.html
+$dokka.location:web5.sdk.credentials/CredentialSchema/id/#/PointingToDeclaration/-web5 -s-d-k -documentation/web5.sdk.credentials/-credential-schema/id.html
+$dokka.location:web5.sdk.credentials/CredentialSchema/type/#/PointingToDeclaration/-web5 -s-d-k -documentation/web5.sdk.credentials/-credential-schema/type.html
 $dokka.location:web5.sdk.credentials/JsonPathParseException///PointingToDeclaration/-web5 -s-d-k -documentation/web5.sdk.credentials/-json-path-parse-exception/index.html
 $dokka.location:web5.sdk.credentials/JsonPathParseException/JsonPathParseException/#/PointingToDeclaration/-web5 -s-d-k -documentation/web5.sdk.credentials/-json-path-parse-exception/-json-path-parse-exception.html
 $dokka.location:web5.sdk.credentials/PexValidationException///PointingToDeclaration/-web5 -s-d-k -documentation/web5.sdk.credentials/-pex-validation-exception/index.html
@@ -144,11 +148,12 @@ $dokka.location:web5.sdk.credentials/StatusPurpose/valueOf/#kotlin.String/Pointi
 $dokka.location:web5.sdk.credentials/StatusPurpose/values/#/PointingToDeclaration/-web5 -s-d-k -documentation/web5.sdk.credentials/-status-purpose/values.html
 $dokka.location:web5.sdk.credentials/VcDataModel///PointingToDeclaration/-web5 -s-d-k -documentation/web5.sdk.credentials/-vc-data-model/index.html
 $dokka.location:web5.sdk.credentials/VerifiableCredential.Companion///PointingToDeclaration/-web5 -s-d-k -documentation/web5.sdk.credentials/-verifiable-credential/-companion/index.html
-$dokka.location:web5.sdk.credentials/VerifiableCredential.Companion/create/#kotlin.String#kotlin.String#kotlin.String#TypeParam(bounds=[kotlin.Any?])#[Error type: Unresolved type for CredentialStatus]?#java.util.Date#java.util.Date?#kotlin.collections.List[kotlin.Any]?/PointingToDeclaration/-web5 -s-d-k -documentation/web5.sdk.credentials/-verifiable-credential/-companion/create.html
+$dokka.location:web5.sdk.credentials/VerifiableCredential.Companion/create/#kotlin.String#kotlin.String#kotlin.String#TypeParam(bounds=[kotlin.Any?])#java.util.Date#java.util.Date?#[Error type: Unresolved type for CredentialStatus]?#web5.sdk.credentials.CredentialSchema?#kotlin.collections.List[kotlin.Any]?/PointingToDeclaration/-web5 -s-d-k -documentation/web5.sdk.credentials/-verifiable-credential/-companion/create.html
 $dokka.location:web5.sdk.credentials/VerifiableCredential.Companion/fromJson/#kotlin.String/PointingToDeclaration/-web5 -s-d-k -documentation/web5.sdk.credentials/-verifiable-credential/-companion/from-json.html
 $dokka.location:web5.sdk.credentials/VerifiableCredential.Companion/parseJwt/#kotlin.String/PointingToDeclaration/-web5 -s-d-k -documentation/web5.sdk.credentials/-verifiable-credential/-companion/parse-jwt.html
 $dokka.location:web5.sdk.credentials/VerifiableCredential.Companion/verify/#kotlin.String/PointingToDeclaration/-web5 -s-d-k -documentation/web5.sdk.credentials/-verifiable-credential/-companion/verify.html
 $dokka.location:web5.sdk.credentials/VerifiableCredential///PointingToDeclaration/-web5 -s-d-k -documentation/web5.sdk.credentials/-verifiable-credential/index.html
+$dokka.location:web5.sdk.credentials/VerifiableCredential/credentialSchema/#/PointingToDeclaration/-web5 -s-d-k -documentation/web5.sdk.credentials/-verifiable-credential/credential-schema.html
 $dokka.location:web5.sdk.credentials/VerifiableCredential/evidence/#/PointingToDeclaration/-web5 -s-d-k -documentation/web5.sdk.credentials/-verifiable-credential/evidence.html
 $dokka.location:web5.sdk.credentials/VerifiableCredential/getFieldByJsonPath/#kotlin.String/PointingToDeclaration/-web5 -s-d-k -documentation/web5.sdk.credentials/-verifiable-credential/get-field-by-json-path.html
 $dokka.location:web5.sdk.credentials/VerifiableCredential/issuer/#/PointingToDeclaration/-web5 -s-d-k -documentation/web5.sdk.credentials/-verifiable-credential/issuer.html
