@@ -102,6 +102,32 @@ public class DidDocument(
     return if (id.startsWith("#")) "${this.id}$id" else id
   }
 
+  fun copy(
+    id: String = this.id,
+    context: List<String>? = this.context,
+    alsoKnownAs: List<String>? = this.alsoKnownAs,
+    controller: List<String>? = this.controller,
+    verificationMethod: List<VerificationMethod>? = this.verificationMethod,
+    service: List<Service>? = this.service,
+    assertionMethod: List<String>? = this.assertionMethod,
+    authentication: List<String>? = this.authentication,
+    keyAgreement: List<String>? = this.keyAgreement,
+    capabilityDelegation: List<String>? = this.capabilityDelegation,
+    capabilityInvocation: List<String>? = this.capabilityInvocation
+  ) = DidDocument(
+    id,
+    context,
+    alsoKnownAs,
+    controller,
+    verificationMethod,
+    service,
+    assertionMethod,
+    authentication,
+    keyAgreement,
+    capabilityDelegation,
+    capabilityInvocation
+  )
+
   /**
    * Finds the first available assertion method from the [DidDocument]. When [assertionMethodId]
    * is null, the function will return the first available assertion method.

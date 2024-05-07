@@ -61,6 +61,13 @@ public class BearerDid(
     return Pair(signer, verificationMethod)
   }
 
+  public fun copy(
+    uri: String = this.uri,
+    did: Did = this.did,
+    keyManager: KeyManager = this.keyManager,
+    document: DidDocument = this.document
+  ) = BearerDid(uri, did, keyManager, document)
+
   /**
    * Converts a `BearerDid` object to a portable format containing the URI and verification methods
    * associated with the DID.
