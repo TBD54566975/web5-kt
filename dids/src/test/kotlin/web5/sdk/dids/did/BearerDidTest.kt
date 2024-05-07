@@ -8,12 +8,61 @@ import org.mockito.kotlin.spy
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import web5.sdk.crypto.InMemoryKeyManager
+import web5.sdk.dids.didcore.DidDocument
+import web5.sdk.dids.didcore.Service
+import web5.sdk.dids.methods.dht.CreateDidDhtOptions
+import web5.sdk.dids.methods.dht.DidDht
 import web5.sdk.dids.methods.jwk.DidJwk
 import kotlin.test.Test
+import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 
 class BearerDidTest {
+
+  @Test
+  fun `append service endpoint to existing did`() {
+    val keyManager = InMemoryKeyManager()
+    var myBearerDid = DidDht.create(keyManager, CreateDidDhtOptions(publish = true))
+
+    val existingBearerDid: BearerDid = myBearerDid
+
+    val serviceToAdd = Service.Builder()
+      .id("pfi")
+      .type("PFI")
+      .serviceEndpoint(listOf("https://example.com/"))
+      .build()
+
+    val updatedServices = existingBearerDid.document.service?.toMutableList() ?: mutableListOf()
+    updatedServices.add(serviceToAdd)
+
+    print(updatedServices)
+
+    val updatedDidDocument = DidDocument(
+      id = existingBearerDid.document.id,
+      context = existingBearerDid.document.context,
+      controller = existingBearerDid.document.controller,
+      verificationMethod = existingBearerDid.document.verificationMethod,
+      authentication = existingBearerDid.document.authentication,
+      assertionMethod = existingBearerDid.document.assertionMethod,
+      keyAgreement = existingBearerDid.document.keyAgreement,
+      capabilityInvocation = existingBearerDid.document.capabilityInvocation,
+      capabilityDelegation = existingBearerDid.document.capabilityDelegation,
+      service = updatedServices
+    )
+
+    val updatedBearerDid = BearerDid(
+      uri = existingBearerDid.uri,
+      did = existingBearerDid.did,
+      keyManager = existingBearerDid.keyManager,
+      document = updatedDidDocument
+    )
+
+    DidDht.publish(updatedBearerDid.keyManager, updatedBearerDid.document)
+    assert(updatedBearerDid.document.service!!.contains(serviceToAdd))
+
+
+  }
 
   @Test
   fun `getSigner should return a signer and verification method`() {
