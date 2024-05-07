@@ -102,6 +102,12 @@ public class DidDocument(
     return if (id.startsWith("#")) "${this.id}$id" else id
   }
 
+  /**
+   * Return a copy of the document with any changes provided.
+   * If no arguments are provided just returns an immutable copy of the DidDocument
+   *
+   * @return an immutable copy of the DidDocument with any changes applied
+   */
   fun copy(
     id: String = this.id,
     context: List<String>? = this.context,
