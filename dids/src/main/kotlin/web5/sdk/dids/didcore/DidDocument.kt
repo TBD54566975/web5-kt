@@ -104,10 +104,11 @@ public class DidDocument(
 
   /**
    * Return a copy of the document with any changes provided.
-   * If no arguments are provided just returns an immutable copy of the DidDocument
+   * If no arguments are provided just returns an immutable copy of the DidDocument.
    *
    * @return an immutable copy of the DidDocument with any changes applied
    */
+  @JvmOverloads
   fun copy(
     id: String = this.id,
     context: List<String>? = this.context,
