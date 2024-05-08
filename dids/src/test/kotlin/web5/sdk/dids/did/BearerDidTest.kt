@@ -33,9 +33,9 @@ class BearerDidTest {
       .serviceEndpoint(listOf("https://example.com/"))
       .build()
 
-    val serviceList = existingBearerDid.document.service ?: emptyList()
+    val newServiceList = existingBearerDid.document.service.orEmpty() + serviceToAdd
     val updatedBearerDid = DidDht.update(existingBearerDid,
-        CreateDidDhtOptions(services = (serviceList + serviceToAdd)))
+                                         CreateDidDhtOptions(services = newServiceList))
 
     DidDht.publish(updatedBearerDid.keyManager, updatedBearerDid.document)
     assert(updatedBearerDid.document.service!!.contains(serviceToAdd))
