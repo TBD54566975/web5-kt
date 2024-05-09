@@ -21,29 +21,25 @@ import kotlin.test.assertNotNull
 class BearerDidTest {
 
   @Test
-  fun `append service endpoint to existing did`() {
+  fun `update service endpoint of existing did`() {
     val keyManager = InMemoryKeyManager()
     var myBearerDid = DidDht.create(keyManager, CreateDidDhtOptions(publish = true))
 
     val existingBearerDid: BearerDid = myBearerDid
 
-    val serviceToAdd = Service.Builder()
+    val serviceToUpdate = Service.Builder()
       .id("pfi")
       .type("PFI")
       .serviceEndpoint(listOf("https://example.com/"))
       .build()
 
-    val newServiceList = existingBearerDid.document.service.orEmpty() + serviceToAdd
     val updatedBearerDid = DidDht.update(existingBearerDid,
-                                         CreateDidDhtOptions(services = newServiceList))
+      CreateDidDhtOptions(services = listOf(serviceToUpdate)))
 
     DidDht.publish(updatedBearerDid.keyManager, updatedBearerDid.document)
-    assert(updatedBearerDid.document.service!!.contains(serviceToAdd))
 
-
-
-
-
+    assertEquals(1, updatedBearerDid.document.service?.size)
+    assertEquals(serviceToUpdate, updatedBearerDid.document.service?.first())
   }
 
   @Test

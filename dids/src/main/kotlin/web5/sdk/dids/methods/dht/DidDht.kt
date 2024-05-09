@@ -202,27 +202,12 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) {
     return BearerDid(didUri, did, keyManager, didDocument)
   }
 
-  /**
-   * Updates an existing "did:dht" DID by applying the provided changes to the DID Document.
-   *
-   * @param bearerDid The existing "did:dht" DID to update.
-   * @param options Optional parameters ([CreateDidDhtOptions]) to specify additional keys, services, and optional
-   * publishing during the update.
-   * @return The updated [BearerDid] instance.
-   */
   public fun update(bearerDid: BearerDid, options: CreateDidDhtOptions): BearerDid {
     val existingDidDocument = bearerDid.document
-    val updatedServices = (existingDidDocument.service ?: emptyList()).toMutableList().apply {
-      options.services?.let { addAll(it) }
-    }
 
-    val updatedControllers = (existingDidDocument.controller ?: emptyList()).toMutableList().apply {
-      options.controllers?.let { addAll(it) }
-    }
-
-    val updatedAlsoKnownAses = (existingDidDocument.alsoKnownAs ?: emptyList()).toMutableList().apply {
-      options.alsoKnownAses?.let { addAll(it) }
-    }
+    val updatedServices = options.services ?: existingDidDocument.service
+    val updatedControllers = options.controllers ?: existingDidDocument.controller
+    val updatedAlsoKnownAses = options.alsoKnownAses ?: existingDidDocument.alsoKnownAs
 
     val updatedVerificationMethods = existingDidDocument.verificationMethod?.toMutableList() ?: mutableListOf()
     options.verificationMethods?.forEach { (publicKey, purposes, controller) ->
@@ -236,9 +221,9 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) {
     }
 
     val updatedDidDocument = existingDidDocument.copy(
-      service = updatedServices,
-      controller = updatedControllers,
-      alsoKnownAs = updatedAlsoKnownAses,
+      service = updatedServices?.toList(),
+      controller = updatedControllers?.toList(),
+      alsoKnownAs = updatedAlsoKnownAses?.toList(),
       verificationMethod = updatedVerificationMethods
     )
 
@@ -250,7 +235,6 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) {
 
     return updatedBearerDid
   }
-
   /**
    * Resolves a "did:dht" DID into a [DidResolutionResult], which contains the DID Document and possible related
    * metadata.
