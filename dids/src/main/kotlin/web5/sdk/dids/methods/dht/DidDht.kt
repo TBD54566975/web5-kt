@@ -202,6 +202,14 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) {
     return BearerDid(didUri, did, keyManager, didDocument)
   }
 
+  /**
+   * Updates an existing "did:dht" DID by applying the provided changes to the DID Document.
+   *
+   * @param bearerDid The existing "did:dht" DID to update.
+   * @param options Optional parameters ([CreateDidDhtOptions]) to specify additional keys, services, and optional
+   * publishing during the update.
+   * @return The updated [BearerDid] instance.
+   */
   public fun update(bearerDid: BearerDid, options: CreateDidDhtOptions): BearerDid {
     val existingDidDocument = bearerDid.document
 
