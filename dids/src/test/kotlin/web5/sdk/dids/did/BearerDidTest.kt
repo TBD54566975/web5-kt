@@ -24,7 +24,7 @@ class BearerDidTest {
   @Test
   fun `update service endpoint of existing did`() {
     val keyManager = InMemoryKeyManager()
-    var myBearerDid = DidDht.create(keyManager, UpdateDidDhtOptions(publish = true))
+    var myBearerDid = DidDht.create(keyManager, CreateDidDhtOptions(publish = true))
 
     val existingBearerDid: BearerDid = myBearerDid
 
@@ -35,7 +35,7 @@ class BearerDidTest {
       .build()
 
     val updatedBearerDid = DidDht.update(existingBearerDid,
-      CreateDidDhtOptions(services = listOf(serviceToUpdate)))
+      UpdateDidDhtOptions(services = listOf(serviceToUpdate)))
 
     DidDht.publish(updatedBearerDid.keyManager, updatedBearerDid.document)
 

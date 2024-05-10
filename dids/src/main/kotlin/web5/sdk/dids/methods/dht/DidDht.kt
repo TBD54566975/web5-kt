@@ -219,7 +219,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) {
    * Updates an existing "did:dht" DID by applying the provided changes to the DID Document.
    *
    * @param bearerDid The existing "did:dht" DID to update.
-   * @param options Optional parameters ([CreateDidDhtOptions]) to specify additional keys, services, and optional
+   * @param options Optional parameters ([UpdateDidDhtOptions]) to specify additional keys, services, and optional
    * publishing during the update.
    * @return The updated [BearerDid] instance.
    */
