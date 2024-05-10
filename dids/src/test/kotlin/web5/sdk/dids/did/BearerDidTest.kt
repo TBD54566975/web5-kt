@@ -12,6 +12,7 @@ import web5.sdk.dids.didcore.DidDocument
 import web5.sdk.dids.didcore.Service
 import web5.sdk.dids.methods.dht.CreateDidDhtOptions
 import web5.sdk.dids.methods.dht.DidDht
+import web5.sdk.dids.methods.dht.UpdateDidDhtOptions
 import web5.sdk.dids.methods.jwk.DidJwk
 import kotlin.test.Test
 import kotlin.test.assertContains
@@ -23,7 +24,7 @@ class BearerDidTest {
   @Test
   fun `update service endpoint of existing did`() {
     val keyManager = InMemoryKeyManager()
-    var myBearerDid = DidDht.create(keyManager, CreateDidDhtOptions(publish = true))
+    var myBearerDid = DidDht.create(keyManager, UpdateDidDhtOptions(publish = true))
 
     val existingBearerDid: BearerDid = myBearerDid
 

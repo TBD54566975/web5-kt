@@ -97,6 +97,19 @@ public class CreateDidDhtOptions(
   public val alsoKnownAses: Iterable<String>? = null,
 ) : CreateDidOptions
 
+/**
+ * Specifies options for updating a "did:dht" Decentralized Identifier (DID).
+ * Any options not specified will retain the value from the DID being updated.
+ *
+ * @property verificationMethods A list of [Jwk]s to add to the DID Document mapped to their purposes
+ * as verification methods, and an optional controller for the verification method.
+ * @property services A list of [Service]s to add to the DID Document.
+ * @property publish Whether to publish the DID Document to the DHT after creation.
+ * @property controllers A list of controller DIDs to add to the DID Document.
+ * @property alsoKnownAses A list of also known as identifiers to add to the DID Document.
+ */
+public typealias UpdateDidDhtOptions = CreateDidDhtOptions
+
 private const val PROPERTY_SEPARATOR = ";"
 private const val ARRAY_SEPARATOR = ","
 private val logger = KotlinLogging.logger {}
@@ -210,7 +223,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) {
    * publishing during the update.
    * @return The updated [BearerDid] instance.
    */
-  public fun update(bearerDid: BearerDid, options: CreateDidDhtOptions): BearerDid {
+  public fun update(bearerDid: BearerDid, options: UpdateDidDhtOptions): BearerDid {
     val existingDidDocument = bearerDid.document
 
     val updatedServices = options.services ?: existingDidDocument.service
