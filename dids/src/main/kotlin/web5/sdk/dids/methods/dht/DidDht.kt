@@ -99,14 +99,17 @@ public class CreateDidDhtOptions(
 
 /**
  * Specifies options for updating a "did:dht" Decentralized Identifier (DID).
- * Any options not specified will retain the value from the DID being updated.
+ * Any options not specified will retain the value from the DID being updated, otherwise
+ * the values provided will be set in the DID document.
+ * For example if you wanted to update the services, pass in the full list of `services` you
+ * would like the updated DID Document to contain.
  *
  * @property verificationMethods A list of [Jwk]s to add to the DID Document mapped to their purposes
  * as verification methods, and an optional controller for the verification method.
- * @property services A list of [Service]s to add to the DID Document.
+ * @property services A list of [Service]s that will be set in the DID Document.
  * @property publish Whether to publish the DID Document to the DHT after creation.
- * @property controllers A list of controller DIDs to add to the DID Document.
- * @property alsoKnownAses A list of also known as identifiers to add to the DID Document.
+ * @property controllers A list of controller DIDs that will be set in the DID Document.
+ * @property alsoKnownAses A list of also known as identifiers to be set in the DID Document.
  */
 public typealias UpdateDidDhtOptions = CreateDidDhtOptions
 
@@ -219,7 +222,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) {
    * Updates an existing "did:dht" DID by applying the provided changes to the DID Document.
    *
    * @param bearerDid The existing "did:dht" DID to update.
-   * @param options Optional parameters ([UpdateDidDhtOptions]) to specify additional keys, services, and optional
+   * @param options Optional parameters ([UpdateDidDhtOptions]) to specify keys, services, and optional
    * publishing during the update.
    * @return The updated [BearerDid] instance.
    */
