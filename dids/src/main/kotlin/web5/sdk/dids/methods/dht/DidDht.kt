@@ -244,14 +244,21 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) {
       updatedVerificationMethods.add(verificationMethod)
     }
 
-    val updatedDidDocument = existingDidDocument.copy(
-      service = updatedServices?.toList(),
-      controller = updatedControllers?.toList(),
+    val updatedDidDocument = DidDocument(
+      existingDidDocument.id,
+      existingDidDocument.context,
       alsoKnownAs = updatedAlsoKnownAses?.toList(),
-      verificationMethod = updatedVerificationMethods
+      controller = updatedControllers?.toList(),
+      verificationMethod = updatedVerificationMethods,
+      service = updatedServices?.toList(),
+      assertionMethod = existingDidDocument.assertionMethod,
+      authentication = existingDidDocument.authentication,
+      keyAgreement = existingDidDocument.keyAgreement,
+      capabilityDelegation = existingDidDocument.capabilityDelegation,
+      capabilityInvocation = existingDidDocument.capabilityInvocation
     )
 
-    val updatedBearerDid = bearerDid.copy(document = updatedDidDocument)
+    val updatedBearerDid = BearerDid(bearerDid.uri, bearerDid.did, bearerDid.keyManager, document = updatedDidDocument)
 
     if (options.publish) {
       publish(bearerDid.keyManager, updatedDidDocument)

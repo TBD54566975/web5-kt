@@ -62,20 +62,6 @@ public class BearerDid(
   }
 
   /**
-   * Return a copy of the bearer did with any changes provided
-   * If no arguments are provided just returns an immutable copy.
-   *
-   * @return an immutable copy of the BearerDid with any changes applied
-   */
-  @JvmOverloads
-  public fun copy(
-    uri: String = this.uri,
-    did: Did = this.did,
-    keyManager: KeyManager = this.keyManager,
-    document: DidDocument = this.document
-  ) = BearerDid(uri, did, keyManager, document)
-
-  /**
    * Converts a `BearerDid` object to a portable format containing the URI and verification methods
    * associated with the DID.
    *
