@@ -7,6 +7,7 @@ import web5.sdk.crypto.KeyManager
 import web5.sdk.crypto.jwk.Jwk
 import web5.sdk.dids.didcore.DidDocument
 import web5.sdk.dids.didcore.Did
+import web5.sdk.dids.didcore.Service
 import web5.sdk.dids.didcore.VMSelector
 import web5.sdk.dids.didcore.VerificationMethod
 
@@ -59,6 +60,62 @@ public class BearerDid(
     }
 
     return Pair(signer, verificationMethod)
+  }
+
+  /**
+   * Adds a new service to the DID Document and returns a new `BearerDid` instance with the updated document.
+   *
+   * @param service The service to add to the DID Document.
+   * @return A new `BearerDid` instance with the updated DID Document.
+   */
+  public fun addService(service: Service): BearerDid {
+    val updatedServices = document.service?.toMutableList() ?: mutableListOf()
+    updatedServices.add(service)
+    val updatedDocument = createUpdatedDocument(updatedServices)
+    return BearerDid(uri, did, keyManager, updatedDocument)
+  }
+
+  /**
+   * Deletes a service from the DID Document by its ID and returns a new `BearerDid` instance with the updated document.
+   *
+   * @param serviceId The ID of the service to delete from the DID Document.
+   * @return A new `BearerDid` instance with the updated DID Document.
+   */
+  public fun deleteService(serviceId: String): BearerDid {
+    val updatedServices = document.service?.filter { it.id != serviceId } ?: emptyList()
+    val updatedDocument = createUpdatedDocument(updatedServices)
+    return BearerDid(uri, did, keyManager, updatedDocument)
+  }
+
+  /**
+   * Clears all services from the DID Document and returns a new `BearerDid` instance with the updated document.
+   *
+   * @return A new `BearerDid` instance with the updated DID Document.
+   */
+  public fun clearServices(): BearerDid {
+    val updatedDocument = createUpdatedDocument(emptyList())
+    return BearerDid(uri, did, keyManager, updatedDocument)
+  }
+
+  /**
+   * Creates a new `DidDocument` instance with the updated services.
+   *
+   * @param updatedServices The updated list of services to include in the DID Document.
+   * @return A new `DidDocument` instance with the updated services.
+   */
+  private fun createUpdatedDocument(updatedServices: List<Service>): DidDocument {
+    return DidDocument(
+      id = document.id,
+      verificationMethod = document.verificationMethod,
+      service = updatedServices,
+      authentication = document.authentication,
+      assertionMethod = document.assertionMethod,
+      keyAgreement = document.keyAgreement,
+      capabilityInvocation = document.capabilityInvocation,
+      capabilityDelegation = document.capabilityDelegation,
+      controller = document.controller,
+      alsoKnownAs = document.alsoKnownAs
+    )
   }
 
   /**
