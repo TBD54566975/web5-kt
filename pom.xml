@@ -7,7 +7,7 @@
   <!-- Artifact Information  -->
   <groupId>xyz.block</groupId>
   <artifactId>web5-parent</artifactId>
-  <version>0.0.0-main-SNAPSHOT</version>
+  <version>1.1.2</version>
   <packaging>pom</packaging>
   <name>Web5 SDK for the JVM</name>
   <url>https://developer.tbd.website</url>
@@ -20,7 +20,7 @@
     <!-- This has to be HTTPS, not git://, for maven-release-plugin to do AUTH correctly -->
     <developerConnection>scm:git:https://github.com/TBD54566975/web5-kt.git</developerConnection>
     <url>https://github.com/TBD54566975/web5-kt</url>
-    <tag>HEAD</tag>
+    <tag>v1.1.2</tag>
   </scm>
 
   <!-- Developers -->
