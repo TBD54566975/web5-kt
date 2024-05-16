@@ -247,6 +247,11 @@
         <version>${version.org.bouncycastle}</version>
       </dependency>
       <dependency>
+        <groupId>org.bouncycastle</groupId>
+        <artifactId>bcutil-jdk15to18</artifactId>
+        <version>${version.org.bouncycastle}</version>
+      </dependency>
+      <dependency>
         <groupId>org.jetbrains.kotlin</groupId>
         <artifactId>kotlin-reflect</artifactId>
         <version>${version.kotlin}</version>
