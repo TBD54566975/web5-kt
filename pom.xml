@@ -107,7 +107,7 @@
     <version.io.github.erdtman>1.1</version.io.github.erdtman>
     <version.io.github.oshai>6.0.2</version.io.github.oshai>
     <version.io.ktor>2.3.7</version.io.ktor>
-    <version.org.bouncycastle>1.77</version.org.bouncycastle>
+    <version.org.bouncycastle>1.78</version.org.bouncycastle>
     <version.org.junit.jupiter>5.10.1</version.org.junit.jupiter>
 
     <!-- Versioning for Test Dependencies -->
