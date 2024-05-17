@@ -102,12 +102,15 @@ jobs:
             --batch-mode \
             -DnewVersion=${{ steps.resolve_version.outputs.resolved_version }}
 
-          # Maven deploy lifecycle will build, run tests, verify, sign, and deploy
-          mvn \
-            deploy \
-              --batch-mode \
-              --settings .maven_settings.xml \
-              -P sign-artifacts
+          # Only attempt to publish artifact if we have credentials
+          if [ -n "${{ secrets.ARTIFACTORY_PASSWORD }}" ]; then
+            # Maven deploy lifecycle will build, run tests, verify, sign, and deploy
+            mvn deploy --batch-mode --settings .maven_settings.xml -P sign-artifacts
+          else
+            # Otherwise, Maven verify lifecycle will build, run tests, and verify
+            mvn verify --batch-mode
+          fi
+
         env:
           ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
           ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
