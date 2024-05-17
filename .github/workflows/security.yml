@@ -20,6 +20,4 @@ jobs:
   security-license-scan:
     uses: TBD54566975/open-source-programs/.github/workflows/security.yml@use-aws-secretsmanager-for-fossa-api-key
     secrets: inherit
-    permissions:
-      id-token: write
 
