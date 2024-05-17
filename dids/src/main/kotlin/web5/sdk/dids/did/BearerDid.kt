@@ -75,27 +75,6 @@ public class BearerDid(
     return BearerDid(uri, did, keyManager, updatedDocument)
   }
 
-  /**
-   * Deletes a service from the DID Document by its ID and returns a new `BearerDid` instance with the updated document.
-   *
-   * @param serviceId The ID of the service to delete from the DID Document.
-   * @return A new `BearerDid` instance with the updated DID Document.
-   */
-  public fun deleteService(serviceId: String): BearerDid {
-    val updatedServices = document.service?.filter { it.id != serviceId } ?: emptyList()
-    val updatedDocument = createUpdatedDocument(updatedServices)
-    return BearerDid(uri, did, keyManager, updatedDocument)
-  }
-
-  /**
-   * Clears all services from the DID Document and returns a new `BearerDid` instance with the updated document.
-   *
-   * @return A new `BearerDid` instance with the updated DID Document.
-   */
-  public fun clearServices(): BearerDid {
-    val updatedDocument = createUpdatedDocument(emptyList())
-    return BearerDid(uri, did, keyManager, updatedDocument)
-  }
 
   /**
    * Creates a new `DidDocument` instance with the updated services.
