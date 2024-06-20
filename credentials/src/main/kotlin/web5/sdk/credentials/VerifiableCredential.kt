@@ -131,7 +131,7 @@ public class VerifiableCredential internal constructor(public val vcDataModel: V
      */
     @JvmOverloads
     public fun <T> create(
-      type: String,
+      type: String? = null,
       issuer: String,
       subject: String,
       data: T,
