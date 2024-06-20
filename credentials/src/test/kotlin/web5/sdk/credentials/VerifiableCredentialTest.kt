@@ -342,6 +342,9 @@ fun `kyc credential verify does not throw an exception if vc is legit`() {
       data = StreetCredibility(localRespect = "high", legit = true)
     )
 
+    val vcDataModelType = vc.vcDataModel.jsonObject["type"] as List<*>
+    assertEquals(vcDataModelType.size, 1)
+
     assertEquals(vc.type, "VerifiableCredential")
     assertEquals(vc.issuer, issuerDid.uri)
     assertEquals(vc.subject, holderDid.uri)
