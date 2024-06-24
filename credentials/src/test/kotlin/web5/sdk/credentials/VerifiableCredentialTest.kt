@@ -32,6 +32,7 @@ import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 
 data class StreetCredibility(val localRespect: String, val legit: Boolean)
 class VerifiableCredentialTest {
@@ -327,6 +328,26 @@ fun `kyc credential verify does not throw an exception if vc is legit`() {
     assertEquals(vc.type, parsedVc.type)
     assertEquals(vc.issuer, parsedVc.issuer)
     assertEquals(vc.subject, parsedVc.subject)
+  }
+
+  @Test
+  fun `create can create a VC with default VerifiableCredential type with null type passed in`() {
+    val keyManager = InMemoryKeyManager()
+    val issuerDid = DidKey.create(keyManager)
+    val holderDid = DidKey.create(keyManager)
+
+    val vc = VerifiableCredential.create(
+      issuer = issuerDid.uri,
+      subject = holderDid.uri,
+      data = StreetCredibility(localRespect = "high", legit = true)
+    )
+
+    val vcDataModelType = vc.vcDataModel.jsonObject["type"] as List<*>
+    assertEquals(vcDataModelType.size, 1)
+
+    assertEquals(vc.type, "VerifiableCredential")
+    assertEquals(vc.issuer, issuerDid.uri)
+    assertEquals(vc.subject, holderDid.uri)
   }
 }
 
