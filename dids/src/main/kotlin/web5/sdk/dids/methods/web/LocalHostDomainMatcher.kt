@@ -25,6 +25,9 @@ import java.util.regex.Pattern
 object LocalHostDomainMatcher {
   private val LOCALHOST_PATTERN = Pattern.compile("^(localhost|127.0.0.1)($|(:\\d+)?(/.*)?)")
 
+  /**
+   * Returns true if the domain matches the criteria of a localhost domain.
+   */
   fun isLocalHostDomain(domain: String): Boolean {
     return LOCALHOST_PATTERN.matcher(domain).matches()
   }
