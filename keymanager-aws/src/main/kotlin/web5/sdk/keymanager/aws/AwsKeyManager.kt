@@ -1,4 +1,4 @@
-package web5.sdk.crypto
+package web5.sdk.keymanager.aws
 
 import com.amazonaws.services.kms.AWSKMS
 import com.amazonaws.services.kms.AWSKMSClientBuilder
@@ -19,6 +19,11 @@ import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo
 import org.bouncycastle.crypto.ExtendedDigest
 import org.bouncycastle.crypto.digests.SHA256Digest
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter
+import web5.sdk.crypto.AlgorithmId
+import web5.sdk.crypto.Jwa
+import web5.sdk.crypto.JwaCurve
+import web5.sdk.crypto.KeyGenOptions
+import web5.sdk.crypto.KeyManager
 import web5.sdk.crypto.jwk.Jwk
 import java.nio.ByteBuffer
 import java.security.PublicKey

@@ -9,7 +9,6 @@ import org.junit.jupiter.api.assertDoesNotThrow
 import web5.sdk.common.Convert
 import web5.sdk.common.Json
 import web5.sdk.crypto.AlgorithmId
-import web5.sdk.crypto.AwsKeyManager
 import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.crypto.Jwa
 import web5.sdk.dids.did.BearerDid
@@ -18,13 +17,13 @@ import web5.sdk.dids.didcore.Purpose
 import web5.sdk.jose.jws.JwsHeader
 import web5.sdk.jose.jwt.Jwt
 import web5.sdk.jose.jwt.JwtClaimsSet
+import web5.sdk.keymanager.aws.AwsKeyManager
 import web5.sdk.dids.methods.dht.CreateDidDhtOptions
 import web5.sdk.dids.methods.dht.DidDht
 import web5.sdk.dids.methods.jwk.DidJwk
 import web5.sdk.dids.methods.key.DidKey
 import web5.sdk.testing.TestVectors
 import java.io.File
-import java.net.URI
 import java.security.SignatureException
 import java.util.Calendar
 import kotlin.test.Ignore
@@ -32,7 +31,6 @@ import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertFails
 import kotlin.test.assertNotNull
-import kotlin.test.assertNull
 
 data class StreetCredibility(val localRespect: String, val legit: Boolean)
 class VerifiableCredentialTest {
