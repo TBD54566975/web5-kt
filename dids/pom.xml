@@ -91,6 +91,10 @@
       <groupId>io.ktor</groupId>
       <artifactId>ktor-serialization-jackson-jvm</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpcore</artifactId>
+    </dependency>
 
     <!--
       Test dependencies may declare direct versions; they are not exported
@@ -100,7 +104,6 @@
     <dependency>
       <groupId>commons-codec</groupId>
       <artifactId>commons-codec</artifactId>
-      <version>1.16.0</version>
       <scope>test</scope>
     </dependency>
     <dependency>

@@ -1,4 +1,4 @@
-package web5.sdk.crypto
+package web5.sdk.keymanager.aws
 
 import com.amazonaws.AmazonServiceException
 import com.amazonaws.auth.AWSStaticCredentialsProvider
@@ -7,6 +7,9 @@ import com.amazonaws.services.kms.AWSKMSClient
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import web5.sdk.crypto.AlgorithmId
+import web5.sdk.crypto.Crypto
+import web5.sdk.crypto.Jwa
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -45,11 +48,11 @@ class AwsKeyManagerTest {
     val signature = awsKeyManager.sign(alias, signingInput)
 
     //Verify the signature with BouncyCastle via Crypto
-    Crypto.verify(
-      publicKey = awsKeyManager.getPublicKey(alias),
-      signedPayload = signingInput,
-      signature = signature
-    )
+      Crypto.verify(
+          publicKey = awsKeyManager.getPublicKey(alias),
+          signedPayload = signingInput,
+          signature = signature
+      )
   }
 
   @Test

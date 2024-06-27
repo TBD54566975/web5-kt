@@ -55,6 +55,7 @@
     <module>dids</module>
     <module>distribution</module>
     <module>jose</module>
+    <module>keymanager-aws</module>
     <module>testing</module>
   </modules>
 
@@ -103,10 +104,12 @@
     <version.com.networknt>1.0.87</version.com.networknt>
     <version.com.nfeld.jsonpathkt>2.0.1</version.com.nfeld.jsonpathkt>
     <version.com.squareup.okhttp3>4.12.0</version.com.squareup.okhttp3>
+    <version.commons.codec>1.17.0</version.commons.codec>
     <version.dnsjava>3.5.2</version.dnsjava>
     <version.io.github.erdtman>1.1</version.io.github.erdtman>
     <version.io.github.oshai>6.0.2</version.io.github.oshai>
     <version.io.ktor>2.3.7</version.io.ktor>
+    <version.org.apache.httpcomponents.httpcore>4.4.16</version.org.apache.httpcomponents.httpcore>
     <version.org.bouncycastle>1.78</version.org.bouncycastle>
     <version.org.junit.jupiter>5.10.1</version.org.junit.jupiter>
 
@@ -175,6 +178,11 @@
         <version>${version.com.squareup.okhttp3}</version>
       </dependency>
       <dependency>
+        <groupId>commons-codec</groupId>
+        <artifactId>commons-codec</artifactId>
+        <version>${version.commons.codec}</version>
+      </dependency>
+      <dependency>
         <groupId>dnsjava</groupId>
         <artifactId>dnsjava</artifactId>
         <version>${version.dnsjava}</version>
@@ -224,6 +232,11 @@
         <groupId>io.ktor</groupId>
         <artifactId>ktor-serialization-kotlinx-json-jvm</artifactId>
         <version>${version.io.ktor}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.apache.httpcomponents</groupId>
+        <artifactId>httpcore</artifactId>
+        <version>${version.org.apache.httpcomponents.httpcore}</version>
       </dependency>
       <dependency>
         <groupId>org.assertj</groupId>
