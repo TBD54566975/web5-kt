@@ -353,6 +353,16 @@
         <artifactId>jackson-databind</artifactId>
         <version>${version.com.fasterxml.jackson}</version>
       </dependency>
+      <dependency>
+        <groupId>com.fasterxml.jackson.dataformat</groupId>
+        <artifactId>jackson-dataformat-cbor</artifactId>
+        <version>${version.com.fasterxml.jackson}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.fasterxml.jackson.dataformat</groupId>
+        <artifactId>jackson-dataformat-yaml</artifactId>
+        <version>${version.com.fasterxml.jackson}</version>
+      </dependency>
       <!-- Addresss https://github.com/TBD54566975/web5-kt/issues/243 -->
       <dependency>
         <groupId>com.google.guava</groupId>
