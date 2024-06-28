@@ -192,15 +192,13 @@ public sealed class DidWebApi(
   private fun decodeId(parsedDid: Did): String {
     val domainNameWithPath = parsedDid.id.replace(":", "/")
     val decodedDomain = URLDecoder.decode(domainNameWithPath, UTF_8)
-    val protocol = if (LocalHostDomainMatcher.isLocalHostDomain(decodedDomain)) "http://" else "https://"
-    val targetUrl = StringBuilder("$protocol$decodedDomain")
+    val url = URL("https://$decodedDomain")
 
-    val url = URL(targetUrl.toString())
-    if (url.path.isEmpty()) {
-      targetUrl.append(WELL_KNOWN_URL_PATH)
+    return buildString {
+      append(if (url.host == "localhost" || url.host == "127.0.0.1") "http://" else "https://")
+      append(decodedDomain)
+      if (url.path.isEmpty()) append(WELL_KNOWN_URL_PATH)
+      append(DID_DOC_FILE_NAME)
     }
-    targetUrl.append(DID_DOC_FILE_NAME)
-
-    return targetUrl.toString()
   }
 }
