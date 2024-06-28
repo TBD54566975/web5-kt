@@ -459,7 +459,7 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) {
 
     message.addRecord(
       TXTRecord(
-        Name("_did."), DClass.IN, ttl, rootRecordText.joinToString(PROPERTY_SEPARATOR)
+        Name("_did.${didDocument.id.split(":")[2]}"), DClass.IN, ttl, rootRecordText.joinToString(PROPERTY_SEPARATOR)
       ), Section.ANSWER
     )
 
