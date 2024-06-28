@@ -55,11 +55,6 @@
       <artifactId>web5-jose</artifactId>
       <version>${project.version}</version>
     </dependency>
-    <dependency>
-      <groupId>xyz.block</groupId>
-      <artifactId>web5-keymanager-aws</artifactId>
-      <version>${project.version}</version>
-    </dependency>
 
     <!-- External -->
 
