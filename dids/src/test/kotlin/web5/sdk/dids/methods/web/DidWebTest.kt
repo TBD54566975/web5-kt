@@ -10,13 +10,11 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
 import io.ktor.utils.io.ByteReadChannel
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
-import web5.sdk.crypto.InMemoryKeyManager
 import web5.sdk.dids.DidResolutionResult
-import web5.sdk.dids.methods.util.readKey
 import web5.sdk.testing.TestVectors
 import java.io.File
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 
 class DidWebTest {
 
@@ -48,15 +46,20 @@ class DidWebTest {
   fun resolve() {
     val didsToTest = listOf(
       "did:web:example.com",
+      "did:web:example.com%3A8080",
       "did:web:w3c-ccg.github.io:user:alice",
       "did:web:example.com%3A3000:user:alice",
+      "did:web:localhost",
+      "did:web:localhost%3A8080",
+      "did:web:127.0.0.1",
     )
     val api = DidWebApi {
       engine = mockEngine()
     }
     for (did in didsToTest) {
       val result = api.resolve(did)
-      assertEquals(did, result.didDocument!!.id)
+      val didDocument = assertNotNull(result.didDocument, "document should not be null for $did")
+      assertEquals(did, didDocument.id)
     }
   }
 
@@ -76,6 +79,14 @@ class DidWebTest {
       "https://example.com/.well-known/did.json" -> {
         respond(
           content = ByteReadChannel("""{"id": "did:web:example.com"}"""),
+          status = HttpStatusCode.OK,
+          headers = headersOf(HttpHeaders.ContentType, "application/json")
+        )
+      }
+
+      "https://example.com:8080/.well-known/did.json" -> {
+        respond(
+          content = ByteReadChannel("""{"id": "did:web:example.com%3A8080"}"""),
           status = HttpStatusCode.OK,
           headers = headersOf(HttpHeaders.ContentType, "application/json")
         )
@@ -102,6 +113,32 @@ class DidWebTest {
           content = ByteReadChannel(
             File("src/test/resources/did_document_jwkEx256k1Public_assertion.json").readText()
           ),
+          status = HttpStatusCode.OK,
+          headers = headersOf(HttpHeaders.ContentType, "application/json")
+        )
+      }
+
+      // localhost (& loopback IP 127.0.0.1) use http
+
+      "http://localhost/.well-known/did.json" -> {
+        respond(
+          content = ByteReadChannel("""{"id": "did:web:localhost"}"""),
+          status = HttpStatusCode.OK,
+          headers = headersOf(HttpHeaders.ContentType, "application/json")
+        )
+      }
+
+      "http://localhost:8080/.well-known/did.json" -> {
+        respond(
+          content = ByteReadChannel("""{"id": "did:web:localhost%3A8080"}"""),
+          status = HttpStatusCode.OK,
+          headers = headersOf(HttpHeaders.ContentType, "application/json")
+        )
+      }
+
+      "http://127.0.0.1/.well-known/did.json" -> {
+        respond(
+          content = ByteReadChannel("""{"id": "did:web:127.0.0.1"}"""),
           status = HttpStatusCode.OK,
           headers = headersOf(HttpHeaders.ContentType, "application/json")
         )
