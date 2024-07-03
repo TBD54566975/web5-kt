@@ -205,12 +205,6 @@ $dokka.location:web5.sdk.crypto/AlgorithmId/algorithmName/#/PointingToDeclaratio
 $dokka.location:web5.sdk.crypto/AlgorithmId/curveName/#/PointingToDeclaration/-web5 -s-d-k -documentation/web5.sdk.crypto/-algorithm-id/curve-name.html
 $dokka.location:web5.sdk.crypto/AlgorithmId/valueOf/#kotlin.String/PointingToDeclaration/-web5 -s-d-k -documentation/web5.sdk.crypto/-algorithm-id/value-of.html
 $dokka.location:web5.sdk.crypto/AlgorithmId/values/#/PointingToDeclaration/-web5 -s-d-k -documentation/web5.sdk.crypto/-algorithm-id/values.html
-$dokka.location:web5.sdk.crypto/AwsKeyManager///PointingToDeclaration/-web5 -s-d-k -documentation/web5.sdk.crypto/-aws-key-manager/index.html
-$dokka.location:web5.sdk.crypto/AwsKeyManager/AwsKeyManager/#[Error type: Unresolved type for AWSKMS]/PointingToDeclaration/-web5 -s-d-k -documentation/web5.sdk.crypto/-aws-key-manager/-aws-key-manager.html
-$dokka.location:web5.sdk.crypto/AwsKeyManager/generatePrivateKey/#web5.sdk.crypto.AlgorithmId#web5.sdk.crypto.KeyGenOptions?/PointingToDeclaration/-web5 -s-d-k -documentation/web5.sdk.crypto/-aws-key-manager/generate-private-key.html
-$dokka.location:web5.sdk.crypto/AwsKeyManager/getDeterministicAlias/#web5.sdk.crypto.jwk.Jwk/PointingToDeclaration/-web5 -s-d-k -documentation/web5.sdk.crypto/-aws-key-manager/get-deterministic-alias.html
-$dokka.location:web5.sdk.crypto/AwsKeyManager/getPublicKey/#kotlin.String/PointingToDeclaration/-web5 -s-d-k -documentation/web5.sdk.crypto/-aws-key-manager/get-public-key.html
-$dokka.location:web5.sdk.crypto/AwsKeyManager/sign/#kotlin.String#kotlin.ByteArray/PointingToDeclaration/-web5 -s-d-k -documentation/web5.sdk.crypto/-aws-key-manager/sign.html
 $dokka.location:web5.sdk.crypto/Crypto///PointingToDeclaration/-web5 -s-d-k -documentation/web5.sdk.crypto/-crypto/index.html
 $dokka.location:web5.sdk.crypto/Crypto/computePublicKey/#web5.sdk.crypto.jwk.Jwk/PointingToDeclaration/-web5 -s-d-k -documentation/web5.sdk.crypto/-crypto/compute-public-key.html
 $dokka.location:web5.sdk.crypto/Crypto/generatePrivateKey/#web5.sdk.crypto.AlgorithmId#web5.sdk.crypto.KeyGenOptions?/PointingToDeclaration/-web5 -s-d-k -documentation/web5.sdk.crypto/-crypto/generate-private-key.html
