@@ -5,10 +5,10 @@
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/TBD54566975/web5-kt/badge)](https://securityscorecards.dev/viewer/?uri=github.com/TBD54566975/web5-kt)
 
 This repo contains 6 packages:
-* [common](./common) - utilities for encoding, decoding, and hashing
-* [credentials](./credentials) - creation and verification of verifiable claims
-* [crypto](./crypto) - key generation, signing, signature verification, encryption, and decryption
-* [dids](./dids) - did generation and resolution
+* [common](./common) - Utilities for encoding, decoding, and hashing
+* [credentials](./credentials) - Creation and verification of verifiable claims
+* [crypto](./crypto) - Key generation, signing, signature verification, encryption, and decryption
+* [dids](./dids) - Did generation and resolution
 * [jose](./jose) - JSON Object Signing with JWS and JWT support for encoding/decoding, signing, and serialization 
 * [web5](./web5) - The full Web5 platform
 
