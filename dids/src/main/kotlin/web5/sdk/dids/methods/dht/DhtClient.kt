@@ -81,6 +81,7 @@ internal class DhtClient(
    * @throws PkarrRecordNotFoundException if the record is not found.
    * @throws PkarrRecordResponseException if the response from the dht gateway is not successful.
    */
+  @OptIn(ExperimentalStdlibApi::class)
   @Throws(PkarrRecordResponseException::class, PkarrRecordNotFoundException::class)
   fun pkarrGet(id: String): Bep44Message {
     val publicKey = ZBase32.decode(id)
