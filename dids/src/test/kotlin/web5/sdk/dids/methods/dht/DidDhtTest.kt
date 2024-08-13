@@ -118,6 +118,35 @@ class DidDhtTest {
     }
 
     @Test
+    fun `create with multiple verification methods`() {
+      val manager = InMemoryKeyManager()
+
+      // create a second verification method
+      val vmKeyAlias = manager.generatePrivateKey(AlgorithmId.Ed25519)
+      val vmPublicKeyJwk = manager.getPublicKey(vmKeyAlias)
+      vmPublicKeyJwk.kid = vmPublicKeyJwk.computeThumbprint()
+
+      val verificationMethods: Iterable<Triple<Jwk, List<Purpose>, String?>>? = listOf(
+        Triple(vmPublicKeyJwk, listOf(Purpose.Authentication), null)
+      )
+
+      val bearerDid =
+        DidDht.create(manager, CreateDidDhtOptions(verificationMethods = verificationMethods, publish = false))
+
+      assertDoesNotThrow { DidDht.validate(bearerDid.did.url) }
+      assertNotNull(bearerDid)
+      assertNotNull(bearerDid.document)
+      assertEquals(2, bearerDid.document.verificationMethod?.size)
+      assertContains(bearerDid.document.verificationMethod?.get(0)?.id!!, "#0")
+      assertEquals(1, bearerDid.document.assertionMethod?.size)
+      assertEquals(2, bearerDid.document.authentication?.size)
+      assertEquals(1, bearerDid.document.capabilityDelegation?.size)
+      assertEquals(1, bearerDid.document.capabilityInvocation?.size)
+      assertNull(bearerDid.document.keyAgreement)
+      assertNull(bearerDid.document.service)
+    }
+
+    @Test
     fun `create and transform to packet with types`() {
       val manager = InMemoryKeyManager()
       val bearerDid = DidDht.create(manager, CreateDidDhtOptions(publish = false))
