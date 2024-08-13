@@ -629,7 +629,6 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) {
     didDocBuilder: DidDocument.Builder
   ) {
     val data = parseTxtData(rr.strings.joinToString(""))
-    val verificationMethodId = data["id"]!!
     val keyBytes = Convert(data["k"]!!, EncodingFormat.Base64Url).toByteArray()
 
     // TODO(gabe): support other key types https://github.com/TBD54566975/web5-kt/issues/272
@@ -637,6 +636,12 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) {
       "0" -> Ed25519.bytesToPublicKey(keyBytes)
       "1" -> Secp256k1.bytesToPublicKey(keyBytes)
       else -> throw IllegalArgumentException("Unknown key type: ${data["t"]}")
+    }
+
+    val verificationMethodId = when {
+      data.containsKey("id") -> data["id"]!!
+      isIdentityKey(did, keyBytes) -> "0"
+      else -> publicKeyJwk.computeThumbprint()
     }
 
     val vmBuilder = VerificationMethod.Builder()
@@ -654,6 +659,13 @@ public sealed class DidDhtApi(configuration: DidDhtConfiguration) {
     didDocBuilder.verificationMethodForPurposes(vm)
 
     keyLookup[name.split(".")[0].drop(1)] = "$did#$verificationMethodId"
+  }
+
+  // Determine if the key is the identity key by comparing the last part of the DID to the key
+  private fun isIdentityKey(did: String, keyBytes: ByteArray): Boolean {
+    val didIdentifier = did.split(":").last()
+    val decodedIdentifier = ZBase32.decode(didIdentifier)
+    return decodedIdentifier.contentEquals(keyBytes)
   }
 
   private fun handleRootRecord(

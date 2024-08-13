@@ -93,6 +93,12 @@ class DidDhtTest {
   @Nested
   inner class DidDhtTest {
 
+    private val knownHexResponse =
+      "1ad37b5b8ed6c5fc87b64fe4849d81e7446c31b36138d03b9f6d68837123d6ae6aedf91e0340a7c83cd53b95a600" +
+        "ffe4a2264c3c677d7d16ca6bd30e05fa820c00000000659dd40e000004000000000200000000035f6b30045f64696400001000010000" +
+        "1c2000373669643d303b743d303b6b3d63506262357357792d553547333854424a79504d6f4b714632746f4c563563395a317748456b" +
+        "7448764c6fc0100010000100001c20002322766d3d6b303b617574683d6b303b61736d3d6b303b696e763d6b303b64656c3d6b30"
+
     @Test
     fun `create with no options`() {
       val manager = InMemoryKeyManager()
@@ -105,6 +111,35 @@ class DidDhtTest {
       assertContains(bearerDid.document.verificationMethod?.get(0)?.id!!, "#0")
       assertEquals(1, bearerDid.document.assertionMethod?.size)
       assertEquals(1, bearerDid.document.authentication?.size)
+      assertEquals(1, bearerDid.document.capabilityDelegation?.size)
+      assertEquals(1, bearerDid.document.capabilityInvocation?.size)
+      assertNull(bearerDid.document.keyAgreement)
+      assertNull(bearerDid.document.service)
+    }
+
+    @Test
+    fun `create with multiple verification methods`() {
+      val manager = InMemoryKeyManager()
+
+      // create a second verification method
+      val vmKeyAlias = manager.generatePrivateKey(AlgorithmId.Ed25519)
+      val vmPublicKeyJwk = manager.getPublicKey(vmKeyAlias)
+      vmPublicKeyJwk.kid = vmPublicKeyJwk.computeThumbprint()
+
+      val verificationMethods: Iterable<Triple<Jwk, List<Purpose>, String?>>? = listOf(
+        Triple(vmPublicKeyJwk, listOf(Purpose.Authentication), null)
+      )
+
+      val bearerDid =
+        DidDht.create(manager, CreateDidDhtOptions(verificationMethods = verificationMethods, publish = false))
+
+      assertDoesNotThrow { DidDht.validate(bearerDid.did.url) }
+      assertNotNull(bearerDid)
+      assertNotNull(bearerDid.document)
+      assertEquals(2, bearerDid.document.verificationMethod?.size)
+      assertContains(bearerDid.document.verificationMethod?.get(0)?.id!!, "#0")
+      assertEquals(1, bearerDid.document.assertionMethod?.size)
+      assertEquals(2, bearerDid.document.authentication?.size)
       assertEquals(1, bearerDid.document.capabilityDelegation?.size)
       assertEquals(1, bearerDid.document.capabilityInvocation?.size)
       assertNull(bearerDid.document.keyAgreement)
@@ -164,13 +199,32 @@ class DidDhtTest {
       }
     }
 
-    @OptIn(ExperimentalStdlibApi::class)
-    private fun mockEngine() = MockEngine { request ->
-      val hexResponse = "1ad37b5b8ed6c5fc87b64fe4849d81e7446c31b36138d03b9f6d68837123d6ae6aedf91e0340a7c83cd53b95a600" +
-        "ffe4a2264c3c677d7d16ca6bd30e05fa820c00000000659dd40e000004000000000200000000035f6b30045f64696400001000010000" +
-        "1c2000373669643d303b743d303b6b3d63506262357357792d553547333854424a79504d6f4b714632746f4c563563395a317748456b" +
-        "7448764c6fc0100010000100001c20002322766d3d6b303b617574683d6b303b61736d3d6b303b696e763d6b303b64656c3d6b30"
+    @Test
+    fun `resolves a known did dht value`() {
+      // known DID associated with our mock response, needed to verify the payload's signature
+      val hexResponse = "20dd194c19c350b5ee4e0e596d21fdf777a1c420bf2220ea2474bd5264d845b0aa308e23e7c826c2a912" +
+        "01a626742bdfb226c1ac2674030b287d414416b9ad080000000066a8fc66000084000000000400000000035f6b30045f64696400" +
+        "0010000100001c20003231743d303b6b3d68635732626b53634f33396d63756430655a756b7074736c75796665515249505a735" +
+        "26e5f4231724f5755035f7330045f646964000010000100001c2000302f69643d7066693b743d5046493b73653d68747470733a" +
+        "2f2f74742d6d6f636b2d706669732e7462646465762e6f7267045f646964346f7a6e3563353172756f377a363375316837343875" +
+        "673772773570316d71333835337974726435676174753961386d6d3866316f000010000100001c20002e2d763d303b766d3d6b30" +
+        "3b617574683d6b303b61736d3d6b303b696e763d6b303b64656c3d6b303b7376633d7330045f646964346f7a6e3563353172756f3" +
+        "77a363375316837343875673772773570316d71333835337974726435676174753961386d6d3866316f000002000100001c20001b0e" +
+        "68747470733a2f2f64696464687406746264646576036f726700"
+      val api = DidDhtApi { engine = mockEngine(hexResponse) }
+      val knownDid = "did:dht:ozn5c51ruo7z63u1h748ug7rw5p1mq3853ytrd5gatu9a8mm8f1o"
 
+      assertDoesNotThrow {
+        val result = api.resolve(knownDid)
+        assertNotNull(result)
+        assertNotNull(result.didDocument)
+        assertEquals(knownDid, result.didDocument!!.id)
+      }
+    }
+
+    @JvmOverloads
+    @OptIn(ExperimentalStdlibApi::class)
+    private fun mockEngine(hexResponse: String = knownHexResponse) = MockEngine { request ->
       when {
         request.url.encodedPath == "/" && request.method == HttpMethod.Put -> {
           respond("Success", HttpStatusCode.OK)
