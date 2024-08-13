@@ -164,6 +164,20 @@ class DidDhtTest {
       }
     }
 
+    @Test
+    fun `resolves a known did dht value`() {
+      val api = DidDhtApi { }
+      // known DID associated with our mock response, needed to verify the payload's signature
+      val knownDid = "did:dht:ozn5c51ruo7z63u1h748ug7rw5p1mq3853ytrd5gatu9a8mm8f1o"
+
+      assertDoesNotThrow {
+        val result = api.resolve(knownDid)
+        assertNotNull(result)
+        assertNotNull(result.didDocument)
+        assertEquals(knownDid, result.didDocument!!.id)
+      }
+    }
+
     @OptIn(ExperimentalStdlibApi::class)
     private fun mockEngine() = MockEngine { request ->
       val hexResponse = "1ad37b5b8ed6c5fc87b64fe4849d81e7446c31b36138d03b9f6d68837123d6ae6aedf91e0340a7c83cd53b95a600" +
