@@ -193,6 +193,7 @@ class DidDhtTest {
         "1c2000373669643d303b743d303b6b3d63506262357357792d553547333854424a79504d6f4b714632746f4c563563395a317748456b" +
         "7448764c6fc0100010000100001c20002322766d3d6b303b617574683d6b303b61736d3d6b303b696e763d6b303b64656c3d6b30"
 
+    @JvmOverloads
     @OptIn(ExperimentalStdlibApi::class)
     private fun mockEngine(hexResponse: String = knownHexResponse) = MockEngine { request ->
       when {
