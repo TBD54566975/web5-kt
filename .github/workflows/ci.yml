@@ -94,6 +94,24 @@ jobs:
           echo "Resolved SNAPSHOT Version: $resolvedVersion"
           echo "resolved_version=$resolvedVersion" >> $GITHUB_OUTPUT
 
+      - name: Run Tests
+        id: tests
+        run: mvn test
+
+      - name: Execute Spec Test Vector Report
+        if: always() && steps.tests.conclusion != 'skipped'
+        uses: TBD54566975/sdk-report-runner/.github/actions/specs-report@leordev/specs-report-fix-web5
+        with:
+          junit-report-paths: "**/target/surefire-reports/*TestVectors*.xml"
+          spec-path: web5-spec
+          suite-name-regex: Web5TestVectors
+          feature-regex: Web5TestVectors(\w+)
+          vector-regex: (\w+)
+          fail-on-missing-vectors: true
+          fail-on-failed-test-cases: true
+          comment-on-pr: true
+          git-token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Build, Test, and Deploy to TBD Artifactory
         run: |
           # Set newly resolved version in POM config
