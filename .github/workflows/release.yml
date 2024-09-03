@@ -140,7 +140,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [publish-publicly]
     steps:
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v4.1.7
         with:
           path: public
       - name: Deploy
