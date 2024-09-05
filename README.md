@@ -50,6 +50,7 @@ adding the dependency in a variety of build tools including Maven and Gradle are
 >       mavenCentral()
 >       // Thirdparty dependencies of TBD projects not in Maven Central
 >       maven("https://blockxyz.jfrog.io/artifactory/tbd-oss-thirdparty-maven2/")
+>   }
 > }
 > ```
 
