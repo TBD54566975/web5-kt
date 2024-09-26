@@ -1,6 +1,7 @@
-# ⚠️ Deprecated ⚠️
+# ⚠️ Deprecated Repository⚠️
+This repository is deprecated.
 
-This repository is deprecated. The last version of web5-kt that used this repository is 2.0.1.
+The last version of tbdex-kt that used this repository is `2.0.1`
 
 Starting from version 4.0.0, the project has transitioned to using the [web5-rs Kotlin bindings repository](https://github.com/TBD54566975/web5-rs/tree/main/bound/kt).
 
