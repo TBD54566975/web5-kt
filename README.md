@@ -1,4 +1,11 @@
-# web5-sdk-kotlin
+# ⚠️ Deprecated ⚠️
+
+## web5-sdk-kotlin
+
+This repository is deprecated. The last version of web5-kt that used this repository is 2.0.1.
+
+Starting from version 4.0.0, the project has transitioned to using the [web5-rs Kotlin bindings repository](https://github.com/TBD54566975/web5-rs/tree/main/bound/kt).
+
 
 [![License](https://img.shields.io/github/license/TBD54566975/web5-kt)](https://github.com/TBD54566975/web5-kt/blob/main/LICENSE)
 [![SDK Kotlin CI](https://github.com/TBD54566975/web5-kt/actions/workflows/ci.yml/badge.svg)](https://github.com/TBD54566975/web5-kt/actions/workflows/ci.yml) [![Coverage](https://img.shields.io/codecov/c/gh/tbd54566975/web5-kt/main?logo=codecov&logoColor=FFFFFF&style=flat-square&token=YI87CKF1LI)](https://codecov.io/github/TBD54566975/web5-kt)
