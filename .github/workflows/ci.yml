@@ -52,123 +52,124 @@ jobs:
           # Maven "test" lifecycle will build and test only on MacOS
           mvn test
 
-  # On Ubuntu we build, test, verify, and deploy: Code Coverage, Test Vectors, and SNAPSHOT artifacts to TBD Artifactory
-  build-test-deploy-snapshot-ubuntu:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: true
+  # Depricated! This is now done in web5-rs kotlin rust bound code
+  # # On Ubuntu we build, test, verify, and deploy: Code Coverage, Test Vectors, and SNAPSHOT artifacts to TBD Artifactory
+  # build-test-deploy-snapshot-ubuntu:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #       with:
+  #         submodules: true
 
-      # https://cashapp.github.io/hermit/usage/ci/
-      - name: Init Hermit
-        uses: cashapp/activate-hermit@v1
-        with:
-          cache: true
+  #     # https://cashapp.github.io/hermit/usage/ci/
+  #     - name: Init Hermit
+  #       uses: cashapp/activate-hermit@v1
+  #       with:
+  #         cache: true
 
-      - name: hash test inputs
-        run: |
-          if ! which sha256sum; then brew install coreutils; fi
-          sha256sum $(find test-vectors -name '*.json') > test-vector-hashes.txt
+  #     - name: hash test inputs
+  #       run: |
+  #         if ! which sha256sum; then brew install coreutils; fi
+  #         sha256sum $(find test-vectors -name '*.json') > test-vector-hashes.txt
 
-      - name: Resolve Snapshot Version
-        id: resolve_version
-        run: |
-          # Version resolution: use provided
-          if [ -n "${{ github.event.inputs.version }}" ]; then
-            resolvedVersion=${{ github.event.inputs.version }}
-          # Otherwise, construct a version for deployment in form X.Y.Z-commit-$shortSHA-SNAPSHOT
-          else
-            longSHA=$(git rev-parse --verify HEAD)
-            shortSHA=$(echo "${longSHA:0:7}")
-            resolvedVersion="commit-$shortSHA-SNAPSHOT"
-            echo "Requesting deployment as version: $resolvedVersion"
-          fi
+  #     - name: Resolve Snapshot Version
+  #       id: resolve_version
+  #       run: |
+  #         # Version resolution: use provided
+  #         if [ -n "${{ github.event.inputs.version }}" ]; then
+  #           resolvedVersion=${{ github.event.inputs.version }}
+  #         # Otherwise, construct a version for deployment in form X.Y.Z-commit-$shortSHA-SNAPSHOT
+  #         else
+  #           longSHA=$(git rev-parse --verify HEAD)
+  #           shortSHA=$(echo "${longSHA:0:7}")
+  #           resolvedVersion="commit-$shortSHA-SNAPSHOT"
+  #           echo "Requesting deployment as version: $resolvedVersion"
+  #         fi
 
-          # Postcondition check; only allow this to proceed if we have a version ending in "-SNAPSHOT"
-          if [[ ! "$resolvedVersion" =~ -SNAPSHOT$ ]]; then
-            echo "Error: The version does not end with \"-SNAPSHOT\": $resolvedVersion"
-            exit 1
-          fi
+  #         # Postcondition check; only allow this to proceed if we have a version ending in "-SNAPSHOT"
+  #         if [[ ! "$resolvedVersion" =~ -SNAPSHOT$ ]]; then
+  #           echo "Error: The version does not end with \"-SNAPSHOT\": $resolvedVersion"
+  #           exit 1
+  #         fi
 
-          echo "Resolved SNAPSHOT Version: $resolvedVersion"
-          echo "resolved_version=$resolvedVersion" >> $GITHUB_OUTPUT
+  #         echo "Resolved SNAPSHOT Version: $resolvedVersion"
+  #         echo "resolved_version=$resolvedVersion" >> $GITHUB_OUTPUT
 
-      - name: Build, Test, and Deploy to TBD Artifactory
-        run: |
-          # Set newly resolved version in POM config
-          mvn \
-            versions:set \
-            --batch-mode \
-            -DnewVersion=${{ steps.resolve_version.outputs.resolved_version }}
+  #     - name: Build, Test, and Deploy to TBD Artifactory
+  #       run: |
+  #         # Set newly resolved version in POM config
+  #         mvn \
+  #           versions:set \
+  #           --batch-mode \
+  #           -DnewVersion=${{ steps.resolve_version.outputs.resolved_version }}
 
-          # Only attempt to publish artifact if we have credentials
-          if [ -n "${{ secrets.ARTIFACTORY_PASSWORD }}" ]; then
-            # Maven deploy lifecycle will build, run tests, verify, sign, and deploy
-            mvn deploy --batch-mode --settings .maven_settings.xml -P sign-artifacts
-          else
-            # Otherwise, Maven verify lifecycle will build, run tests, and verify
-            mvn verify --batch-mode
-          fi
+  #         # Only attempt to publish artifact if we have credentials
+  #         if [ -n "${{ secrets.ARTIFACTORY_PASSWORD }}" ]; then
+  #           # Maven deploy lifecycle will build, run tests, verify, sign, and deploy
+  #           mvn deploy --batch-mode --settings .maven_settings.xml -P sign-artifacts
+  #         else
+  #           # Otherwise, Maven verify lifecycle will build, run tests, and verify
+  #           mvn verify --batch-mode
+  #         fi
 
-        env:
-          ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
-          ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
-          SIGN_KEY_PASS: ${{ secrets.GPG_SECRET_PASSPHRASE }}
-          SIGN_KEY: ${{ secrets.GPG_SECRET_KEY }}
+  #       env:
+  #         ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
+  #         ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
+  #         SIGN_KEY_PASS: ${{ secrets.GPG_SECRET_PASSPHRASE }}
+  #         SIGN_KEY: ${{ secrets.GPG_SECRET_KEY }}
 
-      - name: Upload Vector test results
-        uses: actions/upload-artifact@v3
-        with:
-          name: test-results
-          path: |
-            **/target/surefire-reports/*TestVectors*.xml
-            test-vector-hashes.txt
+  #     - name: Upload Vector test results
+  #       uses: actions/upload-artifact@v3
+  #       with:
+  #         name: test-results
+  #         path: |
+  #           **/target/surefire-reports/*TestVectors*.xml
+  #           test-vector-hashes.txt
 
-      - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v4
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          verbose: true
-          flags: ${{ runner.os }}
+  #     - name: Upload coverage reports to Codecov
+  #       uses: codecov/codecov-action@v4
+  #       with:
+  #         token: ${{ secrets.CODECOV_TOKEN }}
+  #         verbose: true
+  #         flags: ${{ runner.os }}
 
-      - name: Upload JUnit tests report
-        uses: actions/upload-artifact@v3
-        with:
-          name: tests-report-junit
-          path: |
-            **/target/surefire-reports/*.xml
+  #     - name: Upload JUnit tests report
+  #       uses: actions/upload-artifact@v3
+  #       with:
+  #         name: tests-report-junit
+  #         path: |
+  #           **/target/surefire-reports/*.xml
 
-      - name: Generate an access token to trigger downstream repo
-        uses: actions/create-github-app-token@2986852ad836768dfea7781f31828eb3e17990fa # v1.6.2
-        id: generate_token
-        if: github.ref == 'refs/heads/main'
-        with:
-          app-id: ${{ secrets.CICD_ROBOT_GITHUB_APP_ID }}
-          private-key: ${{ secrets.CICD_ROBOT_GITHUB_APP_PRIVATE_KEY }}
-          owner: TBD54566975
-          repositories: sdk-report-runner
+  #     - name: Generate an access token to trigger downstream repo
+  #       uses: actions/create-github-app-token@2986852ad836768dfea7781f31828eb3e17990fa # v1.6.2
+  #       id: generate_token
+  #       if: github.ref == 'refs/heads/main'
+  #       with:
+  #         app-id: ${{ secrets.CICD_ROBOT_GITHUB_APP_ID }}
+  #         private-key: ${{ secrets.CICD_ROBOT_GITHUB_APP_PRIVATE_KEY }}
+  #         owner: TBD54566975
+  #         repositories: sdk-report-runner
 
-      - name: Trigger sdk-report-runner report build
-        if: github.ref == 'refs/heads/main'
-        run: |
-          curl -L \
-          -H "Authorization: Bearer ${APP_TOKEN}" \
-          -H "X-GitHub-Api-Version: 2022-11-28" \
-          -H "Content-Type: application/json" \
-          --fail \
-          --data '{"ref": "main"}' \
-          https://api.github.com/repos/TBD54566975/sdk-report-runner/actions/workflows/build-report.yaml/dispatches
-        env:
-          APP_TOKEN: ${{ steps.generate_token.outputs.token }}
+  #     - name: Trigger sdk-report-runner report build
+  #       if: github.ref == 'refs/heads/main'
+  #       run: |
+  #         curl -L \
+  #         -H "Authorization: Bearer ${APP_TOKEN}" \
+  #         -H "X-GitHub-Api-Version: 2022-11-28" \
+  #         -H "Content-Type: application/json" \
+  #         --fail \
+  #         --data '{"ref": "main"}' \
+  #         https://api.github.com/repos/TBD54566975/sdk-report-runner/actions/workflows/build-report.yaml/dispatches
+  #       env:
+  #         APP_TOKEN: ${{ steps.generate_token.outputs.token }}
 
-  # Ensure both MacOS and Ubuntu build/test jobs succeeded
-  confirm-successful-build-and-tests:
-    # Wait on both jobs to succeed
-    needs: [build-test-macos, build-test-deploy-snapshot-ubuntu]
-    runs-on: ubuntu-latest
+  # # Ensure both MacOS and Ubuntu build/test jobs succeeded
+  # confirm-successful-build-and-tests:
+  #   # Wait on both jobs to succeed
+  #   needs: [build-test-macos, build-test-deploy-snapshot-ubuntu]
+  #   runs-on: ubuntu-latest
 
-    steps:
-      - name: Log Success
-        run: |
-          echo "Builds for MacOS and Ubuntu succeeded."
+  #   steps:
+  #     - name: Log Success
+  #       run: |
+  #         echo "Builds for MacOS and Ubuntu succeeded."
