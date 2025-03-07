@@ -123,7 +123,7 @@
     and approach is documented below in <dependencyManagement> section
     -->
     <version.com.google.guava>32.0.0-android</version.com.google.guava>
-    <version.com.google.protobuf>3.19.6</version.com.google.protobuf>
+    <version.com.google.protobuf>3.25.5</version.com.google.protobuf>
     <version.com.squareup.okio>3.6.0</version.com.squareup.okio>
 
   </properties>
